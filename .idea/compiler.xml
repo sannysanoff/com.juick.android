@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <excludeFromCompile>
+      <directory url="file://$PROJECT_DIR$/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../../../san2/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../../../san2/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../../../san2/tmp/com.juick.android/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../../../san2/tmp/ActionBarSherlock/library/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../ActionBarSherlock/library/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/gen/gen" includeSubdirectories="true" />
+    </excludeFromCompile>
+    <resourceExtensions />
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.ftl" />
+    </wildcardResourcePatterns>
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="false">
+        <processorPath useClasspath="true" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>
+
