@@ -87,7 +87,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_THREAD);
 
         getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity()));
+        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
 
         Thread thr = new Thread(new Runnable() {
 

@@ -34,6 +34,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -197,5 +202,18 @@ public class Utils {
             Log.e("downloadImage", e.toString());
         }
         return null;
+    }
+
+    public static Set<String> string2set(String str) {
+        return new HashSet<String>(Arrays.asList(str.split("\u0001")));
+    }
+    public static String set2string(Set<String> set) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : set) {
+            if (sb.length() != 0)
+                sb.append("\u0001");
+            sb.append(s);
+        }
+        return sb.toString();
     }
 }

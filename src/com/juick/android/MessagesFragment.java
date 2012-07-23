@@ -163,14 +163,15 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshOriginalTopPadding = mRefreshView.getPaddingTop();
         mRefreshState = TAP_TO_REFRESH;
 
-        getListView().setOnTouchListener(this);
-        getListView().setOnScrollListener(this);
-        getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity()));
 
         listAdapter = new JuickMessagesAdapter(getActivity(), 0);
         if (mSaveLastMessagesPosition)
             listAdapter.setContinuationAdapter(true);
+
+        getListView().setOnTouchListener(this);
+        getListView().setOnScrollListener(this);
+        getListView().setOnItemClickListener(this);
+        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
 
         init();
     }
@@ -440,9 +441,15 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshState = REFRESHING;
 
         if (mSaveLastMessagesPosition) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            sp.edit().remove("lastMessagesSavedPosition").commit();
+            clearSavedPosition(getActivity());
             listAdapter.setContinuationAdapter(false);
         }
     }
+
+    public static void clearSavedPosition(Context context) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().remove("lastMessagesSavedPosition").commit();
+    }
+
+
 }

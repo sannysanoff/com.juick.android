@@ -47,6 +47,7 @@
     <string name="Recommend_message">Рекомендовать сообщение</string>
     <string name="Subscribe_to">Подписаться на</string>
     <string name="Blacklist">Добавить в черный список</string>
+    <string name="FilterOutUser">Не показывать</string>
     <string name="Recommended">Рекомендовано</string>
     <string name="Subscribed">Подписано</string>
     <string name="Added_to_BL">Добавлено в черный список</string>
@@ -104,5 +105,6 @@
     <!-- ThreadActivity -->
     <string name="In_reply_to_">В ответ на:</string>
     <string name="Last_messages">Все сообщения</string>
+    <string name="ReallyFilterOut">В самом деле скрыть пользователя?</string>
 
 </resources>

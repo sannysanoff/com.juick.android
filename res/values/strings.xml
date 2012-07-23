@@ -47,6 +47,7 @@
     <string name="Recommend_message">Recommend message</string>
     <string name="Subscribe_to">Subscribe to</string>
     <string name="Blacklist">Blacklist</string>
+    <string name="FilterOutUser">Filter out</string>
     <string name="Recommended">Recommended</string>
     <string name="Subscribed">Subscribed</string>
     <string name="Added_to_BL">Added to BL</string>
@@ -104,5 +105,6 @@
     <!-- ThreadActivity -->
     <string name="In_reply_to_">In reply to:</string>
     <string name="Last_messages">Last messages</string>
+    <string name="ReallyFilterOut">Really filter out user?</string>
 
 </resources>

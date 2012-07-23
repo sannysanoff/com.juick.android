@@ -22,16 +22,20 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.Toast;
 import com.juick.R;
 import com.juick.android.api.JuickMessage;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 
 /**
@@ -43,13 +47,33 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
     Activity activity;
     JuickMessage listSelectedItem;
     ArrayList<String> urls;
-    int menuLength;
+    ListView listView;
+    JuickMessagesAdapter listAdapter;
 
-    public JuickMessageMenu(Activity activity) {
+    public JuickMessageMenu(Activity activity, ListView listView, JuickMessagesAdapter listAdapter) {
         this.activity = activity;
+        this.listView = listView;
+        this.listAdapter = listAdapter;
     }
 
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+    ArrayList<RunnableItem> menuActions = new ArrayList<RunnableItem>();
+
+    static class RunnableItem implements Runnable {
+        String title;
+
+        RunnableItem(String title) {
+            this.title = title;
+        }
+
+        @Override
+        public void run() {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
+    }
+
+    public boolean onItemLongClick(final AdapterView parent, View view, final int position, long id) {
+
+        menuActions.clear();
         listSelectedItem = (JuickMessage) parent.getAdapter().getItem(position);
 
         urls = new ArrayList<String>();
@@ -81,77 +105,121 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         pos = m.end();
         }
          */
-        menuLength = 4 + urls.size();
-        if (listSelectedItem.RID == 0) {
-            menuLength++;
-        }
-        CharSequence[] items = new CharSequence[menuLength];
-        int i = 0;
+
         if (urls.size() > 0) {
-            for (String url : urls) {
-                items[i++] = url;
+            for (final String url : urls) {
+                menuActions.add(new RunnableItem(url) {
+                    @Override
+                    public void run() {
+                        if (url.startsWith("#")) {
+                            int mid = Integer.parseInt(url.substring(1));
+                            if (mid > 0) {
+                                Intent intent = new Intent(activity, ThreadActivity.class);
+                                intent.putExtra("mid", mid);
+                                activity.startActivity(intent);
+                            }
+                            //} else if (url.startsWith("@")) {
+                        } else {
+                            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                        }
+                    }
+                });
+
             }
         }
+        final String UName = listSelectedItem.User.UName;
+        menuActions.add(new RunnableItem('@' + UName + " " + activity.getResources().getString(R.string.blog)) {
+            @Override
+            public void run() {
+                Intent i = new Intent(activity, MessagesActivity.class);
+                i.putExtra("uid", listSelectedItem.User.UID);
+                i.putExtra("uname", listSelectedItem.User.UName);
+                activity.startActivity(i);
+            }
+        });
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " @" + UName) {
+            @Override
+            public void run() {
+                postMessage("S @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Subscribed));
+            }
+        });
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Blacklist) + " @" + UName) {
+            @Override
+            public void run() {
+                postMessage("BL @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Added_to_BL));
+            }
+        });
         if (listSelectedItem.RID == 0) {
-            items[i++] = activity.getResources().getString(R.string.Recommend_message);
+            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Recommend_message)) {
+                @Override
+                public void run() {
+                    postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
+                }
+            });
         }
-        String UName = listSelectedItem.User.UName;
-        items[i++] = '@' + UName + " " + activity.getResources().getString(R.string.blog);
-        items[i++] = activity.getResources().getString(R.string.Subscribe_to) + " @" + UName;
-        items[i++] = activity.getResources().getString(R.string.Blacklist) + " @" + UName;
-        items[i++] = activity.getResources().getString(R.string.Share);
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Share)) {
+            @Override
+            public void run() {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, listSelectedItem.toString());
+                activity.startActivity(intent);
+            }
+        });
+
+
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " @" + UName) {
+            @Override
+            public void run() {
+
+                AlertDialog filteredOutUsers = new AlertDialog.Builder(activity)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setMessage(activity.getResources().getString(R.string.ReallyFilterOut))
+                        .setPositiveButton(R.string.OK, new OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                JuickMessagesAdapter.filteredOutUsers.add(UName);
+                                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                                sp.edit().putString("filteredOutUsers", Utils.set2string(JuickMessagesAdapter.filteredOutUsers)).commit();
+                                for (int i = 0; i < listAdapter.getCount(); i++) {
+                                    JuickMessage jm = listAdapter.getItem(i);
+                                    if (jm.User.UName.equals(UName)) {
+                                        listAdapter.remove(jm);
+                                        i--;
+                                    }
+                                }
+                                Parcelable parcelable = listView.onSaveInstanceState();
+                                listView.setAdapter(listAdapter);
+                                try {
+                                    listView.onRestoreInstanceState(parcelable);
+                                } catch (Throwable e) {
+                                    // bad luck
+                                }
+
+                            }
+
+                        })
+                        .setNegativeButton(R.string.Cancel, null)
+                        .show();
+
+            }
+        });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        CharSequence[] items = new CharSequence[menuActions.size()];
+        for (int j = 0; j < items.length; j++) {
+            items[j] = menuActions.get(j).title;
+        }
         builder.setItems(items, this);
         builder.create().show();
         return true;
     }
 
     public void onClick(DialogInterface dialog, int which) {
-        if (urls != null) {
-            if (which < urls.size()) {
-                String url = urls.get(which);
-                if (url.startsWith("#")) {
-                    int mid = Integer.parseInt(url.substring(1));
-                    if (mid > 0) {
-                        Intent intent = new Intent(activity, ThreadActivity.class);
-                        intent.putExtra("mid", mid);
-                        activity.startActivity(intent);
-                    }
-                    //} else if (url.startsWith("@")) {
-                } else {
-                    activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                }
-                return;
-            }
-            which -= urls.size();
-        }
-        if (listSelectedItem.RID != 0) {
-            which += 1;
-        }
-        switch (which) {
-            case 0:
-                postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
-                break;
-            case 1:
-                Intent i = new Intent(activity, MessagesActivity.class);
-                i.putExtra("uid", listSelectedItem.User.UID);
-                i.putExtra("uname", listSelectedItem.User.UName);
-                activity.startActivity(i);
-                break;
-            case 2:
-                postMessage("S @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Subscribed));
-                break;
-            case 3:
-                postMessage("BL @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Added_to_BL));
-                break;
-            case 4:
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_TEXT, listSelectedItem.toString());
-                activity.startActivity(intent);
-                break;
-        }
+        Runnable runnable = menuActions.get(which);
+        if (runnable != null)
+            runnable.run();
     }
 
     private void postMessage(final String body, final String ok) {

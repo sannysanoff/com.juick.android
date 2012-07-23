@@ -30,8 +30,8 @@ import android.support.v4.view.*;
 import android.view.MenuInflater;
 import android.widget.ArrayAdapter;
 import com.juick.R;
-import java.util.Calendar;
-import java.util.List;
+
+import java.util.*;
 
 /**
  *
@@ -42,6 +42,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     public static final int ACTIVITY_SIGNIN = 2;
     public static final int ACTIVITY_PREFERENCES = 3;
     public static final int PENDINGINTENT_CONSTANT = 713242183;
+
+    int lastNavigationPosition = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +64,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         }
 
         startCheckUpdates(this);
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        JuickMessagesAdapter.filteredOutUsers = Utils.string2set(sp.getString("filteredOutUsers", ""));
 
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
@@ -87,7 +92,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         }
     }
 
-    public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+    public boolean onNavigationItemSelected(int itemPosition, long _) {
+        lastNavigationPosition = itemPosition;
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         MessagesFragment mf = new MessagesFragment();
         Bundle args = new Bundle();
@@ -142,6 +148,15 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 return true;
             case R.id.menuitem_search:
                 startActivity(new Intent(this, ExploreActivity.class));
+                return true;
+            case R.id.reload:
+                if (lastNavigationPosition != -1) {
+                    if (lastNavigationPosition == 1) {
+                        // clear save pointer
+                        MessagesFragment.clearSavedPosition(this);
+                    }
+                    onNavigationItemSelected(lastNavigationPosition, -1);
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

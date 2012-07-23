@@ -37,6 +37,8 @@ import com.juick.R;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,6 +58,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private int type;
     private boolean allItemsEnabled = true;
     private boolean isContinuationAdapter;
+
+    public static Set<String> filteredOutUsers = new HashSet<String>();
+
 
     public JuickMessagesAdapter(Context context, int type) {
         super(context, R.layout.listitem_juickmessage);
@@ -241,6 +246,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public void addAllMessages(ArrayList<JuickMessage> messages) {
         for (JuickMessage message : messages) {
+            if (filteredOutUsers.contains(message.User.UName)) continue;
             add(message);
         }
     }
