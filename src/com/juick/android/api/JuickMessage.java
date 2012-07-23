@@ -41,7 +41,7 @@ public class JuickMessage {
     public String Photo = null;
     public String Video = null;
 
-    public static JuickMessage parseJSON(JSONObject json) throws JSONException {
+    public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();
         jmsg.MID = json.getInt("mid");
         if (json.has("rid")) {

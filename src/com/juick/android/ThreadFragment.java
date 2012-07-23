@@ -28,6 +28,8 @@ import android.widget.AdapterView;
 import com.juick.R;
 import com.juick.android.api.JuickUser;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Ugnich Anton
@@ -92,15 +94,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             public void run() {
                 final String jsonStr = Utils.getJSON(getActivity(), "http://api.juick.com/thread?mid=" + mid);
                 if (isAdded()) {
+                    final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
-                            if (jsonStr != null) {
-                                listAdapter.parseJSON(jsonStr);
-                                setListAdapter(listAdapter);
-                                if (listAdapter.getCount() > 0) {
-                                    initAdapterStageTwo();
-                                }
+                            listAdapter.addAllMessages(messages);
+                            setListAdapter(listAdapter);
+
+                            if (listAdapter.getCount() > 0) {
+                                initAdapterStageTwo();
                             }
                         }
                     });
@@ -130,15 +132,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     public void onWebSocketTextFrame(final String jsonStr) {
         ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
         if (isAdded()) {
-            getActivity().runOnUiThread(new Runnable() {
-
-                public void run() {
-                    if (jsonStr != null) {
-                        listAdapter.parseJSON("[" + jsonStr + "]");
+            if (jsonStr != null) {
+                final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure("[" + jsonStr + "]");
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        listAdapter.addAllMessages(messages);
                         listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
                     }
-                }
-            });
+                });
+            }
         }
     }
 

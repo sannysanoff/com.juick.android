@@ -20,7 +20,6 @@ package com.juick.android;
 import android.text.Layout.Alignment;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.AlignmentSpan;
@@ -31,12 +30,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.juick.R;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,19 +61,20 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         this.type = type;
     }
 
-    public int parseJSON(String jsonStr) {
-        try {
-            JSONArray json = new JSONArray(jsonStr);
-            int cnt = json.length();
-            for (int i = 0; i < cnt; i++) {
-                add(JuickMessage.parseJSON(json.getJSONObject(i)));
+    public static ArrayList<JuickMessage> parseJSONpure(String jsonStr) {
+        ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
+        if (jsonStr != null) {
+            try {
+                JSONArray json = new JSONArray(jsonStr);
+                int cnt = json.length();
+                for (int i = 0; i < cnt; i++) {
+                    messages.add(JuickMessage.initFromJSON(json.getJSONObject(i)));
+                }
+            } catch (Exception e) {
+                Log.e("initOpinionsAdapter", e.toString());
             }
-            return cnt;
-        } catch (Exception e) {
-            Log.e("initOpinionsAdapter", e.toString());
         }
-
-        return 0;
+        return messages;
     }
 
     @Override
@@ -229,5 +229,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         return ssb;
+    }
+
+    public void addAllMessages(ArrayList<JuickMessage> messages) {
+        for (JuickMessage message : messages) {
+            add(message);
+        }
     }
 }

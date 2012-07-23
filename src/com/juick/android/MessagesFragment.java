@@ -18,7 +18,7 @@
  */
 package com.juick.android;
 
-import android.widget.AbsListView;
+import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
 import android.content.Intent;
@@ -30,13 +30,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.AdapterView;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import com.juick.R;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 /**
  *
@@ -169,13 +165,15 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             public void run() {
                 final String jsonStr = Utils.getJSON(getActivity(), apiurl);
                 if (isAdded()) {
+                    final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
+                            long l = System.currentTimeMillis();
                             if (jsonStr != null) {
                                 listAdapter.clear();
-                                int cnt = listAdapter.parseJSON(jsonStr);
-                                if (cnt == 20 && getListView().getFooterViewsCount() == 0) {
+                                listAdapter.addAllMessages(messages);
+                                if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
                                     getListView().addFooterView(viewLoading, null, false);
                                 }
                             }
@@ -194,6 +192,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             resetHeader();
                             getListView().invalidateViews();
                             setSelection(1);
+                            l = System.currentTimeMillis() - l;
+                            Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -212,10 +212,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             public void run() {
                 final String jsonStr = Utils.getJSON(getActivity(), apiurl + "&before_mid=" + jmsg.MID + "&page=" + page);
                 if (isAdded()) {
+                    final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
-                            if (jsonStr == null || listAdapter.parseJSON(jsonStr) != 20) {
+                            listAdapter.addAllMessages(messages);
+                            if (messages.size() != 20) {
                                 MessagesFragment.this.getListView().removeFooterView(viewLoading);
                             }
                             loading = false;
