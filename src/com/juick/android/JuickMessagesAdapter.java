@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.graphics.Typeface;
 import android.text.Layout.Alignment;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
@@ -54,6 +55,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private String Replies;
     private int type;
     private boolean allItemsEnabled = true;
+    private boolean isContinuationAdapter;
 
     public JuickMessagesAdapter(Context context, int type) {
         super(context, R.layout.listitem_juickmessage);
@@ -92,7 +94,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (type == TYPE_THREAD && jmsg.RID == 0) {
                 t.setText(formatFirstMessageText(jmsg));
             } else {
-                t.setText(formatMessageText(jmsg));
+                t.setText(formatMessageText(jmsg, position == 0 && isContinuationAdapter));
             }
 
             /*
@@ -133,8 +135,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         insert(jmsg, position);
     }
 
-    private SpannableStringBuilder formatMessageText(JuickMessage jmsg) {
+    private SpannableStringBuilder formatMessageText(JuickMessage jmsg, boolean addContinuation) {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
+        int spanOffset = 0;
+        if (addContinuation) {
+            ssb.append("<< resuming from last time>>\n");
+            ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, spanOffset + ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        spanOffset = ssb.length();
         String name = '@' + jmsg.User.UName;
         String tags = jmsg.getTags();
         String txt = jmsg.Text;
@@ -144,20 +152,21 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         if (jmsg.Video != null) {
             txt = jmsg.Video + "\n" + txt;
         }
-        ssb.append(name + ' ' + tags + "\n" + txt);
-        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new ForegroundColorSpan(0xFFC8934E), 0, name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.append(name + ' ' + tags + "\n");
+        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(0xFFC8934E), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (tags.length() > 0)
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), name.length() + 1, 
-                    name.length() + tags.length() + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), spanOffset + name.length() + 1,
+                    spanOffset + name.length() + tags.length() + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        int paddingt = name.length() + 1 + tags.length() + 1;
 
+        spanOffset = ssb.length();
+        ssb.append(txt);
         // Highlight links http://example.com/
         int pos = 0;
         Matcher m = urlPattern.matcher(txt);
         while (m.find(pos)) {
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), paddingt + m.start(), paddingt + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             pos = m.end();
         }
 
@@ -165,7 +174,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         pos = 0;
         m = msgPattern.matcher(txt);
         while (m.find(pos)) {
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), paddingt + m.start(), paddingt + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             pos = m.end();
         }
 
@@ -178,26 +187,25 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         pos = m.end();
         }
          */
-        
+
+        int rightPartOffset = spanOffset = ssb.length();
+
         DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
         df.setTimeZone(TimeZone.getDefault());
         String date = df.format(jmsg.Timestamp);
         ssb.append("\n" + date + " ");
 
-        int padding = name.length() + 1 + tags.length() + 1 + txt.length() + 1;
-        int end = padding + date.length() + 1;
+        ssb.setSpan(new ForegroundColorSpan(0xFFAAAAAA), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        ssb.setSpan(new ForegroundColorSpan(0xFFAAAAAA), padding, padding + date.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spanOffset = ssb.length();
 
         if (jmsg.replies > 0) {
             String replies = Replies + jmsg.replies;
             ssb.append("  " + replies + " ");
-            end += 2 + replies.length() + 1;
-            int padding2 = padding + date.length() + 1 + 2;
-            ssb.setSpan(new ForegroundColorSpan(0xFFC8934E), padding2, padding2 + replies.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(0xFFC8934E), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), padding, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         return ssb;
     }
@@ -235,5 +243,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         for (JuickMessage message : messages) {
             add(message);
         }
+    }
+
+    public void setContinuationAdapter(boolean continuationAdapter) {
+        isContinuationAdapter = continuationAdapter;
     }
 }

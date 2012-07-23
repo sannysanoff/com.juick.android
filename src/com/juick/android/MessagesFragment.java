@@ -18,6 +18,8 @@
  */
 package com.juick.android;
 
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
@@ -62,6 +64,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private int mRefreshOriginalTopPadding;
     private int mLastMotionY;
     private boolean mBounceHack;
+    private boolean mSaveLastMessagesPosition;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -115,6 +118,17 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 apiurl += "&popular=1";
             } else if (media) {
                 apiurl += "&media=all";
+            } else {
+                // just "last messages"
+
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                if (sp.getBoolean("persistLastMessagesPosition", false)) {
+                    int lastMessagesSavedPosition = sp.getInt("lastMessagesSavedPosition", -1);
+                    if (lastMessagesSavedPosition != -1) {
+                        apiurl += "&before_mid="+lastMessagesSavedPosition;
+                    }
+                    mSaveLastMessagesPosition = true;
+                }
             }
         }
 
@@ -155,6 +169,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity()));
 
         listAdapter = new JuickMessagesAdapter(getActivity(), 0);
+        if (mSaveLastMessagesPosition)
+            listAdapter.setContinuationAdapter(true);
 
         init();
     }
@@ -193,7 +209,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             getListView().invalidateViews();
                             setSelection(1);
                             l = System.currentTimeMillis() - l;
-                            Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();
+                            //Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -205,17 +221,22 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private void loadMore() {
         loading = true;
         page++;
-        final JuickMessage jmsg = (JuickMessage) listAdapter.getItem(listAdapter.getCount() - 1);
+        final JuickMessage jmsg = listAdapter.getItem(listAdapter.getCount() - 1);
 
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                final String jsonStr = Utils.getJSON(getActivity(), apiurl + "&before_mid=" + jmsg.MID + "&page=" + page);
+                URLParser apiURL = new URLParser(apiurl);
+                apiURL.getArgsMap().put("before_mid", ""+jmsg.MID);
+                apiURL.getArgsMap().put("page", ""+page);
+                final String jsonStr = Utils.getJSON(getActivity(), apiURL.getFullURL());
                 if (isAdded()) {
                     final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
+                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                            sp.edit().putInt("lastMessagesSavedPosition", jmsg.MID).commit();
                             listAdapter.addAllMessages(messages);
                             if (messages.size() != 20) {
                                 MessagesFragment.this.getListView().removeFooterView(viewLoading);
@@ -417,5 +438,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshViewText.setText(R.string.pull_to_refresh_refreshing_label);
 
         mRefreshState = REFRESHING;
+
+        if (mSaveLastMessagesPosition) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            sp.edit().remove("lastMessagesSavedPosition").commit();
+            listAdapter.setContinuationAdapter(false);
+        }
     }
 }

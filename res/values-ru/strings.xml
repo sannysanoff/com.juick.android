@@ -103,5 +103,6 @@
 
     <!-- ThreadActivity -->
     <string name="In_reply_to_">В ответ на:</string>
+    <string name="Last_messages">Все сообщения</string>
 
 </resources>

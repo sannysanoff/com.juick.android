@@ -9,7 +9,15 @@
             android:defaultValue="5"
             android:persistent="true"/>
     </PreferenceCategory>
-<!--    
+    <PreferenceCategory android:title="@string/Last_messages">
+        <CheckBoxPreference
+            android:key="persistLastMessagesPosition"
+            android:title="Save position"
+            android:summary="Position can be reset to latest by refreshing messages"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
+<!--
     <PreferenceCategory android:title="@string/Appearance">
         <ListPreference
             android:key="theme"
