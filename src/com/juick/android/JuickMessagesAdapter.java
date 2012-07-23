@@ -144,6 +144,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
         if (addContinuation) {
+            getContext().getResources().getString(R.string.ResumingFromLastTime);
             ssb.append("<< resuming from last time>>\n");
             ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, spanOffset + ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }

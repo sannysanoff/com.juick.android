@@ -106,5 +106,6 @@
     <string name="In_reply_to_">В ответ на:</string>
     <string name="Last_messages">Все сообщения</string>
     <string name="ReallyFilterOut">В самом деле скрыть пользователя?</string>
+    <string name="ResumingFromLastTime"><![CDATA[<< закончили читать здесь в прошлый раз >>]]></string>
 
 </resources>
