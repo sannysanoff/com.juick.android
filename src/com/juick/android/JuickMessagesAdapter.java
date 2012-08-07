@@ -102,6 +102,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (v == null || !(v instanceof LinearLayout)) {
                 LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 v = vi.inflate(R.layout.listitem_juickmessage, null);
+                TextView tv = (TextView) v.findViewById(R.id.text);
+                float textSize = tv.getTextSize();
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+                try {
+                    Float fontScale = Float.valueOf(sp.getString("messagesFontScale", "1.0"));
+                    tv.setTextSize(textSize*fontScale);
+                } catch (NumberFormatException e) {
+                    //
+                }
             }
             TextView t = (TextView) v.findViewById(R.id.text);
 

@@ -9,12 +9,25 @@
             android:defaultValue="5"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/Last_messages">
+    <PreferenceCategory android:title="@string/Message_List">
         <CheckBoxPreference
             android:key="persistLastMessagesPosition"
-            android:title="Save position"
-            android:summary="Position can be reset to latest by refreshing messages"
+            android:title="@string/Save_position"
+            android:summary="@string/Position_can_be_reset"
             android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="showNumbers"
+            android:title="@string/Show_Numbers"
+            android:summary="@string/Message_numbers_will_be_shown"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <ListPreference
+            android:key="messagesFontScale"
+            android:title="@string/Message_font_scale_factor"
+            android:entries="@array/scaleFontSize"
+            android:entryValues="@array/scaleFontSize"
+            android:defaultValue="1.0"
             android:persistent="true"/>
     </PreferenceCategory>
 <!--

@@ -105,9 +105,14 @@
 
     <!-- ThreadActivity -->
     <string name="In_reply_to_">In reply to:</string>
-    <string name="Last_messages">Last messages</string>
+    <string name="Message_List">Messages list</string>
     <string name="ReallyFilterOut">Really filter out user?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< resuming from last time >>]]></string>
     <string name="EditFilters">List of filtered out users</string>
+    <string name="Show_Numbers">Show message number</string>
+    <string name="Position_can_be_reset">Position can be reset to latest by refreshing messages</string>
+    <string name="Message_numbers_will_be_shown">Message and reply numbers will be shown</string>
+    <string name="Save_position">Save position</string>
+    <string name="Message_font_scale_factor">Message font scale factor</string>
 
 </resources>
