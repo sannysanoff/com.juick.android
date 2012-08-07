@@ -23,13 +23,16 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,7 +48,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.R;
+
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -460,7 +466,22 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 break;
             case 1:
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString());
+
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", false);
+                if (useTempFileForCapture) {
+                    File file = getPhotoCaptureFile();
+                    file.delete();
+                    try {
+                        if (false)
+                            file.createNewFile();
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+                    } catch (IOException e) {
+                        Toast.makeText(this, "Unable to create destination file", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                }
                 startActivityForResult(intent, ACTIVITY_ATTACHMENT_IMAGE);
                 break;
             case 2:
@@ -476,8 +497,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
     }
 
+    private File getPhotoCaptureFile() {
+        return new File(Environment.getExternalStorageDirectory(), "juick_tmp_capture.jpg");
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (getPhotoCaptureFile().length() > 100 && resultCode == RESULT_CANCELED)
+            resultCode = RESULT_OK;     // fixing my bug.
         if (resultCode == RESULT_OK) {
             if (requestCode == ACTIVITY_TAGS) {
                 etMessage.setText("*" + data.getStringExtra("tag") + " " + etMessage.getText());
@@ -490,10 +517,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 if ((pid > 0 || lat != 0) && pname != null) {
                     bLocation.setSelected(true);
                 }
-            } else if ((requestCode == ACTIVITY_ATTACHMENT_IMAGE || requestCode == ACTIVITY_ATTACHMENT_VIDEO) && data != null) {
-                attachmentUri = data.getDataString();
+            } else if ((requestCode == ACTIVITY_ATTACHMENT_IMAGE || requestCode == ACTIVITY_ATTACHMENT_VIDEO)) {
+                if (data != null) {
+                    attachmentUri = data.getDataString();
+                } else if (getPhotoCaptureFile().length() > 100) {
+                    attachmentUri = Uri.fromFile(getPhotoCaptureFile()).toString();
+                }
                 attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
-                bAttachment.setSelected(true);
+                bAttachment.setSelected(attachmentUri != null);
             }
         }
     }
