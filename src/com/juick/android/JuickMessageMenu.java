@@ -34,8 +34,6 @@ import com.juick.R;
 import com.juick.android.api.JuickMessage;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -141,20 +139,35 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " @" + UName) {
             @Override
             public void run() {
-                postMessage("S @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Subscribed));
+                confirmAction(R.string.ReallySubscribe, new Runnable() {
+                    @Override
+                    public void run() {
+                        postMessage("S @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Subscribed));
+                    }
+                });
             }
         });
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Blacklist) + " @" + UName) {
             @Override
             public void run() {
-                postMessage("BL @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Added_to_BL));
+                confirmAction(R.string.ReallyBlacklist, new Runnable() {
+                    @Override
+                    public void run() {
+                        postMessage("BL @" + listSelectedItem.User.UName, activity.getResources().getString(R.string.Added_to_BL));
+                    }
+                });
             }
         });
         if (listSelectedItem.RID == 0) {
             menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Recommend_message)) {
                 @Override
                 public void run() {
-                    postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
+                    confirmAction(R.string.ReallyRecommend, new Runnable() {
+                        @Override
+                        public void run() {
+                            postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
+                        }
+                    });
                 }
             });
         }
@@ -172,40 +185,31 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " @" + UName) {
             @Override
             public void run() {
-
-                new AlertDialog.Builder(activity)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setMessage(activity.getResources().getString(R.string.ReallyFilterOut))
-                        .setPositiveButton(R.string.OK, new OnClickListener() {
-
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Set<String> filteredOutUzers = JuickMessagesAdapter.getFilteredOutUsers(activity);
-                                filteredOutUzers.add(UName);
-                                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-                                sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
-                                for (int i = 0; i < listAdapter.getCount(); i++) {
-                                    JuickMessage jm = listAdapter.getItem(i);
-                                    if (jm.User.UName.equals(UName)) {
-                                        listAdapter.remove(jm);
-                                        i--;
-                                    }
-                                }
-                                Parcelable parcelable = listView.onSaveInstanceState();
-                                listView.setAdapter(listAdapter);
-                                try {
-                                    listView.onRestoreInstanceState(parcelable);
-                                } catch (Throwable e) {
-                                    // bad luck
-                                }
-
+                confirmAction(R.string.ReallyFilterOut, new Runnable() {
+                    @Override
+                    public void run() {
+                        Set<String> filteredOutUzers = JuickMessagesAdapter.getFilteredOutUsers(activity);
+                        filteredOutUzers.add(UName);
+                        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                        sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
+                        for (int i = 0; i < listAdapter.getCount(); i++) {
+                            JuickMessage jm = listAdapter.getItem(i);
+                            if (jm.User.UName.equals(UName)) {
+                                listAdapter.remove(jm);
+                                i--;
                             }
-
-                        })
-                        .setNegativeButton(R.string.Cancel, null)
-                        .show();
-
+                        }
+                        Parcelable parcelable = listView.onSaveInstanceState();
+                        listView.setAdapter(listAdapter);
+                        try {
+                            listView.onRestoreInstanceState(parcelable);
+                        } catch (Throwable e) {
+                            // bad luck
+                        }
+                    }
+                });
             }
+
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
@@ -216,6 +220,27 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         builder.setItems(items, this);
         builder.create().show();
         return true;
+    }
+
+    private void confirmAction(int resId, final Runnable r) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+        if (sp.getBoolean("confirmActions", true)) {
+            new AlertDialog.Builder(activity)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setMessage(activity.getResources().getString(resId))
+                    .setPositiveButton(R.string.OK, new OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            r.run();
+                        }
+
+                    })
+                    .setNegativeButton(R.string.Cancel, null)
+                    .show();
+        } else {
+            r.run();
+        }
     }
 
     public void onClick(DialogInterface dialog, int which) {

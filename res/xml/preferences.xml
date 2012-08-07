@@ -22,6 +22,12 @@
             android:summary="@string/Message_numbers_will_be_shown"
             android:defaultValue="false"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="confirmActions"
+            android:title="@string/Confirm_asctions"
+            android:summary="@string/Such_as_blacklist_recommend"
+            android:defaultValue="true"
+            android:persistent="true"/>
         <ListPreference
             android:key="messagesFontScale"
             android:title="@string/Message_font_scale_factor"
