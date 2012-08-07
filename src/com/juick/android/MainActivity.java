@@ -76,14 +76,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     }
 
     private void startPreferencesStorage(final MainActivity mainActivity) {
-        new Thread() {
-            @Override
-            public void run() {
-                String body = "BL";
-                String whitelist = Utils.postJSON(mainActivity, "http://api.juick.com/post", "body=" + body);
-                System.out.println(whitelist);
-            }
-        }.start();
+//        new Thread() {
+//            @Override
+//            public void run() {
+//                String body = "BL";
+//                String whitelist = Utils.postJSON(mainActivity, "http://api.juick.com/post", "body=" + body);
+//                System.out.println(whitelist);
+//            }
+//        }.start();
     }
 
     public static void startCheckUpdates(Context context) {

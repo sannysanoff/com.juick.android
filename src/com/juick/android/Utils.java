@@ -220,4 +220,16 @@ public class Utils {
         }
         return sb.toString();
     }
+
+    public static String joinStrings(String[] results, String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < results.length; i++) {
+            String result = results[i];
+            sb.append(results);
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+
 }

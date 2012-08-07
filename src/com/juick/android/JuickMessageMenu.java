@@ -37,9 +37,13 @@ import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.R;
 import com.juick.android.api.JuickMessage;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -187,36 +191,43 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             @Override
             public void run() {
                 String body = listSelectedItem.Text;
-                translateToRussian(body, new Utils.Function<Void, String>() {
+                translateToRussian(body, new Utils.Function<Void, String[]>() {
                     @Override
-                    public Void apply(String s) {
-                        if (s != null) {
+                    public Void apply(String ss[]) {
+                        StringBuilder sb = new StringBuilder();
+                        int successes = 0;
+                        for (String s : ss) {
                             try {
                                 JSONObject json = new JSONObject(s);
                                 JSONArray sentences = json.getJSONArray("sentences");
                                 if (sentences != null && sentences.length() > 0) {
                                     s = sentences.getJSONObject(0).getString("trans");
                                     if (s == null) {
-                                        Toast.makeText(activity, "Unknown server response.", Toast.LENGTH_LONG).show();
+                                        sb.append("[error]");
                                     } else {
-                                        listSelectedItem.Text = s;
-                                        listSelectedItem.translated = true;
-                                        Parcelable parcelable = listView.onSaveInstanceState();
-                                        listView.setAdapter(listAdapter);
-                                        try {
-                                            listView.onRestoreInstanceState(parcelable);
-                                        } catch (Throwable e) {
-                                            // bad luck
-                                        }
+                                        successes++;
+                                        sb.append(s);
+                                        sb.append("\n");
                                     }
                                 } else {
-                                    Toast.makeText(activity, "Unknown server response.", Toast.LENGTH_LONG).show();
+                                    sb.append("[error]");
                                 }
                             } catch (JSONException e) {
 
                             }
+                        }
+                        if (successes > 0) {
+                            listSelectedItem.Text = sb.toString();
+                            listSelectedItem.translated = true;
+                            Parcelable parcelable = listView.onSaveInstanceState();
+                            listView.setAdapter(listAdapter);
+                            try {
+                                listView.onRestoreInstanceState(parcelable);
+                            } catch (Throwable e) {
+                                // bad luck
+                            }
                         } else {
-                            Toast.makeText(activity, "Error translating.", Toast.LENGTH_LONG).show();
+                            Toast.makeText(activity, "Error translating..", Toast.LENGTH_LONG).show();
                         }
                         return null;
                     }
@@ -322,61 +333,87 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         thr.start();
     }
 
-    public void translateToRussian(final String body, final Utils.Function<Void, String> callback) {
+    public void translateToRussian(final String body, final Utils.Function<Void, String[]> callback) {
         final ProgressDialog mDialog = new ProgressDialog(activity);
         mDialog.setMessage("Google Translate...");
         mDialog.setCancelable(true);
         mDialog.setCanceledOnTouchOutside(true);
-        Uri.Builder builder = new Uri.Builder().scheme("http").authority("translate.google.com").path("translate_a/t");
-        builder = builder.appendQueryParameter("client", "at");
-        builder = builder.appendQueryParameter("v", "2.0");
-        builder = builder.appendQueryParameter("sl", "auto");
-        builder = builder.appendQueryParameter("tl", "ru");
-        builder = builder.appendQueryParameter("hl", "en_US");
-        builder = builder.appendQueryParameter("ie", "UTF-8");
-        builder = builder.appendQueryParameter("oe", "UTF-8");
-        builder = builder.appendQueryParameter("inputm", "2");
-        builder = builder.appendQueryParameter("source", "edit");
-        builder = builder.appendQueryParameter("text", body);
-        final HttpClient client = AndroidHttpClient.newInstance("AndroidTranslate/2.4.2 2.3.6 (gzip)", activity);
-        final HttpGet httpGet = new HttpGet(builder.build().toString());
-        httpGet.setHeader("Accept-Charset", "UTF-8");
-        final Thread thread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    final String retval = client.execute(httpGet, new BasicResponseHandler());
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.apply(retval);
-                        }
-                    });
-                } catch (IOException e) {
-                    Log.e("com.juick.android", "Error calling google translate", e);
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.apply(null);
-                        }
-                    });
-                } finally {
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mDialog.hide();
-                        }
-                    });
+        final ArrayList<HttpGet> actions = new ArrayList<HttpGet>();
+
+        final String[] split = body.split("\n");
+        final String[] results = new String[split.length];
+        final int[] pieces = new int[]{0};
+        for (int i = 0; i < split.length; i++) {
+            final String s = split[i];
+            if (s.trim().length() == 0) {
+                results[i] = split[i];
+                synchronized (pieces) {
+                    pieces[0]++;
+                    if (pieces[0] == results.length) {
+                        mDialog.hide();
+                        callback.apply(results);
+                    }
                 }
+            } else {
+                Uri.Builder builder = new Uri.Builder().scheme("http").authority("translate.google.com").path("translate_a/t");
+                builder = builder.appendQueryParameter("client", "at");
+                builder = builder.appendQueryParameter("v", "2.0");
+                builder = builder.appendQueryParameter("sl", "auto");
+                builder = builder.appendQueryParameter("tl", "ru");
+                builder = builder.appendQueryParameter("hl", "en_US");
+                builder = builder.appendQueryParameter("ie", "UTF-8");
+                builder = builder.appendQueryParameter("oe", "UTF-8");
+                builder = builder.appendQueryParameter("inputm", "2");
+                builder = builder.appendQueryParameter("source", "edit");
+                builder = builder.appendQueryParameter("text", s);
+                final HttpClient client = AndroidHttpClient.newInstance("AndroidTranslate/2.4.2 2.3.6 (gzip)", activity);
+                final HttpGet verb = new HttpGet(builder.build().toString());
+                actions.add(verb);
+                verb.setHeader("Accept-Charset", "UTF-8");
+                final int finalI = i;
+                final Thread thread = new Thread() {
+                    @Override
+                    public void run() {
+                        final StringBuilder out = new StringBuilder("");
+                        try {
+                            final String retval = client.execute(verb, new BasicResponseHandler());
+                            out.setLength(0);
+                            out.append(retval);
+                        } catch (IOException e) {
+                            Log.e("com.juick.android", "Error calling google translate", e);
+                        } finally {
+                            synchronized (pieces) {
+                                pieces[0]++;
+                                results[finalI] = out.toString();
+                                if (pieces[0] == results.length) {
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mDialog.hide();
+                                            callback.apply(results);
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                };
+                thread.start();
             }
 
-        };
-        thread.start();
+        }
+
         mDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {
-                thread.interrupt();
-                httpGet.abort();
+                for (HttpGet action : actions) {
+                    action.abort();
+                }
+                synchronized (pieces) {
+                    pieces[0] = -10000;
+                }
+                mDialog.hide();
             }
         });
         mDialog.show();
