@@ -166,8 +166,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
 
         listAdapter = new JuickMessagesAdapter(getActivity(), 0);
-        if (mSaveLastMessagesPosition)
-            listAdapter.setContinuationAdapter(true);
+        if (mSaveLastMessagesPosition) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            if (sp.getInt("lastMessagesSavedPosition",-1) > 0)
+                listAdapter.setContinuationAdapter(true);
+        }
 
         getListView().setOnTouchListener(this);
         getListView().setOnScrollListener(this);

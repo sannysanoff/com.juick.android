@@ -71,6 +71,17 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return filteredOutUsers;
     }
 
+    static long lastCachedShowNumbers;
+    static boolean _showNumbers;
+    public static boolean showNumbers(Context ctx) {
+        if (System.currentTimeMillis() - lastCachedShowNumbers > 1000) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+            _showNumbers = sp.getBoolean("showNumbers", false);
+            lastCachedShowNumbers = System.currentTimeMillis();
+        }
+        return _showNumbers;
+    }
+
     public JuickMessagesAdapter(Context context, int type) {
         super(context, R.layout.listitem_juickmessage);
         Replies = context.getResources().getString(R.string.Replies_) + " ";
@@ -189,6 +200,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ssb.append("translated: ");
             ssb.setSpan(new ForegroundColorSpan(0xFF4ec856), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        spanOffset = ssb.length();
+        if (showNumbers(getContext())) {
+            if (jmsg.RID > 0) {
+                ssb.append("/"+jmsg.RID+" ");
+            } else {
+                ssb.append("#"+jmsg.MID+" ");
+            }
+            ssb.setSpan(new ForegroundColorSpan(0xFFa0a5bd), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         spanOffset = ssb.length();
         ssb.append(txt);
