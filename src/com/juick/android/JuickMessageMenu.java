@@ -36,6 +36,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 /**
@@ -172,16 +173,17 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             @Override
             public void run() {
 
-                AlertDialog filteredOutUsers = new AlertDialog.Builder(activity)
+                new AlertDialog.Builder(activity)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setMessage(activity.getResources().getString(R.string.ReallyFilterOut))
                         .setPositiveButton(R.string.OK, new OnClickListener() {
 
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                JuickMessagesAdapter.filteredOutUsers.add(UName);
+                                Set<String> filteredOutUzers = JuickMessagesAdapter.getFilteredOutUsers(activity);
+                                filteredOutUzers.add(UName);
                                 SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-                                sp.edit().putString("filteredOutUsers", Utils.set2string(JuickMessagesAdapter.filteredOutUsers)).commit();
+                                sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
                                 for (int i = 0; i < listAdapter.getCount(); i++) {
                                     JuickMessage jm = listAdapter.getItem(i);
                                     if (jm.User.UName.equals(UName)) {

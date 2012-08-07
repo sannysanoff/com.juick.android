@@ -17,7 +17,9 @@
  */
 package com.juick.android;
 
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.preference.PreferenceManager;
 import android.text.Layout.Alignment;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
@@ -59,8 +61,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private boolean allItemsEnabled = true;
     private boolean isContinuationAdapter;
 
-    public static Set<String> filteredOutUsers = new HashSet<String>();
+    private static Set<String> filteredOutUsers;
 
+    public static Set<String> getFilteredOutUsers(Context ctx) {
+        if (filteredOutUsers == null) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+            filteredOutUsers = Utils.string2set(sp.getString("filteredOutUsers", ""));
+        }
+        return filteredOutUsers;
+    }
 
     public JuickMessagesAdapter(Context context, int type) {
         super(context, R.layout.listitem_juickmessage);
@@ -247,7 +256,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public void addAllMessages(ArrayList<JuickMessage> messages) {
         for (JuickMessage message : messages) {
-            if (filteredOutUsers.contains(message.User.UName)) continue;
+            if (getFilteredOutUsers(getContext()).contains(message.User.UName)) continue;
             add(message);
         }
     }

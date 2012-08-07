@@ -8,12 +8,12 @@
         android:icon="@drawable/ic_action_search"
         android:title="@string/Search"
         android:showAsAction="ifRoom"/>
-    <item android:id="@+id/menuitem_preferences"
-        android:icon="@android:drawable/ic_menu_preferences"
-        android:title="@string/Settings"
-        android:showAsAction="never"/>
     <item android:id="@+id/reload"
         android:icon="@drawable/ic_action_refresh"
         android:title="@string/Refresh"
+        android:showAsAction="never"/>
+    <item android:id="@+id/menuitem_preferences"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="@string/Settings"
         android:showAsAction="never"/>
 </menu>

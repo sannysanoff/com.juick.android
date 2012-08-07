@@ -31,6 +31,7 @@ import android.view.MenuInflater;
 import android.widget.ArrayAdapter;
 import com.juick.R;
 
+import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -64,9 +65,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         }
 
         startCheckUpdates(this);
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        JuickMessagesAdapter.filteredOutUsers = Utils.string2set(sp.getString("filteredOutUsers", ""));
+        startPreferencesStorage(this);
 
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
@@ -74,6 +73,17 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
 
         setContentView(R.layout.messages);
+    }
+
+    private void startPreferencesStorage(final MainActivity mainActivity) {
+        new Thread() {
+            @Override
+            public void run() {
+                String body = "BL";
+                String whitelist = Utils.postJSON(mainActivity, "http://api.juick.com/post", "body=" + body);
+                System.out.println(whitelist);
+            }
+        }.start();
     }
 
     public static void startCheckUpdates(Context context) {
@@ -141,7 +151,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menuitem_preferences:
-                startActivityForResult(new Intent(this, PreferencesActivity.class), ACTIVITY_PREFERENCES);
+                startActivityForResult(new Intent(this, JuickPreferencesActivity.class), ACTIVITY_PREFERENCES);
                 return true;
             case R.id.menuitem_newmessage:
                 startActivity(new Intent(this, NewMessageActivity.class));

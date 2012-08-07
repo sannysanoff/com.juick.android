@@ -205,13 +205,13 @@ public class Utils {
     }
 
     public static Set<String> string2set(String str) {
-        return new HashSet<String>(Arrays.asList(str.split("\u0001")));
+        return new HashSet<String>(Arrays.asList(str.split("@")));
     }
     public static String set2string(Set<String> set) {
         StringBuilder sb = new StringBuilder();
         for (String s : set) {
             if (sb.length() != 0)
-                sb.append("\u0001");
+                sb.append("@");
             sb.append(s);
         }
         return sb.toString();

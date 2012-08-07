@@ -56,6 +56,8 @@
         <activity android:name="com.juick.android.SignUpActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.PreferencesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.JuickPreferencesActivity"/>
+        <activity android:name="com.juick.android.EditFiltersActivity" android:label="@string/EditFilters"/>
         <activity android:name="com.juick.android.PickLocationActivity" android:label="@string/Pick_a_location" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <receiver android:name="com.juick.android.OnBootReceiver">
             <intent-filter>

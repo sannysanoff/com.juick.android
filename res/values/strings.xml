@@ -13,6 +13,7 @@
     <string name="Create">Create</string>
     <string name="Send">Send</string>
     <string name="Settings">Settings</string>
+    <string name="Filters">Filters</string>
     <string name="Signout">Signout</string>
     <string name="Error">Error</string>
     <string name="blog">blog</string>
@@ -107,5 +108,6 @@
     <string name="Last_messages">Last messages</string>
     <string name="ReallyFilterOut">Really filter out user?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< resuming from last time >>]]></string>
+    <string name="EditFilters">List of filtered out users</string>
 
 </resources>
