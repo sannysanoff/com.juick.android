@@ -331,6 +331,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             }
                             if (res && attachmentUri == null) {
                                 Toast.makeText(NewMessageActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
+                                File file = new File(Uri.parse(attachmentUri).getPath());
+                                if (file.exists())
+                                    file.delete();
                             } else {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
                                 builder.setNeutralButton(R.string.OK, null);
@@ -472,13 +475,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 if (useTempFileForCapture) {
                     File file = getPhotoCaptureFile();
                     file.delete();
-                    try {
-                        if (false)
-                            file.createNewFile();
-                        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
-                    } catch (IOException e) {
-                        Toast.makeText(this, "Unable to create destination file", Toast.LENGTH_LONG).show();
-                    }
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
                 } else {
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 }
@@ -503,8 +500,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (getPhotoCaptureFile().length() > 100 && resultCode == RESULT_CANCELED)
-            resultCode = RESULT_OK;     // fixing my bug.
         if (resultCode == RESULT_OK) {
             if (requestCode == ACTIVITY_TAGS) {
                 etMessage.setText("*" + data.getStringExtra("tag") + " " + etMessage.getText());
@@ -520,7 +515,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             } else if ((requestCode == ACTIVITY_ATTACHMENT_IMAGE || requestCode == ACTIVITY_ATTACHMENT_VIDEO)) {
                 if (data != null) {
                     attachmentUri = data.getDataString();
-                } else if (getPhotoCaptureFile().length() > 100) {
+                } else if (getPhotoCaptureFile().exists()) {
                     attachmentUri = Uri.fromFile(getPhotoCaptureFile()).toString();
                 }
                 attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
