@@ -18,6 +18,7 @@
  */
 package com.juick.android;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.widget.*;
@@ -183,36 +184,39 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 final String jsonStr = Utils.getJSON(getActivity(), apiurl);
                 if (isAdded()) {
                     final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
-                    getActivity().runOnUiThread(new Runnable() {
+                    Activity activity = getActivity();
+                    if (activity != null) {
+                        activity.runOnUiThread(new Runnable() {
 
-                        public void run() {
-                            long l = System.currentTimeMillis();
-                            if (jsonStr != null) {
-                                listAdapter.clear();
-                                listAdapter.addAllMessages(messages);
-                                if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
-                                    getListView().addFooterView(viewLoading, null, false);
+                            public void run() {
+                                long l = System.currentTimeMillis();
+                                if (jsonStr != null) {
+                                    listAdapter.clear();
+                                    listAdapter.addAllMessages(messages);
+                                    if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
+                                        getListView().addFooterView(viewLoading, null, false);
+                                    }
                                 }
-                            }
 
-                            if (getListView().getHeaderViewsCount() == 0) {
-                                getListView().addHeaderView(mRefreshView, null, false);
-                                //measureView(mRefreshView);
-                                mRefreshViewHeight = mRefreshView.getMeasuredHeight();
-                            }
+                                if (getListView().getHeaderViewsCount() == 0) {
+                                    getListView().addHeaderView(mRefreshView, null, false);
+                                    //measureView(mRefreshView);
+                                    mRefreshViewHeight = mRefreshView.getMeasuredHeight();
+                                }
 
-                            if (getListAdapter() != listAdapter) {
-                                setListAdapter(listAdapter);
-                            }
+                                if (getListAdapter() != listAdapter) {
+                                    setListAdapter(listAdapter);
+                                }
 
-                            loading = false;
-                            resetHeader();
-                            getListView().invalidateViews();
-                            setSelection(1);
-                            l = System.currentTimeMillis() - l;
-                            //Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();
-                        }
-                    });
+                                loading = false;
+                                resetHeader();
+                                getListView().invalidateViews();
+                                setSelection(1);
+                                l = System.currentTimeMillis() - l;
+                                //Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
                 }
             }
         });

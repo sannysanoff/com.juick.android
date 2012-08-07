@@ -48,6 +48,10 @@ import org.json.JSONObject;
  */
 public class Utils {
 
+    public static interface Function<T,A> {
+        T apply(A a);
+    }
+
     public static void updateTheme(Activity activity) {
         /*
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);

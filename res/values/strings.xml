@@ -119,5 +119,6 @@
     <string name="Message_font_scale_factor">Message font scale factor</string>
     <string name="Confirm_asctions">Confirm actions</string>
     <string name="Such_as_blacklist_recommend">...such as blacklist, recommend etc</string>
+    <string name="TranslateToRussian">Translate to Russian</string>
 
 </resources>

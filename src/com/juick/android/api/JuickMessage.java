@@ -40,6 +40,7 @@ public class JuickMessage {
     public int replies = 0;
     public String Photo = null;
     public String Video = null;
+    public boolean translated;
 
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();

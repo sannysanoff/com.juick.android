@@ -185,6 +185,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
         spanOffset = ssb.length();
+        if (jmsg.translated) {
+            ssb.append("translated: ");
+            ssb.setSpan(new ForegroundColorSpan(0xFF4ec856), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        spanOffset = ssb.length();
         ssb.append(txt);
         // Highlight links http://example.com/
         int pos = 0;

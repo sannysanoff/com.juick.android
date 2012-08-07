@@ -19,26 +19,38 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.net.http.AndroidHttpClient;
+import android.os.Message;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.*;
+import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ListView;
+import android.widget.Toast;
 import com.juick.R;
 import com.juick.android.api.JuickMessage;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.regex.Matcher;
 
 /**
- *
  * @author Ugnich Anton
  */
 public class JuickMessageMenu implements OnItemLongClickListener, OnClickListener {
@@ -171,6 +183,47 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 }
             });
         }
+        boolean add = menuActions.add(new RunnableItem(activity.getResources().getString(R.string.TranslateToRussian)) {
+            @Override
+            public void run() {
+                String body = listSelectedItem.Text;
+                translateToRussian(body, new Utils.Function<Void, String>() {
+                    @Override
+                    public Void apply(String s) {
+                        if (s != null) {
+                            try {
+                                JSONObject json = new JSONObject(s);
+                                JSONArray sentences = json.getJSONArray("sentences");
+                                if (sentences != null && sentences.length() > 0) {
+                                    s = sentences.getJSONObject(0).getString("trans");
+                                    if (s == null) {
+                                        Toast.makeText(activity, "Unknown server response.", Toast.LENGTH_LONG).show();
+                                    } else {
+                                        listSelectedItem.Text = s;
+                                        listSelectedItem.translated = true;
+                                        Parcelable parcelable = listView.onSaveInstanceState();
+                                        listView.setAdapter(listAdapter);
+                                        try {
+                                            listView.onRestoreInstanceState(parcelable);
+                                        } catch (Throwable e) {
+                                            // bad luck
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(activity, "Unknown server response.", Toast.LENGTH_LONG).show();
+                                }
+                            } catch (JSONException e) {
+
+                            }
+                        } else {
+                            Toast.makeText(activity, "Error translating.", Toast.LENGTH_LONG).show();
+                        }
+                        return null;
+                    }
+                });
+            }
+        });
+
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Share)) {
             @Override
             public void run() {
@@ -267,5 +320,69 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             }
         });
         thr.start();
+    }
+
+    public void translateToRussian(final String body, final Utils.Function<Void, String> callback) {
+        final ProgressDialog mDialog = new ProgressDialog(activity);
+        mDialog.setMessage("Google Translate...");
+        mDialog.setCancelable(true);
+        mDialog.setCanceledOnTouchOutside(true);
+        Uri.Builder builder = new Uri.Builder().scheme("http").authority("translate.google.com").path("translate_a/t");
+        builder = builder.appendQueryParameter("client", "at");
+        builder = builder.appendQueryParameter("v", "2.0");
+        builder = builder.appendQueryParameter("sl", "auto");
+        builder = builder.appendQueryParameter("tl", "ru");
+        builder = builder.appendQueryParameter("hl", "en_US");
+        builder = builder.appendQueryParameter("ie", "UTF-8");
+        builder = builder.appendQueryParameter("oe", "UTF-8");
+        builder = builder.appendQueryParameter("inputm", "2");
+        builder = builder.appendQueryParameter("source", "edit");
+        builder = builder.appendQueryParameter("text", body);
+        final HttpClient client = AndroidHttpClient.newInstance("AndroidTranslate/2.4.2 2.3.6 (gzip)", activity);
+        final HttpGet httpGet = new HttpGet(builder.build().toString());
+        httpGet.setHeader("Accept-Charset", "UTF-8");
+        final Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    final String retval = client.execute(httpGet, new BasicResponseHandler());
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.apply(retval);
+                        }
+                    });
+                } catch (IOException e) {
+                    Log.e("com.juick.android", "Error calling google translate", e);
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.apply(null);
+                        }
+                    });
+                } finally {
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mDialog.hide();
+                        }
+                    });
+                }
+            }
+
+        };
+        thread.start();
+        mDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                thread.interrupt();
+                httpGet.abort();
+            }
+        });
+        mDialog.show();
+    }
+
+    public void encodeURIComponent() {
+
     }
 }
