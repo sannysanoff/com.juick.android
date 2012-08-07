@@ -69,7 +69,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="502" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="501" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -82,7 +82,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="391" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="390" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -95,7 +95,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="358" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="357" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -187,15 +187,15 @@
       <file leaf-file-name="NewMessageActivity.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="476" column="0" selection-start="19095" selection-end="19095" vertical-scroll-proportion="0.27992633">
+            <state line="334" column="73" selection-start="12886" selection-end="12886" vertical-scroll-proportion="0.7237569">
               <folding>
-                <element signature="e#0#23185#0" expanded="true" />
+                <element signature="e#0#23157#0" expanded="true" />
                 <element signature="e#11601#11819#0" expanded="true" />
                 <element signature="e#11800#11801#0" expanded="true" />
-                <element signature="e#11993#13748#0" expanded="true" />
-                <element signature="e#13733#13734#0" expanded="true" />
-                <element signature="e#16694#16845#0" expanded="true" />
-                <element signature="e#16826#16827#0" expanded="true" />
+                <element signature="e#11993#13720#0" expanded="true" />
+                <element signature="e#13705#13706#0" expanded="true" />
+                <element signature="e#16666#16817#0" expanded="true" />
+                <element signature="e#16798#16799#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -972,15 +972,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="476" column="0" selection-start="19095" selection-end="19095" vertical-scroll-proportion="0.27992633">
+        <state line="334" column="73" selection-start="12886" selection-end="12886" vertical-scroll-proportion="0.7237569">
           <folding>
-            <element signature="e#0#23185#0" expanded="true" />
+            <element signature="e#0#23157#0" expanded="true" />
             <element signature="e#11601#11819#0" expanded="true" />
             <element signature="e#11800#11801#0" expanded="true" />
-            <element signature="e#11993#13748#0" expanded="true" />
-            <element signature="e#13733#13734#0" expanded="true" />
-            <element signature="e#16694#16845#0" expanded="true" />
-            <element signature="e#16826#16827#0" expanded="true" />
+            <element signature="e#11993#13720#0" expanded="true" />
+            <element signature="e#13705#13706#0" expanded="true" />
+            <element signature="e#16666#16817#0" expanded="true" />
+            <element signature="e#16798#16799#0" expanded="true" />
           </folding>
         </state>
       </provider>

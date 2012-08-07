@@ -332,8 +332,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             if (res && attachmentUri == null) {
                                 Toast.makeText(NewMessageActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
                                 File file = new File(Uri.parse(attachmentUri).getPath());
-                                if (file.exists())
-                                    file.delete();
+                                getPhotoCaptureFile().delete(); // if any
                             } else {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
                                 builder.setNeutralButton(R.string.OK, null);
