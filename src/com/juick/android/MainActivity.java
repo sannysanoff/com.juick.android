@@ -101,10 +101,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             @Override
             public void run() {
                 String[] list = cacheDir.list();
-                for (String fname : list) {
-                    File file = new File(cacheDir, fname);
-                    if (file.lastModified() < System.currentTimeMillis() - finalDaysToKeep * 24 * 60 * 60 * 1000) {
-                        file.delete();
+                if (list != null) {
+                    for (String fname : list) {
+                        File file = new File(cacheDir, fname);
+                        if (file.lastModified() < System.currentTimeMillis() - finalDaysToKeep * 24 * 60 * 60 * 1000) {
+                            file.delete();
+                        }
                     }
                 }
             }
