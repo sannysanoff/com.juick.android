@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" filepath="$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../../san2/tmp/ActionBarSherlock/library/Library.iml" filepath="$PROJECT_DIR$/../../../san2/tmp/ActionBarSherlock/library/Library.iml" />
       <module fileurl="file://$PROJECT_DIR$/juick_android.iml" filepath="$PROJECT_DIR$/juick_android.iml" />
     </modules>
   </component>

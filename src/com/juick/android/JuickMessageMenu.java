@@ -286,9 +286,13 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         return true;
     }
 
-    private void confirmAction(int resId, final Runnable r) {
+    public void confirmAction(int resId, final Runnable r) {
+        confirmAction(resId, activity, false, r);
+    }
+
+    public static void confirmAction(int resId, Activity activity, boolean alwaysConfirm, final Runnable r) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-        if (sp.getBoolean("confirmActions", true)) {
+        if (sp.getBoolean("confirmActions", true) || alwaysConfirm) {
             new AlertDialog.Builder(activity)
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setMessage(activity.getResources().getString(resId))

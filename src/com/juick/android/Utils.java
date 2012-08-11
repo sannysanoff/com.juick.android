@@ -20,14 +20,17 @@ package com.juick.android;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.app.Service;
+import android.content.*;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import com.juick.R;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,14 +46,81 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- *
  * @author Ugnich Anton
  */
 public class Utils {
 
-    public static interface Function<T,A> {
+    public static interface Function<T, A> {
         T apply(A a);
     }
+
+
+    public static class ServiceGetter<T extends Service> {
+
+        Context context;
+        Class<T> serviceClass;
+
+        public ServiceGetter(Context context, Class<T> serviceClass) {
+            this.context = context;
+            this.serviceClass = serviceClass;
+        }
+
+        public abstract static class Receiver<T extends Service> {
+            public void withService(T service) {
+
+            }
+
+            public void withoutService() {
+
+            }
+        }
+
+        public static class LocalBinder<T extends Service> extends Binder implements IBinder {
+
+            T service;
+
+            public LocalBinder(T service) {
+                this.service = service;
+            }
+
+
+            T getService() {
+                return service;
+            }
+        }
+
+        public void getService(final Receiver<T> receive) {
+            ServiceConnection mConnection = new ServiceConnection() {
+
+                @Override
+                public void onServiceConnected(ComponentName className,
+                                               IBinder ibinder) {
+                    // We've bound to LocalService, cast the IBinder and get LocalService instance
+                    if (LocalBinder.class.isAssignableFrom(ibinder.getClass())) {
+                        LocalBinder<T> binder = (LocalBinder<T>) ibinder;
+                        try {
+                            receive.withService(binder.getService());
+                        } finally {
+                            context.unbindService(this);
+                        }
+                    } else {
+                        throw new RuntimeException("getService: bad binder: " + ibinder);
+                    }
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName arg0) {
+                    receive.withoutService();
+                    context.unbindService(this);
+                }
+            };
+
+            Intent intent = new Intent(context, serviceClass);
+            context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+        }
+    }
+
 
     public static void updateTheme(Activity activity) {
         /*
@@ -211,6 +281,7 @@ public class Utils {
     public static Set<String> string2set(String str) {
         return new HashSet<String>(Arrays.asList(str.split("@")));
     }
+
     public static String set2string(Set<String> set) {
         StringBuilder sb = new StringBuilder();
         for (String s : set) {

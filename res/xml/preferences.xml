@@ -43,6 +43,80 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="Load images">
+        <ListPreference
+            android:key="image.loadMode"
+            android:summary="off / full / proxy ?"
+            android:title="Load image mode"
+            android:entries="@array/imageLoadMode"
+            android:entryValues="@array/imageLoadModeValues"
+            android:defaultValue="off"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="imageproxy.login"
+            android:title="Image Proxy login"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="imageproxy.password"
+            android:title="Image Proxy password"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="image.daystokeep"
+            android:title="Days to keep cached images"
+            android:defaultValue="10"
+            android:persistent="true"/>
+        <ListPreference
+            android:key="image.height_percent"
+            android:title="Image height (% of screen)"
+            android:entries="@array/imageHeight"
+            android:entryValues="@array/imageHeightValues"
+            android:defaultValue="0.3"
+            android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="XMPP client">
+        <CheckBoxPreference
+            android:key="useXMPP"
+            android:title="XMPP enabled"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="xmpp_username"
+            android:title="Username"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="xmpp_password"
+            android:title="Password"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="xmpp_resource"
+            android:title="Resource"
+            android:defaultValue="com.juick.android"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="xmpp_priority"
+            android:title="Priority"
+            android:defaultValue="55"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="xmpp_server"
+            android:title="Server"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="xmpp_port"
+            android:title="Port"
+            android:defaultValue="5222"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="xmpp_force_encryption"
+            android:title="Require encryption"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
 <!--
     <PreferenceCategory android:title="@string/Appearance">
         <ListPreference

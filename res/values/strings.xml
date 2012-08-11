@@ -110,6 +110,7 @@
     <string name="ReallyRecommend">Really recommend message?</string>
     <string name="ReallySubscribe">Really subscribe to user?</string>
     <string name="ReallyBlacklist">Really blacklist user?</string>
+    <string name="DownloadOriginal">Download and show original?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< resuming from last time >>]]></string>
     <string name="EditFilters">List of filtered out users</string>
     <string name="Show_Numbers">Show message number</string>
@@ -120,5 +121,6 @@
     <string name="Confirm_asctions">Confirm actions</string>
     <string name="Such_as_blacklist_recommend">...such as blacklist, recommend etc</string>
     <string name="TranslateToRussian">Translate to Russian</string>
+    <string name="Incoming_Events">Incoming events</string>
 
 </resources>

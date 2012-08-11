@@ -4,5 +4,8 @@
     <item android:id="@+id/menuitem_filters"
         android:title="@string/Filters"
         android:showAsAction="never"/>
+    <item android:id="@+id/menuitem_xmpp_settings"
+        android:title="XMPP setup"
+        android:showAsAction="never"/>
 
 </menu>

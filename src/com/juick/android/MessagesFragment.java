@@ -67,6 +67,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private boolean mBounceHack;
     private boolean mSaveLastMessagesPosition;
 
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -214,6 +216,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                 loading = false;
                                 resetHeader();
                                 getListView().invalidateViews();
+                                getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
+                                    @Override
+                                    public void onMovedToScrapHeap(View view) {
+                                        listAdapter.recycleView(view);
+                                    }
+                                });
                                 setSelection(1);
                                 l = System.currentTimeMillis() - l;
                                 //Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();

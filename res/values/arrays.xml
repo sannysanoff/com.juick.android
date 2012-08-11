@@ -53,4 +53,34 @@
         <item>4.0</item>
         <item>5.0</item>
     </string-array>
+    <string-array name="imageLoadMode">
+        <item>Do not load</item>
+        <item>Original size</item>
+        <item>fastun.com = jpeg recompression, reg needed</item>
+        <item>images.weserv.nl = image resizing</item>
+        <item>2 above combined</item>
+    </string-array>
+    <string-array name="imageLoadModeValues">
+        <item>off</item>
+        <item>fullSize</item>
+        <item>fastun</item>
+        <item>weserv</item>
+        <item>fastunweserv</item>
+    </string-array>
+    <string-array name="imageHeight">
+        <item>20%</item>
+        <item>30%</item>
+        <item>40%</item>
+        <item>50%</item>
+        <item>60%</item>
+        <item>70%</item>
+    </string-array>
+    <string-array name="imageHeightValues">
+        <item>0.2</item>
+        <item>0.3</item>
+        <item>0.4</item>
+        <item>0.5</item>
+        <item>0.6</item>
+        <item>0.7</item>
+    </string-array>
 </resources>

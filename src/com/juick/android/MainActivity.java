@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -35,10 +36,9 @@ import java.net.URLEncoder;
 import java.util.*;
 
 /**
- *
  * @author Ugnich Anton
  */
-public class MainActivity extends FragmentActivity implements ActionBar.OnNavigationListener {
+public class MainActivity extends FragmentActivity implements ActionBar.OnNavigationListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final int ACTIVITY_SIGNIN = 2;
     public static final int ACTIVITY_PREFERENCES = 3;
@@ -67,12 +67,50 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         startCheckUpdates(this);
         startPreferencesStorage(this);
 
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.registerOnSharedPreferenceChangeListener(this);
+        toggleXMPP();
+
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
 
         setContentView(R.layout.messages);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    private void toggleXMPP() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean useXMPP = sp.getBoolean("useXMPP", false);
+        if (useXMPP) {
+            startService(new Intent(this, XMPPService.class));
+        } else {
+            if (isMyServiceRunning()) {
+                Intent service = new Intent(this, XMPPService.class);
+                service.putExtra("terminate", true);
+                startService(service);
+            }
+        }
+    }
+
+    private boolean isMyServiceRunning() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        String className = XMPPService.class.getName();
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (className.equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void startPreferencesStorage(final MainActivity mainActivity) {
@@ -92,7 +130,10 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        int interval = Integer.parseInt(sp.getString("refresh", "5"));
+        int interval = 5;
+        try {
+            interval = Integer.parseInt(sp.getString("refresh", "5"));
+        } catch (Exception ex) {}
         if (interval > 0) {
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.SECOND, 5);
@@ -192,5 +233,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             //TODO show user
         }
         return false;
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        if (s.equals("useXMPP")) {
+            toggleXMPP();
+        }
     }
 }
