@@ -177,6 +177,28 @@ public class XMPPService extends Service {
                         }
                     });
                     Roster roster = connection.getRoster();
+                    juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
+                        @Override
+                        public void processMessage(Chat chat, Message message) {
+                            for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
+                                messageReceiver.apply(message);
+                            }
+                        }
+                    });
+                    connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
+                    connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
+                    connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
+                    messageReceivers.add(new Utils.Function<Void, Message>() {
+                        @Override
+                        public Void apply(Message message) {
+                            // general juick message receiver
+                            if (JUICK_ID.equals(message.getFrom())) {
+                                messagesReceived++;
+                                handleJuickMessage(message);
+                            }
+                            return null;
+                        }
+                    });
                     roster.addRosterListener(new RosterListener() {
                         @Override
                         public void entriesAdded(Collection<String> addresses) {
@@ -210,41 +232,7 @@ public class XMPPService extends Service {
                                     }
                                 });
                                 if (botOnline) {
-                                    juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
-                                        @Override
-                                        public void processMessage(Chat chat, Message message) {
-                                            for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
-                                                messageReceiver.apply(message);
-                                            }
-                                        }
-                                    });
-                                    sendJuickMessage("ON", new Utils.Function<Void,Message>() {
-                                        @Override
-                                        public Void apply(Message message) {
-                                            if (message.getBody().contains("Delivery of messages is enabled")) {
-                                                messageReceivers.clear();
-                                                messageReceivers.add(new Utils.Function<Void, Message>() {
-                                                    @Override
-                                                    public Void apply(Message message) {
-                                                        // general juick message receiver
-                                                        if (JUICK_ID.equals(message.getFrom())) {
-                                                            messagesReceived++;
-                                                            handleJuickMessage(message);
-                                                        }
-                                                        return null;
-                                                    }
-                                                });
-                                            }
-                                            return null;
-                                        }
-                                    });
-                                    connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
-                                    connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
-                                    connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
-                                } else {
-                                    connection.removePacketListener(packetListener);
-                                    connection.removePacketListener(packetListener2);
-                                    connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.normal));
+                                    sendJuickMessage("ON");
                                 }
                             }
                         }
@@ -506,9 +494,8 @@ public class XMPPService extends Service {
         sendMyBroadcast();
     }
 
-    private void sendJuickMessage(String text, Utils.Function<Void, Message> function) {
+    private void sendJuickMessage(String text) {
         try {
-            messageReceivers.add(function);
             juickChat.sendMessage(text);
         } catch (XMPPException e) {
             cleanup("Error sending message");
