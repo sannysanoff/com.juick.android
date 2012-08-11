@@ -30,8 +30,10 @@ import android.support.v4.app.*;
 import android.support.v4.view.*;
 import android.view.MenuInflater;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 import com.juick.R;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -72,6 +74,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         sp.registerOnSharedPreferenceChangeListener(this);
         toggleXMPP();
 
+        clearObsoleteImagesInCache();
+
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
@@ -79,6 +83,33 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         setContentView(R.layout.messages);
 
+
+
+    }
+
+    private void clearObsoleteImagesInCache() {
+        final File cacheDir = new File(getCacheDir(), "image_cache");
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        int daysToKeep = 10;
+        try {
+            daysToKeep = Integer.parseInt(sp.getString("image.daystokeep", "10"));
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Invalid 'days to keep cache' value - number format", Toast.LENGTH_SHORT).show();
+        }
+        final int finalDaysToKeep = daysToKeep;
+        new Thread() {
+            @Override
+            public void run() {
+                String[] list = cacheDir.list();
+                for (String fname : list) {
+                    File file = new File(cacheDir, fname);
+                    if (file.lastModified() < System.currentTimeMillis() - finalDaysToKeep * 24 * 60 * 60 * 1000) {
+                        file.delete();
+                    }
+                }
+            }
+
+        }.start();
     }
 
     @Override
