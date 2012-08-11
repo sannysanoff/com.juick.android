@@ -47,7 +47,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
-    ArrayList<XMPPService.IncomingMessage> allMessages;
     ArrayList<Object> displayItems;
     Handler handler;
 
@@ -132,21 +131,21 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
             @Override
             public void withService(XMPPService service) {
-                allMessages = service.incomingMessages;
-                refreshListWithAllMessages();
+                synchronized (service.incomingMessages) {
+                    refreshListWithAllMessages(service.incomingMessages);
+                }
             }
 
             @Override
             public void withoutService() {
                 super.withoutService();
                 Toast.makeText(XMPPIncomingMessagesActivity.this, "Unable to connect to XMPP service", Toast.LENGTH_LONG).show();
-                allMessages = new ArrayList<XMPPService.IncomingMessage>();
-                refreshListWithAllMessages();
+                refreshListWithAllMessages(new ArrayList<XMPPService.IncomingMessage>());
             }
         });
     }
 
-    private void refreshListWithAllMessages() {
+    private void refreshListWithAllMessages(ArrayList<XMPPService.IncomingMessage> allMessages) {
 
         ArrayList<Item> privateMessages = new ArrayList<Item>();
         ArrayList<Item> jabberMessages = new ArrayList<Item>();

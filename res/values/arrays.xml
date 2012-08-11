@@ -56,9 +56,9 @@
     <string-array name="imageLoadMode">
         <item>Do not load</item>
         <item>Original size</item>
-        <item>fastun.com = jpeg recompression, reg needed</item>
-        <item>images.weserv.nl = image resizing</item>
-        <item>2 above combined</item>
+        <item>fastun.com (auth needed!) = JPG compression</item>
+        <item>images.weserv.nl = resizing</item>
+        <item>2 above combined (auth needed!)</item>
     </string-array>
     <string-array name="imageLoadModeValues">
         <item>off</item>

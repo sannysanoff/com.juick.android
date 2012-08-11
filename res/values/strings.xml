@@ -122,5 +122,6 @@
     <string name="Such_as_blacklist_recommend">...such as blacklist, recommend etc</string>
     <string name="TranslateToRussian">Translate to Russian</string>
     <string name="Incoming_Events">Incoming events</string>
+    <string name="XMPPControl">XMPP control</string>
 
 </resources>

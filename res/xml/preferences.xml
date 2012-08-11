@@ -90,6 +90,7 @@
         <EditTextPreference
             android:key="xmpp_username"
             android:title="Username"
+            android:summary=" .. without @server.com part"
             android:defaultValue=""
             android:persistent="true"/>
         <EditTextPreference
@@ -104,7 +105,8 @@
             android:persistent="true"/>
         <EditTextPreference
             android:key="xmpp_priority"
-            android:title="Priority"
+            android:title="Priority (important)"
+            android:summary="set it same as in your desktop jabber client to receive notifications in both worlds"
             android:defaultValue="55"
             android:persistent="true"/>
         <EditTextPreference
@@ -120,6 +122,11 @@
         <CheckBoxPreference
             android:key="xmpp_force_encryption"
             android:title="Require encryption"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="xmpp_verbose"
+            android:title="Verbose event notifications"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>

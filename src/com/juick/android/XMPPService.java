@@ -33,6 +33,10 @@ public class XMPPService extends Service {
     ArrayList<Utils.Function<Void,Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
     public static final String ACTION_MESSAGE_RECEIVED = "com.juick.android.action.ACTION_MESSAGE_RECEIVED";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
+    int reconnectDelay = 10000;
+    int messagesReceived = 0;
+    public boolean botOnline;
+
 
 
     @Override
@@ -43,7 +47,9 @@ public class XMPPService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getBooleanExtra("terminate", false)) {
-            cleanup("user terminated");
+            String message = intent.getStringExtra("terminateMessage");
+            if (message == null) message = "user terminated";
+            cleanup(message);
             stopSelf();
         } else {
             startup();
@@ -56,8 +62,11 @@ public class XMPPService extends Service {
 
 
     String JUICK_ID="juick@juick.com/Juick";
+    Exception lastException;
 
-    private void startup() {
+    public void startup() {
+        lastException = null;
+        botOnline = false;
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
         final String username = sp.getString("xmpp_username", "");
@@ -77,7 +86,7 @@ public class XMPPService extends Service {
             Toast.makeText(XMPPService.this, "Invalid priority. ", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (useXMPP) {
+        if (useXMPP && !(connection != null && connection.isConnected())) {
             final int finalIPort = iPort;
             final int finalIPriority = iPriority;
             (currentThread = new Thread() {
@@ -106,17 +115,52 @@ public class XMPPService extends Service {
                                 delay = 15*60*1000;
                             }
                         }
+                        reconnectDelay = 10000;     // reset value
+                        connection.addConnectionListener(new ConnectionListener() {
+                            @Override
+                            public void connectionClosed() {
+                                System.out.println();
+                                //To change body of implemented methods use File | Settings | File Templates.
+                            }
+
+                            @Override
+                            public void connectionClosedOnError(Exception e) {
+                                System.out.println();
+                                //To change body of implemented methods use File | Settings | File Templates.
+                            }
+
+                            @Override
+                            public void reconnectingIn(int seconds) {
+                                System.out.println();
+                            }
+
+                            @Override
+                            public void reconnectionSuccessful() {
+                                System.out.println();
+                            }
+
+                            @Override
+                            public void reconnectionFailed(Exception e) {
+                                cleanup("failed to reconnect, juick will retry later");
+                                scheduleReconnect();
+                            }
+                        });
                         String fullUsername = username;
                         if (fullUsername.indexOf("@") != -1)
                             fullUsername = fullUsername.substring(0, fullUsername.indexOf("@"));
                         connection.login(fullUsername, password, resource);
+                    } catch (final IllegalStateException e) {
+                        cleanup(null);
+                        scheduleReconnect();
                     } catch (final XMPPException e) {
+                        lastException = e;
                         if (currentThread() == currentThread) {
                             connection.disconnect();
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(XMPPService.this, "XMPP Connect: " + e.toString(), Toast.LENGTH_LONG).show();
+                                    if (verboseXMPP())
+                                        Toast.makeText(XMPPService.this, "XMPP Connect: " + e.toString(), Toast.LENGTH_LONG).show();
                                 }
                             });
                             connection = null;
@@ -128,7 +172,8 @@ public class XMPPService extends Service {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
+                            if (verboseXMPP())
+                                Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
                         }
                     });
                     Roster roster = connection.getRoster();
@@ -149,58 +194,58 @@ public class XMPPService extends Service {
                         }
 
                         @Override
-                        public void presenceChanged(Presence presence) {
-                            if (presence.isAvailable() && presence.getFrom().equals(JUICK_ID)) {
+                        public void presenceChanged(final Presence presence) {
+                            if (presence.getFrom().equals(JUICK_ID)) {
+                                botOnline = presence.isAvailable();
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Toast.makeText(XMPPService.this, "JUICK BOT ONLINE", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                                juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
-                                    @Override
-                                    public void processMessage(Chat chat, Message message) {
-                                        for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
-                                            messageReceiver.apply(message);
+                                        if (verboseXMPP()) {
+                                            if (botOnline) {
+                                                Toast.makeText(XMPPService.this, "juick bot online", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                Toast.makeText(XMPPService.this, "JUICK BOT OFFLINE", Toast.LENGTH_SHORT).show();
+                                            }
                                         }
                                     }
                                 });
-                                sendJuickMessage("ON", new Utils.Function<Void,Message>() {
-                                    @Override
-                                    public Void apply(Message message) {
-                                        if (message.getBody().contains("Delivery of messages is enabled")) {
-                                            messageReceivers.remove(this);
-                                            messageReceivers.add(new Utils.Function<Void, Message>() {
-                                                @Override
-                                                public Void apply(Message message) {
-                                                    // general juick message receiver
-                                                    if (JUICK_ID.equals(message.getFrom())) {
-                                                        handleJuickMessage(message);
+                                if (botOnline) {
+                                    juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
+                                        @Override
+                                        public void processMessage(Chat chat, Message message) {
+                                            for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
+                                                messageReceiver.apply(message);
+                                            }
+                                        }
+                                    });
+                                    sendJuickMessage("ON", new Utils.Function<Void,Message>() {
+                                        @Override
+                                        public Void apply(Message message) {
+                                            if (message.getBody().contains("Delivery of messages is enabled")) {
+                                                messageReceivers.clear();
+                                                messageReceivers.add(new Utils.Function<Void, Message>() {
+                                                    @Override
+                                                    public Void apply(Message message) {
+                                                        // general juick message receiver
+                                                        if (JUICK_ID.equals(message.getFrom())) {
+                                                            messagesReceived++;
+                                                            handleJuickMessage(message);
+                                                        }
+                                                        return null;
                                                     }
-                                                    return null;
-                                                }
-                                            });
+                                                });
+                                            }
+                                            return null;
                                         }
-                                        return null;
-                                    }
-                                });
-                                connection.addPacketListener(new PacketListener() {
-                                    @Override
-                                    public void processPacket(Packet packet) {
-                                        if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom())) {
-                                            handleTextMessage((Message) packet);
-                                        }
-                                    }
-                                }, new MessageTypeFilter(Message.Type.chat));
-                                connection.addPacketListener(new PacketListener() {
-                                    @Override
-                                    public void processPacket(Packet packet) {
-                                        if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom())) {
-                                            handleTextMessage((Message) packet);
-                                        }
-                                    }
-                                }, new MessageTypeFilter(Message.Type.normal));
-                                connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
+                                    });
+                                    connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
+                                    connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
+                                    connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
+                                } else {
+                                    connection.removePacketListener(packetListener);
+                                    connection.removePacketListener(packetListener2);
+                                    connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.normal));
+                                }
                             }
                         }
                     });
@@ -211,14 +256,52 @@ public class XMPPService extends Service {
 
     }
 
+    private boolean verboseXMPP() {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        return sp.getBoolean("xmpp_verbose", false);
+    }
+
+    private void scheduleReconnect() {
+        reconnectDelay *= 2;
+        handler.postDelayed(new Runnable() {
+            final Connection retryConnection = connection;
+            @Override
+            public void run() {
+                startup();
+            }
+        }, reconnectDelay);
+    }
+
+    PacketListener packetListener = new PacketListener() {
+        @Override
+        public void processPacket(Packet packet) {
+            messagesReceived++;
+            if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom())) {
+                handleTextMessage((Message) packet);
+            }
+        }
+    };
+
+    PacketListener packetListener2 = new PacketListener() {
+        @Override
+        public void processPacket(Packet packet) {
+            messagesReceived++;
+            if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom())) {
+                handleTextMessage((Message) packet);
+            }
+        }
+    };
+
     public void removeReceivedMessages(int mid) {
-        Iterator<IncomingMessage> iterator = incomingMessages.iterator();
-        while (iterator.hasNext()) {
-            IncomingMessage next = iterator.next();
-            if (next instanceof JuickIncomingMessage) {
-                JuickIncomingMessage jim = (JuickIncomingMessage)next;
-                if (jim.getPureThread() == mid) {
-                    iterator.remove();
+        synchronized (incomingMessages) {
+            Iterator<IncomingMessage> iterator = incomingMessages.iterator();
+            while (iterator.hasNext()) {
+                IncomingMessage next = iterator.next();
+                if (next instanceof JuickIncomingMessage) {
+                    JuickIncomingMessage jim = (JuickIncomingMessage)next;
+                    if (jim.getPureThread() == mid) {
+                        iterator.remove();
+                    }
                 }
             }
         }
@@ -231,16 +314,20 @@ public class XMPPService extends Service {
     }
 
     public void removeMessage(IncomingMessage incomingMessage) {
-        incomingMessages.remove(incomingMessage);
+        synchronized (incomingMessage) {
+            incomingMessages.remove(incomingMessage);
+        }
         maybeCancelNotification();
     }
 
     public void removeMessages(Class messageClass) {
-        Iterator<IncomingMessage> iterator = incomingMessages.iterator();
-        while (iterator.hasNext()) {
-            IncomingMessage next = iterator.next();
-            if (next.getClass() == messageClass) {
-                iterator.remove();
+        synchronized (incomingMessages) {
+            Iterator<IncomingMessage> iterator = incomingMessages.iterator();
+            while (iterator.hasNext()) {
+                IncomingMessage next = iterator.next();
+                if (next.getClass() == messageClass) {
+                    iterator.remove();
+                }
             }
         }
         maybeCancelNotification();
@@ -327,77 +414,79 @@ public class XMPPService extends Service {
     public ArrayList<IncomingMessage> incomingMessages = new ArrayList<IncomingMessage>();
 
     private void handleJuickMessage(Message message) {
-        String[] split = message.getBody().split("\n");
-        String head = split[0];
-        boolean handled = false;
-        if (head.startsWith("Reply by @")) {
-            int colon = head.indexOf(":");
-            String username = head.substring(10, colon);
-            try {
-                String msgno = split[split.length - 1].trim().split(" ")[0].trim();
-                if (msgno.startsWith("#")) {
-                    StringBuilder sb = new StringBuilder();
-                    for(int i=3; i<split.length-2; i++) {
-                        sb.append(split[i]);
-                        sb.append("\n");
+        synchronized (incomingMessages) {
+            String[] split = message.getBody().split("\n");
+            String head = split[0];
+            boolean handled = false;
+            if (head.startsWith("Reply by @")) {
+                int colon = head.indexOf(":");
+                String username = head.substring(10, colon);
+                try {
+                    String msgno = split[split.length - 1].trim().split(" ")[0].trim();
+                    if (msgno.startsWith("#")) {
+                        StringBuilder sb = new StringBuilder();
+                        for(int i=3; i<split.length-2; i++) {
+                            sb.append(split[i]);
+                            sb.append("\n");
+                        }
+                        handled = true;
+                        incomingMessages.add(new JuickThreadIncomingMessage(username, sb.toString(), msgno));
                     }
-                    handled = true;
-                    incomingMessages.add(new JuickThreadIncomingMessage(username, sb.toString(), msgno));
+                } catch (Exception ex) {
+                    //
                 }
-            } catch (Exception ex) {
-                //
             }
-        }
-        if (head.startsWith("@") && head.contains(":")) {
-            int colon = head.indexOf(":");
-            if (colon != -1) {
-                String username = head.substring(0, colon);
-                if (head.indexOf("*private") != -1) {
-                    if (split.length >= 7) {
-                        try {
-                            String msgno = split[split.length - 1].trim().split(" ")[0].trim();
-                            if (msgno.startsWith("#")) {
+            if (head.startsWith("@") && head.contains(":")) {
+                int colon = head.indexOf(":");
+                if (colon != -1) {
+                    String username = head.substring(0, colon);
+                    if (head.indexOf("*private") != -1) {
+                        if (split.length >= 7) {
+                            try {
+                                String msgno = split[split.length - 1].trim().split(" ")[0].trim();
+                                if (msgno.startsWith("#")) {
+                                    StringBuilder sb = new StringBuilder();
+                                    for(int i=1; i<split.length-4; i++) {
+                                        sb.append(split[i]);
+                                        sb.append("\n");
+                                    }
+                                    if (sb.length() > 1 && sb.charAt(sb.length()-2) == '\n') {
+                                        sb. setLength(sb.length()-1);       // remove last empty line
+
+                                    }
+                                    handled = true;
+                                    incomingMessages.add(new JuickPrivateIncomingMessage(username, sb.toString(), msgno));
+                                }
+                            } catch (Exception ex) {
+                                //
+                            }
+                        }
+                    } else {
+                        String last = split[split.length-1];
+                        String[] msgNoAndURL = last.trim().split(" ");
+                        if (msgNoAndURL.length >= 2 && msgNoAndURL[0].trim().startsWith("#")) {
+                            String msgNo = msgNoAndURL[0].trim();
+                            String url = msgNoAndURL[msgNoAndURL.length-1].trim();
+                            if (url.equals("http://juick.com/"+msgNo.substring(1))) {
                                 StringBuilder sb = new StringBuilder();
-                                for(int i=1; i<split.length-4; i++) {
+                                for(int i=1; i<split.length-1; i++) {
                                     sb.append(split[i]);
                                     sb.append("\n");
                                 }
-                                if (sb.length() > 1 && sb.charAt(sb.length()-2) == '\n') {
-                                    sb. setLength(sb.length()-1);       // remove last empty line
-
-                                }
+                                incomingMessages.add(new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo));
                                 handled = true;
-                                incomingMessages.add(new JuickPrivateIncomingMessage(username, sb.toString(), msgno));
                             }
-                        } catch (Exception ex) {
-                            //
-                        }
-                    }
-                } else {
-                    String last = split[split.length-1];
-                    String[] msgNoAndURL = last.trim().split(" ");
-                    if (msgNoAndURL.length >= 2 && msgNoAndURL[0].trim().startsWith("#")) {
-                        String msgNo = msgNoAndURL[0].trim();
-                        String url = msgNoAndURL[msgNoAndURL.length-1].trim();
-                        if (url.equals("http://juick.com/"+msgNo.substring(1))) {
-                            StringBuilder sb = new StringBuilder();
-                            for(int i=1; i<split.length-1; i++) {
-                                sb.append(split[i]);
-                                sb.append("\n");
-                            }
-                            incomingMessages.add(new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo));
-                            handled = true;
                         }
                     }
                 }
             }
-        }
-        if (message.getFrom().equals(JUICK_ID)) {
-            if (message.getBody().toLowerCase().contains("delivery of messages is"));
-            handled = true;
-        }
-        if (!handled) {
-            incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
+            if (message.getFrom().equals(JUICK_ID)) {
+                if (message.getBody().toLowerCase().contains("delivery of messages is"));
+                handled = true;
+            }
+            if (!handled) {
+                incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
+            }
         }
         sendMyBroadcast();
         System.out.println();
@@ -411,7 +500,9 @@ public class XMPPService extends Service {
     }
 
     private void handleTextMessage(Message message) {
-        incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
+        synchronized (incomingMessages) {
+            incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
+        }
         sendMyBroadcast();
     }
 
@@ -424,16 +515,24 @@ public class XMPPService extends Service {
         }
     }
 
-    private void cleanup(final String reason) {
+    public void cleanup(final String reason) {
         if (connection != null) {
-            connection.disconnect();
+            try {
+                connection.disconnect();
+            } catch (Exception e) {
+                //
+            }
             connection = null;
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(XMPPService.this, "XMPP Disconnected: "+reason, Toast.LENGTH_LONG).show();
-                }
-            });
+            botOnline = false;
+            if (reason != null) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (verboseXMPP())
+                            Toast.makeText(XMPPService.this, "XMPP Disconnected: "+reason, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
         }
     }
 

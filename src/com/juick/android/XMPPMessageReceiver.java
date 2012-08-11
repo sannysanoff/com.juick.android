@@ -29,7 +29,6 @@ import java.util.ArrayList;
 
 /**
  *
- * @author Гgnich Anton
  */
 public class XMPPMessageReceiver extends BroadcastReceiver {
 
@@ -44,6 +43,7 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
     public void onReceive(final Context context, final Intent intent) {
         if (intent.getAction().equals(XMPPService.ACTION_MESSAGE_RECEIVED)) {
             int nMessages = intent.getIntExtra("messagesCount", 0);
+            if (nMessages == 0) return;
             ArrayList<MessageReceiverListener> allListeners = (ArrayList<MessageReceiverListener>) listeners.clone();
             for (MessageReceiverListener listener : allListeners) {
                 listener.onMessageReceived();

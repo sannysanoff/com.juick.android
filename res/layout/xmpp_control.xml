@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:dividerPadding="10sp"
+    android:orientation="vertical">
+
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Connection status:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/xmpp_status"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text="Connected"
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Juick bot:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/xmpp_juickbot"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:text="Messages received:"
+                android:layout_gravity="right"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/messages_received"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text="112345"
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Last exception:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/last_exception"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <Button
+                android:layout_height="wrap_content"
+                android:id="@+id/retry"
+                android:text="Пнуть"
+                />
+    </TableRow>
+</TableLayout>

@@ -26,6 +26,9 @@ public class JuickPreferencesActivity extends PreferencesActivity {
             case R.id.menuitem_filters:
                 startActivity(new Intent(this, EditFiltersActivity.class));
                 break;
+            case R.id.menuitem_xmpp_control:
+                startActivity(new Intent(this, XMPPControlActivity.class));
+                break;
         }
         return super.onOptionsItemSelected(item);    //To change body of overridden methods use File | Settings | File Templates.
     }
