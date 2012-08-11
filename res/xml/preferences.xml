@@ -35,6 +35,12 @@
             android:entryValues="@array/scaleFontSize"
             android:defaultValue="1.0"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="capitalizeReplies"
+            android:title="Auto-capitalize reply text"
+            android:summary="..when replying "
+            android:defaultValue="false"
+            android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Camera capture">
         <CheckBoxPreference

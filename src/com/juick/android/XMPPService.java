@@ -222,10 +222,17 @@ public class XMPPService extends Service {
                 }
             }
         }
+        maybeCancelNotification();
+    }
+
+    private void maybeCancelNotification() {
+        if (incomingMessages.size() == 0)
+            XMPPMessageReceiver.cancelInfo(this);
     }
 
     public void removeMessage(IncomingMessage incomingMessage) {
         incomingMessages.remove(incomingMessage);
+        maybeCancelNotification();
     }
 
     public void removeMessages(Class messageClass) {
@@ -234,6 +241,17 @@ public class XMPPService extends Service {
             IncomingMessage next = iterator.next();
             if (next.getClass() == messageClass) {
                 iterator.remove();
+            }
+        }
+        maybeCancelNotification();
+    }
+
+    public void requestMessageBody(int finalTopicMessageId) {
+        if (connection.isConnected()) {
+            try {
+                juickChat.sendMessage("#" + finalTopicMessageId);
+            } catch (XMPPException e) {
+                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -358,9 +376,9 @@ public class XMPPService extends Service {
                 } else {
                     String last = split[split.length-1];
                     String[] msgNoAndURL = last.trim().split(" ");
-                    if (msgNoAndURL.length == 2 && msgNoAndURL[0].trim().startsWith("#")) {
+                    if (msgNoAndURL.length >= 2 && msgNoAndURL[0].trim().startsWith("#")) {
                         String msgNo = msgNoAndURL[0].trim();
-                        String url = msgNoAndURL[1].trim();
+                        String url = msgNoAndURL[msgNoAndURL.length-1].trim();
                         if (url.equals("http://juick.com/"+msgNo.substring(1))) {
                             StringBuilder sb = new StringBuilder();
                             for(int i=1; i<split.length-1; i++) {

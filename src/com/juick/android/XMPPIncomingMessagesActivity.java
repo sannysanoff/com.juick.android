@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
@@ -48,6 +51,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     ArrayList<Object> displayItems;
     Handler handler;
 
+    static HashMap<Integer, XMPPService.JuickIncomingMessage> cachedTopicStarters = new HashMap<Integer, XMPPService.JuickIncomingMessage>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +66,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Object o = displayItems.get(i);
                 if (o instanceof Item) {
-                    Item item = (Item)o;
+                    Item item = (Item) o;
                     final XMPPService.IncomingMessage incomingMessage = item.messages.get(0);
                     if (incomingMessage instanceof XMPPService.JabberIncomingMessage) {
                         xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
@@ -75,6 +80,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     }
                     if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
                         Intent intent = new Intent(XMPPIncomingMessagesActivity.this, ThreadActivity.class);
+                        if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
+                            intent.putExtra("scrollToBottom", true);
+                        }
                         intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getPureThread());
                         startActivity(intent);
                         return;
@@ -82,7 +90,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
             }
         });
-        XMPPMessageReceiver.cancelInfo(this);
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -90,7 +97,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     @Override
                     public void withService(XMPPService service) {
                         boolean connected = service.connection.isConnected();
-                        getWindow().setTitle("Connected: "+connected+" time="+new Date());
+                        //getWindow().setTitle("Connected: "+connected+" time="+new Date());
                     }
                 });
                 handler.postDelayed(this, 5000);
@@ -166,7 +173,13 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 jabberMessages.add(new Item(message));
             }
             if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
-                subscriptions.add(new Item(message));
+                XMPPService.JuickSubscriptionIncomingMessage subscriptionIncomingMessage = (XMPPService.JuickSubscriptionIncomingMessage) message;
+                XMPPService.JuickIncomingMessage juickIncomingMessage = cachedTopicStarters.get(subscriptionIncomingMessage.getPureThread());
+                if (juickIncomingMessage != null && juickIncomingMessage.getBody().length() == 0) {
+                    cachedTopicStarters.put(subscriptionIncomingMessage.getPureThread(), subscriptionIncomingMessage);
+                } else {
+                    subscriptions.add(new Item(message));
+                }
             }
         }
 
@@ -226,6 +239,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         Parcelable parcelable = lv.onSaveInstanceState();
         lv.setAdapter(new MyListAdapter());
         lv.onRestoreInstanceState(parcelable);
+
     }
 
     private void deleteMessages(final Class incomingMessageClass) {
@@ -297,6 +311,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             if (message instanceof XMPPService.JuickThreadIncomingMessage) {
                 HashMap<String,Integer> counts = new HashMap<String, Integer>();
                 int totalCount = 0;
+                int topicMessageId = -1;
                 for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
                     XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
                     String from = commentMessage.getFrom();
@@ -305,8 +320,23 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     oldCount = oldCount + 1;
                     counts.put(from, oldCount);
                     totalCount++;
+                    if (topicMessageId == -1) {
+                        topicMessageId = commentMessage.getPureThread();
+                    }
                 }
-                StringBuilder sb = new StringBuilder();
+                XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(topicMessageId);
+                if (topicStarter == null) {
+                    topicStarter = new XMPPService.JuickThreadIncomingMessage("@???","","#"+topicMessageId);    // put placeholder for details
+                    cachedTopicStarters.put(topicMessageId, topicStarter);
+                    final int finalTopicMessageId = topicMessageId;
+                    xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                        @Override
+                        public void withService(XMPPService service) {
+                            service.requestMessageBody(finalTopicMessageId);
+                        }
+                    });
+                }
+                SpannableStringBuilder sb = new SpannableStringBuilder();
                 for (Map.Entry<String, Integer> stringIntegerEntry : counts.entrySet()) {
                     sb.append(stringIntegerEntry.getKey());
                     Integer commentCount = stringIntegerEntry.getValue();
@@ -318,16 +348,22 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
                 XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
                 TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
-                fromTags.setText("THREAD="+commentMessage.getPureThread());
+                fromTags.setText(topicStarter.getFrom());
                 TextView preview = (TextView)view.findViewById(R.id.preview);
-                preview.setText("THREAD="+commentMessage.getPureThread());
+                preview.setText(topicStarter.getBody().length() > 0 ? topicStarter.getBody() : "[ loading ... ]");
                 TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
+                String insertString;
                 if (totalCount == 1) {
-                    sb.insert(0, "1 comment from: ");
+                    insertString = "1 comment ";
                 } else {
-                    sb.insert(0, totalCount + " comments from: ");
+                    insertString = totalCount + " comments ";
                 }
-                commentCounts.setText(sb.toString());
+                sb.insert(0, insertString);
+                sb.setSpan(new ForegroundColorSpan(0xFF008000), 0, insertString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.insert(insertString.length(), "from: ");
+                int offset = insertString.length() + 6;
+                sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                commentCounts.setText(sb);
                 return view;
             }
             if (message instanceof XMPPService.JabberIncomingMessage) {

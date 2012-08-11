@@ -2,11 +2,9 @@ package com.juick.android;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;

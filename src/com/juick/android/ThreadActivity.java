@@ -18,7 +18,9 @@
 package com.juick.android;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.text.Spannable;
@@ -26,6 +28,7 @@ import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -59,6 +62,11 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         setContentView(R.layout.thread);
         tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
         etMessage = (EditText) findViewById(R.id.editMessage);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sp.getBoolean("capitalizeReplies", false)) {
+            etMessage.setInputType(EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        }
+
         bSend = (Button) findViewById(R.id.buttonSend);
         bSend.setOnClickListener(this);
 
@@ -66,6 +74,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         ThreadFragment tf = new ThreadFragment();
         Bundle args = new Bundle();
         args.putInt("mid", mid);
+        args.putBoolean("scrollToBottom", i.getBooleanExtra("scrollToBottom", false));
         tf.setArguments(args);
         ft.add(R.id.threadfragment, tf);
         ft.commit();

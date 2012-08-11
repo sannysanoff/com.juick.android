@@ -19,6 +19,7 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.support.v4.app.SupportActivity;
+import android.widget.ListView;
 import com.juick.android.api.JuickMessage;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -98,6 +99,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
+                            Bundle args = getArguments();
+                            boolean scrollToBottom = args.getBoolean("scrollToBottom", false);
+                            if (scrollToBottom) {
+                                getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+                                getListView().setStackFromBottom(true);
+                            }
                             listAdapter.addAllMessages(messages);
                             setListAdapter(listAdapter);
 
