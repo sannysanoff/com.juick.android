@@ -469,8 +469,8 @@ public class XMPPService extends Service {
                 }
             }
             if (message.getFrom().equals(JUICK_ID)) {
-                if (message.getBody().toLowerCase().contains("delivery of messages is"));
-                handled = true;
+                if (message.getBody().toLowerCase().contains("delivery of messages is"))
+                    handled = true;
             }
             if (!handled) {
                 incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
