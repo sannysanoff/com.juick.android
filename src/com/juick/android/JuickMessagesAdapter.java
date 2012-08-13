@@ -69,7 +69,7 @@ import org.json.JSONArray;
  */
 public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
-    private static final String PREFERENCES_SCALE = "MessagesListScale";
+    private static final String PREFERENCES_SCALE = "messagesFontScale";
     public static final int TYPE_THREAD = 1;
     public static Pattern urlPattern = Pattern.compile("((?<=\\A)|(?<=\\s))(ht|f)tps?://[a-z0-9\\-\\.]+[a-z]{2,}/?[^\\s\\n]*", Pattern.CASE_INSENSITIVE);
     public static Pattern msgPattern = Pattern.compile("#[0-9]+");
@@ -112,19 +112,23 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public JuickMessagesAdapter(Context context, int type) {
         super(context, R.layout.listitem_juickmessage);
+        sp = PreferenceManager.getDefaultSharedPreferences(context);
         mUiThread = Thread.currentThread();
         if (Replies == null) {
             Replies = context.getResources().getString(R.string.Replies_) + " ";
         }
         this.type = type;
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
         imageHeightPercent = Double.parseDouble(sp.getString("image.height_percent", "0.3"));
         imageLoadMode = sp.getString("image.loadMode", "off");
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         defaultTextSize = new TextView(context).getTextSize();
-        sp = PreferenceManager.getDefaultSharedPreferences(context);
-        textScale = sp.getFloat(PREFERENCES_SCALE, 1);
+        textScale = 1;
+        try {
+            textScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
+        } catch (Exception ex) {
+            //
+        }
     }
 
     public static ArrayList<JuickMessage> parseJSONpure(String jsonStr) {
@@ -154,11 +158,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 v = vi.inflate(R.layout.listitem_juickmessage, null);
                 TextView tv = (TextView) v.findViewById(R.id.text);
                 float textSize = tv.getTextSize();
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
                 try {
-                    Float fontScale = Float.valueOf(sp.getString("messagesFontScale", "1.0"));
+                    Float fontScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
                     tv.setTextSize(textSize*fontScale);
-                } catch (NumberFormatException e) {
+                } catch (Exception e) {
                     //
                 }
             }
@@ -374,7 +377,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public void setScale(float scale) {
         textScale *= scale;
         textScale = Math.max(0.5f, Math.min(textScale, 2.0f));
-        sp.edit().putFloat(PREFERENCES_SCALE, textScale).commit();
+        sp.edit().putString(PREFERENCES_SCALE, ""+textScale).commit();
     }
 
     public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation) {

@@ -35,6 +35,11 @@
             android:entryValues="@array/scaleFontSize"
             android:defaultValue="1.0"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="enableScaleByGesture"
+            android:title="Enable fonts scale by gesture"
+            android:defaultValue="true"
+            android:persistent="true"/>
         <ListPreference
             android:key="menuFontScale"
             android:title="@string/Menu_font_scale_factor"

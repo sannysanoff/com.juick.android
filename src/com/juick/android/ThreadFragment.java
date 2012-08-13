@@ -18,6 +18,9 @@
 package com.juick.android;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
+import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -42,14 +45,19 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     private ThreadFragmentListener parentActivity;
     private JuickMessagesAdapter listAdapter;
-    private ScaleGestureDetector mScaleDetector;
+    private ScaleGestureDetector mScaleDetector = null;
     private WsClient ws = null;
     private int mid = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
+        if (Build.VERSION.SDK_INT >= 8) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            if (sp.getBoolean("enableScaleByGesture", true)) {
+                mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
+            }
+        }
     }
 
     @Override
@@ -140,6 +148,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private void initAdapterStageTwo() {
+        if (!isAdded()) {
+            return;
+        }
         String replies = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 1) + ")";
         listAdapter.addDisabledItem(replies, 1);
 
@@ -157,17 +168,18 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     public void onWebSocketTextFrame(final String jsonStr) {
+        if (!isAdded()) {
+            return;
+        }
         ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
-        if (isAdded()) {
-            if (jsonStr != null) {
-                final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure("[" + jsonStr + "]");
-                getActivity().runOnUiThread(new Runnable() {
-                    public void run() {
-                        listAdapter.addAllMessages(messages);
-                        listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
-                    }
-                });
-            }
+        if (jsonStr != null) {
+            final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure("[" + jsonStr + "]");
+            getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    listAdapter.addAllMessages(messages);
+                    listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
+                }
+            });
         }
     }
 
@@ -186,7 +198,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     public boolean onTouch(View view, MotionEvent event) {
-        mScaleDetector.onTouchEvent(event);
+        if (mScaleDetector != null) {
+            mScaleDetector.onTouchEvent(event);
+        }
         return false;
     }
 

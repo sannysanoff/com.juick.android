@@ -334,7 +334,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 resetForm();
                             }
                             if (res && attachmentUri == null) {
-                                Toast.makeText(NewMessageActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
+                                Toast.makeText(NewMessageActivity.this, res ? R.string.Message_posted : R.string.Error, Toast.LENGTH_LONG).show();
                                 File file = new File(Uri.parse(attachmentUri).getPath());
                                 getPhotoCaptureFile().delete(); // if any
                             } else {

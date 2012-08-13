@@ -25,6 +25,7 @@ import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
@@ -67,7 +68,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private int mLastMotionY;
     private boolean mBounceHack;
     private boolean mSaveLastMessagesPosition;
-    private ScaleGestureDetector mScaleDetector;
+    private ScaleGestureDetector mScaleDetector = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -148,7 +149,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mReverseFlipAnimation.setDuration(250);
         mReverseFlipAnimation.setFillAfter(true);
 
-        mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
+        if (Build.VERSION.SDK_INT >= 8) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            if (sp.getBoolean("enableScaleByGesture", true)) {
+                mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
+            }
+        }
     }
 
     @Override
@@ -325,8 +331,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     public boolean onTouch(View view, MotionEvent event) {
-
-        mScaleDetector.onTouchEvent(event);
+        if (mScaleDetector != null) {
+            mScaleDetector.onTouchEvent(event);
+        }
 
         final int y = (int) event.getY();
         mBounceHack = false;
