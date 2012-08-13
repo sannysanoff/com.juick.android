@@ -126,7 +126,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/XMPPService.java" line="207" class="com.juick.android.XMPPService$1$5" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/XMPPService.java" line="207" class="com.juick.android.XMPPService$1$1" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -620,7 +620,7 @@
       <recent name="com.juick.android" />
     </key>
   </component>
-  <component name="RunManager" selected="Android Application.Com.juick.android">
+  <component name="RunManager" selected="Android Application.com.juickadvanced">
     <configuration default="true" type="AndroidTestRunConfigurationType" factoryName="Android Tests">
       <module name="" />
       <option name="TESTING_TYPE" value="0" />
@@ -710,7 +710,7 @@
       <option name="CLEAR_LOGCAT" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="Com.juick.android" type="AndroidRunConfigurationType" factoryName="Android Application">
+    <configuration default="false" name="com.juickadvanced" type="AndroidRunConfigurationType" factoryName="Android Application">
       <module name="juick_android" />
       <option name="ACTIVITY_CLASS" value="" />
       <option name="MODE" value="default_activity" />
@@ -728,7 +728,7 @@
       <method />
     </configuration>
     <list size="1">
-      <item index="0" class="java.lang.String" itemvalue="Android Application.Com.juick.android" />
+      <item index="0" class="java.lang.String" itemvalue="Android Application.com.juickadvanced" />
     </list>
     <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">
       <Host>localhost</Host>
