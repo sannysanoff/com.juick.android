@@ -47,7 +47,7 @@
   </component>
   <component name="DebuggerManager">
     <line_breakpoints>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="302" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="303" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -60,7 +60,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="504" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="490" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -73,7 +73,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="393" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="389" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -86,7 +86,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="360" class="com.juick.android.NewMessageActivity" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" line="361" class="com.juick.android.NewMessageActivity" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -151,7 +151,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java" line="608" class="com.juick.android.JuickMessagesAdapter.ImageLoader$1" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java" line="626" class="com.juick.android.JuickMessagesAdapter.ImageLoader$1" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -216,7 +216,7 @@
         <option name="CONDITION" value="" />
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
-      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java" line="691" class="com.juick.android.JuickMessagesAdapter.ImageLoader$3" package="com.juick.android">
+      <breakpoint url="file://$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java" line="709" class="com.juick.android.JuickMessagesAdapter.ImageLoader$3" package="com.juick.android">
         <option name="ENABLED" value="true" />
         <option name="LOG_ENABLED" value="false" />
         <option name="LOG_EXPRESSION_ENABLED" value="false" />
@@ -341,49 +341,46 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="AndroidManifest.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/AndroidManifest.xml">
+      <file leaf-file-name="SignInActivity.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/SignInActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="87" column="103" selection-start="6736" selection-end="6736" vertical-scroll-proportion="0.0">
+            <state line="34" column="25" selection-start="1251" selection-end="1251" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="authenticator.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/res/xml/authenticator.xml">
+      <file leaf-file-name="SignUpActivity.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/SignUpActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="2" column="42" selection-start="163" selection-end="163" vertical-scroll-proportion="0.0">
+            <state line="32" column="25" selection-start="1158" selection-end="1158" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="XMPPMessageReceiver.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPMessageReceiver.java">
+      <file leaf-file-name="TagsActivity.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/TagsActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="34" column="14" selection-start="1083" selection-end="1083" vertical-scroll-proportion="0.0">
+            <state line="23" column="25" selection-start="915" selection-end="915" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="JuickMessagesAdapter.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java">
+      <file leaf-file-name="ThreadActivity.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/ThreadActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="119" column="42" selection-start="4539" selection-end="4539" vertical-scroll-proportion="0.0">
-              <folding>
-                <element signature="e#0#34356#0" expanded="true" />
-                <element signature="imports" expanded="true" />
-              </folding>
+            <state line="42" column="0" selection-start="1539" selection-end="1539" vertical-scroll-proportion="0.0">
+              <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MessagesFragment.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/juick/android/MessagesFragment.java">
+      <file leaf-file-name="ThreadFragment.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/ThreadFragment.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="188" column="0" selection-start="7311" selection-end="7311" vertical-scroll-proportion="0.0">
+            <state line="31" column="0" selection-start="1148" selection-end="1148" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -392,44 +389,48 @@
       <file leaf-file-name="Utils.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/juick/android/Utils.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="194" column="0" selection-start="6219" selection-end="6219" vertical-scroll-proportion="0.0">
+            <state line="31" column="25" selection-start="1135" selection-end="1135" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="XMPPService.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPService.java">
+      <file leaf-file-name="XMPPControlActivity.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPControlActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="154" column="0" selection-start="6852" selection-end="6852" vertical-scroll-proportion="0.0">
+            <state line="8" column="25" selection-start="223" selection-end="223" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="preferences.xml" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/res/xml/preferences.xml">
+      <file leaf-file-name="XMPPIncomingMessagesActivity.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPIncomingMessagesActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="108" column="141" selection-start="4703" selection-end="4703" vertical-scroll-proportion="0.14180478">
+            <state line="13" column="25" selection-start="400" selection-end="400" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SignInActivity.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/com/juick/android/SignInActivity.java">
+      <file leaf-file-name="XMPPMessageReceiver.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPMessageReceiver.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="133" column="84" selection-start="5164" selection-end="5164" vertical-scroll-proportion="0.0">
+            <state line="25" column="25" selection-start="971" selection-end="971" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="strings.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/res/values/strings.xml">
+      <file leaf-file-name="JuickMessageMenu.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/com/juick/android/JuickMessageMenu.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="4" column="27" selection-start="230" selection-end="239" vertical-scroll-proportion="0.0">
-              <folding />
+            <state line="416" column="0" selection-start="16446" selection-end="16446" vertical-scroll-proportion="0.4989154">
+              <folding>
+                <element signature="e#0#21293#0" expanded="true" />
+                <element signature="e#2583#2597#0" expanded="true" />
+                <element signature="e#17597#17606#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -444,22 +445,22 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
+        <option value="$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/PickLocationActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/PickPlaceActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/PlaceEditActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/PlacesActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/PreferencesActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/SignInActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/SignUpActivity.java" />
         <option value="$PROJECT_DIR$/src/com/juick/android/TagsActivity.java" />
         <option value="$PROJECT_DIR$/src/com/juick/android/ThreadActivity.java" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/XMPPControlActivity.java" />
-        <option value="$PROJECT_DIR$/res/values/arrays.xml" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/MainActivity.java" />
-        <option value="$PROJECT_DIR$/res/values-ru/strings.xml" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/JuickMessageMenu.java" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/XMPPIncomingMessagesActivity.java" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/api/JuickMessage.java" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java" />
         <option value="$PROJECT_DIR$/src/com/juick/android/ThreadFragment.java" />
-        <option value="$PROJECT_DIR$/src/com/juick/android/XMPPService.java" />
-        <option value="$PROJECT_DIR$/AndroidManifest.xml" />
-        <option value="$PROJECT_DIR$/res/values/strings.xml" />
-        <option value="$PROJECT_DIR$/res/xml/authenticator.xml" />
-        <option value="$PROJECT_DIR$/res/xml/preferences.xml" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/Utils.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/XMPPControlActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/XMPPIncomingMessagesActivity.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/XMPPMessageReceiver.java" />
+        <option value="$PROJECT_DIR$/src/com/juick/android/JuickMessageMenu.java" />
       </list>
     </option>
   </component>
@@ -751,7 +752,7 @@
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32911393" sideWeight="0.4375" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.39978904" sideWeight="0.7583333" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39978904" sideWeight="0.7583333" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39978904" sideWeight="0.23802084" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -825,119 +826,119 @@
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../ActionBarSherlock/library/src/com/actionbarsherlock/internal/view/menu/ActionMenuItemView.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/NewMessageActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="232" column="73" selection-start="7276" selection-end="7276" vertical-scroll-proportion="0.0">
+        <state line="45" column="25" selection-start="1604" selection-end="1604" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/ThreadFragment.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/PickLocationActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="151" column="0" selection-start="5403" selection-end="5403" vertical-scroll-proportion="0.0">
+        <state line="28" column="25" selection-start="1089" selection-end="1089" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/JuickMessageMenu.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/PickPlaceActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="425" column="0" selection-start="16852" selection-end="16852" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="e#0#21284#0" expanded="true" />
-            <element signature="imports" expanded="true" />
-            <element signature="e#2575#2589#0" expanded="true" />
-            <element signature="e#17588#17597#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/res/drawable/ic_launcher.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/res/drawable-hdpi/ic_launcher.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/MessagesActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="86" column="13" selection-start="3058" selection-end="3058" vertical-scroll-proportion="0.0">
+        <state line="44" column="25" selection-start="1659" selection-end="1659" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPMessageReceiver.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/PlaceEditActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="14" selection-start="1083" selection-end="1083" vertical-scroll-proportion="0.0">
+        <state line="32" column="25" selection-start="1206" selection-end="1206" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/JuickMessagesAdapter.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/PlacesActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="119" column="42" selection-start="4539" selection-end="4539" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="e#0#34356#0" expanded="true" />
-            <element signature="imports" expanded="true" />
-          </folding>
+        <state line="41" column="25" selection-start="1528" selection-end="1528" vertical-scroll-proportion="0.0">
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/res/values/strings.xml">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/PreferencesActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="27" selection-start="230" selection-end="239" vertical-scroll-proportion="0.0">
+        <state line="26" column="25" selection-start="1071" selection-end="1071" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/juick/android/SignInActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="133" column="84" selection-start="5164" selection-end="5164" vertical-scroll-proportion="0.0">
+        <state line="34" column="25" selection-start="1251" selection-end="1251" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/AndroidManifest.xml">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/SignUpActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="87" column="103" selection-start="6736" selection-end="6736" vertical-scroll-proportion="0.0">
+        <state line="32" column="25" selection-start="1158" selection-end="1158" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/res/xml/authenticator.xml">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/TagsActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="42" selection-start="163" selection-end="163" vertical-scroll-proportion="0.0">
+        <state line="23" column="25" selection-start="915" selection-end="915" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/MessagesFragment.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/ThreadActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="188" column="0" selection-start="7311" selection-end="7311" vertical-scroll-proportion="0.0">
+        <state line="42" column="0" selection-start="1539" selection-end="1539" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/ThreadFragment.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="31" column="0" selection-start="1148" selection-end="1148" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/juick/android/Utils.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="194" column="0" selection-start="6219" selection-end="6219" vertical-scroll-proportion="0.0">
+        <state line="31" column="25" selection-start="1135" selection-end="1135" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPService.java">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPControlActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="154" column="0" selection-start="6852" selection-end="6852" vertical-scroll-proportion="0.0">
+        <state line="8" column="25" selection-start="223" selection-end="223" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/res/xml/preferences.xml">
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPIncomingMessagesActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="108" column="141" selection-start="4703" selection-end="4703" vertical-scroll-proportion="0.14180478">
+        <state line="13" column="25" selection-start="400" selection-end="400" vertical-scroll-proportion="0.0">
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/XMPPMessageReceiver.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="25" column="25" selection-start="971" selection-end="971" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/juick/android/JuickMessageMenu.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="416" column="0" selection-start="16446" selection-end="16446" vertical-scroll-proportion="0.4989154">
+          <folding>
+            <element signature="e#0#21293#0" expanded="true" />
+            <element signature="e#2583#2597#0" expanded="true" />
+            <element signature="e#17597#17606#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

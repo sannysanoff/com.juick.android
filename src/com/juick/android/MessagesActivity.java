@@ -22,7 +22,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import com.juick.R;
+import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 /**

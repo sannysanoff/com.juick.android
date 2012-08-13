@@ -42,7 +42,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-import com.juick.R;
+import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
@@ -103,7 +103,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                     PickPlaceActivity.this.finish();
                 }
             });
-            builder.create().show();
+            builder.show();
             return;
         }
         lm.requestLocationUpdates(bestProvider, 0, 0, this);

@@ -3,7 +3,7 @@ package com.juick.android;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.*;
-import com.juick.R;
+import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 /**

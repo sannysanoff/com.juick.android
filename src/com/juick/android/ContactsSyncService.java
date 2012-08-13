@@ -35,7 +35,7 @@ import android.os.IBinder;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.RawContacts;
-import com.juick.R;
+import com.juickadvanced.R;
 import com.juick.android.api.JuickUser;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;

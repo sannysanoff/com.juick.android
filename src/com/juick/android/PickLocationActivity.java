@@ -26,7 +26,7 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
-import com.juick.R;
+import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 /**

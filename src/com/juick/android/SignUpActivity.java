@@ -30,7 +30,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-import com.juick.R;
+import com.juickadvanced.R;
 import java.net.URLEncoder;
 
 import de.quist.app.errorreporter.ExceptionReporter;

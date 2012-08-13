@@ -23,7 +23,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import com.juick.R;
+import com.juickadvanced.R;
 
 import java.util.ArrayList;
 

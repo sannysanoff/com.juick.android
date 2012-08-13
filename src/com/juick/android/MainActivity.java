@@ -32,7 +32,7 @@ import android.text.Html;
 import android.view.MenuInflater;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
-import com.juick.R;
+import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.io.CharArrayWriter;

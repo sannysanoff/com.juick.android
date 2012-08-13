@@ -26,7 +26,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
-import com.juick.R;
+import com.juickadvanced.R;
 
 import java.util.ArrayList;
 

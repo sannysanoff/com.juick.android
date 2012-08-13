@@ -36,7 +36,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
-import com.juick.R;
+import com.juickadvanced.R;
 import com.juick.android.api.JuickMessage;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -413,6 +413,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         if (runnable != null)
             runnable.run();
     }
+
 
     private void postMessage(final String body, final String ok) {
         Thread thr = new Thread(new Runnable() {

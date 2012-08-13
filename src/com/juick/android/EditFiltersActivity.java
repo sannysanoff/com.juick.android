@@ -12,7 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
-import com.juick.R;
+import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.util.ArrayList;

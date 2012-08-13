@@ -29,7 +29,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import com.juick.R;
+import com.juickadvanced.R;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

@@ -24,7 +24,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import com.juick.R;
+import com.juickadvanced.R;
 import org.json.JSONException;
 import org.json.JSONObject;
 
