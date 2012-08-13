@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  *
@@ -33,6 +34,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

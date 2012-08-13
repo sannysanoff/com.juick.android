@@ -35,6 +35,7 @@ public class JuickMessage {
 
     public int MID = 0;
     public int RID = 0;
+    public int replyTo = 0;
     public String Text = null;
     public JuickUser User = null;
     public Vector<String> tags = new Vector<String>();
@@ -49,6 +50,9 @@ public class JuickMessage {
         jmsg.MID = json.getInt("mid");
         if (json.has("rid")) {
             jmsg.RID = json.getInt("rid");
+        }
+        if (json.has("replyto")) {
+            jmsg.replyTo = json.getInt("replyto");
         }
         jmsg.Text = json.getString("body").replace("&quot;", "\"");
         jmsg.User = JuickUser.parseJSON(json.getJSONObject("user"));

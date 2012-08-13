@@ -33,6 +33,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -55,6 +57,7 @@ public class SignInActivity extends Activity implements OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

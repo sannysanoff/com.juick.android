@@ -39,6 +39,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Library" />
     <orderEntry type="library" name="asmack-2010.05.07" level="project" />
+    <orderEntry type="library" name="android-error-reporter" level="project" />
   </component>
 </module>
 

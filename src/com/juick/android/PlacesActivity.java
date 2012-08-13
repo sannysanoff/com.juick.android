@@ -41,6 +41,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import com.juick.R;
 import com.juick.android.api.JuickPlace;
+import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
 
 /**
@@ -61,6 +62,7 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

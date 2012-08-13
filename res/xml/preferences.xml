@@ -35,6 +35,19 @@
             android:entryValues="@array/scaleFontSize"
             android:defaultValue="1.0"
             android:persistent="true"/>
+        <ListPreference
+            android:key="menuFontScale"
+            android:title="@string/Menu_font_scale_factor"
+            android:entries="@array/scaleFontSize"
+            android:entryValues="@array/scaleFontSize"
+            android:defaultValue="1.0"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="compressedMenu"
+            android:title="@string/Compressed_Menu"
+            android:summary="@string/Compressed_Menu_Summary"
+            android:defaultValue="false"
+            android:persistent="true"/>
         <CheckBoxPreference
             android:key="capitalizeReplies"
             android:title="Auto-capitalize reply text"
@@ -101,7 +114,7 @@
         <EditTextPreference
             android:key="xmpp_resource"
             android:title="Resource"
-            android:defaultValue="com.juick.android"
+            android:defaultValue="com.juickadvanced"
             android:persistent="true"/>
         <EditTextPreference
             android:key="xmpp_priority"

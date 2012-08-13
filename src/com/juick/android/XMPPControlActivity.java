@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +22,7 @@ public class XMPPControlActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xmpp_control);
         final TextView xmppStatus = (TextView) findViewById(R.id.xmpp_status);
@@ -52,7 +54,7 @@ public class XMPPControlActivity extends Activity {
                         xmppStatus.setText(service.connection != null ? (service.connection.isConnected() ? "CONNECTED" : "connecting") : "idle");
                         lastException.setText(service.lastException != null ? service.lastException.toString() : " --- ");
                         messagesReceived.setText(""+service.messagesReceived);
-                        juickbot.setText(service.botOnline ? "ONLINE": "offline");
+                        juickbot.setText(service.botOnline ? "ONLINE" : "offline");
                         handler.postDelayed(thiz, 200);
                     }
                 });

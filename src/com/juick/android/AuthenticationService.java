@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  *
@@ -36,6 +37,12 @@ import com.juick.R;
 public class AuthenticationService extends Service {
 
     private static AccountAuthenticatorImpl sAccountAuthenticator = null;
+
+    @Override
+    public void onCreate() {
+        ExceptionReporter.register(this);
+        super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
+    }
 
     @Override
     public IBinder onBind(Intent intent) {

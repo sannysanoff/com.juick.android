@@ -40,6 +40,8 @@ import com.juick.android.api.JuickUser;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -51,6 +53,12 @@ public class ContactsSyncService extends Service {
 
     private static SyncAdapterImpl sSyncAdapter = null;
     private static ContentResolver mContentResolver = null;
+
+    @Override
+    public void onCreate() {
+        ExceptionReporter.register(this);
+        super.onCreate();
+    }
 
     private static class SyncAdapterImpl extends AbstractThreadedSyncAdapter {
 

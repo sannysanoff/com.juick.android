@@ -32,6 +32,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import com.juick.R;
 import java.net.URLEncoder;
+
+import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONObject;
 
 /**
@@ -57,6 +59,7 @@ public class SignUpActivity extends Activity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

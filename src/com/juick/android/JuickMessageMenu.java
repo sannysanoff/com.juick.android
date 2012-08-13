@@ -20,10 +20,12 @@ package com.juick.android;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Message;
@@ -31,10 +33,9 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
+import android.view.ViewGroup;
+import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.ListView;
-import android.widget.Toast;
 import com.juick.R;
 import com.juick.android.api.JuickMessage;
 import org.apache.http.NameValuePair;
@@ -163,6 +164,17 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 });
             }
         });
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + listSelectedItem.MID) {
+            @Override
+            public void run() {
+                confirmAction(R.string.ReallySubscribe, new Runnable() {
+                    @Override
+                    public void run() {
+                        postMessage("S #" + listSelectedItem.MID, activity.getResources().getString(R.string.Subscribed));
+                    }
+                });
+            }
+        });
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Blacklist) + " @" + UName) {
             @Override
             public void run() {
@@ -282,7 +294,92 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             items[j] = menuActions.get(j).title;
         }
         builder.setItems(items, this);
-        builder.create().show();
+        AlertDialog alertDialog = builder.create();
+
+        alertDialog.show();
+        final ListAdapter adapter = alertDialog.getListView().getAdapter();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+        float menuFontScale = 1;
+        try {
+            menuFontScale = Float.parseFloat(sp.getString("menuFontScale", "1.0"));
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        final boolean compressedMenu = sp.getBoolean("compressedMenu", false);
+        final float finalMenuFontScale = menuFontScale;
+        final int screenHeight = activity.getWindow().getWindowManager().getDefaultDisplay().getHeight();
+        alertDialog.getListView().setAdapter(new ListAdapter() {
+            @Override
+            public boolean areAllItemsEnabled() {
+                return adapter.areAllItemsEnabled();
+            }
+
+            @Override
+            public boolean isEnabled(int position) {
+                return adapter.isEnabled(position);
+            }
+
+            @Override
+            public void registerDataSetObserver(DataSetObserver observer) {
+                adapter.registerDataSetObserver(observer);
+            }
+
+            @Override
+            public void unregisterDataSetObserver(DataSetObserver observer) {
+                adapter.unregisterDataSetObserver(observer);
+            }
+
+            @Override
+            public int getCount() {
+                return adapter.getCount();
+            }
+
+            @Override
+            public Object getItem(int position) {
+                return adapter.getItem(position);
+            }
+
+            @Override
+            public long getItemId(int position) {
+                return adapter.getItemId(position);
+            }
+
+            @Override
+            public boolean hasStableIds() {
+                return adapter.hasStableIds();
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View retval = adapter.getView(position, convertView, parent);
+                if (retval instanceof TextView) {
+                    TextView tv = (TextView)retval;
+                    if (compressedMenu) {
+                        int minHeight = (int)((screenHeight * 0.7) / getCount());
+                        tv.setMinHeight(minHeight);
+                        tv.setMinimumHeight(minHeight);
+                    }
+                    tv.measure(1000, 1000);
+                    tv.setTextSize(22 * finalMenuFontScale);
+                }
+                return retval;
+            }
+
+            @Override
+            public int getItemViewType(int position) {
+                return adapter.getItemViewType(position);
+            }
+
+            @Override
+            public int getViewTypeCount() {
+                return adapter.getViewTypeCount();
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return adapter.isEmpty();
+            }
+        });
         return true;
     }
 
@@ -290,12 +387,12 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         confirmAction(resId, activity, false, r);
     }
 
-    public static void confirmAction(int resId, Activity activity, boolean alwaysConfirm, final Runnable r) {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+    public static void confirmAction(int resId, Context context, boolean alwaysConfirm, final Runnable r) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         if (sp.getBoolean("confirmActions", true) || alwaysConfirm) {
-            new AlertDialog.Builder(activity)
+            new AlertDialog.Builder(context)
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setMessage(activity.getResources().getString(resId))
+                    .setMessage(context.getResources().getString(resId))
                     .setPositiveButton(R.string.OK, new OnClickListener() {
 
                         @Override

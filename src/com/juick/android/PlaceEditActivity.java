@@ -32,6 +32,8 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.juick.R;
 import java.net.URLEncoder;
+
+import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONObject;
 
 /**
@@ -53,6 +55,7 @@ public class PlaceEditActivity extends MapActivity implements OnClickListener, T
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

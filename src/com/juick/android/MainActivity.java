@@ -28,17 +28,23 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.*;
 import android.support.v4.view.*;
+import android.text.Html;
 import android.view.MenuInflater;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
+import java.io.CharArrayWriter;
 import java.io.File;
+import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.util.*;
 
 /**
  * @author Ugnich Anton
+ * todo: http://juick.com/Umnik/1612234
+ * todo: subscribe to thread
  */
 public class MainActivity extends FragmentActivity implements ActionBar.OnNavigationListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -50,6 +56,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
         super.onCreate(savedInstanceState);
 
@@ -82,7 +89,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
 
         setContentView(R.layout.messages);
-
 
 
     }

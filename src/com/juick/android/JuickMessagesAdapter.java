@@ -394,7 +394,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         spanOffset = ssb.length();
         if (showNumbers(ctx)) {
             if (jmsg.RID > 0) {
-                ssb.append("/"+jmsg.RID+" ");
+                ssb.append("/"+jmsg.RID);
+                if (jmsg.replyTo != 0) {
+                    ssb.append("->"+jmsg.replyTo);
+                }
+                ssb.append(" ");
             } else {
                 ssb.append("#"+jmsg.MID+" ");
             }

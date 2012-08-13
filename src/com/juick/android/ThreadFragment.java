@@ -20,6 +20,7 @@ package com.juick.android;
 import android.app.Activity;
 import android.support.v4.app.SupportActivity;
 import android.widget.ListView;
+import android.widget.Toast;
 import com.juick.android.api.JuickMessage;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -161,6 +162,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
+        if (jmsg.replyTo != 0) {
+            for(int q=0; q<parent.getCount(); q++) {
+                JuickMessage maybeReplied = (JuickMessage)parent.getItemAtPosition(q);
+                if (maybeReplied.RID == jmsg.replyTo) {
+                    Toast.makeText(parent.getContext(), "/"+maybeReplied.RID+" "+maybeReplied.Text, Toast.LENGTH_LONG).show();
+                    break;
+                }
+            }
+        }
         parentActivity.onReplySelected(jmsg.RID, jmsg.Text);
     }
 

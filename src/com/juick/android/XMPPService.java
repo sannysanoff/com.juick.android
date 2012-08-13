@@ -7,23 +7,20 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
+import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
 
-import javax.net.SocketFactory;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 
 /**
- * Created with IntelliJ IDEA.
- * User: san
- * Date: 8/8/12
- * Time: 3:12 AM
- * To change this template use File | Settings | File Templates.
  */
 public class XMPPService extends Service {
 
@@ -36,6 +33,7 @@ public class XMPPService extends Service {
     int reconnectDelay = 10000;
     int messagesReceived = 0;
     public boolean botOnline;
+    static HashMap<Integer, JuickIncomingMessage> cachedTopicStarters = new HashMap<Integer, XMPPService.JuickIncomingMessage>();
 
 
 
@@ -46,7 +44,8 @@ public class XMPPService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getBooleanExtra("terminate", false)) {
+        handler.removeCallbacksAndMessages(null);
+        if (intent != null && intent.getBooleanExtra("terminate", false)) {
             String message = intent.getStringExtra("terminateMessage");
             if (message == null) message = "user terminated";
             cleanup(message);
@@ -69,24 +68,24 @@ public class XMPPService extends Service {
         botOnline = false;
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
-        final String username = sp.getString("xmpp_username", "");
-        final String password = sp.getString("xmpp_password", "");
-        final String resource = sp.getString("xmpp_resource","");
-        final String server = sp.getString("xmpp_server","");
-        String port = sp.getString("xmpp_port","");
-        String priority = sp.getString("xmpp_priority","55");
-        final boolean secure = sp.getBoolean("xmpp_force_encryption", false);
-        int iPort = 0;
-        int iPriority = 0;
-        try {iPort = Integer.parseInt(port); } catch (NumberFormatException e) {
-            Toast.makeText(XMPPService.this, "Invalid port. ", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try {iPriority = Integer.parseInt(priority); } catch (NumberFormatException e) {
-            Toast.makeText(XMPPService.this, "Invalid priority. ", Toast.LENGTH_SHORT).show();
-            return;
-        }
         if (useXMPP && !(connection != null && connection.isConnected())) {
+            final String username = sp.getString("xmpp_username", "");
+            final String password = sp.getString("xmpp_password", "");
+            final String resource = sp.getString("xmpp_resource","");
+            final String server = sp.getString("xmpp_server","");
+            String port = sp.getString("xmpp_port","5555");
+            String priority = sp.getString("xmpp_priority","55");
+            final boolean secure = sp.getBoolean("xmpp_force_encryption", false);
+            int iPort = 0;
+            int iPriority = 0;
+            try {iPort = Integer.parseInt(port); } catch (NumberFormatException e) {
+                Toast.makeText(XMPPService.this, "XMPP: Invalid port. ", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {iPriority = Integer.parseInt(priority); } catch (NumberFormatException e) {
+                Toast.makeText(XMPPService.this, "XMPP: Invalid priority. ", Toast.LENGTH_SHORT).show();
+                return;
+            }
             final int finalIPort = iPort;
             final int finalIPriority = iPriority;
             (currentThread = new Thread() {
@@ -153,16 +152,15 @@ public class XMPPService extends Service {
                         cleanup(null);
                         scheduleReconnect();
                     } catch (final XMPPException e) {
+                        if (e.getWrappedThrowable() instanceof SocketException) {
+                            scheduleReconnect();
+                        }
                         lastException = e;
                         if (currentThread() == currentThread) {
-                            connection.disconnect();
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (verboseXMPP())
-                                        Toast.makeText(XMPPService.this, "XMPP Connect: " + e.toString(), Toast.LENGTH_LONG).show();
-                                }
-                            });
+                            String message = e.toString();
+                            if (message.toLowerCase().indexOf("auth") >= 0)
+                                message = "!"+message;
+                            cleanup(message);
                             connection = null;
                             currentThread = null;
                         }
@@ -251,6 +249,7 @@ public class XMPPService extends Service {
 
     private void scheduleReconnect() {
         reconnectDelay *= 2;
+        handler.removeCallbacksAndMessages(null);
         handler.postDelayed(new Runnable() {
             final Connection retryConnection = connection;
             @Override
@@ -296,7 +295,7 @@ public class XMPPService extends Service {
         maybeCancelNotification();
     }
 
-    private void maybeCancelNotification() {
+    public void maybeCancelNotification() {
         if (incomingMessages.size() == 0)
             XMPPMessageReceiver.cancelInfo(this);
     }
@@ -326,7 +325,7 @@ public class XMPPService extends Service {
             try {
                 juickChat.sendMessage("#" + finalTopicMessageId);
             } catch (XMPPException e) {
-                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "requestMessageBody: "+e.toString(), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -382,8 +381,27 @@ public class XMPPService extends Service {
     }
 
     public static class JuickThreadIncomingMessage extends JuickIncomingMessage {
+        private CharSequence originalBody;
+        private CharSequence originalFrom;
+
         public JuickThreadIncomingMessage(String from, String body, String messageNo) {
             super(from, body, messageNo);
+        }
+
+        public CharSequence getOriginalBody() {
+            return originalBody;
+        }
+
+        public CharSequence getOriginalFrom() {
+            return originalFrom;
+        }
+
+        public void setOriginalBody(CharSequence originalBody) {
+            this.originalBody = originalBody;
+        }
+
+        public void setOriginalFrom(CharSequence originalFrom) {
+            this.originalFrom = originalFrom;
         }
     }
 
@@ -418,7 +436,17 @@ public class XMPPService extends Service {
                             sb.append("\n");
                         }
                         handled = true;
-                        incomingMessages.add(new JuickThreadIncomingMessage(username, sb.toString(), msgno));
+                        JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno);
+                        XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getPureThread());
+                        if (topicStarter == null) {
+                            topicStarter = new JuickThreadIncomingMessage("@???","","#"+threadIncomingMessage.getPureThread());    // put placeholder for details
+                            cachedTopicStarters.put(threadIncomingMessage.getPureThread(), topicStarter);
+                            requestMessageBody(threadIncomingMessage.getPureThread());
+                        } else {
+                            threadIncomingMessage.setOriginalBody(topicStarter.getBody());
+                            threadIncomingMessage.setOriginalFrom(topicStarter.getFrom());
+                        }
+                        incomingMessages.add(threadIncomingMessage);
                     }
                 } catch (Exception ex) {
                     //
@@ -461,7 +489,21 @@ public class XMPPService extends Service {
                                     sb.append(split[i]);
                                     sb.append("\n");
                                 }
-                                incomingMessages.add(new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo));
+                                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo);
+                                JuickIncomingMessage topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getPureThread());
+                                if (topicStarter != null && topicStarter.getBody().length() == 0) {
+                                    cachedTopicStarters.put(subscriptionIncomingMessage.getPureThread(), subscriptionIncomingMessage);
+                                    for (IncomingMessage incomingMessage : incomingMessages) {
+                                        if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getPureThread() == topicStarter.getPureThread()) {
+                                            // details came!
+                                            JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;
+                                            imsg.setOriginalBody(subscriptionIncomingMessage.getBody());
+                                            imsg.setOriginalFrom(subscriptionIncomingMessage.getFrom());
+                                        }
+                                    }
+                                } else {
+                                    incomingMessages.add(subscriptionIncomingMessage);
+                                }
                                 handled = true;
                             }
                         }
@@ -515,7 +557,7 @@ public class XMPPService extends Service {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (verboseXMPP())
+                        if (verboseXMPP() || reason.startsWith("!"))
                             Toast.makeText(XMPPService.this, "XMPP Disconnected: "+reason, Toast.LENGTH_LONG).show();
                     }
                 });
@@ -525,13 +567,14 @@ public class XMPPService extends Service {
 
     @Override
     public void onCreate() {
+        ExceptionReporter.register(this);
         handler = new Handler();
         super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override
     public void onDestroy() {
-        handler.removeCallbacksAndMessages(this);
+        handler.removeCallbacksAndMessages(null);
         super.onDestroy();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

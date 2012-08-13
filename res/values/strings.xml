@@ -2,7 +2,7 @@
 <resources>
     <string name="maps_key">0DjDjZPPUT1SCsxeIxkduemcXUkYnxtPSw7s0lQ</string>
     <!--<string name="maps_key">0DjDjZPPUT1RBx4LNrOlllz_EVOwnO83nJFq_xA</string>-->
-    <string name="com_juick">com.juick</string>
+    <string name="com_juick">com.juickadvanced</string>
 
     <string name="Juick">Juick</string>
     <string name="Loading___">Loading...</string>
@@ -111,17 +111,21 @@
     <string name="ReallySubscribe">Really subscribe to user?</string>
     <string name="ReallyBlacklist">Really blacklist user?</string>
     <string name="DownloadOriginal">Download and show original?</string>
+    <string name="SendErrorReport">Exception occured. Send error report via email?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< resuming from last time >>]]></string>
     <string name="EditFilters">List of filtered out users</string>
     <string name="Show_Numbers">Show message number</string>
+    <string name="Compressed_Menu">Condensed menu</string>
     <string name="Position_can_be_reset">Position can be reset to latest by refreshing messages</string>
     <string name="Message_numbers_will_be_shown">Message and reply numbers will be shown</string>
     <string name="Save_position">Save position</string>
     <string name="Message_font_scale_factor">Message font scale factor</string>
+    <string name="Menu_font_scale_factor">Menu font scale factor</string>
     <string name="Confirm_asctions">Confirm actions</string>
     <string name="Such_as_blacklist_recommend">...such as blacklist, recommend etc</string>
     <string name="TranslateToRussian">Translate to Russian</string>
     <string name="Incoming_Events">Incoming events</string>
     <string name="XMPPControl">XMPP control</string>
+    <string name="Compressed_Menu_Summary">More items in message menu will fit on the screen</string>
 
 </resources>

@@ -26,6 +26,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  *
@@ -37,6 +38,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

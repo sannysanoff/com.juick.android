@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.util.*;
 
@@ -50,10 +51,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     ArrayList<Object> displayItems;
     Handler handler;
 
-    static HashMap<Integer, XMPPService.JuickIncomingMessage> cachedTopicStarters = new HashMap<Integer, XMPPService.JuickIncomingMessage>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
         super.onCreate(savedInstanceState);
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
@@ -89,19 +90,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
             }
         });
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                    @Override
-                    public void withService(XMPPService service) {
-                        boolean connected = service.connection.isConnected();
-                        //getWindow().setTitle("Connected: "+connected+" time="+new Date());
-                    }
-                });
-                handler.postDelayed(this, 5000);
-            }
-        }, 5000);
     }
 
     private void deleteMessage(XMPPService.IncomingMessage incomingMessage) {
@@ -132,7 +120,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             @Override
             public void withService(XMPPService service) {
                 synchronized (service.incomingMessages) {
-                    refreshListWithAllMessages(service.incomingMessages);
+                    refreshListWithAllMessages(service, service.incomingMessages);
+                    service.maybeCancelNotification();
                 }
             }
 
@@ -140,12 +129,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             public void withoutService() {
                 super.withoutService();
                 Toast.makeText(XMPPIncomingMessagesActivity.this, "Unable to connect to XMPP service", Toast.LENGTH_LONG).show();
-                refreshListWithAllMessages(new ArrayList<XMPPService.IncomingMessage>());
+                refreshListWithAllMessages(null, new ArrayList<XMPPService.IncomingMessage>());
             }
         });
     }
 
-    private void refreshListWithAllMessages(ArrayList<XMPPService.IncomingMessage> allMessages) {
+    private void refreshListWithAllMessages(XMPPService service, ArrayList<XMPPService.IncomingMessage> allMessages) {
 
         ArrayList<Item> privateMessages = new ArrayList<Item>();
         ArrayList<Item> jabberMessages = new ArrayList<Item>();
@@ -173,12 +162,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
             if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
                 XMPPService.JuickSubscriptionIncomingMessage subscriptionIncomingMessage = (XMPPService.JuickSubscriptionIncomingMessage) message;
-                XMPPService.JuickIncomingMessage juickIncomingMessage = cachedTopicStarters.get(subscriptionIncomingMessage.getPureThread());
-                if (juickIncomingMessage != null && juickIncomingMessage.getBody().length() == 0) {
-                    cachedTopicStarters.put(subscriptionIncomingMessage.getPureThread(), subscriptionIncomingMessage);
-                } else {
-                    subscriptions.add(new Item(message));
-                }
+                subscriptions.add(new Item(message));
             }
         }
 
@@ -323,18 +307,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         topicMessageId = commentMessage.getPureThread();
                     }
                 }
-                XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(topicMessageId);
-                if (topicStarter == null) {
-                    topicStarter = new XMPPService.JuickThreadIncomingMessage("@???","","#"+topicMessageId);    // put placeholder for details
-                    cachedTopicStarters.put(topicMessageId, topicStarter);
-                    final int finalTopicMessageId = topicMessageId;
-                    xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                        @Override
-                        public void withService(XMPPService service) {
-                            service.requestMessageBody(finalTopicMessageId);
-                        }
-                    });
-                }
                 SpannableStringBuilder sb = new SpannableStringBuilder();
                 for (Map.Entry<String, Integer> stringIntegerEntry : counts.entrySet()) {
                     sb.append(stringIntegerEntry.getKey());
@@ -347,9 +319,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
                 XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
                 TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
-                fromTags.setText(topicStarter.getFrom());
+                fromTags.setText(commentMessage.getOriginalFrom());
                 TextView preview = (TextView)view.findViewById(R.id.preview);
-                preview.setText(topicStarter.getBody().length() > 0 ? topicStarter.getBody() : "[ loading ... ]");
+                preview.setText(commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody() : "[ loading ... ]");
                 TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
                 String insertString;
                 if (totalCount == 1) {
@@ -390,6 +362,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacksAndMessages(this);
+        handler.removeCallbacksAndMessages(null);
     }
 }

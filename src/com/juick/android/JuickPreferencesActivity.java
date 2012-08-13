@@ -1,8 +1,10 @@
 package com.juick.android;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.view.*;
 import com.juick.R;
+import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,6 +15,11 @@ import com.juick.R;
  */
 public class JuickPreferencesActivity extends PreferencesActivity {
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        ExceptionReporter.register(this);
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
