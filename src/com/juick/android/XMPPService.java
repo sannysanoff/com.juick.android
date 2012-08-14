@@ -151,6 +151,7 @@ public class XMPPService extends Service {
                     } catch (final IllegalStateException e) {
                         cleanup(null);
                         scheduleReconnect();
+                        return;
                     } catch (final XMPPException e) {
                         if (e.getWrappedThrowable() instanceof SocketException) {
                             scheduleReconnect();
@@ -185,7 +186,13 @@ public class XMPPService extends Service {
                     });
                     connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
                     connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
-                    connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
+                    try {
+                        connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
+                    } catch (Exception e) {
+                        cleanup("error while sending presence");
+                        scheduleReconnect();
+                        return;
+                    }
                     messageReceivers.add(new Utils.Function<Void, Message>() {
                         @Override
                         public Void apply(Message message) {

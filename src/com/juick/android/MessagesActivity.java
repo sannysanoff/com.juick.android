@@ -43,6 +43,7 @@ public class MessagesActivity extends FragmentActivity {
         String search = i.getStringExtra("search");
         String tag = i.getStringExtra("tag");
         int place_id = i.getIntExtra("place_id", 0);
+        boolean myBlog = i.getBooleanExtra("myBlog", false);
 
         if (i.getData() != null) {
             Cursor cursor = managedQuery(getIntent().getData(), null, null, null, null);
@@ -64,6 +65,8 @@ public class MessagesActivity extends FragmentActivity {
             setTitle(title);
         } else if (place_id > 0) {
             setTitle("Location");
+        } else if (myBlog) {
+            setTitle(getResources().getString(R.string.My_blog));
         } else {
             setTitle(getResources().getString(R.string.All_messages));
         }

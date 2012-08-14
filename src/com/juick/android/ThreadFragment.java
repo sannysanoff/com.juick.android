@@ -128,7 +128,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             listAdapter.addAllMessages(messages);
                             setListAdapter(listAdapter);
 
-                            if (listAdapter.getCount() > 0) {
+                            if (messages.size() > 0) {
                                 initAdapterStageTwo();
                             }
                             Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);

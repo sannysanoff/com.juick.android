@@ -335,7 +335,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             }
                             if (res && attachmentUri == null) {
                                 Toast.makeText(NewMessageActivity.this, res ? R.string.Message_posted : R.string.Error, Toast.LENGTH_LONG).show();
-                                File file = new File(Uri.parse(attachmentUri).getPath());
                                 getPhotoCaptureFile().delete(); // if any
                             } else {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
@@ -492,7 +491,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
     }
 
-    private File getPhotoCaptureFile() {
+    public static File getPhotoCaptureFile() {
         return new File(Environment.getExternalStorageDirectory(), "juick_tmp_capture.jpg");
     }
 

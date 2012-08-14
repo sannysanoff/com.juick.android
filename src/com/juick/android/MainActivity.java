@@ -19,11 +19,14 @@ package com.juick.android;
 
 import android.app.ActivityManager;
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.*;
@@ -31,20 +34,25 @@ import android.support.v4.view.*;
 import android.text.Html;
 import android.view.MenuInflater;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.Toast;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.CharArrayWriter;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.util.*;
 
 /**
  * @author Ugnich Anton
- * todo: http://juick.com/Umnik/1612234
- * todo: subscribe to thread
+ *         todo: http://juick.com/Umnik/1612234
+ *         todo: subscribe to thread
  */
 public class MainActivity extends FragmentActivity implements ActionBar.OnNavigationListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -172,7 +180,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         int interval = 5;
         try {
             interval = Integer.parseInt(sp.getString("refresh", "5"));
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+        }
         if (interval > 0) {
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.SECOND, 5);
@@ -182,22 +191,102 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         }
     }
 
-    public boolean onNavigationItemSelected(int itemPosition, long _) {
-        lastNavigationPosition = itemPosition;
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        MessagesFragment mf = new MessagesFragment();
-        Bundle args = new Bundle();
+    public boolean onNavigationItemSelected(final int itemPosition, long _) {
+        final MessagesFragment mf = new MessagesFragment();
+        final Bundle args = new Bundle();
+        boolean shouldCommit = true;
         if (itemPosition == 0) {
             args.putBoolean("home", true);
         } else if (itemPosition == 2) {
             args.putBoolean("popular", true);
         } else if (itemPosition == 3) {
             args.putBoolean("media", true);
+        } else if (itemPosition == 4) {
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            if (sp.getString("myUserId", "").equals("")) {
+                shouldCommit = false;
+                AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+                alert.setTitle(R.string.Your_User_Name);
+                alert.setMessage(R.string.Your_User_Name_Explain);
+
+                // Set an EditText view to get user input
+                final EditText input = new EditText(this);
+                alert.setView(input);
+
+                alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        final String value = input.getText().toString();
+                        if (value.length() > 0) {
+                            final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    String fullName = value;
+                                    if (fullName.startsWith("@")) fullName = fullName.substring(1);
+                                    HttpGet httpGet = new HttpGet("http://juick.com/" + fullName+"/");
+                                    try {
+                                        String retval = httpClient.execute(httpGet, new BasicResponseHandler());
+                                        String SEARCH_MARKER = "http://i.juick.com/a/";
+                                        int ix = retval.indexOf(SEARCH_MARKER);
+                                        if (ix < 0) {
+                                            throw new RuntimeException("Website returned unrecognized response");
+                                        }
+                                        int ix2 = retval.indexOf(".png", ix+SEARCH_MARKER.length());
+                                        if (ix2 < 0 || ix2-(ix+SEARCH_MARKER.length()) > 15) {  // optimistic!
+                                            throw new RuntimeException("Website returned unrecognized response");
+                                        }
+                                        final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                sp.edit().putString("myUserId", uidS).commit();
+                                                lastNavigationPosition = itemPosition;
+                                                replaceFragment(mf, args);
+                                            }
+                                        });
+
+                                    } catch (final Exception e) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(MainActivity.this, "Unable to detect nick: "+e.toString(), Toast.LENGTH_LONG).show();
+                                            }
+                                        });
+                                    }
+                                    super.run();
+                                }
+                            }.start();
+
+
+                        }
+                    }
+                });
+
+                alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        // Canceled.
+                    }
+                });
+
+                alert.show();
+
+            }
+            args.putBoolean("myBlog", true);
+
         }
+        if (shouldCommit) {
+            lastNavigationPosition = itemPosition;
+            replaceFragment(mf, args);
+        }
+        return true;
+    }
+
+    private void replaceFragment(MessagesFragment mf, Bundle args) {
+        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         mf.setArguments(args);
         ft.replace(R.id.messagesfragment, mf);
         ft.commit();
-        return true;
     }
 
     @Override

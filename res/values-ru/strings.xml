@@ -43,6 +43,7 @@
     <string name="Popular_tags">Популярные теги</string>
     <string name="All_messages">Все сообщения</string>
     <string name="Nearby_places">Места поблизости</string>
+    <string name="My_blog">Мои сообщения</string>
 
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Рекомендовать сообщение</string>
@@ -114,5 +115,8 @@
     <string name="Message_List">Список сообщений</string>
     <string name="ReallyFilterOut">В самом деле скрыть пользователя?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< закончили читать здесь в прошлый раз >>]]></string>
+    <string name="Your_User_Name">Ваш жуйский ник</string>
+    <string name="Your_User_Name_Explain">Juick API не предоставляет известного способа для получения вашего Nickname. Введите ваш Nickname для определения по нему вашего Id.
+    </string>
 
 </resources>

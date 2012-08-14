@@ -82,6 +82,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         int place_id = 0;
         boolean popular = false;
         boolean media = false;
+        boolean myBlog = true;
 
         Bundle args = getArguments();
         if (args != null) {
@@ -93,6 +94,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             place_id = args.getInt("place_id", 0);
             popular = args.getBoolean("popular", false);
             media = args.getBoolean("media", false);
+            myBlog = args.getBoolean("myBlog", false);
         }
 
         if (home) {
@@ -101,6 +103,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             apiurl = "http://api.juick.com/messages?1=1";
             if (uid > 0 && uname != null) {
                 apiurl += "&user_id=" + uid;
+            } else if (myBlog) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                String myUserId = sp.getString("myUserId", "12234567788");
+                apiurl += "&user_id=" + myUserId;
             } else if (search != null) {
                 try {
                     apiurl += "&search=" + URLEncoder.encode(search, "utf-8");

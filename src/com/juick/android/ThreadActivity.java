@@ -22,6 +22,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.os.Handler;
@@ -43,6 +44,7 @@ import android.widget.Toast;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
+import java.io.File;
 import java.net.URLEncoder;
 
 /**
@@ -234,6 +236,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                         if (res && attachmentUri == null) {
                             Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
                         } else {
+                            NewMessageActivity.getPhotoCaptureFile().delete(); // if any
                             AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
                             builder.setNeutralButton(R.string.OK, null);
                             if (res) {
@@ -262,7 +265,16 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 break;
             case 1:
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString());
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", false);
+                if (useTempFileForCapture) {
+                    File file = NewMessageActivity.getPhotoCaptureFile();
+                    file.delete();
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(file));
+                } else {
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT,
+                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                }
                 startActivityForResult(intent, ACTIVITY_ATTACHMENT_IMAGE);
                 break;
             case 2:
@@ -277,14 +289,18 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 break;
         }
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
-            if ((requestCode == ACTIVITY_ATTACHMENT_IMAGE || requestCode == ACTIVITY_ATTACHMENT_VIDEO) && data != null) {
-                attachmentUri = data.getDataString();
+            if ((requestCode == ACTIVITY_ATTACHMENT_IMAGE || requestCode == ACTIVITY_ATTACHMENT_VIDEO)) {
+                if (data != null) {
+                    attachmentUri = data.getDataString();
+                } else if (NewMessageActivity.getPhotoCaptureFile().exists()) {
+                    attachmentUri = Uri.fromFile(NewMessageActivity.getPhotoCaptureFile()).toString();
+                }
                 attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
-                bAttach.setSelected(true);
+                bAttach.setSelected(attachmentUri != null);
             }
         }
     }
