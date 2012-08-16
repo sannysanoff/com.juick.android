@@ -16,4 +16,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/Loading___"/>
+    <TextView
+        android:id="@+id/progress_loading_more"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="5dip"
+        android:text="0k"/>
 </LinearLayout>

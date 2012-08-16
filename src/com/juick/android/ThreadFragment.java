@@ -20,18 +20,15 @@ package com.juick.android;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
-import android.widget.ListView;
-import android.widget.Toast;
-import android.view.MotionEvent;
+import android.view.*;
+import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.v4.app.ListFragment;
-import android.view.ScaleGestureDetector;
-import android.view.View;
-import android.widget.AdapterView;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickUser;
 
@@ -41,7 +38,7 @@ import java.util.ArrayList;
  *
  * @author Ugnich Anton
  */
-public class ThreadFragment extends ListFragment implements AdapterView.OnItemClickListener, View.OnTouchListener, WsClientListener {
+public class ThreadFragment extends ListFragment implements AdapterView.OnItemClickListener, View.OnTouchListener, WsClientListener, XMPPMessageReceiver.MessageReceiverListener {
 
     private ThreadFragmentListener parentActivity;
     private JuickMessagesAdapter listAdapter;
@@ -49,15 +46,25 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private WsClient ws = null;
     private int mid = 0;
 
+    Handler handler;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        handler = new Handler();
         if (Build.VERSION.SDK_INT >= 8) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
             if (sp.getBoolean("enableScaleByGesture", true)) {
                 mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
             }
         }
+    }
+
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_view, null);
     }
 
     @Override
@@ -68,6 +75,11 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString() + " must implement ThreadFragmentListener");
         }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
     }
 
     @Override
@@ -84,7 +96,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
         getListView().setOnTouchListener(this);
 
-        initWebSocket();
         initAdapter();
     }
 
@@ -110,11 +121,21 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
 
+        final MessagesLoadNotification notification = new MessagesLoadNotification(getActivity(), handler);
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                final String jsonStr = Utils.getJSON(getActivity(), "http://api.juick.com/thread?mid=" + mid);
+                final String jsonStr = Utils.getJSONWithRetries(getActivity(), "http://api.juick.com/thread?mid=" + mid, notification);
                 if (isAdded()) {
+                    if (jsonStr == null) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                notification.statusText.setText("Download error: "+notification.lastError);
+                                notification.progressBar.setVisibility(View.GONE);
+                            }
+                        });
+                    }
                     final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
@@ -159,12 +180,39 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        initWebSocket();
+        XMPPMessageReceiver.listeners.add(this);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doneWebSocket();
+                initWebSocket();
+                handler.postDelayed(this, 60000);
+            }
+        }, 60000);
+    }
+
+    @Override
     public void onPause() {
+        XMPPMessageReceiver.listeners.remove(this);
+        handler.removeCallbacksAndMessages(null);
+        doneWebSocket();
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        handler.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
+
+    private void doneWebSocket() {
         if (ws != null) {
             ws.disconnect();
             ws = null;
         }
-        super.onPause();
     }
 
     public void onWebSocketTextFrame(final String jsonStr) {
@@ -177,7 +225,11 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
                     listAdapter.addAllMessages(messages);
-                    listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
+                    try {
+                        listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
+                    } catch (Throwable ex) {
+                        // web socket came earlier than body itself!
+                    }
                 }
             });
         }
@@ -220,4 +272,17 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             return true;
         }
     }
+
+    @Override
+    public boolean onMessageReceived(XMPPService.IncomingMessage message) {
+        if (message instanceof XMPPService.JuickThreadIncomingMessage) {
+            XMPPService.JuickThreadIncomingMessage jtim = (XMPPService.JuickThreadIncomingMessage)message;
+            if (jtim.getPureThread() == mid) {
+                //
+                return true;
+            }
+        }
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
 }

@@ -33,7 +33,7 @@ import java.util.ArrayList;
 public class XMPPMessageReceiver extends BroadcastReceiver {
 
     interface MessageReceiverListener {
-        void onMessageReceived();
+        boolean onMessageReceived(XMPPService.IncomingMessage message);
     }
 
     public static ArrayList<MessageReceiverListener> listeners = new ArrayList<MessageReceiverListener>();
@@ -43,22 +43,28 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
     public void onReceive(final Context context, final Intent intent) {
         if (intent.getAction().equals(XMPPService.ACTION_MESSAGE_RECEIVED)) {
             int nMessages = intent.getIntExtra("messagesCount", 0);
+            XMPPService.IncomingMessage messag = (XMPPService.IncomingMessage)intent.getSerializableExtra("message");
             if (nMessages == 0) return;
             ArrayList<MessageReceiverListener> allListeners = (ArrayList<MessageReceiverListener>) listeners.clone();
+            boolean handled = false;
             for (MessageReceiverListener listener : allListeners) {
-                listener.onMessageReceived();
+                handled |= listener.onMessageReceived(messag);
             }
-            if (allListeners.size() == 0) {
-                NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-                String tickerText = "juick: new message";
-                Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
-                notif.defaults = Notification.DEFAULT_ALL;
-                Intent nintent = new Intent(context, XMPPIncomingMessagesActivity.class);
-                PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
-                notif.setLatestEventInfo(context, "Juick: "+nMessages+" new message"+ (nMessages > 1 ? "s":""), tickerText, pendingIntent);
-                nm.notify("", 2, notif);
+            if (!handled) {
+                updateInfo(context, nMessages, false);
             }
         }
+    }
+
+    public static void updateInfo(Context context, int nMessages, boolean silent) {
+        NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        String tickerText = "juick: new message";
+        Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
+        notif.defaults = silent ? 0 : Notification.DEFAULT_ALL;
+        Intent nintent = new Intent(context, XMPPIncomingMessagesActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
+        notif.setLatestEventInfo(context, "Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : ""), tickerText, pendingIntent);
+        nm.notify("", 2, notif);
     }
 
     public static void cancelInfo(Context context) {

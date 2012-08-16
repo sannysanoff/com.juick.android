@@ -101,7 +101,7 @@ public class ContactsSyncService extends Service {
             localContacts.put(c1.getString(1), c1.getLong(0));
         }
 
-        final String jsonStr = Utils.getJSON(context, "http://api.juick.com/users/friends");
+        final String jsonStr = Utils.getJSON(context, "http://api.juick.com/users/friends", null);
         if (jsonStr != null && jsonStr.length() > 4) {
             try {
                 JSONArray json = new JSONArray(jsonStr);

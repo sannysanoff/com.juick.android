@@ -510,7 +510,22 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public void addAllMessages(ArrayList<JuickMessage> messages) {
         for (JuickMessage message : messages) {
             if (getFilteredOutUsers(getContext()).contains(message.User.UName)) continue;
-            add(message);
+            boolean canAdd = true;
+            if (message.RID > 0) {
+                // don't add duplicate replies coming from any source (XMPP/websocket)
+                int limit = getCount();
+
+                for(int q=0; q<limit; q++) {
+                    JuickMessage item = getItem(q);
+                    if (item.RID == message.RID) {
+                        canAdd = false;     // already there
+                        break;
+                    }
+                }
+            }
+            if (canAdd) {
+                add(message);
+            }
         }
     }
 
@@ -619,8 +634,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                         final int finalTotalRead1 = totalRead;
                                         updateStatus("Done.." + (finalTotalRead1 / 1024) + "K");
                                         loading = false;
-                                        if (!terminated)
-                                            updateWebView(destFile);
+                                        if (!terminated) {
+                                            activity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    updateWebView(destFile);
+                                                }
+                                            });
+                                        }
                                     }
                                     return null;
                                 }

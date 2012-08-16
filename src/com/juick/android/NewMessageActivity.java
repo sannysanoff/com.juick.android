@@ -197,7 +197,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     jsonUrl += "?lat=" + loc.getLatitude() + "&lon=" + loc.getLongitude() + "&acc=" + loc.getAccuracy() + "&fixage=" + Math.round((System.currentTimeMillis() - loc.getTime()) / 1000);
                 }
 
-                final String jsonStr = Utils.getJSON(NewMessageActivity.this, jsonUrl);
+                final String jsonStr = Utils.getJSON(NewMessageActivity.this, jsonUrl, null);
 
                 NewMessageActivity.this.runOnUiThread(new Runnable() {
 

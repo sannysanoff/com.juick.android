@@ -44,7 +44,7 @@ public class CheckUpdatesReceiver extends BroadcastReceiver {
         checkUpdateThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                final String jsonStr = Utils.getJSON(context, "http://api.juick.com/notifications");
+                final String jsonStr = Utils.getJSON(context, "http://api.juick.com/notifications", null);
                 if (jsonStr != null && jsonStr.length() > 4) {
                     try {
                         if (checkUpdateThread == Thread.currentThread()) {

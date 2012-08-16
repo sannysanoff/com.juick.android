@@ -20,7 +20,9 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
@@ -29,10 +31,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import com.juickadvanced.R;
@@ -70,10 +68,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private boolean mSaveLastMessagesPosition;
     private ScaleGestureDetector mScaleDetector = null;
 
+    Handler handler;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        handler = new Handler();
         boolean home = false;
         int uid = 0;
         String uname = null;
@@ -164,6 +165,28 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+
+    @Override
+    public void onDestroy() {
+        handler.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_view, null);
+    }
+
+    @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -197,11 +220,22 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     private void init() {
+        final MessagesLoadNotification messagesLoadNotification = new MessagesLoadNotification(getActivity(), handler);
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                final String jsonStr = Utils.getJSON(getActivity(), apiurl);
+                final MessagesLoadNotification notification = messagesLoadNotification;
+                final String jsonStr = Utils.getJSON(getActivity(), apiurl, notification);
                 if (isAdded()) {
+                    if (jsonStr == null) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                notification.statusText.setText("Download error: "+notification.lastError);
+                                notification.progressBar.setVisibility(View.GONE);
+                            }
+                        });
+                    }
                     final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     Activity activity = getActivity();
                     if (activity != null) {
@@ -248,19 +282,70 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         thr.start();
     }
 
+    public class MoreMessagesLoadNotification implements Utils.DownloadProgressNotification, Utils.RetryNotification, Utils.DownloadErrorNotification {
+
+        TextView progress;
+        int retry = 0;
+        String lastError= null;
+        public MoreMessagesLoadNotification() {
+            progress = (TextView) viewLoading.findViewById(R.id.progress_loading_more);
+            progress.setText("");
+        }
+
+        @Override
+        public void notifyDownloadError(final String error) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progress.setText(error);
+                }
+            });
+            lastError = error;
+        }
+
+        @Override
+        public void notifyDownloadProgress(int progressBytes) {
+            String text = " " + progressBytes / 1024 + "K";
+            if (retry > 0) {
+                text += " (retry "+(retry+1)+")";
+            }
+            final String finalText = text;
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progress.setText(finalText);
+                }
+            });
+        }
+
+        @Override
+        public void notifyRetryIsInProgress(int retry) {
+            this.retry = retry;
+        }
+    }
+
     private void loadMore() {
         loading = true;
         page++;
         final JuickMessage jmsg = listAdapter.getItem(listAdapter.getCount() - 1);
 
+        final MoreMessagesLoadNotification progressNotification = new MoreMessagesLoadNotification();
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
                 URLParser apiURL = new URLParser(apiurl);
                 apiURL.getArgsMap().put("before_mid", ""+jmsg.MID);
                 apiURL.getArgsMap().put("page", ""+page);
-                final String jsonStr = Utils.getJSON(getActivity(), apiURL.getFullURL());
+                final String jsonStr = Utils.getJSON(getActivity(), apiURL.getFullURL(), progressNotification);
                 if (isAdded()) {
+//                    if (jsonStr == null) {
+//                        getActivity().runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Toast.makeText(getActivity(), "More messages: "+progressNotification.lastError, Toast.LENGTH_LONG).show();
+//                            }
+//                        });
+//                    }
                     final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
@@ -268,9 +353,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
                             sp.edit().putInt("lastMessagesSavedPosition", jmsg.MID).commit();
                             listAdapter.addAllMessages(messages);
-                            if (messages.size() != 20) {
-                                MessagesFragment.this.getListView().removeFooterView(viewLoading);
-                            }
+//                            if (messages.size() != 20) {
+//                                MessagesFragment.this.getListView().removeFooterView(viewLoading);
+//                            }
                             loading = false;
                         }
                     });

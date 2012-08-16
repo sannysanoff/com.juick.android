@@ -31,10 +31,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import com.juickadvanced.R;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
@@ -161,7 +158,7 @@ public class Utils {
     }
 
     public static String getAuthHash(Context context) {
-        String jsonStr = getJSON(context, "http://api.juick.com/auth");
+        String jsonStr = getJSON(context, "http://api.juick.com/auth", null);
         if (jsonStr != null && !jsonStr.equals("")) {
             try {
                 JSONObject json = new JSONObject(jsonStr);
@@ -192,7 +189,39 @@ public class Utils {
         return "";
     }
 
-    public static String getJSON(Context context, String url) {
+    public static interface Notification {
+
+    }
+
+    public static interface RetryNotification extends Notification {
+        public void notifyRetryIsInProgress(int retry);
+    }
+
+    public static interface DownloadProgressNotification extends Notification {
+        public void notifyDownloadProgress(int progressBytes);
+    }
+
+    public static interface DownloadErrorNotification extends Notification {
+        public void notifyDownloadError(String error);
+    }
+
+    public static String getJSONWithRetries(Context context, String url, Notification notification) {
+        String retval = null;
+        for(int i=0; i<5; i++) {
+            retval = getJSON(context, url, notification instanceof DownloadProgressNotification ? (DownloadProgressNotification)notification : null);
+            if (retval == null) {
+                if (notification instanceof RetryNotification) {
+                    ((RetryNotification)notification).notifyRetryIsInProgress(i+1);
+                }
+                continue;
+            } else {
+                break;
+            }
+        }
+        return retval;
+    }
+
+    public static String getJSON(Context context, String url, Notification progressNotification) {
         String ret = null;
         try {
             URL jsonURL = new URL(url);
@@ -207,11 +236,21 @@ public class Utils {
             conn.setDoInput(true);
             conn.connect();
             if (conn.getResponseCode() == 200) {
-                ret = streamToString(conn.getInputStream());
+                if (progressNotification instanceof DownloadProgressNotification) {
+                    ((DownloadProgressNotification)progressNotification).notifyDownloadProgress(0);
+                }
+                ret = streamToString(conn.getInputStream(), progressNotification);
+            } else {
+                if (progressNotification instanceof DownloadErrorNotification) {
+                    ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP response code: "+conn.getResponseCode());
+                }
             }
 
             conn.disconnect();
         } catch (Exception e) {
+            if (progressNotification instanceof DownloadErrorNotification) {
+                ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP connect: "+e.toString());
+            }
             Log.e("getJSON", e.toString());
         }
         return ret;
@@ -239,7 +278,7 @@ public class Utils {
             wr.close();
 
             if (conn.getResponseCode() == 200) {
-                ret = streamToString(conn.getInputStream());
+                ret = streamToString(conn.getInputStream(), null);
             }
 
             conn.disconnect();
@@ -249,17 +288,24 @@ public class Utils {
         return ret;
     }
 
-    public static String streamToString(InputStream is) {
+    public static String streamToString(InputStream is, Notification progressNotification) {
         try {
-            BufferedReader buf = new BufferedReader(new InputStreamReader(is));
-            StringBuilder str = new StringBuilder();
-            String line;
-            do {
-                line = buf.readLine();
-                str.append(line).append("\n");
-            } while (line != null);
-            return str.toString();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            long l = System.currentTimeMillis();
+            while(true) {
+                int c = is.read();
+                if (c <= 0) break;
+                baos.write(c);
+                if (System.currentTimeMillis() - l > 100) {
+                    l = System.currentTimeMillis();
+                    if (progressNotification instanceof DownloadProgressNotification)
+                        ((DownloadProgressNotification)progressNotification).notifyDownloadProgress(baos.size());
+                }
+            }
+            return new String(baos.toByteArray(),"UTF-8");
         } catch (Exception e) {
+            if (progressNotification instanceof DownloadErrorNotification)
+                ((DownloadErrorNotification)progressNotification).notifyDownloadError(e.toString());
             Log.e("streamReader", e.toString());
         }
         return null;

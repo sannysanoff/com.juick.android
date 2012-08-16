@@ -304,4 +304,5 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             }
         }
     }
+
 }

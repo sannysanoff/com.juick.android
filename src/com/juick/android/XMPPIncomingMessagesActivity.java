@@ -110,8 +110,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     @Override
-    public void onMessageReceived() {
+    public boolean onMessageReceived(XMPPService.IncomingMessage msg) {
         refreshList();
+        return false;
     }
 
     void refreshList() {

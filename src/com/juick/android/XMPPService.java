@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.widget.Toast;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.*;
@@ -14,6 +15,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
 
+import java.io.*;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,8 +74,9 @@ public class XMPPService extends Service {
             final String username = sp.getString("xmpp_username", "");
             final String password = sp.getString("xmpp_password", "");
             final String resource = sp.getString("xmpp_resource","");
-            final String server = sp.getString("xmpp_server","");
-            String port = sp.getString("xmpp_port","5555");
+            String server = sp.getString("xmpp_server","");
+            if (server.equals("gmail.com")) server = "talk.google.com";
+            String port = sp.getString("xmpp_port","5222");
             String priority = sp.getString("xmpp_priority","55");
             final boolean secure = sp.getBoolean("xmpp_force_encryption", false);
             int iPort = 0;
@@ -88,19 +91,25 @@ public class XMPPService extends Service {
             }
             final int finalIPort = iPort;
             final int finalIPriority = iPriority;
+            final String finalServer = server;
             (currentThread = new Thread() {
                 @Override
                 public void run() {
                     try {
-                        ConnectionConfiguration configuration = new ConnectionConfiguration(server, finalIPort, server);
+                        String serviceName = finalServer;
+                        if (finalServer.equals("talk.google.com"))
+                            serviceName = "gmail.com";
+                        ConnectionConfiguration configuration = new ConnectionConfiguration(finalServer, finalIPort, serviceName);
                         configuration.setSecurityMode(secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
                         configuration.setReconnectionAllowed(true);
-                        SASLAuthentication.supportSASLMechanism("PLAIN");
+                        SASLAuthentication.supportSASLMechanism("PLAIN", 0);
                         //configuration.setSASLAuthenticationEnabled(secure);
                         //configuration.setCompressionEnabled(true);
-                        connection = new XMPPConnection(configuration);
                         int delay = 1000;
                         while(true) {
+                            if (currentThread != Thread.currentThread()) return;        // we are abandoned!
+                            if (connection != null && connection.isConnected()) break;
+                            connection = new XMPPConnection(configuration);
                             connection.connect();
                             if (connection.isConnected()) break;
                             try {
@@ -305,10 +314,13 @@ public class XMPPService extends Service {
     public void maybeCancelNotification() {
         if (incomingMessages.size() == 0)
             XMPPMessageReceiver.cancelInfo(this);
+        else
+            XMPPMessageReceiver.updateInfo(this, incomingMessages.size(), true);
     }
 
     public void removeMessage(IncomingMessage incomingMessage) {
         synchronized (incomingMessage) {
+            removeMessageFile(incomingMessage.id);
             incomingMessages.remove(incomingMessage);
         }
         maybeCancelNotification();
@@ -337,13 +349,18 @@ public class XMPPService extends Service {
         }
     }
 
-    public static abstract class IncomingMessage {
+    static int message_seq = 0;
+    public static abstract class IncomingMessage implements Serializable {
         protected String from;
         String body;
+        String id;
 
         IncomingMessage(String from, String body) {
             this.from = from;
             this.body = body;
+            synchronized (IncomingMessage.class) {
+                this.id = System.currentTimeMillis() + "_" + (message_seq++);
+            }
         }
 
         public String getBody() {
@@ -355,7 +372,28 @@ public class XMPPService extends Service {
             return from;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
+            IncomingMessage that = (IncomingMessage) o;
+
+            if (id != null ? !id.equals(that.id) : that.id != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return id != null ? id.hashCode() : 0;
+        }
     }
 
     public static abstract class JuickIncomingMessage extends IncomingMessage {
@@ -388,8 +426,8 @@ public class XMPPService extends Service {
     }
 
     public static class JuickThreadIncomingMessage extends JuickIncomingMessage {
-        private CharSequence originalBody;
-        private CharSequence originalFrom;
+        private String originalBody;
+        private String originalFrom;
 
         public JuickThreadIncomingMessage(String from, String body, String messageNo) {
             super(from, body, messageNo);
@@ -403,11 +441,11 @@ public class XMPPService extends Service {
             return originalFrom;
         }
 
-        public void setOriginalBody(CharSequence originalBody) {
+        public void setOriginalBody(String originalBody) {
             this.originalBody = originalBody;
         }
 
-        public void setOriginalFrom(CharSequence originalFrom) {
+        public void setOriginalFrom(String originalFrom) {
             this.originalFrom = originalFrom;
         }
     }
@@ -427,10 +465,11 @@ public class XMPPService extends Service {
     public ArrayList<IncomingMessage> incomingMessages = new ArrayList<IncomingMessage>();
 
     private void handleJuickMessage(Message message) {
+        IncomingMessage handled = null;
+        boolean silent = false;
         synchronized (incomingMessages) {
             String[] split = message.getBody().split("\n");
             String head = split[0];
-            boolean handled = false;
             if (head.startsWith("Reply by @")) {
                 int colon = head.indexOf(":");
                 String username = head.substring(10, colon);
@@ -442,7 +481,6 @@ public class XMPPService extends Service {
                             sb.append(split[i]);
                             sb.append("\n");
                         }
-                        handled = true;
                         JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno);
                         XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getPureThread());
                         if (topicStarter == null) {
@@ -453,7 +491,9 @@ public class XMPPService extends Service {
                             threadIncomingMessage.setOriginalBody(topicStarter.getBody());
                             threadIncomingMessage.setOriginalFrom(topicStarter.getFrom());
                         }
+                        saveMessage(threadIncomingMessage);
                         incomingMessages.add(threadIncomingMessage);
+                        handled = threadIncomingMessage;
                     }
                 } catch (Exception ex) {
                     //
@@ -477,8 +517,10 @@ public class XMPPService extends Service {
                                         sb. setLength(sb.length()-1);       // remove last empty line
 
                                     }
-                                    handled = true;
-                                    incomingMessages.add(new JuickPrivateIncomingMessage(username, sb.toString(), msgno));
+                                    JuickPrivateIncomingMessage object = new JuickPrivateIncomingMessage(username, sb.toString(), msgno);
+                                    saveMessage(object);
+                                    handled = object;
+                                    incomingMessages.add(object);
                                 }
                             } catch (Exception ex) {
                                 //
@@ -506,39 +548,70 @@ public class XMPPService extends Service {
                                             JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;
                                             imsg.setOriginalBody(subscriptionIncomingMessage.getBody());
                                             imsg.setOriginalFrom(subscriptionIncomingMessage.getFrom());
+                                            silent = true;
                                         }
                                     }
                                 } else {
+                                    saveMessage(subscriptionIncomingMessage);
                                     incomingMessages.add(subscriptionIncomingMessage);
+                                    handled = subscriptionIncomingMessage;
                                 }
-                                handled = true;
                             }
                         }
                     }
                 }
             }
             if (message.getFrom().equals(JUICK_ID)) {
-                if (message.getBody().toLowerCase().contains("delivery of messages is"))
-                    handled = true;
+                if (message.getBody().toLowerCase().contains("delivery of messages is")) {
+                    silent = true;
+                }
+
             }
-            if (!handled) {
-                incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
+            if (handled == null && !silent) {
+                JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), message.getBody());
+                saveMessage(messag);
+                incomingMessages.add(messag);
             }
         }
-        sendMyBroadcast();
-        System.out.println();
+        if (!silent)
+            sendMyBroadcast();
+    }
+
+    private void saveMessage(IncomingMessage message) {
+        try {
+            File xmpp_messages_v1 = getSavedMessagesDirectory();
+            boolean mkdirs = xmpp_messages_v1.mkdirs();
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(xmpp_messages_v1, message.id)));
+            oos.writeObject(message);
+            oos.close();
+        } catch (IOException e) {
+            Log.e("com.juickadvanced", "saveMessage", e);
+        }
+    }
+
+    private void removeMessageFile(String id) {
+        File xmpp_messages_v1 = getSavedMessagesDirectory();
+        File file = new File(xmpp_messages_v1, id);
+        file.delete();
+    }
+
+    private File getSavedMessagesDirectory() {
+        return getDir("xmpp_messages_v1", MODE_PRIVATE);
     }
 
     private void sendMyBroadcast() {
         Intent intent = new Intent();
         intent.setAction(ACTION_MESSAGE_RECEIVED);
         intent.putExtra("messagesCount", incomingMessages.size());
+        intent.putExtra("messagesCount", incomingMessages.size());
         sendBroadcast(intent);
     }
 
     private void handleTextMessage(Message message) {
         synchronized (incomingMessages) {
-            incomingMessages.add(new JabberIncomingMessage(message.getFrom(), message.getBody()));
+            JabberIncomingMessage msg = new JabberIncomingMessage(message.getFrom(), message.getBody());
+            saveMessage(msg);
+            incomingMessages.add(msg);
         }
         sendMyBroadcast();
     }
@@ -576,7 +649,26 @@ public class XMPPService extends Service {
     public void onCreate() {
         ExceptionReporter.register(this);
         handler = new Handler();
-        super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
+        super.onCreate();
+        File savedMessagesDirectory = getSavedMessagesDirectory();
+        String[] list = savedMessagesDirectory.list();
+        try {
+            if (list != null) {
+                for (String fname : list) {
+                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(savedMessagesDirectory, fname)));
+                    IncomingMessage o = (IncomingMessage) ois.readObject();
+                    ois.close();
+                    incomingMessages.add(o);
+
+                }
+            }
+        } catch (Exception e) {
+            Log.e("com.juickadvanced", "restoreMessages", e);
+        }
+        if (incomingMessages.size() > 0) {
+            XMPPMessageReceiver.updateInfo(this, incomingMessages.size(), true);
+        }
+
     }
 
     @Override
