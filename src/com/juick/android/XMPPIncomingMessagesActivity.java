@@ -12,7 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
+ import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.util.*;
 
@@ -322,7 +322,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
                 fromTags.setText(commentMessage.getOriginalFrom());
                 TextView preview = (TextView)view.findViewById(R.id.preview);
-                preview.setText(commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody() : "[ loading ... ]");
+                preview.setText(commentMessage.getOriginalBody() != null && commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody() : "[ loading ... ]");
                 TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
                 String insertString;
                 if (totalCount == 1) {

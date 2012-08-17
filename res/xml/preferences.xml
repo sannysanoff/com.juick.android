@@ -105,11 +105,6 @@
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="XMPP client">
-        <CheckBoxPreference
-            android:key="useXMPP"
-            android:title="XMPP enabled"
-            android:defaultValue="false"
-            android:persistent="true"/>
         <EditTextPreference
             android:key="xmpp_username"
             android:title="Username"
@@ -150,6 +145,12 @@
         <CheckBoxPreference
             android:key="xmpp_verbose"
             android:title="Verbose event notifications"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="useXMPP"
+            android:title="XMPP enabled"
+            android:summary="Activate it after you finished setting up account details"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
