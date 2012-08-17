@@ -295,7 +295,7 @@ public class XMPPService extends Service {
         }
     };
 
-    public void removeReceivedMessages(int mid) {
+    public void removeMessages(int mid) {
         synchronized (incomingMessages) {
             Iterator<IncomingMessage> iterator = incomingMessages.iterator();
             while (iterator.hasNext()) {
@@ -303,6 +303,7 @@ public class XMPPService extends Service {
                 if (next instanceof JuickIncomingMessage) {
                     JuickIncomingMessage jim = (JuickIncomingMessage)next;
                     if (jim.getPureThread() == mid) {
+                        removeMessageFile(jim.id);
                         iterator.remove();
                     }
                 }
@@ -332,6 +333,7 @@ public class XMPPService extends Service {
             while (iterator.hasNext()) {
                 IncomingMessage next = iterator.next();
                 if (next.getClass() == messageClass) {
+                    removeMessageFile(next.id);
                     iterator.remove();
                 }
             }

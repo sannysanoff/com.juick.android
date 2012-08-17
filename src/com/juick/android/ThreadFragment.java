@@ -46,11 +46,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     Handler handler;
     private Object restoreData;
     boolean implicitlyCreated;
+    Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
         if (Build.VERSION.SDK_INT >= 8) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -205,7 +207,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                                 @Override
                                 public void withService(XMPPService service) {
-                                    service.removeReceivedMessages(mid);
+                                    service.removeMessages(mid);
                                 }
                             });
 
@@ -275,6 +277,14 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
                     listAdapter.addAllMessages(messages);
+                    xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                        @Override
+                        public void withService(XMPPService service) {
+                            for (JuickMessage message : messages) {
+                                service.removeMessages(message.MID);
+                            }
+                        }
+                    });
                     try {
                         listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
                     } catch (Throwable ex) {
@@ -328,6 +338,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         if (message instanceof XMPPService.JuickThreadIncomingMessage) {
             XMPPService.JuickThreadIncomingMessage jtim = (XMPPService.JuickThreadIncomingMessage)message;
             if (jtim.getPureThread() == mid) {
+                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                    @Override
+                    public void withService(XMPPService service) {
+                        service.removeMessages(mid);
+                    }
+                });
                 //
                 return true;
             }
