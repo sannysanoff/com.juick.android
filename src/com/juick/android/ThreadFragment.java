@@ -19,15 +19,12 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Handler;
+import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
-import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.v4.app.ListFragment;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickUser;
@@ -47,6 +44,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private int mid = 0;
 
     Handler handler;
+    private Object restoreData;
+    boolean implicitlyCreated;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,6 +59,16 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             }
         }
     }
+
+    public ThreadFragment(Object restoreData) {
+        this.restoreData = restoreData;
+        implicitlyCreated = false;
+    }
+
+    public ThreadFragment() {
+        implicitlyCreated = true;
+    }
+
 
 
 
@@ -104,20 +114,47 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             ws = new WsClient();
             ws.setListener(this);
         }
+        final WsClient thisWs = ws;
         Thread wsthr = new Thread(new Runnable() {
 
             public void run() {
-                if (ws.connect("api.juick.com", 8080, "/replies/" + mid, null) && ws != null) {
-                    ws.readLoop();
+                if (thisWs == ws) {
+                    if (ws.connect("api.juick.com", 8080, "/replies/" + mid, null) && ws != null) {
+                        ws.readLoop();
+                    }
                 }
             }
         });
         wsthr.start();
     }
 
+    static class RetainedData {
+        ArrayList<JuickMessage> messages;
+        Parcelable viewState;
+
+    }
+
+    public Object saveState() {
+        RetainedData rd = new RetainedData();
+        rd.messages = new ArrayList<JuickMessage>();
+        int count = listAdapter.getCount();
+        for(int i=0; i<count; i++) {
+            JuickMessage item = listAdapter.getItem(i);
+            if (item.User != null)
+                rd.messages.add(item);
+        }
+        rd.viewState = getListView().onSaveInstanceState();
+        return rd;
+    }
+
     private void initAdapter() {
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_THREAD);
-
+        if (implicitlyCreated || restoreData != null) {
+            getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
+        }
+        if (implicitlyCreated) {
+            return;
+        }
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
 
@@ -125,9 +162,19 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                final String jsonStr = Utils.getJSONWithRetries(getActivity(), "http://api.juick.com/thread?mid=" + mid, notification);
+                final ArrayList<JuickMessage> messages;
+                final Parcelable listPosition;
+                if (restoreData == null) {
+                    final String jsonStr = Utils.getJSONWithRetries(getActivity(), "http://api.juick.com/thread?mid=" + mid, notification);
+                    messages = listAdapter.parseJSONpure(jsonStr);
+                    listPosition = null;
+                } else {
+                    messages = ((RetainedData)restoreData).messages;
+                    listPosition = ((RetainedData)restoreData).viewState;
+                    restoreData = null;
+                }
                 if (isAdded()) {
-                    if (jsonStr == null) {
+                    if (messages.size() == 0) {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -136,7 +183,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             }
                         });
                     }
-                    final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
@@ -151,6 +197,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
                             if (messages.size() > 0) {
                                 initAdapterStageTwo();
+                            }
+                            if (listPosition != null) {
+                                getListView().onRestoreInstanceState(listPosition);
                             }
                             Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
                             xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
@@ -182,8 +231,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     @Override
     public void onResume() {
         super.onResume();
-        initWebSocket();
         XMPPMessageReceiver.listeners.add(this);
+        doneWebSocket();
+        initWebSocket();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -198,13 +248,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     public void onPause() {
         XMPPMessageReceiver.listeners.remove(this);
         handler.removeCallbacksAndMessages(null);
-        doneWebSocket();
         super.onPause();
     }
 
     @Override
     public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
+        doneWebSocket();
         super.onDestroy();
     }
 

@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
@@ -61,6 +62,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     public static final int PENDINGINTENT_CONSTANT = 713242183;
 
     int lastNavigationPosition = -1;
+    MessagesFragment mf;
+    Object restoreData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +84,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             return;
         }
 
-        startCheckUpdates(this);
+        //startCheckUpdates(this);
         startPreferencesStorage(this);
 
 
@@ -97,8 +100,13 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
 
         setContentView(R.layout.messages);
+        restoreData = getLastCustomNonConfigurationInstance();
 
+    }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
     }
 
     private void clearObsoleteImagesInCache() {
@@ -127,6 +135,16 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         }.start();
     }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        if (mf != null) {
+            return mf.saveState();
+        }
+        return super.onRetainCustomNonConfigurationInstance();
+    }
+
+
 
     @Override
     protected void onDestroy() {
@@ -192,7 +210,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     }
 
     public boolean onNavigationItemSelected(final int itemPosition, long _) {
-        final MessagesFragment mf = new MessagesFragment();
+        mf = new MessagesFragment(restoreData);
+        restoreData = null;
         final Bundle args = new Bundle();
         boolean shouldCommit = true;
         if (itemPosition == 0) {

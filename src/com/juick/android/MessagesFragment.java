@@ -21,6 +21,7 @@ package com.juick.android;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.view.*;
 import android.widget.*;
@@ -69,6 +70,18 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private ScaleGestureDetector mScaleDetector = null;
 
     Handler handler;
+    private Object restoreData;
+    boolean implicitlyCreated;
+
+
+    public MessagesFragment(Object restoreData) {
+        this.restoreData = restoreData;
+        implicitlyCreated = false;
+    }
+
+    public MessagesFragment() {
+        implicitlyCreated = true;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -220,14 +233,25 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     private void init() {
+        if (implicitlyCreated) return;
         final MessagesLoadNotification messagesLoadNotification = new MessagesLoadNotification(getActivity(), handler);
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
                 final MessagesLoadNotification notification = messagesLoadNotification;
-                final String jsonStr = Utils.getJSON(getActivity(), apiurl, notification);
+                final ArrayList<JuickMessage> messages;
+                Parcelable listPosition = null;
+                if (restoreData == null) {
+                    final String jsonStr = Utils.getJSON(getActivity(), apiurl, notification);
+                    messages = listAdapter.parseJSONpure(jsonStr);
+                } else {
+
+                    messages = ((RetainedData)restoreData).messages;
+                    listPosition = ((RetainedData)restoreData).viewState;
+                    restoreData = null;
+                }
                 if (isAdded()) {
-                    if (jsonStr == null) {
+                    if (messages.size() == 0) {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -236,14 +260,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             }
                         });
                     }
-                    final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
                     Activity activity = getActivity();
                     if (activity != null) {
+                        final Parcelable finalListPosition = listPosition;
                         activity.runOnUiThread(new Runnable() {
 
                             public void run() {
                                 long l = System.currentTimeMillis();
-                                if (jsonStr != null) {
+                                if (messages.size() != 0) {
                                     listAdapter.clear();
                                     listAdapter.addAllMessages(messages);
                                     if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
@@ -270,9 +294,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                         listAdapter.recycleView(view);
                                     }
                                 });
-                                setSelection(1);
-                                l = System.currentTimeMillis() - l;
-                                //Toast.makeText(getActivity(), "List reload time: "+l+" msec", Toast.LENGTH_LONG).show();
+                                if (finalListPosition != null) {
+                                    getListView().onRestoreInstanceState(finalListPosition);
+                                } else {
+                                    setSelection(1);
+                                }
                             }
                         });
                     }
@@ -280,6 +306,22 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         });
         thr.start();
+    }
+
+    static class RetainedData {
+        ArrayList<JuickMessage> messages;
+        Parcelable viewState;
+    }
+
+    public Object saveState() {
+        RetainedData rd = new RetainedData();
+        rd.messages = new ArrayList<JuickMessage>();
+        int count = listAdapter.getCount();
+        for(int i=0; i<count; i++) {
+            rd.messages.add(listAdapter.getItem(i));
+        }
+        rd.viewState = getListView().onSaveInstanceState();
+        return rd;
     }
 
     public class MoreMessagesLoadNotification implements Utils.DownloadProgressNotification, Utils.RetryNotification, Utils.DownloadErrorNotification {
@@ -579,4 +621,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             return true;
         }
     }
+
+
+
+
 }

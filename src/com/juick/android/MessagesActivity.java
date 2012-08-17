@@ -18,6 +18,7 @@
 package com.juick.android;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -30,6 +31,9 @@ import de.quist.app.errorreporter.ExceptionReporter;
  * @author Ugnich Anton
  */
 public class MessagesActivity extends FragmentActivity {
+
+    MessagesFragment mf;
+    Object restoreData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +77,8 @@ public class MessagesActivity extends FragmentActivity {
 
         setContentView(R.layout.messages);
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        MessagesFragment mf = new MessagesFragment();
+        restoreData = getLastCustomNonConfigurationInstance();
+        mf = new MessagesFragment(restoreData);
         Bundle args = new Bundle();
 
         args.putInt("uid", uid);
@@ -85,5 +90,18 @@ public class MessagesActivity extends FragmentActivity {
         mf.setArguments(args);
         ft.replace(R.id.messagesfragment, mf);
         ft.commit();
+    }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        if (mf != null) {
+            return mf.saveState();
+        }
+        return super.onRetainCustomNonConfigurationInstance();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

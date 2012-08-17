@@ -76,6 +76,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             }
         }
     };
+    ThreadFragment tf;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +104,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         bAttach.setOnClickListener(this);
         
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ThreadFragment tf = new ThreadFragment();
+        tf = new ThreadFragment(getLastCustomNonConfigurationInstance());
         Bundle args = new Bundle();
         args.putInt("mid", mid);
         args.putBoolean("scrollToBottom", i.getBooleanExtra("scrollToBottom", false));
@@ -144,7 +145,15 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             tvReplyTo.setVisibility(View.GONE);
         }
     }
-    
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        if (tf != null) {
+            return tf.saveState();
+        }
+        return super.onRetainCustomNonConfigurationInstance();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
     public void onClick(View view) {
         if (view == bAttach) {
             if (attachmentUri == null) {

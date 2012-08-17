@@ -508,8 +508,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public void addAllMessages(ArrayList<JuickMessage> messages) {
+        Set<String> filteredOutUsers1 = getFilteredOutUsers(getContext());
         for (JuickMessage message : messages) {
-            if (getFilteredOutUsers(getContext()).contains(message.User.UName)) continue;
+            if (filteredOutUsers1.contains(message.User.UName)) continue;
             boolean canAdd = true;
             if (message.RID > 0) {
                 // don't add duplicate replies coming from any source (XMPP/websocket)
