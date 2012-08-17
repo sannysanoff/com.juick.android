@@ -105,52 +105,24 @@
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="XMPP client">
-        <EditTextPreference
-            android:key="xmpp_username"
-            android:title="Username"
-            android:summary=" .. without @server.com part"
-            android:defaultValue=""
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="xmpp_password"
-            android:title="Password"
-            android:defaultValue=""
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="xmpp_resource"
-            android:title="Resource"
-            android:defaultValue="com.juickadvanced"
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="xmpp_priority"
-            android:title="Priority (important)"
-            android:summary="set it same as in your desktop jabber client to receive notifications in both worlds"
-            android:defaultValue="55"
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="xmpp_server"
-            android:title="Server"
-            android:defaultValue=""
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="xmpp_port"
-            android:title="Port"
-            android:defaultValue="5222"
-            android:persistent="true"/>
+        <com.juick.android.XMPPPreference
+                android:key="xmpp_config"
+                android:defaultValue=""
+                android:summary="Not set up"
+                android:title="XMPP config"
+                android:persistent="true"
+                >
+
+        </com.juick.android.XMPPPreference>
         <CheckBoxPreference
-            android:key="xmpp_force_encryption"
-            android:title="Require encryption"
+            android:key="useXMPP"
+            android:title="XMPP enabled"
+            android:summary="Activate it after you finished setting up account details"
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="xmpp_verbose"
             android:title="Verbose event notifications"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="useXMPP"
-            android:title="XMPP enabled"
-            android:summary="Activate it after you finished setting up account details"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>

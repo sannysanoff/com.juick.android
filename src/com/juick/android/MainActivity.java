@@ -42,11 +42,12 @@ import de.quist.app.errorreporter.ExceptionReporter;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.SASLAuthentication;
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
 
-import java.io.CharArrayWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -67,6 +68,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
         super.onCreate(savedInstanceState);

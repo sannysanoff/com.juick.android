@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
+import com.google.gson.Gson;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
@@ -70,37 +71,15 @@ public class XMPPService extends Service {
         botOnline = false;
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
-        if (useXMPP && !(connection != null && connection.isConnected())) {
-            final String username = sp.getString("xmpp_username", "");
-            final String password = sp.getString("xmpp_password", "");
-            final String resource = sp.getString("xmpp_resource","");
-            String server = sp.getString("xmpp_server","");
-            if (server.equals("gmail.com")) server = "talk.google.com";
-            String port = sp.getString("xmpp_port","5222");
-            String priority = sp.getString("xmpp_priority","55");
-            final boolean secure = sp.getBoolean("xmpp_force_encryption", false);
-            int iPort = 0;
-            int iPriority = 0;
-            try {iPort = Integer.parseInt(port); } catch (NumberFormatException e) {
-                Toast.makeText(XMPPService.this, "XMPP: Invalid port. ", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            try {iPriority = Integer.parseInt(priority); } catch (NumberFormatException e) {
-                Toast.makeText(XMPPService.this, "XMPP: Invalid priority. ", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            final int finalIPort = iPort;
-            final int finalIPriority = iPriority;
-            final String finalServer = server;
+        Gson gson = new Gson();
+        final XMPPPreference.Value connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPPreference.Value.class);
+        if (useXMPP && connectionArgs != null && !(connection != null && connection.isConnected())) {
             (currentThread = new Thread() {
                 @Override
                 public void run() {
                     try {
-                        String serviceName = finalServer;
-                        if (finalServer.equals("talk.google.com"))
-                            serviceName = "gmail.com";
-                        ConnectionConfiguration configuration = new ConnectionConfiguration(finalServer, finalIPort, serviceName);
-                        configuration.setSecurityMode(secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
+                        ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.server, connectionArgs.port, connectionArgs.service);
+                        configuration.setSecurityMode(connectionArgs.secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
                         configuration.setReconnectionAllowed(true);
                         SASLAuthentication.supportSASLMechanism("PLAIN", 0);
                         //configuration.setSASLAuthenticationEnabled(secure);
@@ -153,10 +132,7 @@ public class XMPPService extends Service {
                                 scheduleReconnect();
                             }
                         });
-                        String fullUsername = username;
-                        if (fullUsername.indexOf("@") != -1)
-                            fullUsername = fullUsername.substring(0, fullUsername.indexOf("@"));
-                        connection.login(fullUsername, password, resource);
+                        connection.login(connectionArgs.login, connectionArgs.password, connectionArgs.resource);
                     } catch (final IllegalStateException e) {
                         cleanup(null);
                         scheduleReconnect();
@@ -196,7 +172,7 @@ public class XMPPService extends Service {
                     connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
                     connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
                     try {
-                        connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", finalIPriority, Presence.Mode.available));
+                        connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", connectionArgs.priority, Presence.Mode.available));
                     } catch (Exception e) {
                         cleanup("error while sending presence");
                         scheduleReconnect();
