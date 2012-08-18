@@ -212,6 +212,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     }
 
     public boolean onNavigationItemSelected(final int itemPosition, long _) {
+        if (lastNavigationPosition == itemPosition) return false;       // happens during screen rotate
         mf = new MessagesFragment(restoreData);
         restoreData = null;
         final Bundle args = new Bundle();
@@ -274,8 +275,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                                                 Toast.makeText(MainActivity.this, "Unable to detect nick: "+e.toString(), Toast.LENGTH_LONG).show();
                                             }
                                         });
+                                    } finally {
+                                        httpClient.close();
                                     }
-                                    super.run();
                                 }
                             }.start();
 

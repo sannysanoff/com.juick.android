@@ -35,11 +35,11 @@ import android.util.Log;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import com.juickadvanced.R;
+
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
 /**
- *
  * @author Ugnich Anton
  */
 public class MessagesFragment extends ListFragment implements AdapterView.OnItemClickListener, AbsListView.OnScrollListener, View.OnTouchListener, View.OnClickListener {
@@ -149,7 +149,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 if (sp.getBoolean("persistLastMessagesPosition", false)) {
                     int lastMessagesSavedPosition = sp.getInt("lastMessagesSavedPosition", -1);
                     if (lastMessagesSavedPosition != -1) {
-                        apiurl += "&before_mid="+lastMessagesSavedPosition;
+                        apiurl += "&before_mid=" + lastMessagesSavedPosition;
                     }
                     mSaveLastMessagesPosition = true;
                 }
@@ -220,7 +220,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listAdapter = new JuickMessagesAdapter(getActivity(), 0);
         if (mSaveLastMessagesPosition) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            if (sp.getInt("lastMessagesSavedPosition",-1) > 0)
+            if (sp.getInt("lastMessagesSavedPosition", -1) > 0)
                 listAdapter.setContinuationAdapter(true);
         }
 
@@ -245,59 +245,60 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     final String jsonStr = Utils.getJSON(getActivity(), apiurl, notification);
                     messages = listAdapter.parseJSONpure(jsonStr);
                 } else {
-
-                    messages = ((RetainedData)restoreData).messages;
-                    listPosition = ((RetainedData)restoreData).viewState;
-                    restoreData = null;
+                    messages = ((RetainedData) restoreData).messages;
+                    listPosition = ((RetainedData) restoreData).viewState;
                 }
                 if (isAdded()) {
                     if (messages.size() == 0) {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                notification.statusText.setText("Download error: "+notification.lastError);
+                                notification.statusText.setText("Download error: " + notification.lastError);
                                 notification.progressBar.setVisibility(View.GONE);
                             }
                         });
                     }
-                    Activity activity = getActivity();
+                    final Activity activity = getActivity();
                     if (activity != null) {
                         final Parcelable finalListPosition = listPosition;
                         activity.runOnUiThread(new Runnable() {
 
                             public void run() {
-                                long l = System.currentTimeMillis();
-                                if (messages.size() != 0) {
-                                    listAdapter.clear();
-                                    listAdapter.addAllMessages(messages);
-                                    if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
-                                        getListView().addFooterView(viewLoading, null, false);
+                                try {
+                                    if (messages.size() != 0) {
+                                        listAdapter.clear();
+                                        listAdapter.addAllMessages(messages);
+                                        if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
+                                            getListView().addFooterView(viewLoading, null, false);
+                                        }
                                     }
-                                }
 
-                                if (getListView().getHeaderViewsCount() == 0) {
-                                    getListView().addHeaderView(mRefreshView, null, false);
-                                    //measureView(mRefreshView);
-                                    mRefreshViewHeight = mRefreshView.getMeasuredHeight();
-                                }
-
-                                if (getListAdapter() != listAdapter) {
-                                    setListAdapter(listAdapter);
-                                }
-
-                                loading = false;
-                                resetHeader();
-                                getListView().invalidateViews();
-                                getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
-                                    @Override
-                                    public void onMovedToScrapHeap(View view) {
-                                        listAdapter.recycleView(view);
+                                    if (getListView().getHeaderViewsCount() == 0) {
+                                        getListView().addHeaderView(mRefreshView, null, false);
+                                        //measureView(mRefreshView);
+                                        mRefreshViewHeight = mRefreshView.getMeasuredHeight();
                                     }
-                                });
-                                if (finalListPosition != null) {
-                                    getListView().onRestoreInstanceState(finalListPosition);
-                                } else {
-                                    setSelection(1);
+
+                                    if (getListAdapter() != listAdapter) {
+                                        setListAdapter(listAdapter);
+                                    }
+
+                                    loading = false;
+                                    resetHeader();
+                                    getListView().invalidateViews();
+                                    getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
+                                        @Override
+                                        public void onMovedToScrapHeap(View view) {
+                                            listAdapter.recycleView(view);
+                                        }
+                                    });
+                                    if (finalListPosition != null) {
+                                        getListView().onRestoreInstanceState(finalListPosition);
+                                    } else {
+                                        setSelection(1);
+                                    }
+                                } catch (IllegalStateException e) {
+                                    Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
@@ -317,7 +318,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         RetainedData rd = new RetainedData();
         rd.messages = new ArrayList<JuickMessage>();
         int count = listAdapter.getCount();
-        for(int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             rd.messages.add(listAdapter.getItem(i));
         }
         rd.viewState = getListView().onSaveInstanceState();
@@ -328,15 +329,18 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         TextView progress;
         int retry = 0;
-        String lastError= null;
+        String lastError = null;
+        Activity activity;
+
         public MoreMessagesLoadNotification() {
             progress = (TextView) viewLoading.findViewById(R.id.progress_loading_more);
             progress.setText("");
+            activity = getActivity();
         }
 
         @Override
         public void notifyDownloadError(final String error) {
-            getActivity().runOnUiThread(new Runnable() {
+            activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     progress.setText(error);
@@ -349,10 +353,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         public void notifyDownloadProgress(int progressBytes) {
             String text = " " + progressBytes / 1024 + "K";
             if (retry > 0) {
-                text += " (retry "+(retry+1)+")";
+                text += " (retry " + (retry + 1) + ")";
             }
             final String finalText = text;
-            getActivity().runOnUiThread(new Runnable() {
+            activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     progress.setText(finalText);
@@ -368,6 +372,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     private void loadMore() {
         loading = true;
+        restoreData = null;
         page++;
         final JuickMessage jmsg = listAdapter.getItem(listAdapter.getCount() - 1);
 
@@ -376,8 +381,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
             public void run() {
                 URLParser apiURL = new URLParser(apiurl);
-                apiURL.getArgsMap().put("before_mid", ""+jmsg.MID);
-                apiURL.getArgsMap().put("page", ""+page);
+                apiURL.getArgsMap().put("before_mid", "" + jmsg.MID);
+                apiURL.getArgsMap().put("page", "" + page);
                 final String jsonStr = Utils.getJSON(getActivity(), apiURL.getFullURL(), progressNotification);
                 if (isAdded()) {
 //                    if (jsonStr == null) {
@@ -621,8 +626,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             return true;
         }
     }
-
-
 
 
 }

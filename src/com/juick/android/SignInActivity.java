@@ -26,6 +26,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -99,7 +100,6 @@ public class SignInActivity extends Activity implements OnClickListener {
             Toast.makeText(this, R.string.Enter_nick_and_password, Toast.LENGTH_SHORT).show();
             return;
         }
-
         Toast.makeText(this, R.string.Please_wait___, Toast.LENGTH_SHORT).show();
 
         Thread thr = new Thread(new Runnable() {
@@ -108,8 +108,8 @@ public class SignInActivity extends Activity implements OnClickListener {
                 int status = 0;
                 try {
                     String authStr = nick + ":" + password;
-                    String basicAuth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
-
+                    final String basicAuth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
+                    Utils.verboseDebug(SignInActivity.this, "Authorization: "+basicAuth);
                     URL apiUrl = new URL("http://api.juick.com/post");
                     HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
                     conn.setConnectTimeout(10000);
@@ -120,6 +120,7 @@ public class SignInActivity extends Activity implements OnClickListener {
                     status = conn.getResponseCode();
                     conn.disconnect();
                 } catch (Exception e) {
+                    Utils.verboseDebug(SignInActivity.this, e.toString());
                     Log.e("checkingNickPassw", e.toString());
                 }
                 if (status == 400) {
@@ -138,6 +139,7 @@ public class SignInActivity extends Activity implements OnClickListener {
                     SignInActivity.this.setResult(RESULT_OK);
                     SignInActivity.this.finish();
                 } else {
+                    Utils.verboseDebug(SignInActivity.this, "auth: HTTP status: "+status);
                     handlErrToast.sendEmptyMessage(0);
                 }
             }

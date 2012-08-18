@@ -9,6 +9,58 @@
             android:defaultValue="5"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="XMPP client">
+        <com.juick.android.XMPPPreference
+                android:key="xmpp_config"
+                android:defaultValue=""
+                android:summary="Not set up"
+                android:title="XMPP config"
+                android:persistent="true">
+        </com.juick.android.XMPPPreference>
+        <CheckBoxPreference
+            android:key="useXMPP"
+            android:title="XMPP enabled"
+            android:summary="Activate it after you finished setting up account details"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="xmpp_verbose"
+            android:title="Verbose event notifications"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Load images">
+        <ListPreference
+            android:key="image.loadMode"
+            android:summary="off / full / proxy ?"
+            android:title="Load image mode"
+            android:entries="@array/imageLoadMode"
+            android:entryValues="@array/imageLoadModeValues"
+            android:defaultValue="off"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="imageproxy.login"
+            android:title="Image Proxy login"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="imageproxy.password"
+            android:title="Image Proxy password"
+            android:defaultValue=""
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="image.daystokeep"
+            android:title="Days to keep cached images"
+            android:defaultValue="10"
+            android:persistent="true"/>
+        <ListPreference
+            android:key="image.height_percent"
+            android:title="Image height (% of screen)"
+            android:entries="@array/imageHeight"
+            android:entryValues="@array/imageHeightValues"
+            android:defaultValue="0.3"
+            android:persistent="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/Message_List">
         <CheckBoxPreference
             android:key="persistLastMessagesPosition"
@@ -72,57 +124,10 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Load images">
-        <ListPreference
-            android:key="image.loadMode"
-            android:summary="off / full / proxy ?"
-            android:title="Load image mode"
-            android:entries="@array/imageLoadMode"
-            android:entryValues="@array/imageLoadModeValues"
-            android:defaultValue="off"
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="imageproxy.login"
-            android:title="Image Proxy login"
-            android:defaultValue=""
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="imageproxy.password"
-            android:title="Image Proxy password"
-            android:defaultValue=""
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="image.daystokeep"
-            android:title="Days to keep cached images"
-            android:defaultValue="10"
-            android:persistent="true"/>
-        <ListPreference
-            android:key="image.height_percent"
-            android:title="Image height (% of screen)"
-            android:entries="@array/imageHeight"
-            android:entryValues="@array/imageHeightValues"
-            android:defaultValue="0.3"
-            android:persistent="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="XMPP client">
-        <com.juick.android.XMPPPreference
-                android:key="xmpp_config"
-                android:defaultValue=""
-                android:summary="Not set up"
-                android:title="XMPP config"
-                android:persistent="true"
-                >
-
-        </com.juick.android.XMPPPreference>
+    <PreferenceCategory android:title="Debug">
         <CheckBoxPreference
-            android:key="useXMPP"
-            android:title="XMPP enabled"
-            android:summary="Activate it after you finished setting up account details"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="xmpp_verbose"
-            android:title="Verbose event notifications"
+            android:key="verboseDebug"
+            android:title="Enable diagnostic messages"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>

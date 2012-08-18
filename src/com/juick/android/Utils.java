@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 import com.juickadvanced.R;
 
 import java.io.*;
@@ -46,6 +47,18 @@ import org.json.JSONObject;
  * @author Ugnich Anton
  */
 public class Utils {
+
+    public static void verboseDebug(final Activity context, final String s) {
+        final boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
+        if (verboseDebug) {
+            context.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
 
     public static interface Function<T, A> {
         T apply(A a);
