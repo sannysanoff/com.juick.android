@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.http.client.HttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -49,7 +50,9 @@ import org.json.JSONObject;
 public class Utils {
 
     public static void verboseDebug(final Activity context, final String s) {
-        final boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
+        boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
+        if (!Utils.hasAuth(context))
+            verboseDebug = true;
         if (verboseDebug) {
             context.runOnUiThread(new Runnable() {
                 @Override
@@ -212,6 +215,7 @@ public class Utils {
 
     public static interface DownloadProgressNotification extends Notification {
         public void notifyDownloadProgress(int progressBytes);
+        public void notifyHttpClientObtained(HttpClient client);
     }
 
     public static interface DownloadErrorNotification extends Notification {

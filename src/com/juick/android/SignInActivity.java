@@ -36,6 +36,7 @@ import android.widget.Toast;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -115,15 +116,19 @@ public class SignInActivity extends Activity implements OnClickListener {
                     conn.setConnectTimeout(10000);
                     conn.setUseCaches(false);
                     conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
                     conn.setRequestProperty("Authorization", basicAuth);
                     conn.connect();
+                    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+                    wr.write("body=ON");
+                    wr.close();
                     status = conn.getResponseCode();
                     conn.disconnect();
                 } catch (Exception e) {
                     Utils.verboseDebug(SignInActivity.this, e.toString());
                     Log.e("checkingNickPassw", e.toString());
                 }
-                if (status == 400) {
+                if (status == 200) {
                     Account account = new Account(nick, getString(R.string.com_juick));
                     AccountManager am = AccountManager.get(SignInActivity.this);
                     boolean accountCreated = am.addAccountExplicitly(account, password, null);

@@ -47,6 +47,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private Object restoreData;
     boolean implicitlyCreated;
     Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
+    MessagesLoadNotification notification;
 
 
     @Override
@@ -160,7 +161,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
 
-        final MessagesLoadNotification notification = new MessagesLoadNotification(getActivity(), handler);
+        notification = new MessagesLoadNotification(getActivity(), handler);
         Thread thr = new Thread(new Runnable() {
 
             public void run() {

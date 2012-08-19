@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.juickadvanced.R;
+import org.apache.http.client.HttpClient;
 
 /**
 * Created with IntelliJ IDEA.
@@ -25,6 +26,11 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
         progressBar = (ProgressBar)activity.findViewById(R.id.progress_bar);
         statusText.setText("Loading..");
         this.handler = handler;
+    }
+
+    @Override
+    public void notifyHttpClientObtained(HttpClient client) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

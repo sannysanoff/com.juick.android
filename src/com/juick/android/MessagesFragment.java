@@ -35,6 +35,7 @@ import android.util.Log;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import com.juickadvanced.R;
+import org.apache.http.client.HttpClient;
 
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -350,6 +351,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             });
             lastError = error;
+        }
+
+        @Override
+        public void notifyHttpClientObtained(HttpClient client) {
+            //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
