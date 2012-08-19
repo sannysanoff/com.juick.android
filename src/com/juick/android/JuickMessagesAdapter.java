@@ -30,9 +30,6 @@ import android.webkit.WebView;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.AlignmentSpan;
@@ -312,11 +309,26 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         for (String url : urls) {
             String urlLower = url.toLowerCase();
             urlLower = trimRequest(urlLower);
-            if (hasValidImageExtension(urlLower)) {
-                retval.add(url);
+            if (isValidImageURl(urlLower)) {
+                retval.add(unescapeURL(url));
             }
         }
         return retval;
+    }
+
+    private String unescapeURL(String url) {
+        if (url.indexOf("www.dropbox.com/") != -1) {
+            url += "&dl=1";
+        }
+        if (url.indexOf("gyazo.com/") != -1) {
+            if (url.lastIndexOf(".") < url.length() - 10) {
+                url += ".png";
+            }
+        }
+        if (url.indexOf("%") != 1) {
+            return Uri.decode(url);
+        }
+        return url;
     }
 
     private String trimRequest(String url) {
@@ -327,7 +339,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return url;
     }
 
-    private boolean hasValidImageExtension(String urlLower) {
+    private boolean isValidImageURl(String urlLower) {
+        if (urlLower.indexOf("http://gyazo.com") != -1) return true;
         return urlLower.endsWith(".png") || urlLower.endsWith(".gif") || urlLower.endsWith(".jpg") || urlLower.endsWith(".jpeg");
     }
 
@@ -752,7 +765,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             int ask = url.indexOf('?');
             if (ask != -1) {
                 String suburl = url.substring(0, ask);
-                if (hasValidImageExtension(suburl)) {
+                if (isValidImageURl(suburl)) {
                     int q = suburl.lastIndexOf('.');
                     // somefile.jpg?zz=true   -> somefile.jpg?zz=true.jpg   -> somefile.jpg_zz_true.jpg
                     url += suburl.substring(q);
