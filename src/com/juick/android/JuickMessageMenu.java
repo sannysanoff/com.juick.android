@@ -482,7 +482,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                             out.setLength(0);
                             out.append(retval);
                         } catch (IOException e) {
-                            Log.e("com.juick.android", "Error calling google translate", e);
+                            Log.e("com.juickadvanced", "Error calling google translate", e);
                         } finally {
                             synchronized (pieces) {
                                 pieces[0]++;

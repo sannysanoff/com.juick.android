@@ -66,7 +66,7 @@
         <activity android:name="com.juick.android.XMPPControlActivity" android:label="@string/XMPPControl" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <receiver android:name="com.juick.android.XMPPMessageReceiver" >
             <intent-filter>
-                <action android:name="com.juick.android.action.ACTION_MESSAGE_RECEIVED"/>
+                <action android:name="com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED"/>
             </intent-filter>
         </receiver>
 

@@ -352,8 +352,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 startActivity(new Intent(this, ExploreActivity.class));
                 return true;
             case R.id.reload:
-                if (((String)null).length() > 0) {
-                }
                 if (lastNavigationPosition != -1) {
                     int oldPosition = lastNavigationPosition;
                     if (lastNavigationPosition == 1) {

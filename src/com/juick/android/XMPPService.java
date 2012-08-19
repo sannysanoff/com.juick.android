@@ -31,7 +31,7 @@ public class XMPPService extends Service {
     Handler handler;
     Chat juickChat;
     ArrayList<Utils.Function<Void,Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
-    public static final String ACTION_MESSAGE_RECEIVED = "com.juick.android.action.ACTION_MESSAGE_RECEIVED";
+    public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
     int reconnectDelay = 10000;
     int messagesReceived = 0;
@@ -160,6 +160,7 @@ public class XMPPService extends Service {
                                 Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
                         }
                     });
+                    if (Thread.currentThread().isInterrupted()) return;
                     Roster roster = connection.getRoster();
                     juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
                         @Override
@@ -169,6 +170,8 @@ public class XMPPService extends Service {
                             }
                         }
                     });
+                    if (Thread.currentThread().isInterrupted()) return;
+                    if (currentThread() != currentThread) return;
                     connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
                     connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
                     try {
@@ -610,6 +613,10 @@ public class XMPPService extends Service {
                 //
             }
             connection = null;
+            if (currentThread != null) {
+                currentThread.interrupt();
+                currentThread = null;
+            }
             botOnline = false;
             if (reason != null) {
                 handler.post(new Runnable() {
