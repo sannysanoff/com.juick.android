@@ -116,6 +116,12 @@
             android:title="User ID for 'My Blog'"
             android:summary="Leave it empty if unknown"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="prefetchMessages"
+            android:title="Prefetch more messages"
+            android:summary="...and never see `loading..`"
+            android:defaultValue="false"
+            android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Camera capture">
         <CheckBoxPreference

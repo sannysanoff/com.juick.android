@@ -177,8 +177,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
     }
 
+    boolean prefetchMessages = false;
     @Override
     public void onResume() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        prefetchMessages = sp.getBoolean("prefetchMessages", false);
         super.onResume();
     }
 
@@ -428,7 +431,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount == totalItemCount) && loading == false) {
+        int prefetchMessagesSize = prefetchMessages ? 20:0;
+        if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && loading == false) {
             loadMore();
         }
 
