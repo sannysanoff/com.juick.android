@@ -352,12 +352,16 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 startActivity(new Intent(this, ExploreActivity.class));
                 return true;
             case R.id.reload:
+                if (((String)null).length() > 0) {
+                }
                 if (lastNavigationPosition != -1) {
+                    int oldPosition = lastNavigationPosition;
                     if (lastNavigationPosition == 1) {
                         // clear save pointer
                         MessagesFragment.clearSavedPosition(this);
                     }
-                    onNavigationItemSelected(lastNavigationPosition, -1);
+                    lastNavigationPosition = -1;
+                    onNavigationItemSelected(oldPosition, -1);
                 }
                 return true;
             default:

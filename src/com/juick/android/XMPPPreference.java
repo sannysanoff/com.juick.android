@@ -126,7 +126,9 @@ public class XMPPPreference extends Preference {
                         pd.setIndeterminate(true);
                         pd.show();
                         pd.setCancelable(true);
-                        final ConnectionConfiguration configuration = new ConnectionConfiguration(server.getText().toString(), atoi(port.getText().toString()), service.getText().toString());
+                        String svc = service.getText().toString();
+                        String svr = server.getText().toString();
+                        final ConnectionConfiguration configuration = new ConnectionConfiguration(svr, atoi(port.getText().toString()), Utils.nvl(svc, svr).trim());
                         configuration.setSecurityMode(secure.isChecked() ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
                         SASLAuthentication.supportSASLMechanism("PLAIN", 0);
                         final XMPPConnection connection = new XMPPConnection(configuration);

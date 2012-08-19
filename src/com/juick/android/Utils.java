@@ -361,5 +361,10 @@ public class Utils {
         return sb.toString();
     }
 
+    public static String nvl(String value, String def) {
+        if (value == null || value.length() == 0) return def;
+        return value;
+    }
+
 
 }

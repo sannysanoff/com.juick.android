@@ -721,7 +721,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 scaledW, scaledH
                         ));
                         content.append(String.format("</body></html>"));
-                        webView.getSettings().setAllowContentAccess(true);
                         webView.loadData(content.toString(), "text/html", "UTF-8");
                         webView.setOnTouchListener(new View.OnTouchListener() {
                             @Override

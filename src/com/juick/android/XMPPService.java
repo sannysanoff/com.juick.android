@@ -78,7 +78,7 @@ public class XMPPService extends Service {
                 @Override
                 public void run() {
                     try {
-                        ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.server, connectionArgs.port, connectionArgs.service);
+                        ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.server, connectionArgs.port, Utils.nvl(connectionArgs.service, connectionArgs.server).trim());
                         configuration.setSecurityMode(connectionArgs.secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
                         configuration.setReconnectionAllowed(true);
                         SASLAuthentication.supportSASLMechanism("PLAIN", 0);
