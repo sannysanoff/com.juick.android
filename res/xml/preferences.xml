@@ -127,7 +127,7 @@
         <CheckBoxPreference
             android:key="useTempFileForCapture"
             android:title="Capture into temp file (bugfix)"
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Debug">

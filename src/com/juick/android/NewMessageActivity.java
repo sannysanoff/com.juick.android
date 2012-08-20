@@ -468,7 +468,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
                 SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", false);
+                boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", true);
                 if (useTempFileForCapture) {
                     File file = getPhotoCaptureFile();
                     file.delete();
