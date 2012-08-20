@@ -138,98 +138,103 @@ public class XMPPService extends Service {
                         scheduleReconnect();
                         return;
                     } catch (final XMPPException e) {
-                        if (e.getWrappedThrowable() instanceof SocketException) {
-                            scheduleReconnect();
-                        }
-                        lastException = e;
                         if (currentThread() == currentThread) {
                             String message = e.toString();
                             if (message.toLowerCase().indexOf("auth") >= 0)
                                 message = "!"+message;
                             cleanup(message);
-                            connection = null;
-                            currentThread = null;
                         }
+                        if (e.getWrappedThrowable() instanceof SocketException) {
+                            scheduleReconnect();
+                        }
+                        lastException = e;
                         return;
                     }
-                    if (currentThread() != currentThread) return;
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (verboseXMPP())
-                                Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    if (Thread.currentThread().isInterrupted()) return;
-                    Roster roster = connection.getRoster();
-                    juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
-                        @Override
-                        public void processMessage(Chat chat, Message message) {
-                            for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
-                                messageReceiver.apply(message);
-                            }
-                        }
-                    });
-                    if (Thread.currentThread().isInterrupted()) return;
-                    if (currentThread() != currentThread) return;
-                    connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
-                    connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
                     try {
-                        connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", connectionArgs.priority, Presence.Mode.available));
-                    } catch (Exception e) {
-                        cleanup("error while sending presence");
-                        scheduleReconnect();
-                        return;
-                    }
-                    messageReceivers.add(new Utils.Function<Void, Message>() {
-                        @Override
-                        public Void apply(Message message) {
-                            // general juick message receiver
-                            if (JUICK_ID.equals(message.getFrom())) {
-                                messagesReceived++;
-                                handleJuickMessage(message);
+                        if (currentThread() != currentThread) return;
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (verboseXMPP())
+                                    Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
                             }
-                            return null;
-                        }
-                    });
-                    roster.addRosterListener(new RosterListener() {
-                        @Override
-                        public void entriesAdded(Collection<String> addresses) {
-                            System.out.println();
-                        }
-
-                        @Override
-                        public void entriesUpdated(Collection<String> addresses) {
-                            System.out.println();
-                        }
-
-                        @Override
-                        public void entriesDeleted(Collection<String> addresses) {
-                            //To change body of implemented methods use File | Settings | File Templates.
-                        }
-
-                        @Override
-                        public void presenceChanged(final Presence presence) {
-                            if (presence.getFrom().equals(JUICK_ID)) {
-                                botOnline = presence.isAvailable();
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (verboseXMPP()) {
-                                            if (botOnline) {
-                                                Toast.makeText(XMPPService.this, "juick bot online", Toast.LENGTH_SHORT).show();
-                                            } else {
-                                                Toast.makeText(XMPPService.this, "JUICK BOT OFFLINE", Toast.LENGTH_SHORT).show();
-                                            }
-                                        }
-                                    }
-                                });
-                                if (botOnline) {
-                                    sendJuickMessage("ON");
+                        });
+                        if (Thread.currentThread().isInterrupted()) return;
+                        Roster roster = connection.getRoster();
+                        juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
+                            @Override
+                            public void processMessage(Chat chat, Message message) {
+                                for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
+                                    messageReceiver.apply(message);
                                 }
                             }
+                        });
+                        if (Thread.currentThread().isInterrupted()) return;
+                        if (currentThread() != currentThread) return;
+                        connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
+                        connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
+                        try {
+                            connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", connectionArgs.priority, Presence.Mode.available));
+                        } catch (Exception e) {
+                            cleanup("error while sending presence");
+                            scheduleReconnect();
+                            return;
                         }
-                    });
+                        messageReceivers.add(new Utils.Function<Void, Message>() {
+                            @Override
+                            public Void apply(Message message) {
+                                // general juick message receiver
+                                if (JUICK_ID.equals(message.getFrom())) {
+                                    messagesReceived++;
+                                    handleJuickMessage(message);
+                                }
+                                return null;
+                            }
+                        });
+                        roster.addRosterListener(new RosterListener() {
+                            @Override
+                            public void entriesAdded(Collection<String> addresses) {
+                                System.out.println();
+                            }
+
+                            @Override
+                            public void entriesUpdated(Collection<String> addresses) {
+                                System.out.println();
+                            }
+
+                            @Override
+                            public void entriesDeleted(Collection<String> addresses) {
+                                //To change body of implemented methods use File | Settings | File Templates.
+                            }
+
+                            @Override
+                            public void presenceChanged(final Presence presence) {
+                                if (presence.getFrom().equals(JUICK_ID)) {
+                                    botOnline = presence.isAvailable();
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (verboseXMPP()) {
+                                                if (botOnline) {
+                                                    Toast.makeText(XMPPService.this, "juick bot online", Toast.LENGTH_SHORT).show();
+                                                } else {
+                                                    Toast.makeText(XMPPService.this, "JUICK BOT OFFLINE", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        }
+                                    });
+                                    if (botOnline) {
+                                        sendJuickMessage("ON");
+                                    }
+                                }
+                            }
+                        });
+                    } catch (Exception ex) {
+                        if (currentThread() != currentThread) return;
+                        Log.e("XMPPThread", "exception in main thread", ex);
+                        cleanup("Exception in main server thread");
+                        scheduleReconnect();
+                    }
                 }
 
             }).start();
@@ -242,13 +247,18 @@ public class XMPPService extends Service {
         return sp.getBoolean("xmpp_verbose", false);
     }
 
+    boolean scheduledForReconnect = false;
+
     private void scheduleReconnect() {
+        if (scheduledForReconnect) return;
+        scheduledForReconnect = true;
         reconnectDelay *= 2;
         handler.removeCallbacksAndMessages(null);
         handler.postDelayed(new Runnable() {
             final Connection retryConnection = connection;
             @Override
             public void run() {
+                scheduledForReconnect = false;
                 startup();
             }
         }, reconnectDelay);

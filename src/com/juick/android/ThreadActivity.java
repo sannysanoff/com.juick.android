@@ -246,16 +246,20 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                             Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
                         } else {
                             NewMessageActivity.getPhotoCaptureFile().delete(); // if any
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
-                            builder.setNeutralButton(R.string.OK, null);
-                            if (res) {
-                                builder.setIcon(android.R.drawable.ic_dialog_info);
-                                builder.setMessage(R.string.Message_posted);
-                            } else {
-                                builder.setIcon(android.R.drawable.ic_dialog_alert);
-                                builder.setMessage(R.string.Error);
+                            try {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
+                                builder.setNeutralButton(R.string.OK, null);
+                                if (res) {
+                                    builder.setIcon(android.R.drawable.ic_dialog_info);
+                                    builder.setMessage(R.string.Message_posted);
+                                } else {
+                                    builder.setIcon(android.R.drawable.ic_dialog_alert);
+                                    builder.setMessage(R.string.Error);
+                                }
+                                builder.show();
+                            } catch (Exception e) {
+                                // activity must be dead already
                             }
-                            builder.show();
                         }
                     }
                 });
