@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" filepath="$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" />
       <module fileurl="file://$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" filepath="$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" />
       <module fileurl="file://$PROJECT_DIR$/juick_android.iml" filepath="$PROJECT_DIR$/juick_android.iml" />
     </modules>

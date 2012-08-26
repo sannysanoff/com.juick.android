@@ -4,6 +4,9 @@
     <item android:id="@+id/menuitem_filters"
         android:title="@string/Filters"
         android:showAsAction="never"/>
+    <item android:id="@+id/colors"
+        android:title="@string/ColorsTheme"
+        android:showAsAction="never"/>
     <item android:id="@+id/menuitem_xmpp_control"
         android:title="XMPP control"
         android:showAsAction="never"/>

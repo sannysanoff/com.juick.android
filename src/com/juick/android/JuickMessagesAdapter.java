@@ -300,6 +300,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 ((TextView) v).setText("");
             }
         }
+        MainActivity.restyleChildrenOrWidget(v);
 
         return v;
     }
@@ -393,7 +394,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         sp.edit().putString(PREFERENCES_SCALE, ""+textScale).commit();
     }
 
+    public static ColorsTheme.ColorTheme colorTheme = null;
+
     public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation) {
+        if (colorTheme == null)
+            colorTheme = new ColorsTheme.ColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
         if (addContinuation) {
@@ -413,16 +418,16 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
         ssb.append(name + ' ' + tags + "\n");
         ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new ForegroundColorSpan(0xFFC8934E), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (tags.length() > 0)
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), spanOffset + name.length() + 1,
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), spanOffset + name.length() + 1,
                     spanOffset + name.length() + tags.length() + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
 
         spanOffset = ssb.length();
         if (jmsg.translated) {
             ssb.append("translated: ");
-            ssb.setSpan(new ForegroundColorSpan(0xFF4ec856), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey. TRANSLATED_LABEL, 0xFF4ec856)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         spanOffset = ssb.length();
@@ -436,7 +441,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             } else {
                 ssb.append("#"+jmsg.MID+" ");
             }
-            ssb.setSpan(new ForegroundColorSpan(0xFFa0a5bd), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.MESSAGE_ID, 0xFFa0a5bd)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         spanOffset = ssb.length();
         ssb.append(txt);
@@ -446,7 +451,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ArrayList<String> urls = new ArrayList<String>();
         while (m.find(pos)) {
             urls.add(ssb.subSequence(spanOffset + m.start(), spanOffset + m.end()).toString());
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             pos = m.end();
         }
 
@@ -454,7 +459,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         pos = 0;
         m = msgPattern.matcher(txt);
         while (m.find(pos)) {
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             pos = m.end();
         }
 
@@ -475,14 +480,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         String date = df.format(jmsg.Timestamp);
         ssb.append("\n" + date + " ");
 
-        ssb.setSpan(new ForegroundColorSpan(0xFFAAAAAA), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         spanOffset = ssb.length();
 
         if (jmsg.replies > 0) {
             String replies = Replies + jmsg.replies;
             ssb.append("  " + replies + " ");
-            ssb.setSpan(new ForegroundColorSpan(0xFFC8934E), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.NUMBER_OF_COMMENTS, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -505,7 +510,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
         ssb.append(tags + txt);
         if (tags.length() > 0) {
-            ssb.setSpan(new ForegroundColorSpan(0xFF000099), 0, tags.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), 0, tags.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         int paddingt = tags.length();
@@ -513,7 +518,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         Matcher m = urlPattern.matcher(txt);
         ArrayList<String> urls = new ArrayList<String>();
         while (m.find(pos)) {
-            ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), paddingt + m.start(), paddingt + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), paddingt + m.start(), paddingt + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             urls.add(ssb.subSequence(paddingt + m.start(), paddingt + m.end()).toString());
             pos = m.end();
         }

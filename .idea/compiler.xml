@@ -11,6 +11,7 @@
       <directory url="file://$PROJECT_DIR$/../../../san2/tmp/ActionBarSherlock/library/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/../ActionBarSherlock/library/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/gen/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/gen" includeSubdirectories="true" />
     </excludeFromCompile>
     <resourceExtensions />
     <wildcardResourcePatterns>

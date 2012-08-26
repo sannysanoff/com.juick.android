@@ -135,5 +135,7 @@
     <string name="Your_User_Name">Your Juick Username</string>
     <string name="Your_User_Name_Explain">Juick API does not provide means to know your Nickname. Please enter the Nickname to detect your user id.
     </string>
+    <string name="ColorsTheme">Colors/Theme</string>
+    <string name="Colors">Colors</string>
 
 </resources>

@@ -76,4 +76,10 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
             }
         }
     }
+
+    @Override
+    public void finish() {
+        JuickMessagesAdapter.colorTheme = null; // will be reloaded
+        super.finish();
+    }
 }

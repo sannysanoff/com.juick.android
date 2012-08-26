@@ -122,14 +122,25 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         bAttach.setSelected(false);
         setFormEnabled(true);
     }
-    
+
+    @Override
+    protected void onResume() {
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+        super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
     private void setFormEnabled(boolean state) {
         etMessage.setEnabled(state);
         bSend.setEnabled(state);
     }
     
     public void onThreadLoaded(int uid, String nick) {
-        setTitle("@" + nick);
+        String title = "@" + nick;
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean showNumbers = sp.getBoolean("showNumbers", false);
+        if (showNumbers)
+            title += " - #" + mid;
+        setTitle(title);
     }
     
     public void onReplySelected(int newrid, String txt) {

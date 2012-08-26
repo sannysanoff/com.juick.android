@@ -39,6 +39,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="AmbilWarna" />
     <orderEntry type="module" module-name="Library" />
     <orderEntry type="library" name="android-error-reporter" level="project" />
   </component>

@@ -51,6 +51,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         TagsFragment tf = new TagsFragment();
         ft.add(R.id.tagsfragment, tf);
         ft.commit();
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     public void onClick(View v) {

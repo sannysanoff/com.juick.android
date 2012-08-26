@@ -161,6 +161,53 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/Colors">
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.COMMON_BACKGROUND"
+            android:title="Common background"
+            android:defaultValue="0xFFFFFFFF"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.COMMON_FOREGROUND"
+            android:title="Common foreground"
+            android:defaultValue="0xFF000000"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.USERNAME"
+            android:title="Usernames"
+            android:defaultValue="0xFFC8934E"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.TAGS"
+            android:title="Tags"
+            android:defaultValue="0xFF0000CC"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.URLS"
+            android:title="URLs"
+            android:defaultValue="0xFF0000CC"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.MESSAGE_ID"
+            android:title="Message IDs"
+            android:defaultValue="0xFFa0a5bd"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.NUMBER_OF_COMMENTS"
+            android:title="Number of comments"
+            android:defaultValue="0xFFC8934E"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.TRANSLATED_LABEL"
+            android:title="``Translated`` label"
+            android:defaultValue="0xFF4ec856"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Color.DATE"
+            android:title="Dates"
+            android:defaultValue="0xFFAAAAAA"
+            android:persistent="true"/>
+    </PreferenceCategory>
 <!--
     <PreferenceCategory android:title="@string/Appearance">
         <ListPreference

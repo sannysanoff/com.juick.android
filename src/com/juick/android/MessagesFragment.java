@@ -619,6 +619,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             clearSavedPosition(getActivity());
             listAdapter.setContinuationAdapter(false);
         }
+
+        MainActivity.restyleChildrenOrWidget(mRefreshView);
     }
 
     public static void clearSavedPosition(Context context) {

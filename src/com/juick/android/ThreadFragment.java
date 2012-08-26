@@ -98,7 +98,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        MainActivity.restyleChildrenOrWidget(view);
         Bundle args = getArguments();
         if (args != null) {
             mid = args.getInt("mid", 0);

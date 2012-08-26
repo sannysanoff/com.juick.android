@@ -144,6 +144,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
          */
         handleIntent(getIntent());
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
     /*
     @Override

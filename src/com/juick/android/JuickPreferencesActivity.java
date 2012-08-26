@@ -33,6 +33,9 @@ public class JuickPreferencesActivity extends PreferencesActivity {
             case R.id.menuitem_filters:
                 startActivity(new Intent(this, EditFiltersActivity.class));
                 break;
+            case R.id.colors:
+                startActivity(new Intent(this, ColorsTheme.class));
+                break;
             case R.id.menuitem_xmpp_control:
                 startActivity(new Intent(this, XMPPControlActivity.class));
                 break;

@@ -17,10 +17,7 @@
  */
 package com.juick.android;
 
-import android.app.ActivityManager;
-import android.app.AlarmManager;
-import android.app.AlertDialog;
-import android.app.PendingIntent;
+import android.app.*;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,24 +28,20 @@ import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.*;
+import android.support.v4.app.ActionBar;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.*;
-import android.text.Html;
 import android.view.MenuInflater;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.Toast;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.*;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.SASLAuthentication;
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
+import yuku.ambilwarna.widget.AmbilWarnaPreference;
 
 import java.io.*;
-import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -69,8 +62,10 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        System.out.println(AmbilWarnaPreference.class);
         ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
+
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
@@ -100,9 +95,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
+        if (getIntent().hasExtra("lastNavigationPosition")) {
+            int lastNavigationPosition1 = getIntent().getExtras().getInt("lastNavigationPosition");
+            bar.selectTab(bar.getTabAt(lastNavigationPosition1));
+        }
 
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
+
 
     }
 
@@ -163,7 +163,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         }
         return super.onRetainCustomNonConfigurationInstance();
     }
-
 
 
     @Override
@@ -230,6 +229,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     }
 
     public boolean onNavigationItemSelected(final int itemPosition, long _) {
+        restyle();
         if (lastNavigationPosition == itemPosition) return false;       // happens during screen rotate
         mf = new MessagesFragment(restoreData);
         restoreData = null;
@@ -264,7 +264,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                                 public void run() {
                                     String fullName = value;
                                     if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                                    HttpGet httpGet = new HttpGet("http://juick.com/" + fullName+"/");
+                                    HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
                                     try {
                                         String retval = httpClient.execute(httpGet, new BasicResponseHandler());
                                         String SEARCH_MARKER = "http://i.juick.com/a/";
@@ -272,8 +272,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                                         if (ix < 0) {
                                             throw new RuntimeException("Website returned unrecognized response");
                                         }
-                                        int ix2 = retval.indexOf(".png", ix+SEARCH_MARKER.length());
-                                        if (ix2 < 0 || ix2-(ix+SEARCH_MARKER.length()) > 15) {  // optimistic!
+                                        int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
+                                        if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
                                             throw new RuntimeException("Website returned unrecognized response");
                                         }
                                         final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
@@ -290,7 +290,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                Toast.makeText(MainActivity.this, "Unable to detect nick: "+e.toString(), Toast.LENGTH_LONG).show();
+                                                Toast.makeText(MainActivity.this, "Unable to detect nick: " + e.toString(), Toast.LENGTH_LONG).show();
                                             }
                                         });
                                     } finally {
@@ -345,7 +345,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             if (resultCode == RESULT_OK) {
                 Intent intent = getIntent();
                 finish();
+                intent.putExtra("lastNavigationPosition", lastNavigationPosition);
                 startActivity(intent);
+
             }
         }
     }
@@ -404,6 +406,44 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             //TODO show user
         }
         return false;
+    }
+
+    @Override
+    protected void onResume() {
+        restyle();
+        super.onResume();    //To change body of overridden methods use File | Settings | File Templates.}
+    }
+
+    private void restyle() {
+        final ViewGroup decorView = (ViewGroup) getWindow().getDecorView();
+        restyleChildrenOrWidget(decorView);
+    }
+
+
+    public static void restyleChildrenOrWidget(View view) {
+        if (JuickMessagesAdapter.colorTheme == null)
+            JuickMessagesAdapter.colorTheme = new ColorsTheme.ColorTheme(view.getContext());
+        if (view instanceof EditText) {
+            EditText et = (EditText) view;
+            et.setTextColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+            et.setBackgroundColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+        } else if (view instanceof Button) {
+            Button btn = (Button) view;
+            btn.setTextColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+            btn.setBackgroundColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+        } else if (view instanceof TextView) {
+            TextView text = (TextView) view;
+            text.setTextColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+        } else if (view instanceof ViewGroup) {
+            ViewGroup parent = (ViewGroup) view;
+            int childCount = parent.getChildCount();
+            parent.setBackgroundColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            for (int i = 0; i < childCount; i++) {
+                View child = parent.getChildAt(i);
+                System.out.println(child);
+                restyleChildrenOrWidget(child);
+            }
+        }
     }
 
     @Override
