@@ -80,8 +80,9 @@ public class ColorsTheme {
         ColorKey[] values = ColorKey.values();
         HashMap<ColorKey, ColorSetup> retval = new HashMap<ColorKey, ColorSetup>();
         for (ColorKey value : values) {
-            int color = defaultSharedPreferences.getInt("Color." + value.name(), -1);
-            retval.put(value, new ColorSetup("generic",color));
+            int color = defaultSharedPreferences.getInt("Colors." + value.name(), -2);
+            if (color != -2)
+                retval.put(value, new ColorSetup("generic",color));
         }
         return new ColorTheme(retval);
     }

@@ -95,10 +95,10 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
-        if (getIntent().hasExtra("lastNavigationPosition")) {
-            int lastNavigationPosition1 = getIntent().getExtras().getInt("lastNavigationPosition");
-            bar.selectTab(bar.getTabAt(lastNavigationPosition1));
-        }
+//        if (getIntent().hasExtra("lastNavigationPosition")) {
+//            int lastNavigationPosition1 = getIntent().getExtras().getInt("lastNavigationPosition");
+//            bar.selectTab(bar.getTabAt(lastNavigationPosition1));
+//        }
 
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
