@@ -36,12 +36,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.Button;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
 import de.quist.app.errorreporter.ExceptionReporter;
@@ -112,19 +109,23 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
     }
 
     public void onClick(View v) {
-        if (v == bNewPlace) {
-            Intent i = new Intent(Intent.ACTION_PICK);
-            i.setClass(this, PlaceEditActivity.class);
-            i.putExtra("lat", location.getLatitude());
-            i.putExtra("lon", location.getLongitude());
-            startActivityForResult(i, ACTIVITY_NEWPLACE);
-        } else if (v == bNonamePlace) {
-            Intent i = new Intent();
-            i.putExtra("lat", location.getLatitude());
-            i.putExtra("lon", location.getLongitude());
-            i.putExtra("pname", getResources().getString(R.string.Without_name));
-            setResult(RESULT_OK, i);
-            finish();
+        if (location != null) {
+            if (v == bNewPlace) {
+                Intent i = new Intent(Intent.ACTION_PICK);
+                i.setClass(this, PlaceEditActivity.class);
+                i.putExtra("lat", location.getLatitude());
+                i.putExtra("lon", location.getLongitude());
+                startActivityForResult(i, ACTIVITY_NEWPLACE);
+            } else if (v == bNonamePlace) {
+                Intent i = new Intent();
+                i.putExtra("lat", location.getLatitude());
+                i.putExtra("lon", location.getLongitude());
+                i.putExtra("pname", getResources().getString(R.string.Without_name));
+                setResult(RESULT_OK, i);
+                finish();
+            }
+        } else {
+            Toast.makeText(this, "Location is still unknown.", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -202,7 +202,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                 initAdapterStageTwo();
                             }
                             if (listPosition != null) {
-                                getListView().onRestoreInstanceState(listPosition);
+                                try {
+                                    getListView().onRestoreInstanceState(listPosition);
+                                } catch (Exception e) {
+                                    /* tmp fix for
+                                    java.lang.IllegalStateException: Content view not yet created
+                                            at+android.support.v4.app.ListFragment.ensureList(ListFragment.java:328)
+                                            at+android.support.v4.app.ListFragment.getListView(ListFragment.java:222)
+                                     */
+                                }
                             }
                             Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
                             xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {

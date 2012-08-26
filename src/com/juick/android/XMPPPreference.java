@@ -157,7 +157,7 @@ public class XMPPPreference extends Preference {
                                             Toast.makeText(getContext(), "SUCCESS !", Toast.LENGTH_SHORT).show();
                                         }
                                     });
-                                } catch (final XMPPException e) {
+                                } catch (final Exception e) {
                                     ((Activity) getContext()).runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {

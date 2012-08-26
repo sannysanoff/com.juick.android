@@ -145,6 +145,10 @@ public class XMPPService extends Service {
                             cleanup(null);
                             scheduleReconnect();
                             return;
+                        } catch (final NullPointerException e) {
+                            // concurrent connection change
+                            // todo implement properly, shame on me
+                            return;
                         } catch (final XMPPException e) {
                             if (currentThread() == currentThread) {
                                 String message = e.toString();

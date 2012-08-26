@@ -107,6 +107,24 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        try {
+            super.onRestoreInstanceState(savedInstanceState);
+        } catch (Exception e) {
+            /*
+            fix for 4.0:
+                Caused+by:+java.lang.NullPointerException
+                        at+android.view.View.dispatchRestoreInstanceState(View.java:10064)
+                        at+android.view.ViewGroup.dispatchRestoreInstanceState(ViewGroup.java:2421)
+                        at+android.view.View.restoreHierarchyState(View.java:10047)
+                        at+com.android.internal.policy.impl.PhoneWindow.restoreHierarchyState(PhoneWindow.java:1630)
+                        at+android.app.Activity.onRestoreInstanceState(Activity.java:906)
+
+             */
+        }
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
     }
