@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
+import org.jivesoftware.smack.XMPPConnection;
 
 /**
  * Created with IntelliJ IDEA.
@@ -51,7 +52,24 @@ public class XMPPControlActivity extends Activity {
                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
                     public void withService(XMPPService service) {
-                        xmppStatus.setText(service.connection != null ? (service.connection.isConnected() ? "CONNECTED" : "connecting") : "idle");
+                        String status = "";
+                        synchronized (service.connections) {
+                            if (service.connections.size() == 0) {
+                                status = "idle.";
+                            } else {
+                                XMPPConnection conn = service.connections.get(service.connections.size() - 1);
+                                if (conn.isConnected()) {
+                                    if (conn.isAuthenticated()) {
+                                        status = "CONNECTED, AUTH-ed.";
+                                    } else {
+                                        status = "CONNECTED, no auth";
+                                    }
+                                } else {
+                                    status = "connecting...";
+                                }
+                            }
+                        }
+                        xmppStatus.setText(status);
                         lastException.setText(service.lastException != null ? service.lastException.toString() : " --- ");
                         messagesReceived.setText(""+service.messagesReceived);
                         juickbot.setText(service.botOnline ? "ONLINE" : "offline");

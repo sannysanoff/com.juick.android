@@ -29,6 +29,30 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="Notifications">
+        <RingtonePreference
+                android:key="ringtone_uri"
+                android:defaultValue=""
+                android:title="Choose sound"
+                android:ringtoneType="all"
+                android:persistent="true">
+        </RingtonePreference>
+        <CheckBoxPreference
+            android:key="ringtone_enabled"
+            android:title="Sound enabled"
+            android:defaultValue="true"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="vibration_enabled"
+            android:title="Vibration enabled"
+            android:defaultValue="true"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="led_enabled"
+            android:title="LED enabled"
+            android:defaultValue="true"
+            android:persistent="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="Load images">
         <ListPreference
             android:key="image.loadMode"

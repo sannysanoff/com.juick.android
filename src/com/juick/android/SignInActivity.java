@@ -120,7 +120,7 @@ public class SignInActivity extends Activity implements OnClickListener {
                     conn.setRequestProperty("Authorization", basicAuth);
                     conn.connect();
                     OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-                    wr.write("body=ON");
+                    wr.write("body=PING");
                     wr.close();
                     status = conn.getResponseCode();
                     conn.disconnect();

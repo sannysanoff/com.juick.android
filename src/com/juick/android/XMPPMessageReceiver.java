@@ -23,6 +23,9 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.preference.PreferenceManager;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
@@ -60,7 +63,21 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
         NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         String tickerText = "juick: new message";
         Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
-        notif.defaults = silent ? 0 : Notification.DEFAULT_ALL;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        int notification = 0;
+        if (!silent) {
+            if (prefs.getBoolean("vibration_enabled", true)) notification |= Notification.DEFAULT_VIBRATE;
+            if (prefs.getBoolean("led_enabled", true)) notification |= Notification.DEFAULT_LIGHTS;
+            if (prefs.getBoolean("ringtone_enabled", true)) {
+                String ringtone_uri = prefs.getString("ringtone_uri", "");
+                if (ringtone_uri.length() > 0) {
+                    notif.sound = Uri.parse(ringtone_uri);
+                }
+                else
+                    notification |= Notification.DEFAULT_SOUND;
+            }
+        }
+        notif.defaults = silent ? 0 : notification;
         Intent nintent = new Intent(context, XMPPIncomingMessagesActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
         notif.setLatestEventInfo(context, "Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : ""), tickerText, pendingIntent);

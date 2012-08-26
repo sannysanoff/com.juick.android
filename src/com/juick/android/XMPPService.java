@@ -27,7 +27,7 @@ import java.util.Iterator;
  */
 public class XMPPService extends Service {
 
-    XMPPConnection connection;
+    ArrayList<XMPPConnection> connections = new ArrayList<XMPPConnection>();
     Handler handler;
     Chat juickChat;
     ArrayList<Utils.Function<Void,Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
@@ -73,173 +73,197 @@ public class XMPPService extends Service {
         boolean useXMPP = sp.getBoolean("useXMPP", false);
         Gson gson = new Gson();
         final XMPPPreference.Value connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPPreference.Value.class);
-        if (useXMPP && connectionArgs != null && !(connection != null && connection.isConnected())) {
-            (currentThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.server, connectionArgs.port, Utils.nvl(connectionArgs.service, connectionArgs.server).trim());
-                        configuration.setSecurityMode(connectionArgs.secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
-                        configuration.setReconnectionAllowed(true);
-                        SASLAuthentication.supportSASLMechanism("PLAIN", 0);
-                        //configuration.setSASLAuthenticationEnabled(secure);
-                        //configuration.setCompressionEnabled(true);
-                        int delay = 1000;
-                        while(true) {
-                            if (currentThread != Thread.currentThread()) return;        // we are abandoned!
-                            if (connection != null && connection.isConnected()) break;
-                            connection = new XMPPConnection(configuration);
-                            connection.connect();
-                            if (connection.isConnected()) break;
-                            try {
-                                Thread.sleep(delay);
-                            } catch (InterruptedException e) {
-                                cleanup("connect interrupted");
-                                return;
-                            }
-                            delay *= 2;
-                            if (delay > 15*60*1000) {
-                                delay = 15*60*1000;
-                            }
-                        }
-                        reconnectDelay = 10000;     // reset value
-                        connection.addConnectionListener(new ConnectionListener() {
-                            @Override
-                            public void connectionClosed() {
-                                System.out.println();
-                                //To change body of implemented methods use File | Settings | File Templates.
-                            }
+        synchronized (connections) {
+            if (useXMPP && connectionArgs != null && connections.size() == 0) {
+                (currentThread = new Thread() {
 
-                            @Override
-                            public void connectionClosedOnError(Exception e) {
-                                System.out.println();
-                                //To change body of implemented methods use File | Settings | File Templates.
-                            }
+                    XMPPConnection connection;
 
-                            @Override
-                            public void reconnectingIn(int seconds) {
-                                System.out.println();
-                            }
-
-                            @Override
-                            public void reconnectionSuccessful() {
-                                System.out.println();
-                            }
-
-                            @Override
-                            public void reconnectionFailed(Exception e) {
-                                cleanup("failed to reconnect, juick will retry later");
-                                scheduleReconnect();
-                            }
-                        });
-                        connection.login(connectionArgs.login, connectionArgs.password, connectionArgs.resource);
-                    } catch (final IllegalStateException e) {
-                        cleanup(null);
-                        scheduleReconnect();
-                        return;
-                    } catch (final XMPPException e) {
-                        if (currentThread() == currentThread) {
-                            String message = e.toString();
-                            if (message.toLowerCase().indexOf("auth") >= 0)
-                                message = "!"+message;
-                            cleanup(message);
-                        }
-                        if (e.getWrappedThrowable() instanceof SocketException) {
-                            scheduleReconnect();
-                        }
-                        lastException = e;
-                        return;
-                    }
-                    try {
-                        if (currentThread() != currentThread) return;
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (verboseXMPP())
-                                    Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                        if (Thread.currentThread().isInterrupted()) return;
-                        Roster roster = connection.getRoster();
-                        juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
-                            @Override
-                            public void processMessage(Chat chat, Message message) {
-                                for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
-                                    messageReceiver.apply(message);
+                    @Override
+                    public void run() {
+                        try {
+                            ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.server, connectionArgs.port, Utils.nvl(connectionArgs.service, connectionArgs.server).trim());
+                            configuration.setSecurityMode(connectionArgs.secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
+                            configuration.setReconnectionAllowed(true);
+                            SASLAuthentication.supportSASLMechanism("PLAIN", 0);
+                            //configuration.setSASLAuthenticationEnabled(secure);
+                            //configuration.setCompressionEnabled(true);
+                            int delay = 1000;
+                            while(true) {
+                                if (currentThread != Thread.currentThread()) return;        // we are abandoned!
+                                if (connection != null && connection.isConnected()) break;
+                                connection = new XMPPConnection(configuration);
+                                synchronized (connections) {
+                                    connections.add(connection);
+                                }
+                                connection.connect();
+                                if (connection.isConnected()) break;
+                                try {
+                                    cleanup(null);
+                                    Thread.sleep(delay);
+                                } catch (InterruptedException e) {
+                                    scheduleReconnect();
+                                    return;
+                                }
+                                delay *= 2;
+                                if (delay > 15*60*1000) {
+                                    delay = 15*60*1000;
                                 }
                             }
-                        });
-                        if (Thread.currentThread().isInterrupted()) return;
-                        if (currentThread() != currentThread) return;
-                        connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
-                        connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
-                        try {
-                            connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", connectionArgs.priority, Presence.Mode.available));
-                        } catch (Exception e) {
-                            cleanup("error while sending presence");
+                            reconnectDelay = 10000;     // reset value
+                            connection.addConnectionListener(new ConnectionListener() {
+                                @Override
+                                public void connectionClosed() {
+                                    System.out.println();
+                                    //To change body of implemented methods use File | Settings | File Templates.
+                                }
+
+                                @Override
+                                public void connectionClosedOnError(Exception e) {
+                                    System.out.println();
+                                    //To change body of implemented methods use File | Settings | File Templates.
+                                }
+
+                                @Override
+                                public void reconnectingIn(int seconds) {
+                                    System.out.println();
+                                }
+
+                                @Override
+                                public void reconnectionSuccessful() {
+                                    System.out.println();
+                                }
+
+                                @Override
+                                public void reconnectionFailed(Exception e) {
+                                    cleanup("failed to reconnect, juick will retry later");
+                                    scheduleReconnect();
+                                }
+                            });
+                            connection.login(connectionArgs.login, connectionArgs.password, connectionArgs.resource);
+                        } catch (final IllegalStateException e) {
+                            cleanup(null);
                             scheduleReconnect();
                             return;
+                        } catch (final XMPPException e) {
+                            if (currentThread() == currentThread) {
+                                String message = e.toString();
+                                if (message.toLowerCase().indexOf("auth") >= 0)
+                                    message = "!"+message;
+                                cleanup(message);
+                            }
+                            if (e.getWrappedThrowable() instanceof SocketException) {
+                                scheduleReconnect();
+                            }
+                            lastException = e;
+                            return;
                         }
-                        messageReceivers.add(new Utils.Function<Void, Message>() {
-                            @Override
-                            public Void apply(Message message) {
-                                // general juick message receiver
-                                if (JUICK_ID.equals(message.getFrom())) {
-                                    messagesReceived++;
-                                    handleJuickMessage(message);
+                        try {
+                            if (currentThread() != currentThread) return;
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (verboseXMPP())
+                                        Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
                                 }
-                                return null;
-                            }
-                        });
-                        roster.addRosterListener(new RosterListener() {
-                            @Override
-                            public void entriesAdded(Collection<String> addresses) {
-                                System.out.println();
-                            }
-
-                            @Override
-                            public void entriesUpdated(Collection<String> addresses) {
-                                System.out.println();
-                            }
-
-                            @Override
-                            public void entriesDeleted(Collection<String> addresses) {
-                                //To change body of implemented methods use File | Settings | File Templates.
-                            }
-
-                            @Override
-                            public void presenceChanged(final Presence presence) {
-                                if (presence.getFrom().equals(JUICK_ID)) {
-                                    botOnline = presence.isAvailable();
-                                    handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (verboseXMPP()) {
-                                                if (botOnline) {
-                                                    Toast.makeText(XMPPService.this, "juick bot online", Toast.LENGTH_SHORT).show();
-                                                } else {
-                                                    Toast.makeText(XMPPService.this, "JUICK BOT OFFLINE", Toast.LENGTH_SHORT).show();
-                                                }
-                                            }
-                                        }
-                                    });
-                                    if (botOnline) {
-                                        sendJuickMessage("ON");
+                            });
+                            if (Thread.currentThread().isInterrupted()) return;
+                            Roster roster = connection.getRoster();
+                            juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
+                                @Override
+                                public void processMessage(Chat chat, Message message) {
+                                    for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
+                                        messageReceiver.apply(message);
                                     }
                                 }
+                            });
+                            if (Thread.currentThread().isInterrupted()) return;
+                            if (currentThread() != currentThread) return;
+                            connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
+                            connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
+                            try {
+                                connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", connectionArgs.priority, Presence.Mode.available));
+                            } catch (Exception e) {
+                                cleanup("error while sending presence");
+                                scheduleReconnect();
+                                return;
                             }
-                        });
-                    } catch (Exception ex) {
-                        if (currentThread() != currentThread) return;
-                        Log.e("XMPPThread", "exception in main thread", ex);
-                        cleanup("Exception in main server thread");
-                        scheduleReconnect();
+                            messageReceivers.add(new Utils.Function<Void, Message>() {
+                                @Override
+                                public Void apply(Message message) {
+                                    // general juick message receiver
+                                    if (JUICK_ID.equals(message.getFrom())) {
+                                        messagesReceived++;
+                                        handleJuickMessage(message);
+                                    }
+                                    return null;
+                                }
+                            });
+                            roster.addRosterListener(new RosterListener() {
+                                @Override
+                                public void entriesAdded(Collection<String> addresses) {
+                                    System.out.println();
+                                }
+
+                                @Override
+                                public void entriesUpdated(Collection<String> addresses) {
+                                    System.out.println();
+                                }
+
+                                @Override
+                                public void entriesDeleted(Collection<String> addresses) {
+                                    //To change body of implemented methods use File | Settings | File Templates.
+                                }
+
+                                @Override
+                                public void presenceChanged(final Presence presence) {
+                                    if (presence.getFrom().equals(JUICK_ID)) {
+                                        botOnline = presence.isAvailable();
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (verboseXMPP()) {
+                                                    if (botOnline) {
+                                                        Toast.makeText(XMPPService.this, "juick bot online", Toast.LENGTH_SHORT).show();
+                                                    } else {
+                                                        Toast.makeText(XMPPService.this, "JUICK BOT OFFLINE", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        if (botOnline) {
+                                            sendJuickMessage("ON");
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (Exception ex) {
+                            if (currentThread() != currentThread) return;
+                            Log.e("XMPPThread", "exception in main thread", ex);
+                            cleanup("Exception in main server thread");
+                            scheduleReconnect();
+                        }
                     }
-                }
 
-            }).start();
+                    private void scheduleReconnect() {
+                        if (scheduledForReconnect) return;
+                        scheduledForReconnect = true;
+                        reconnectDelay *= 2;
+                        handler.removeCallbacksAndMessages(null);
+                        handler.postDelayed(new Runnable() {
+                            final Connection retryConnection = connection;
+                            @Override
+                            public void run() {
+                                scheduledForReconnect = false;
+                                startup();
+                            }
+                        }, reconnectDelay);
+                    }
+
+
+                }).start();
+            }
         }
-
     }
 
     private boolean verboseXMPP() {
@@ -249,20 +273,6 @@ public class XMPPService extends Service {
 
     boolean scheduledForReconnect = false;
 
-    private void scheduleReconnect() {
-        if (scheduledForReconnect) return;
-        scheduledForReconnect = true;
-        reconnectDelay *= 2;
-        handler.removeCallbacksAndMessages(null);
-        handler.postDelayed(new Runnable() {
-            final Connection retryConnection = connection;
-            @Override
-            public void run() {
-                scheduledForReconnect = false;
-                startup();
-            }
-        }, reconnectDelay);
-    }
 
     PacketListener packetListener = new PacketListener() {
         @Override
@@ -331,14 +341,13 @@ public class XMPPService extends Service {
     }
 
     public void requestMessageBody(int finalTopicMessageId) {
-        if (connection.isConnected()) {
-            try {
-                juickChat.sendMessage("#" + finalTopicMessageId);
-            } catch (XMPPException e) {
-                Toast.makeText(this, "requestMessageBody: "+e.toString(), Toast.LENGTH_LONG).show();
-            }
+        try {
+            if (juickChat != null) juickChat.sendMessage("#" + finalTopicMessageId);
+        } catch (XMPPException e) {
+            Toast.makeText(this, "requestMessageBody: "+e.toString(), Toast.LENGTH_LONG).show();
         }
     }
+
 
     static int message_seq = 0;
     public static abstract class IncomingMessage implements Serializable {
@@ -594,7 +603,6 @@ public class XMPPService extends Service {
         Intent intent = new Intent();
         intent.setAction(ACTION_MESSAGE_RECEIVED);
         intent.putExtra("messagesCount", incomingMessages.size());
-        intent.putExtra("messagesCount", incomingMessages.size());
         sendBroadcast(intent);
     }
 
@@ -616,26 +624,30 @@ public class XMPPService extends Service {
     }
 
     public void cleanup(final String reason) {
-        if (connection != null) {
-            try {
-                connection.disconnect();
-            } catch (Exception e) {
-                //
-            }
-            connection = null;
-            if (currentThread != null) {
-                currentThread.interrupt();
-                currentThread = null;
-            }
-            botOnline = false;
-            if (reason != null) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (verboseXMPP() || reason.startsWith("!"))
-                            Toast.makeText(XMPPService.this, "XMPP Disconnected: "+reason, Toast.LENGTH_LONG).show();
+        synchronized (connections) {
+            for (XMPPConnection connection : connections) {
+                if (connection != null) {
+                    try {
+                        connection.disconnect();
+                    } catch (Exception e) {
+                        //
                     }
-                });
+                    connection = null;
+                    if (currentThread != null) {
+                        currentThread.interrupt();
+                        currentThread = null;
+                    }
+                    botOnline = false;
+                    if (reason != null) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (verboseXMPP() || reason.startsWith("!"))
+                                    Toast.makeText(XMPPService.this, "XMPP Disconnected: "+reason, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }
             }
         }
     }
