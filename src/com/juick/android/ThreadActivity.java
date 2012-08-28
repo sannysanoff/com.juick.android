@@ -98,7 +98,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         etMessage = (EditText) findViewById(R.id.editMessage);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         if (sp.getBoolean("capitalizeReplies", false)) {
-            etMessage.setInputType(EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
+            etMessage.setInputType(etMessage.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
         }
 
         bSend = (Button) findViewById(R.id.buttonSend);
