@@ -376,7 +376,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                     int oldPosition = lastNavigationPosition;
                     if (lastNavigationPosition == 1) {
                         // clear save pointer
-                        MessagesFragment.clearSavedPosition(this);
+                        mf.clearSavedPosition(this);
                     }
                     lastNavigationPosition = -1;
                     onNavigationItemSelected(oldPosition, -1);
@@ -421,23 +421,22 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
 
     public static void restyleChildrenOrWidget(View view) {
-        if (JuickMessagesAdapter.colorTheme == null)
-            JuickMessagesAdapter.colorTheme = new ColorsTheme.ColorTheme(view.getContext());
+        ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         if (view instanceof EditText) {
             EditText et = (EditText) view;
-            et.setTextColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
-            et.setBackgroundColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            et.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+            et.setBackgroundColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
         } else if (view instanceof Button) {
             Button btn = (Button) view;
-            btn.setTextColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
-            btn.setBackgroundColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            btn.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+            btn.setBackgroundColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
-            text.setTextColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+            text.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
         } else if (view instanceof ViewGroup) {
             ViewGroup parent = (ViewGroup) view;
             int childCount = parent.getChildCount();
-            parent.setBackgroundColor(JuickMessagesAdapter.colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            parent.setBackgroundColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
             for (int i = 0; i < childCount; i++) {
                 View child = parent.getChildAt(i);
                 System.out.println(child);

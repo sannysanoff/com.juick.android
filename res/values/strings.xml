@@ -49,10 +49,12 @@
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Recommend message</string>
     <string name="Subscribe_to">Subscribe to</string>
+    <string name="Toggle_Subscription_to">Toggle subscr. to</string>
     <string name="Blacklist">Blacklist</string>
     <string name="FilterOutUser">Filter out</string>
     <string name="Recommended">Recommended</string>
     <string name="Subscribed">Subscribed</string>
+    <string name="Changed">Changed</string>
     <string name="Added_to_BL">Added to BL</string>
     <string name="Are_you_sure_recommend">Are you sure you want to recommend?</string>
     <string name="Are_you_sure_subscribe">Are you sure you want to subscribe?</string>
@@ -114,6 +116,7 @@
     <string name="ReallyFilterOut">Really filter out user?</string>
     <string name="ReallyRecommend">Really recommend message?</string>
     <string name="ReallySubscribe">Really subscribe to user?</string>
+    <string name="ReallySubscribePost">Really subscribe to post?</string>
     <string name="ReallyBlacklist">Really blacklist user?</string>
     <string name="DownloadOriginal">Download and show original?</string>
     <string name="SendErrorReport">Exception occured. Send error report via email?</string>

@@ -395,10 +395,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public static ColorsTheme.ColorTheme colorTheme = null;
-
-    public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation) {
+    public static ColorsTheme.ColorTheme getColorTheme(Context ctx) {
         if (colorTheme == null)
             colorTheme = new ColorsTheme.ColorTheme(ctx);
+        return colorTheme;
+    }
+
+    public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation) {
+        getColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
         if (addContinuation) {
@@ -480,7 +484,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         String date = df.format(jmsg.Timestamp);
         ssb.append("\n" + date + " ");
 
-        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         spanOffset = ssb.length();
 

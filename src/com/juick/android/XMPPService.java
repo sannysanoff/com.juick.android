@@ -64,6 +64,7 @@ public class XMPPService extends Service {
 
 
     String JUICK_ID="juick@juick.com/Juick";
+    String JUBO_ID="jubo@nologin.ru/jubo";
     Exception lastException;
 
     public void startup() {
@@ -200,6 +201,10 @@ public class XMPPService extends Service {
                                         messagesReceived++;
                                         handleJuickMessage(message);
                                     }
+                                    if (JUBO_ID.equalsIgnoreCase(message.getFrom())) {
+                                        messagesReceived++;
+                                        handleJuickMessage(message);
+                                    }
                                     return null;
                                 }
                             });
@@ -236,7 +241,13 @@ public class XMPPService extends Service {
                                             }
                                         });
                                         if (botOnline) {
-                                            sendJuickMessage("ON");
+                                            String sendOn = sp.getString("juickBotOn", "skip");
+                                            if (sendOn.equals("on")) {
+                                                sendJuickMessage("ON");
+                                            }
+                                            if (sendOn.equals("off")) {
+                                                sendJuickMessage("OFF");
+                                            }
                                         }
                                     }
                                 }
@@ -282,7 +293,7 @@ public class XMPPService extends Service {
         @Override
         public void processPacket(Packet packet) {
             messagesReceived++;
-            if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom())) {
+            if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom()) && !JUBO_ID.equalsIgnoreCase(packet.getFrom())) {
                 handleTextMessage((Message) packet);
             }
         }
@@ -472,7 +483,14 @@ public class XMPPService extends Service {
         IncomingMessage handled = null;
         boolean silent = false;
         synchronized (incomingMessages) {
-            String[] split = message.getBody().split("\n");
+            String body = message.getBody();
+            if (body.startsWith("Найденные") && JUBO_ID.equals(message.getFrom())) {
+                int cr = body.indexOf("\n");
+                if (cr != -1 && body.length() > cr) {
+                    body = body.substring(cr+1);
+                }
+            }
+            String[] split = body.split("\n");
             String head = split[0];
             if (head.startsWith("Reply by @")) {
                 int colon = head.indexOf(":");
@@ -566,13 +584,13 @@ public class XMPPService extends Service {
                 }
             }
             if (message.getFrom().equals(JUICK_ID)) {
-                if (message.getBody().toLowerCase().contains("delivery of messages is")) {
+                if (body.toLowerCase().contains("delivery of messages is")) {
                     silent = true;
                 }
 
             }
             if (handled == null && !silent) {
-                JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), message.getBody());
+                JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), body);
                 saveMessage(messag);
                 incomingMessages.add(messag);
             }

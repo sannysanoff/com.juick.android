@@ -23,6 +23,14 @@
             android:summary="Activate it after you finished setting up account details"
             android:defaultValue="false"
             android:persistent="true"/>
+        <ListPreference
+            android:key="juickBotOn"
+            android:title="Juick bot ON after connect?"
+            android:summary="Whether to send ON message"
+            android:defaultValue="skip"
+            android:entries="@array/juickBotOnLabels"
+            android:entryValues="@array/juickBotOnValues"
+            android:persistent="true"/>
         <CheckBoxPreference
             android:key="xmpp_verbose"
             android:title="Verbose event notifications"

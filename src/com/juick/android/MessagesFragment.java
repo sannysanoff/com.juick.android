@@ -73,6 +73,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     Handler handler;
     private Object restoreData;
     boolean implicitlyCreated;
+    private int topMessageId = -1;
 
 
     public MessagesFragment(Object restoreData) {
@@ -275,6 +276,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                         if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
                                             getListView().addFooterView(viewLoading, null, false);
                                         }
+                                        topMessageId = messages.get(0).MID;
+                                    } else {
+                                        topMessageId = -1;
                                     }
 
                                     if (getListView().getHeaderViewsCount() == 0) {
@@ -339,6 +343,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         public MoreMessagesLoadNotification() {
             progress = (TextView) viewLoading.findViewById(R.id.progress_loading_more);
             progress.setText("");
+            ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(activity);
+            progress.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
             activity = getActivity();
         }
 
@@ -392,8 +398,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 URLParser apiURL = new URLParser(apiurl);
                 apiURL.getArgsMap().put("before_mid", "" + jmsg.MID);
                 apiURL.getArgsMap().put("page", "" + page);
-                final String jsonStr = Utils.getJSON(getActivity(), apiURL.getFullURL(), progressNotification);
-                if (isAdded()) {
+                Activity activity = getActivity();
+                final String jsonStr = Utils.getJSON(activity, apiURL.getFullURL(), progressNotification);
+                if (isAdded() && activity != null) {
 //                    if (jsonStr == null) {
 //                        getActivity().runOnUiThread(new Runnable() {
 //                            @Override
@@ -403,11 +410,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 //                        });
 //                    }
                     final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
-                    getActivity().runOnUiThread(new Runnable() {
+                    activity.runOnUiThread(new Runnable() {
 
                         public void run() {
-                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                            sp.edit().putInt("lastMessagesSavedPosition", jmsg.MID).commit();
                             listAdapter.addAllMessages(messages);
 //                            if (messages.size() != 20) {
 //                                MessagesFragment.this.getListView().removeFooterView(viewLoading);
@@ -436,11 +441,30 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     @Override
+    public void onStop() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        if (topMessageId != -1 && mSaveLastMessagesPosition) {
+            sp.edit().putInt("lastMessagesSavedPosition", topMessageId).commit();
+        }
+        super.onStop();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         int prefetchMessagesSize = prefetchMessages ? 20:0;
         if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && loading == false) {
             loadMore();
         }
+        try {
+            JuickMessage jm;
+            if (firstVisibleItem != 0) {
+                jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem-1);
+                topMessageId = jm.MID;
+            } else {
+                jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem);
+                topMessageId = jm.MID+1;    // open/closed interval
+            }
+        } catch (Exception ex) {}
 
         // When the refresh view is completely visible, change the text to say
         // "Release to refresh..." and flip the arrow drawable.
@@ -617,15 +641,20 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         if (mSaveLastMessagesPosition) {
             clearSavedPosition(getActivity());
+            mSaveLastMessagesPosition = true;   // restore
             listAdapter.setContinuationAdapter(false);
+            URLParser parser = new URLParser(apiurl);
+            parser.getArgsMap().remove("before_mid");
+            apiurl = parser.getFullURL(); // and continue default way
         }
 
         MainActivity.restyleChildrenOrWidget(mRefreshView);
     }
 
-    public static void clearSavedPosition(Context context) {
+    public void clearSavedPosition(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         sp.edit().remove("lastMessagesSavedPosition").commit();
+        mSaveLastMessagesPosition = false;
     }
 
 

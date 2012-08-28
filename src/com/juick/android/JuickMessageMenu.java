@@ -164,13 +164,13 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 });
             }
         });
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + listSelectedItem.MID) {
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Toggle_Subscription_to) + " #" + listSelectedItem.MID) {
             @Override
             public void run() {
-                confirmAction(R.string.ReallySubscribe, new Runnable() {
+                confirmAction(R.string.ReallySubscribePost, new Runnable() {
                     @Override
                     public void run() {
-                        postMessage("S #" + listSelectedItem.MID, activity.getResources().getString(R.string.Subscribed));
+                        postMessage("S #" + listSelectedItem.MID, activity.getResources().getString(R.string.Changed));
                     }
                 });
             }
@@ -193,7 +193,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                     confirmAction(R.string.ReallyRecommend, new Runnable() {
                         @Override
                         public void run() {
-                            postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
+                            postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Changed));
                         }
                     });
                 }

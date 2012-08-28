@@ -25,6 +25,8 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
         statusText = (TextView)activity.findViewById(R.id.status_text);
         progressBar = (ProgressBar)activity.findViewById(R.id.progress_bar);
         statusText.setText("Loading..");
+        ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(activity);
+        statusText.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
         this.handler = handler;
     }
 

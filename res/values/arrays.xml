@@ -94,4 +94,14 @@
         <item>jabber</item>
         <item>gtalk</item>
     </string-array>
+    <string-array name="juickBotOnLabels">
+        <item>Always send ON</item>
+        <item>Always send OFF</item>
+        <item>Do not send anything</item>
+    </string-array>
+    <string-array name="juickBotOnValues">
+        <item>on</item>
+        <item>off</item>
+        <item>skip</item>
+    </string-array>
 </resources>
