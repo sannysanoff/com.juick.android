@@ -10,6 +10,7 @@ import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.*;
 import com.juickadvanced.R;
  import de.quist.app.errorreporter.ExceptionReporter;
@@ -133,6 +134,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 refreshListWithAllMessages(null, new ArrayList<XMPPService.IncomingMessage>());
             }
         });
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     private void refreshListWithAllMessages(XMPPService service, ArrayList<XMPPService.IncomingMessage> allMessages) {
@@ -278,7 +280,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         refreshList();
                     }
                 });
-
                 return view;
             }
             Item messagesItem = (Item)item;
@@ -290,6 +291,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 TextView preview = (TextView)view.findViewById(R.id.preview);
                 fromTags.setText(privmsg.getFrom());
                 preview.setText(privmsg.getBody());
+                MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             if (message instanceof XMPPService.JuickThreadIncomingMessage) {
@@ -336,6 +338,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 int offset = insertString.length() + 6;
                 sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 commentCounts.setText(sb);
+                MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             if (message instanceof XMPPService.JabberIncomingMessage) {
@@ -345,6 +348,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 TextView preview = (TextView)view.findViewById(R.id.preview);
                 from.setText(jabberIncomingMessage.getFrom());
                 preview.setText(jabberIncomingMessage.getBody());
+                MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
@@ -354,6 +358,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 TextView preview = (TextView)view.findViewById(R.id.preview);
                 fromTags.setText(subscriptionMessage.getFrom());
                 preview.setText(subscriptionMessage.getBody());
+                MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             return null;
