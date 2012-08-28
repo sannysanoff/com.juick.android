@@ -328,7 +328,11 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
                         public void run() {
                             if (progressDialog != null) {
-                                progressDialog.dismiss();
+                                try {
+                                    progressDialog.dismiss();
+                                } catch (Exception e) {
+                                    //
+                                }
                             }
                             setFormEnabled(true);
                             if (res) {
