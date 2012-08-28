@@ -154,6 +154,18 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/PostReply">
+        <CheckBoxPreference
+            android:key="previewReplies"
+            android:title="Preview your replies before send"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="warnRepliesToBody"
+            android:title="Warn replies without 'In-reply-to'?"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="Camera capture">
         <CheckBoxPreference
             android:key="useTempFileForCapture"

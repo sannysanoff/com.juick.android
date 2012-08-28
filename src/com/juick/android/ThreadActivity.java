@@ -41,11 +41,14 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.juick.android.api.JuickMessage;
+import com.juick.android.api.JuickUser;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.io.File;
 import java.net.URLEncoder;
+import java.util.Vector;
 
 /**
  *
@@ -178,29 +181,93 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 bAttach.setSelected(false);
             }
         } else if (view == bSend) {
-            String msg = etMessage.getText().toString();
+            final String msg = etMessage.getText().toString();
             if (msg.length() < 3) {
                 Toast.makeText(this, R.string.Enter_a_message, Toast.LENGTH_SHORT).show();
                 return;
             }
-//        Toast.makeText(this, R.string.Please_wait___, Toast.LENGTH_SHORT).show();
-
-            String msgnum = "#" + mid;
-            if (rid > 0) {
-                msgnum += "/" + rid;
-            }
-            final String body = msgnum + " " + msg;
-            
-            setFormEnabled(false);
-            
-            if (attachmentUri == null) {
-                postText(body);
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            if (sp.getBoolean("warnRepliesToBody", false) && rid == 0 && tf.getListView().getAdapter().getCount() > 3) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Post reply")
+                        .setMessage("Replying to topic starter? (or select recipient)")
+                        .setCancelable(true)
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        })
+                        .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                                previewAndSendReply(msg);
+                            }
+                        }).show();
             } else {
-                postMedia(body);
+                previewAndSendReply(msg);
             }
         }
     }
-    
+
+    private void previewAndSendReply(final String msg) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sp.getBoolean("previewReplies", false)) {
+            TextView tv = new TextView(this);
+            JuickMessage jm = new JuickMessage();
+            jm.User = new JuickUser();;
+            jm.User.UName = "You";
+            jm.Text = msg;
+            jm.tags = new Vector<String>();
+            if (rid != 0) {
+                // insert destination user name
+                JuickMessage reply = tf.findReply(tf.getListView(), rid);
+                if (reply != null) {
+                    jm.Text = "@"+reply.User.UName+" "+jm.Text;
+                }
+            }
+            JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(this, jm, false, true);
+            tv.setText(parsedMessage.textContent);
+            MainActivity.restyleChildrenOrWidget(tv);
+            new AlertDialog.Builder(this)
+                    .setTitle("Post reply - preview")
+                    .setView(tv)
+                    .setCancelable(true)
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    })
+                    .setPositiveButton("Post reply", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                            sendReplyMain(msg);
+                        }
+                    }).show();
+        } else {
+            sendReplyMain(msg);
+        }
+    }
+
+    private void sendReplyMain(String msg) {
+        String msgnum = "#" + mid;
+        if (rid > 0) {
+            msgnum += "/" + rid;
+        }
+        final String body = msgnum + " " + msg;
+
+        setFormEnabled(false);
+
+        if (attachmentUri == null) {
+            postText(body);
+        } else {
+            postMedia(body);
+        }
+    }
+
     public void postText(final String body) {
         Thread thr = new Thread(new Runnable() {
             

@@ -306,9 +306,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     public JuickMessage findReply(AdapterView<?> parent, int replyNo) {
         for(int q=0; q<parent.getCount(); q++) {
-            JuickMessage maybeReplied = (JuickMessage)parent.getItemAtPosition(q);
-            if (maybeReplied.RID == replyNo) {
-                return  maybeReplied;
+            Object itemAtPosition = parent.getItemAtPosition(q);
+            if (itemAtPosition instanceof JuickMessage) {
+                JuickMessage maybeReplied = (JuickMessage) itemAtPosition;
+                if (maybeReplied.RID == replyNo) {
+                    return  maybeReplied;
+                }
             }
         }
         return null;

@@ -140,5 +140,6 @@
     </string>
     <string name="ColorsTheme">Colors/Theme</string>
     <string name="Colors">Colors</string>
+    <string name="PostReply">Post a reply</string>
 
 </resources>
