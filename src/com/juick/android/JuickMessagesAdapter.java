@@ -178,7 +178,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (type == TYPE_THREAD && jmsg.RID == 0) {
                 parsedMessage = formatFirstMessageText(jmsg);
             } else {
-                parsedMessage = formatMessageText(getContext(), jmsg, position == 0 && isContinuationAdapter);
+                parsedMessage = formatMessageText(getContext(), jmsg, position == 0 && isContinuationAdapter, false);
             }
             t.setText(parsedMessage.textContent);
             final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
@@ -410,7 +410,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return colorTheme;
     }
 
-    public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation) {
+    public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation, boolean condensed) {
         getColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
@@ -419,32 +419,41 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ssb.append("<< resuming from last time>>\n");
             ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, spanOffset + ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+        //
+        // NAME
+        //
         spanOffset = ssb.length();
         String name = '@' + jmsg.User.UName;
-        String tags = jmsg.getTags();
-        String txt = jmsg.Text;
-        if (jmsg.Photo != null) {
-            txt = jmsg.Photo + "\n" + txt;
-        }
-        if (jmsg.Video != null) {
-            txt = jmsg.Video + "\n" + txt;
-        }
-        ssb.append(name + ' ' + tags + "\n");
-        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, spanOffset + name.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (tags.length() > 0)
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), spanOffset + name.length() + 1,
-                    spanOffset + name.length() + tags.length() + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-
+        ssb.append(name);
+        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, spanOffset + ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, spanOffset + ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.append(' ');
         spanOffset = ssb.length();
+
+        if (!condensed) {
+            //
+            // TAGS
+            //
+            String tags = jmsg.getTags();
+            ssb.append(tags + "\n");
+            if (tags.length() > 0)
+                ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), spanOffset,
+                        ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spanOffset = ssb.length();
+        }
         if (jmsg.translated) {
+            //
+            // 'translated'
+            //
             ssb.append("translated: ");
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey. TRANSLATED_LABEL, 0xFF4ec856)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spanOffset = ssb.length();
         }
-        spanOffset = ssb.length();
-        if (showNumbers(ctx)) {
+        if (showNumbers(ctx) && !condensed) {
+            //
+            // numbers
+            //
             if (jmsg.RID > 0) {
                 ssb.append("/"+jmsg.RID);
                 if (jmsg.replyTo != 0) {
@@ -455,8 +464,20 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 ssb.append("#"+jmsg.MID+" ");
             }
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.MESSAGE_ID, 0xFFa0a5bd)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spanOffset = ssb.length();
         }
-        spanOffset = ssb.length();
+        //
+        // MESSAGE BODY
+        //
+        String txt = jmsg.Text;
+        if (!condensed) {
+            if (jmsg.Photo != null) {
+                txt = jmsg.Photo + "\n" + txt;
+            }
+            if (jmsg.Video != null) {
+                txt = jmsg.Video + "\n" + txt;
+            }
+        }
         ssb.append(txt);
         // Highlight links http://example.com/
         int pos = 0;
@@ -476,34 +497,32 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             pos = m.end();
         }
 
-        /*
-        // Highlight usernames @username
-        pos = 0;
-        m = usrPattern.matcher(txt);
-        while (m.find(pos)) {
-        ssb.setSpan(new ForegroundColorSpan(0xFF0000CC), paddingt + m.start(), paddingt + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        pos = m.end();
+        if (!condensed) {
+            //
+            // TIME
+            //
+            int rightPartOffset = spanOffset = ssb.length();
+
+            DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
+            df.setTimeZone(TimeZone.getDefault());
+            String date = df.format(jmsg.Timestamp);
+            ssb.append("\n" + date + " ");
+
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            spanOffset = ssb.length();
+
+            //
+            // Number of REPLIES
+            //
+            if (jmsg.replies > 0) {
+                String replies = Replies + jmsg.replies;
+                ssb.append("  " + replies + " ");
+                ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.NUMBER_OF_COMMENTS, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            // right align
+            ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-         */
-
-        int rightPartOffset = spanOffset = ssb.length();
-
-        DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
-        df.setTimeZone(TimeZone.getDefault());
-        String date = df.format(jmsg.Timestamp);
-        ssb.append("\n" + date + " ");
-
-        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        spanOffset = ssb.length();
-
-        if (jmsg.replies > 0) {
-            String replies = Replies + jmsg.replies;
-            ssb.append("  " + replies + " ");
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.NUMBER_OF_COMMENTS, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         return new ParsedMessage(ssb, urls);
     }

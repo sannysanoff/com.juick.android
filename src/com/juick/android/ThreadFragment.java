@@ -304,15 +304,40 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
     }
 
+    public JuickMessage findReply(AdapterView<?> parent, int replyNo) {
+        for(int q=0; q<parent.getCount(); q++) {
+            JuickMessage maybeReplied = (JuickMessage)parent.getItemAtPosition(q);
+            if (maybeReplied.RID == replyNo) {
+                return  maybeReplied;
+            }
+        }
+        return null;
+    }
+
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
         if (jmsg.replyTo != 0) {
-            for(int q=0; q<parent.getCount(); q++) {
-                JuickMessage maybeReplied = (JuickMessage)parent.getItemAtPosition(q);
-                if (maybeReplied.RID == jmsg.replyTo) {
-                    Toast.makeText(parent.getContext(), "/"+maybeReplied.RID+" "+maybeReplied.Text, Toast.LENGTH_LONG).show();
-                    break;
-                }
+            JuickMessage reply = jmsg;
+            LinearLayout ll = new LinearLayout(getActivity());
+            ll.setOrientation(LinearLayout.VERTICAL);
+            int totalCount = 0;
+            while(reply != null) {
+                totalCount += reply.Text.length();
+                if (totalCount > 500 || ll.getChildCount() > 10) break;
+                JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(getActivity(), reply, false, true);
+                TextView child = new TextView(getActivity());
+                ll.addView(child, 0);
+                child.setText(parsedMessage.textContent);
+                if (reply.replyTo < 1) break;
+                reply = findReply(parent, reply.replyTo);
+            }
+            if (ll.getChildCount() != 0) {
+                ll.setPressed(true);
+                MainActivity.restyleChildrenOrWidget(ll);
+                Toast result = new Toast(getActivity());
+                result.setView(ll);
+                result.setDuration(Toast.LENGTH_LONG);
+                result.show();
             }
         }
         parentActivity.onReplySelected(jmsg.RID, jmsg.Text);
