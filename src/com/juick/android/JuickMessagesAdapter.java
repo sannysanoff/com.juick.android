@@ -67,6 +67,7 @@ import org.json.JSONArray;
 public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     private static final String PREFERENCES_SCALE = "messagesFontScale";
+    public static final int TYPE_MESSAGES = 0;
     public static final int TYPE_THREAD = 1;
     public static Pattern urlPattern = Pattern.compile("((?<=\\A)|(?<=\\s))(ht|f)tps?://[a-z0-9\\-\\.]+[a-z]{2,}/?[^\\s\\n]*", Pattern.CASE_INSENSITIVE);
     public static Pattern msgPattern = Pattern.compile("#[0-9]+");
@@ -153,6 +154,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (v == null || !(v instanceof LinearLayout)) {
                 LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 v = vi.inflate(R.layout.listitem_juickmessage, null);
+                final PressableLinearLayout sll = (PressableLinearLayout)v;
+                sll.setPressedListener(new PressableLinearLayout.PressedListener() {
+                    @Override
+                    public void onPressStateChanged(boolean selected) {
+                        MainActivity.restyleChildrenOrWidget(sll);
+                    }
+                });
                 TextView tv = (TextView) v.findViewById(R.id.text);
                 float textSize = tv.getTextSize();
                 try {
@@ -248,6 +256,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             System.out.println("oh");
                         }
                         //view.measure(2000, 2000);
+                        MainActivity.restyleChildrenOrWidget(view);
                         return view;
                     }
                 });

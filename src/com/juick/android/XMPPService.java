@@ -484,7 +484,7 @@ public class XMPPService extends Service {
         boolean silent = false;
         synchronized (incomingMessages) {
             String body = message.getBody();
-            if (body.startsWith("Найденные") && JUBO_ID.equals(message.getFrom())) {
+            if (body.startsWith("Найденные") && JUBO_ID.equalsIgnoreCase(message.getFrom()) || body.startsWith("Recommended by @") && JUICK_ID.equals(message.getFrom())) {
                 int cr = body.indexOf("\n");
                 if (cr != -1 && body.length() > cr) {
                     body = body.substring(cr+1);

@@ -422,21 +422,22 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
     public static void restyleChildrenOrWidget(View view) {
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
+        boolean pressed = view.isPressed();
         if (view instanceof EditText) {
             EditText et = (EditText) view;
-            et.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
-            et.setBackgroundColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            et.setTextColor(colorTheme.getForeground(pressed));
+            et.setBackgroundColor(colorTheme.getBackground(pressed));
         } else if (view instanceof Button) {
             Button btn = (Button) view;
-            btn.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
-            btn.setBackgroundColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            btn.setTextColor(colorTheme.getForeground(pressed));
+            btn.setBackgroundColor(colorTheme.getBackground(pressed));
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
-            text.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
+            text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
             ViewGroup parent = (ViewGroup) view;
             int childCount = parent.getChildCount();
-            parent.setBackgroundColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+            parent.setBackgroundColor(colorTheme.getBackground(pressed));
             for (int i = 0; i < childCount; i++) {
                 View child = parent.getChildAt(i);
                 System.out.println(child);

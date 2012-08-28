@@ -222,7 +222,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshState = TAP_TO_REFRESH;
 
 
-        listAdapter = new JuickMessagesAdapter(getActivity(), 0);
+        listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES);
         if (mSaveLastMessagesPosition) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
             if (sp.getInt("lastMessagesSavedPosition", -1) > 0)
@@ -233,7 +233,17 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         getListView().setOnScrollListener(this);
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
+        getListView().setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                System.out.println();
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                System.out.println();
+            }
+        });
         init();
     }
 

@@ -25,8 +25,7 @@
             android:persistent="true"/>
         <ListPreference
             android:key="juickBotOn"
-            android:title="Juick bot ON after connect?"
-            android:summary="Whether to send ON message"
+            android:title="Send 'ON' command after connect?"
             android:defaultValue="skip"
             android:entries="@array/juickBotOnLabels"
             android:entryValues="@array/juickBotOnValues"

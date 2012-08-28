@@ -60,6 +60,22 @@ public class ColorsTheme {
                 return retval.color;
             }
         }
+
+        public int getForeground() {
+            return getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000);
+        }
+
+        public int getBackground() {
+            return getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF);
+        }
+
+        public int getBackground(boolean selected) {
+            return selected ? getForeground() : getBackground();
+        }
+
+        public int getForeground(boolean selected) {
+            return selected ? getBackground(): getForeground();
+        }
     }
 
     public enum ColorKey {
