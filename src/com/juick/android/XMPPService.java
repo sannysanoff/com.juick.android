@@ -193,21 +193,6 @@ public class XMPPService extends Service {
                                 scheduleReconnect();
                                 return;
                             }
-                            messageReceivers.add(new Utils.Function<Void, Message>() {
-                                @Override
-                                public Void apply(Message message) {
-                                    // general juick message receiver
-                                    if (JUICK_ID.equals(message.getFrom())) {
-                                        messagesReceived++;
-                                        handleJuickMessage(message);
-                                    }
-                                    if (JUBO_ID.equalsIgnoreCase(message.getFrom())) {
-                                        messagesReceived++;
-                                        handleJuickMessage(message);
-                                    }
-                                    return null;
-                                }
-                            });
                             roster.addRosterListener(new RosterListener() {
                                 @Override
                                 public void entriesAdded(Collection<String> addresses) {
@@ -293,8 +278,16 @@ public class XMPPService extends Service {
         @Override
         public void processPacket(Packet packet) {
             messagesReceived++;
-            if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom()) && !JUBO_ID.equalsIgnoreCase(packet.getFrom())) {
-                handleTextMessage((Message) packet);
+            if (packet instanceof Message) {
+                Message msg = (Message)packet;
+                if (JUBO_ID.equalsIgnoreCase(packet.getFrom())) {
+                    handleJuickMessage(msg);
+                } else if (JUICK_ID.equals(packet.getFrom())) {
+                    handleJuickMessage(msg);
+                    // handled elsewhere
+                } else if (!JUICK_ID.equals(packet.getFrom())) {
+                    handleTextMessage((Message) packet);
+                }
             }
         }
     };
