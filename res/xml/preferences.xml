@@ -59,6 +59,11 @@
             android:title="LED enabled"
             android:defaultValue="true"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="current_vibration_enabled"
+            android:title="Vibration in current thread"
+            android:defaultValue="true"
+            android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Load images">
         <ListPreference

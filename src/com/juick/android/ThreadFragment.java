@@ -280,11 +280,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         if (!isAdded()) {
             return;
         }
-        ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
         if (jsonStr != null) {
             final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure("[" + jsonStr + "]");
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    if (sp.getBoolean("current_vibration_enabled", true))
+                        ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
                     listAdapter.addAllMessages(messages);
                     xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                         @Override

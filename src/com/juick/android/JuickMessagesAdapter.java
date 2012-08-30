@@ -417,7 +417,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         if (addContinuation) {
             ctx.getResources().getString(R.string.ResumingFromLastTime);
             ssb.append("<< resuming from last time>>\n");
-            ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, spanOffset + ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         //
         // NAME
@@ -425,8 +425,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         spanOffset = ssb.length();
         String name = '@' + jmsg.User.UName;
         ssb.append(name);
-        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, spanOffset + ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, spanOffset + ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.append(' ');
         spanOffset = ssb.length();
 
