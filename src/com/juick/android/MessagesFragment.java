@@ -409,27 +409,29 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 apiURL.getArgsMap().put("before_mid", "" + jmsg.MID);
                 apiURL.getArgsMap().put("page", "" + page);
                 Activity activity = getActivity();
-                final String jsonStr = Utils.getJSON(activity, apiURL.getFullURL(), progressNotification);
-                if (isAdded() && activity != null) {
-//                    if (jsonStr == null) {
-//                        getActivity().runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                Toast.makeText(getActivity(), "More messages: "+progressNotification.lastError, Toast.LENGTH_LONG).show();
-//                            }
-//                        });
-//                    }
-                    final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
-                    activity.runOnUiThread(new Runnable() {
+                if (activity != null) {
+                    final String jsonStr = Utils.getJSON(activity, apiURL.getFullURL(), progressNotification);
+                    if (isAdded()) {
+    //                    if (jsonStr == null) {
+    //                        getActivity().runOnUiThread(new Runnable() {
+    //                            @Override
+    //                            public void run() {
+    //                                Toast.makeText(getActivity(), "More messages: "+progressNotification.lastError, Toast.LENGTH_LONG).show();
+    //                            }
+    //                        });
+    //                    }
+                        final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
+                        activity.runOnUiThread(new Runnable() {
 
-                        public void run() {
-                            listAdapter.addAllMessages(messages);
-//                            if (messages.size() != 20) {
-//                                MessagesFragment.this.getListView().removeFooterView(viewLoading);
-//                            }
-                            loading = false;
-                        }
-                    });
+                            public void run() {
+                                listAdapter.addAllMessages(messages);
+    //                            if (messages.size() != 20) {
+    //                                MessagesFragment.this.getListView().removeFooterView(viewLoading);
+    //                            }
+                                loading = false;
+                            }
+                        });
+                    }
                 }
             }
         });
