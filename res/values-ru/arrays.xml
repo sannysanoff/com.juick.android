@@ -5,6 +5,8 @@
         <item>Все сообщения</item>
         <item>Популярные</item>
         <item>С фото</item>
+        <item>Мой блог</item>
+        <item>Срачики</item>
     </string-array>
     <string-array name="prefsRefreshIntervalTitles">
         <item>Никогда</item>

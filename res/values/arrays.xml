@@ -6,6 +6,7 @@
         <item>Top messages</item>
         <item>With photos</item>
         <item>My blog</item>
+        <item>Srachiki</item>
     </string-array>
     <string-array name="prefsRefreshIntervalTitles">
         <item>Never</item>

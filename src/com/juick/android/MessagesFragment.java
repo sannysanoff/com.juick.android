@@ -98,7 +98,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         int place_id = 0;
         boolean popular = false;
         boolean media = false;
-        boolean myBlog = true;
+        boolean myBlog = false;
+        boolean srachiki = false;
 
         Bundle args = getArguments();
         if (args != null) {
@@ -111,10 +112,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             popular = args.getBoolean("popular", false);
             media = args.getBoolean("media", false);
             myBlog = args.getBoolean("myBlog", false);
+            srachiki = args.getBoolean("srachiki", false);
         }
 
         if (home) {
             apiurl = "http://api.juick.com/home?1=1";
+        } else if (srachiki) {
+            apiurl = "http://s.jugregator.org/api";
         } else {
             apiurl = "http://api.juick.com/messages?1=1";
             if (uid > 0 && uname != null) {

@@ -315,6 +315,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             }
             args.putBoolean("myBlog", true);
 
+        } else if (itemPosition == 5) {
+            args.putBoolean("srachiki", true);
         }
         if (shouldCommit) {
             lastNavigationPosition = itemPosition;
