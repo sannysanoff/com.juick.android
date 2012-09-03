@@ -22,6 +22,7 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
@@ -58,6 +59,7 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
 
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(this);
+        MainActivity.restyleChildrenOrWidget(view);
 
         Thread thr = new Thread(new Runnable() {
 
@@ -73,7 +75,14 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
                         public void run() {
                             if (jsonStr != null) {
                                 try {
-                                    ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1);
+                                    ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1) {
+                                        @Override
+                                        public View getView(int position, View convertView, ViewGroup parent) {
+                                            View retval = super.getView(position, convertView, parent);
+                                            MainActivity.restyleChildrenOrWidget(retval);
+                                            return retval;    //To change body of overridden methods use File | Settings | File Templates.
+                                        }
+                                    };
 
                                     JSONArray json = new JSONArray(jsonStr);
                                     int cnt = json.length();

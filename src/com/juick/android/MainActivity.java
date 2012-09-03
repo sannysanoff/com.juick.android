@@ -423,6 +423,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
 
     public static void restyleChildrenOrWidget(View view) {
+        if (view == null) return;
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         boolean pressed = view.isPressed();
         if (view instanceof EditText) {

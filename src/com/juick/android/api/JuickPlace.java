@@ -36,6 +36,7 @@ public class JuickPlace {
     public int users = 0;
     public int messages = 0;
     public int distance = 0;
+    public String source = null;
     public Vector<String> tags = new Vector<String>();
 
     public static JuickPlace parseJSON(JSONObject json) throws JSONException {

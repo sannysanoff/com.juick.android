@@ -170,6 +170,13 @@
                 android:summary="..when replying "
                 android:defaultValue="false"
                 android:persistent="true"/>
+        <ListPreference
+                android:key="locationAccuracy"
+                android:title="Accuracy of location"
+                android:entries="@array/prefsAccuracyTitles"
+                android:entryValues="@array/prefsAccuracyValues"
+                android:defaultValue="ACCURACY_FINE"
+                android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Camera capture">
         <CheckBoxPreference

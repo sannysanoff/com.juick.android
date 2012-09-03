@@ -24,11 +24,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -43,9 +46,14 @@ import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 
 /**
- *
  * @author Ugnich Anton
  */
 public class PickPlaceActivity extends ListActivity implements OnClickListener, OnItemClickListener, OnItemLongClickListener, OnCancelListener, LocationListener {
@@ -81,7 +89,15 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
 
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria c = new Criteria();
-        c.setAccuracy(Criteria.ACCURACY_FINE);
+        SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String accuracy = defaultSharedPreferences.getString("locationAccuracy", "ACCURACY_FINE");
+        if (accuracy.equals("ACCURACY_COARSE")) {
+            c.setAccuracy(Criteria.ACCURACY_COARSE);
+        } else if (accuracy.equals("ACCURACY_LOW")) {
+            c.setAccuracy(Criteria.ACCURACY_LOW);
+        } else {
+            c.setAccuracy(Criteria.ACCURACY_FINE);
+        }
         String bestProvider = lm.getBestProvider(c, true);
         if (bestProvider == null || bestProvider.length() == 0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -147,27 +163,83 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        JuickPlace jplace = (JuickPlace) parent.getItemAtPosition(position);
-        Intent i = new Intent();
-        if (location != null) {
-            i.putExtra("mylat", location.getLatitude());
-            i.putExtra("mylon", location.getLongitude());
-            if (location.hasAccuracy()) {
-                i.putExtra("myacc", String.valueOf(location.getAccuracy()));
-            }
+        final JuickPlace jplace = (JuickPlace) parent.getItemAtPosition(position);
+        if (jplace.source != null && jplace.source.equals("google")) {
+            EditText tv = new EditText(this);
+            tv.setText(jplace.name);
+            tv.setSingleLine(false);
+            tv.setLines(5);
+            MainActivity.restyleChildrenOrWidget(tv);
+            new AlertDialog.Builder(this)
+                    .setTitle("Edit location before save")
+                    .setView(tv)
+                    .setCancelable(true)
+                    .setPositiveButton("Save and continue", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(final DialogInterface dialogInterface, int i) {
+                            String data = "lat=" + jplace.lat + "&lon=" + jplace.lon + "&name=" + Uri.encode(jplace.name);
+                            final String dataf = data;
+                            final ProgressDialog pd = new ProgressDialog(PickPlaceActivity.this);
+                            pd.setIndeterminate(true);
+                            pd.setCancelable(false);
+                            pd.show();
+                            Thread thr = new Thread(new Runnable() {
+
+                                public void run() {
+                                    final String jsonStr = Utils.postJSON(PickPlaceActivity.this, "http://api.juick.com/place_add", dataf);
+                                    String error = null;
+                                    try {
+                                        JSONObject json = new JSONObject(jsonStr);
+                                        if (json.has("pid")) {
+                                            jplace.pid = json.getInt("pid");
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    dialogInterface.dismiss();
+                                                    pd.dismiss();
+                                                    finishWithPlace(jplace);
+                                                }
+                                            });
+                                        } else {
+                                            error = "Juick was unable to store this place: "+jsonStr;
+                                        }
+                                    } catch (JSONException e) {
+                                        error = "Juick server could not process request: "+jsonStr;
+                                    }
+                                    if (error != null) {
+                                        final String finalError = error;
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dialogInterface.dismiss();
+                                                pd.dismiss();
+                                                Toast.makeText(PickPlaceActivity.this, finalError, Toast.LENGTH_LONG).show();
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                            thr.start();
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    }).show();
+        } else {
+            finishWithPlace(jplace);
         }
-        i.putExtra("pid", jplace.pid);
-        i.putExtra("lat", jplace.lat);
-        i.putExtra("lon", jplace.lon);
-        i.putExtra("pname", jplace.name);
-        setResult(RESULT_OK, i);
-        finish();
     }
 
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        Intent i = new Intent(this, MessagesActivity.class);
-        i.putExtra("place_id", listAdapter.getItem(position).pid);
-        startActivity(i);
+        int placeId = listAdapter.getItem(position).pid;
+        if (placeId != 0) {
+            Intent i = new Intent(this, MessagesActivity.class);
+            i.putExtra("place_id", placeId);
+            startActivity(i);
+        }
         return true;
     }
 
@@ -210,7 +282,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
     public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
     }
 
-    public void onLocationChanged(Location loc) {
+    public void onLocationChanged(final Location loc) {
         location = loc;
         lm.removeUpdates(this);
         listAdapter.clear();
@@ -227,16 +299,71 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                     public void run() {
                         if (jsonStr != null) {
                             listAdapter.parseJSON(jsonStr);
+                            progressDialog.dismiss();
                         }
-                        progressDialog.dismiss();
                     }
                 });
 
             }
         });
         thr.start();
+        Thread thr2 = new Thread(new Runnable() {
+
+            public void run() {
+                String url = "http://maps.googleapis.com/maps/api/geocode/json?language=ru&sensor=true&latlng=" + String.valueOf(location.getLatitude()) + "," + String.valueOf(location.getLongitude());
+                final String jsonStr = Utils.getJSON(PickPlaceActivity.this, url, null);
+                PickPlaceActivity.this.runOnUiThread(new Runnable() {
+
+                    public void run() {
+                        try {
+                            boolean added = false;
+                            if (jsonStr != null) {
+                                try {
+                                    JSONObject jsonObject = new JSONObject(jsonStr);
+                                    JSONArray results = (JSONArray) jsonObject.get("results");
+                                    for (int i = 0; i < results.length(); i++) {
+                                        JSONObject res = (JSONObject) results.get(i);
+                                        String addr = (String) res.get("formatted_address");
+                                        JuickPlace jplace = new JuickPlace();
+                                        jplace.name = addr;
+                                        jplace.source = "google";
+                                        jplace.lat = loc.getLatitude();
+                                        jplace.lon = loc.getLongitude();
+                                        listAdapter.add(jplace);
+                                        added = true;
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                }
+                            }
+                            if (added)
+                                listAdapter.notifyDataSetChanged();
+                        } finally {
+                            progressDialog.dismiss();
+                        }
+                    }
+                });
+
+            }
+        });
+        thr2.start();
     }
-}
+    private void finishWithPlace(JuickPlace jplace) {
+        Intent i = new Intent();
+        if (location != null) {
+            i.putExtra("mylat", location.getLatitude());
+            i.putExtra("mylon", location.getLongitude());
+            if (location.hasAccuracy()) {
+                i.putExtra("myacc", String.valueOf(location.getAccuracy()));
+            }
+        }
+        i.putExtra("pid", jplace.pid);
+        i.putExtra("lat", jplace.lat);
+        i.putExtra("lon", jplace.lon);
+        i.putExtra("pname", jplace.name);
+        setResult(RESULT_OK, i);
+        finish();
+    }}
 
 class JuickPlacesAdapter extends ArrayAdapter<JuickPlace> {
 
@@ -269,7 +396,13 @@ class JuickPlacesAdapter extends ArrayAdapter<JuickPlace> {
             LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             t = (TextView) vi.inflate(textViewResourceId, null);
         }
-        t.setText(getItem(position).name);
+        JuickPlace item = getItem(position);
+        String label = item.name;
+        if (item.source != null && item.source.equals("google")) {
+            label = "[auto] " + label;
+        }
+        t.setText(label);
         return t;
     }
 }
+
