@@ -141,12 +141,6 @@
             android:summary="@string/Compressed_Menu_Summary"
             android:defaultValue="false"
             android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="capitalizeReplies"
-            android:title="Auto-capitalize reply text"
-            android:summary="..when replying "
-            android:defaultValue="false"
-            android:persistent="true"/>
         <EditTextPreference
             android:key="myUserId"
             android:title="User ID for 'My Blog'"
@@ -170,6 +164,12 @@
             android:title="Warn replies without 'In-reply-to'?"
             android:defaultValue="false"
             android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="capitalizeReplies"
+                android:title="Auto-capitalize reply text"
+                android:summary="..when replying "
+                android:defaultValue="false"
+                android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Camera capture">
         <CheckBoxPreference

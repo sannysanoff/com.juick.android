@@ -30,10 +30,12 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.MenuItem;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.util.Log;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -395,5 +397,28 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             }
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.support.v4.view.Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.thread, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menuitem_preferences:
+                startActivity(new Intent(this, JuickPreferencesActivity.class));
+                return true;
+            case R.id.reload:
+                tf.reload();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
 
 }

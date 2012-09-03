@@ -41,7 +41,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="AmbilWarna" />
     <orderEntry type="module" module-name="Library" />
-    <orderEntry type="library" name="android-error-reporter" level="project" />
+    <orderEntry type="library" name="libs" level="project" />
   </component>
 </module>
 

@@ -22,6 +22,7 @@ import android.content.SharedPreferences;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
+import android.support.v4.view.*;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
@@ -131,6 +132,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         wsthr.start();
     }
 
+    public void reload() {
+        getView().findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+        getView().findViewById(android.R.id.list).setVisibility(View.GONE);
+        restoreData = null;
+        initAdapter();
+    }
+
     static class RetainedData {
         ArrayList<JuickMessage> messages;
         Parcelable viewState;
@@ -197,6 +205,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             }
                             listAdapter.addAllMessages(messages);
                             setListAdapter(listAdapter);
+                            getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
+                            getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
 
                             if (messages.size() > 0) {
                                 initAdapterStageTwo();
@@ -210,15 +220,18 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                             at+android.support.v4.app.ListFragment.ensureList(ListFragment.java:328)
                                             at+android.support.v4.app.ListFragment.getListView(ListFragment.java:222)
                                      */
+
                                 }
                             }
-                            Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
-                            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                @Override
-                                public void withService(XMPPService service) {
-                                    service.removeMessages(mid);
-                                }
-                            });
+                            if (messages.size() != 0) {
+                                Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
+                                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                    @Override
+                                    public void withService(XMPPService service) {
+                                        service.removeMessages(mid);
+                                    }
+                                });
+                            }
 
                         }
                     });
@@ -389,5 +402,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
 
 }
