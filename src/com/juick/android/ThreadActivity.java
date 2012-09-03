@@ -292,7 +292,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                     Log.e("postComment", e.toString());
                 }
             }
-        });
+        },"Post comment");
         thr.start();
     }
     
@@ -344,7 +344,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                     }
                 });
             }
-        });
+        },"Post media");
         thr.start();
     }
     

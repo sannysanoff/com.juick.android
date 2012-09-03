@@ -66,7 +66,7 @@ class PacketReader {
         done = false;
         connectionID = null;
 
-        readerThread = new Thread() {
+        readerThread = new Thread("XMPP Packet reader") {
             public void run() {
                 parsePackets(this);
             }

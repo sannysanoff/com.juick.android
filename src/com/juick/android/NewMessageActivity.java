@@ -227,7 +227,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     }
                 });
             }
-        });
+        },"Post message");
         thr.start();
     }
 
@@ -356,7 +356,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                         }
                     });
                 }
-            });
+            },"Post message (large)");
             thr.start();
         }
     }

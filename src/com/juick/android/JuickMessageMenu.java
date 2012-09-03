@@ -431,7 +431,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                     Log.e("postMessage", e.toString());
                 }
             }
-        });
+        }, "postMessage");
         thr.start();
     }
 
@@ -473,7 +473,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 actions.add(verb);
                 verb.setHeader("Accept-Charset", "UTF-8");
                 final int finalI = i;
-                final Thread thread = new Thread() {
+                final Thread thread = new Thread("google translate") {
                     @Override
                     public void run() {
                         final StringBuilder out = new StringBuilder("");

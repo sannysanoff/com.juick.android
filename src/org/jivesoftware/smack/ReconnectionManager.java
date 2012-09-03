@@ -65,7 +65,7 @@ public class ReconnectionManager implements ConnectionListener {
         if (this.isReconnectionAllowed()) {
             // Since there is no thread running, creates a new one to attempt
             // the reconnection.
-            Thread reconnectionThread = new Thread() {
+            Thread reconnectionThread = new Thread("XMPP reconnection") {
 
                 /**
                  * Holds the current number of reconnection attempts

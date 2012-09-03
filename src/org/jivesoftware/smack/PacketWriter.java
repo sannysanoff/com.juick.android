@@ -73,7 +73,7 @@ class PacketWriter {
         this.writer = connection.writer;
         done = false;
 
-        writerThread = new Thread() {
+        writerThread = new Thread("XMPP packet writer") {
             public void run() {
                 writePackets(this);
             }
@@ -130,7 +130,7 @@ class PacketWriter {
         int keepAliveInterval = SmackConfiguration.getKeepAliveInterval();
         if (keepAliveInterval > 0) {
             KeepAliveTask task = new KeepAliveTask(keepAliveInterval);
-            keepAliveThread = new Thread(task);
+            keepAliveThread = new Thread(task, "XMPP keep alive");
             task.setThread(keepAliveThread);
             keepAliveThread.setDaemon(true);
             keepAliveThread.setName("Smack Keep Alive (" + connection.connectionCounterValue + ")");

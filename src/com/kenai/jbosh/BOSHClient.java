@@ -661,7 +661,7 @@ public final class BOSHClient {
         lock.lock();
         try {
             httpSender.init(cfg);
-            procThread = new Thread(procRunnable);
+            procThread = new Thread(procRunnable,"BOSHClient");
             procThread.setDaemon(true);
             procThread.setName(BOSHClient.class.getSimpleName()
                     + "[" + System.identityHashCode(this)

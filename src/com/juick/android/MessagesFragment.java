@@ -74,6 +74,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private Object restoreData;
     boolean implicitlyCreated;
     private int topMessageId = -1;
+    boolean allMessages = false;
+
+    Utils.ServiceGetter<DatabaseService> databaseGetter;
+    boolean trackLastRead = false;
+    private boolean enableMessageDB;
 
 
     public MessagesFragment(Object restoreData) {
@@ -88,7 +93,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
         handler = new Handler();
         boolean home = false;
         int uid = 0;
@@ -101,6 +106,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         boolean myBlog = false;
         boolean srachiki = false;
 
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        trackLastRead = sp.getBoolean("lastReadMessages", false);
+        enableMessageDB = sp.getBoolean("enableMessageDB", false);
+
         Bundle args = getArguments();
         if (args != null) {
             home = args.getBoolean("home", false);
@@ -110,6 +119,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             tag = args.getString("tag");
             place_id = args.getInt("place_id", 0);
             popular = args.getBoolean("popular", false);
+            allMessages = args.getBoolean("all", false);
             media = args.getBoolean("media", false);
             myBlog = args.getBoolean("myBlog", false);
             srachiki = args.getBoolean("srachiki", false);
@@ -124,7 +134,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             if (uid > 0 && uname != null) {
                 apiurl += "&user_id=" + uid;
             } else if (myBlog) {
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
                 String myUserId = sp.getString("myUserId", "12234567788");
                 apiurl += "&user_id=" + myUserId;
             } else if (search != null) {
@@ -151,7 +160,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             } else {
                 // just "last messages"
 
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
                 if (sp.getBoolean("persistLastMessagesPosition", false)) {
                     int lastMessagesSavedPosition = sp.getInt("lastMessagesSavedPosition", -1);
                     if (lastMessagesSavedPosition != -1) {
@@ -176,7 +184,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mReverseFlipAnimation.setFillAfter(true);
 
         if (Build.VERSION.SDK_INT >= 8) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
             if (sp.getBoolean("enableScaleByGesture", true)) {
                 mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
             }
@@ -226,7 +233,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshState = TAP_TO_REFRESH;
 
 
-        listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES);
+        listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
         if (mSaveLastMessagesPosition) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
             if (sp.getInt("lastMessagesSavedPosition", -1) > 0)
@@ -254,7 +261,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private void init() {
         if (implicitlyCreated) return;
         final MessagesLoadNotification messagesLoadNotification = new MessagesLoadNotification(getActivity(), handler);
-        Thread thr = new Thread(new Runnable() {
+        Thread thr = new Thread("Download messages (init)") {
 
             public void run() {
                 final MessagesLoadNotification notification = messagesLoadNotification;
@@ -262,7 +269,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 Parcelable listPosition = null;
                 if (restoreData == null) {
                     final String jsonStr = Utils.getJSON(getActivity(), apiurl, notification);
+                    URLParser parser = new URLParser(apiurl);
+                    String fromS = parser.getArgsMap().get("before_mid");
                     messages = listAdapter.parseJSONpure(jsonStr);
+                    processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && allMessages ? Integer.parseInt(fromS) : -1);
                 } else {
                     messages = ((RetainedData) restoreData).messages;
                     listPosition = ((RetainedData) restoreData).viewState;
@@ -327,8 +337,26 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     }
                 }
             }
-        });
+        };
         thr.start();
+    }
+
+    public static void processPureMessages(Utils.ServiceGetter<DatabaseService> databaseGetter, ArrayList<JuickMessage> messages, int beforeMID) {
+        for(int i=0; i<messages.size(); i++) {
+            final JuickMessage juickMessage = messages.get(i);
+            if (databaseGetter != null) {
+                final String source = juickMessage.source;
+                juickMessage.previousMID = beforeMID;
+                beforeMID = juickMessage.MID;
+                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                    @Override
+                    public void withService(DatabaseService service) {
+                        service.storeMessage(juickMessage, source);
+                    }
+                });
+            }
+            juickMessage.source = null;
+        }
     }
 
     static class RetainedData {
@@ -406,7 +434,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         final JuickMessage jmsg = listAdapter.getItem(listAdapter.getCount() - 1);
 
         final MoreMessagesLoadNotification progressNotification = new MoreMessagesLoadNotification();
-        Thread thr = new Thread(new Runnable() {
+        Thread thr = new Thread("Download messages (more)") {
 
             public void run() {
                 URLParser apiURL = new URLParser(apiurl);
@@ -424,7 +452,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     //                            }
     //                        });
     //                    }
+                        String fromS = apiURL.getArgsMap().get("before_mid");
                         final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
+                        processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && allMessages ? Integer.parseInt(fromS) : -1);
                         activity.runOnUiThread(new Runnable() {
 
                             public void run() {
@@ -438,7 +468,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     }
                 }
             }
-        });
+        };
         thr.start();
     }
 
@@ -465,6 +495,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         super.onStop();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
+    int lastItemReported = 0;
+
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         int prefetchMessagesSize = prefetchMessages ? 20:0;
@@ -476,6 +508,26 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             if (firstVisibleItem != 0) {
                 jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem-1);
                 topMessageId = jm.MID;
+                if (firstVisibleItem > 1 && trackLastRead) {
+                    final int itemToReport = firstVisibleItem - 1;
+                    if (lastItemReported < itemToReport) {
+                        for(lastItemReported++; lastItemReported <= itemToReport; lastItemReported++) {
+                            final int itemToSave = lastItemReported;
+                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                @Override
+                                public void withService(DatabaseService service) {
+                                    JuickMessage item = (JuickMessage) getListAdapter().getItem(itemToSave-1);
+                                    service.markAsRead(new DatabaseService.ReadMarker(item.MID, item.replies));
+                                }
+
+                                @Override
+                                public void withoutService() {
+                                }
+                            });
+                        }
+                        lastItemReported--;
+                    }
+                }
             } else {
                 jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem);
                 topMessageId = jm.MID+1;    // open/closed interval

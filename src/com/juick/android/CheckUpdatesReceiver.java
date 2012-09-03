@@ -68,7 +68,7 @@ public class CheckUpdatesReceiver extends BroadcastReceiver {
                     }
                 }
             }
-        });
+        },"checkUpdateThread");
         checkUpdateThread.start();
     }
 }

@@ -128,7 +128,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     }
                 }
             }
-        });
+        },"Websocket thread: mid="+mid);
         wsthr.start();
     }
 
@@ -159,7 +159,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private void initAdapter() {
-        listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_THREAD);
+        listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_THREAD, JuickMessagesAdapter.SUBTYPE_OTHER);
         if (implicitlyCreated || restoreData != null) {
             getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
         }
@@ -228,7 +228,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                                     @Override
                                     public void withService(XMPPService service) {
-                                        service.removeMessages(mid);
+                                        service.removeMessages(mid, false);
                                     }
                                 });
                             }
@@ -237,7 +237,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     });
                 }
             }
-        });
+        },"Init adapter, mid="+mid);
         thr.start();
     }
 
@@ -305,7 +305,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         @Override
                         public void withService(XMPPService service) {
                             for (JuickMessage message : messages) {
-                                service.removeMessages(message.MID);
+                                service.removeMessages(message.MID, false);
                             }
                         }
                     });
@@ -393,7 +393,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
                     public void withService(XMPPService service) {
-                        service.removeMessages(mid);
+                        service.removeMessages(mid, false);
                     }
                 });
                 //

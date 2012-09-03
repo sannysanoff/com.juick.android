@@ -639,7 +639,7 @@ public class BOSHConnection extends Connection {
         });
 
         // Create and start a thread which discards all read data.
-        readerConsumer = new Thread() {
+        readerConsumer = new Thread("BOSH consumer") {
             private Thread thread = this;
             private int bufferLength = 1024;
 

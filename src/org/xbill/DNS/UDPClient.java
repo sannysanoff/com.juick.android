@@ -37,7 +37,7 @@ static {
 			   public void run() {
 			   int n = prng.nextInt();
 			   prng_initializing = false;
-		   }}).start();
+		   }},"UDPClient prng").start();
 }
 
 private boolean bound = false;

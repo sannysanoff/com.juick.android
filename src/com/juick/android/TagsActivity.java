@@ -53,6 +53,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         tf.setArguments(args);
         ft.add(R.id.tagsfragment, tf);
         ft.commit();
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     public void onTagClick(String tag) {

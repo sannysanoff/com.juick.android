@@ -138,7 +138,7 @@ public class XMPPPreference extends Preference {
                                 pd.hide();
                             }
                         });
-                        new Thread() {
+                        new Thread("XMPP test connect") {
                             @Override
                             public void run() {
                                 try {

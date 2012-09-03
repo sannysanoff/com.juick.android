@@ -34,6 +34,7 @@ import org.json.JSONObject;
 public class JuickMessage {
 
     public int MID = 0;
+    public int previousMID = 0;
     public int RID = 0;
     public int replyTo = 0;
     public String Text = null;
@@ -44,9 +45,11 @@ public class JuickMessage {
     public String Photo = null;
     public String Video = null;
     public boolean translated;
+    public String source;
 
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();
+        jmsg.source = json.toString();
         jmsg.MID = json.getInt("mid");
         if (json.has("rid")) {
             jmsg.RID = json.getInt("rid");
@@ -158,5 +161,10 @@ public class JuickMessage {
             msg += "#" + RID;
         }
         return msg;
+    }
+
+    public Object getTimestampFormatted() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(Timestamp);
     }
 }

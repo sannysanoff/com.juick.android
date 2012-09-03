@@ -100,6 +100,8 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
             }
         });
         thr.start();
+        MainActivity.restyleChildrenOrWidget(getListView());
+
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

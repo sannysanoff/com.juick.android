@@ -24,7 +24,9 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.sax.StartElementListener;
 import android.text.Layout.Alignment;
+import android.text.style.StrikethroughSpan;
 import android.view.MotionEvent;
 import android.webkit.WebView;
 import android.widget.*;
@@ -59,6 +61,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
@@ -69,6 +72,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private static final String PREFERENCES_SCALE = "messagesFontScale";
     public static final int TYPE_MESSAGES = 0;
     public static final int TYPE_THREAD = 1;
+    public static final int SUBTYPE_ALL = 1;
+    public static final int SUBTYPE_OTHER = 2;
     public static Pattern urlPattern = Pattern.compile("((?<=\\A)|(?<=\\s))(ht|f)tps?://[a-z0-9\\-\\.]+[a-z]{2,}/?[^\\s\\n]*", Pattern.CASE_INSENSITIVE);
     public static Pattern msgPattern = Pattern.compile("#[0-9]+");
 //    public static Pattern usrPattern = Pattern.compile("@[a-zA-Z0-9\\-]{2,16}");
@@ -84,6 +89,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private final String proxyLogin;
     private final Thread mUiThread;
 
+    Utils.ServiceGetter<DatabaseService> databaseGetter;
+    Utils.ServiceGetter<XMPPService> xmppServiceGetter;
+    private boolean trackLastRead;
+    private int subtype;
 
 
     public static Set<String> getFilteredOutUsers(Context ctx) {
@@ -107,8 +116,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private SharedPreferences sp;
     private float defaultTextSize;
     private float textScale;
+    boolean enableMessageDB;
 
-    public JuickMessagesAdapter(Context context, int type) {
+    public JuickMessagesAdapter(Context context, int type, int subtype) {
         super(context, R.layout.listitem_juickmessage);
         sp = PreferenceManager.getDefaultSharedPreferences(context);
         mUiThread = Thread.currentThread();
@@ -116,17 +126,22 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             Replies = context.getResources().getString(R.string.Replies_) + " ";
         }
         this.type = type;
+        this.subtype = subtype;
         imageHeightPercent = Double.parseDouble(sp.getString("image.height_percent", "0.3"));
+        trackLastRead = sp.getBoolean("lastReadMessages", false);
         imageLoadMode = sp.getString("image.loadMode", "off");
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         defaultTextSize = new TextView(context).getTextSize();
+        enableMessageDB = sp.getBoolean("enableMessageDB", true);
         textScale = 1;
         try {
             textScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
         } catch (Exception ex) {
             //
         }
+        databaseGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
+        xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(context, XMPPService.class);
     }
 
     public static ArrayList<JuickMessage> parseJSONpure(String jsonStr) {
@@ -136,7 +151,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 JSONArray json = new JSONArray(jsonStr);
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
-                    messages.add(JuickMessage.initFromJSON(json.getJSONObject(i)));
+                    JSONObject jsonObject = json.getJSONObject(i);
+                    messages.add(JuickMessage.initFromJSON(jsonObject));
                 }
             } catch (Exception e) {
                 Log.e("initOpinionsAdapter", e.toString());
@@ -147,7 +163,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        JuickMessage jmsg = getItem(position);
+        final JuickMessage jmsg = getItem(position);
         View v = convertView;
 
         if (jmsg.User != null && jmsg.Text != null) {
@@ -171,7 +187,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 }
             }
             final LinearLayout ll = (LinearLayout)v;
-            TextView t = (TextView) v.findViewById(R.id.text);
+            final TextView t = (TextView) v.findViewById(R.id.text);
             t.setTextSize(defaultTextSize * textScale);
 
             final ParsedMessage parsedMessage;
@@ -180,7 +196,43 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             } else {
                 parsedMessage = formatMessageText(getContext(), jmsg, position == 0 && isContinuationAdapter, false);
             }
-            t.setText(parsedMessage.textContent);
+            t.setTag(jmsg.MID);
+            if (type != TYPE_THREAD && trackLastRead) {
+                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                    @Override
+                    public void withService(DatabaseService service) {
+                        service.getMessageReadStatus(jmsg.MID, new Utils.Function<Void, DatabaseService.MessageReadStatus>() {
+                            @Override
+                            public Void apply(DatabaseService.MessageReadStatus messageReadStatus) {
+                                if (messageReadStatus.read) {
+                                    Activity a = (Activity)t.getContext();
+                                    a.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (t.getTag().equals(jmsg.MID)) {
+                                                // still valid
+                                                parsedMessage.markAsRead();
+                                                t.setText(parsedMessage.textContent);
+                                            }
+                                        }
+                                    });
+                                }
+                                return null;
+                            }
+                        });
+                    }
+                });
+                xmppServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                    @Override
+                    public void withService(XMPPService service) {
+                        service.removeMessages(jmsg.MID, true);
+                    }
+                });
+
+            }
+            if (!parsedMessage.read) {  // could be set synchronously by the getMessageReadStatus, above
+                t.setText(parsedMessage.textContent);
+            }
             final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
             final Gallery gallery = (Gallery)ll.findViewById(R.id.gallery);
             gallery.setVisibility(View.VISIBLE);
@@ -391,11 +443,28 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     static class ParsedMessage {
         SpannableStringBuilder textContent;
         ArrayList<String> urls;
+        public int messageNumberStart, messageNumberEnd;
+        public int userNameStart, userNameEnd;
+        public StyleSpan userNameBoldSpan;
+        public ForegroundColorSpan userNameColorSpan;
+        boolean read;
 
         ParsedMessage(SpannableStringBuilder textContent, ArrayList<String> urls) {
             this.textContent = textContent;
             this.urls = urls;
         }
+
+        public void markAsRead() {
+            this.read = true;
+            textContent.removeSpan(userNameBoldSpan);
+            textContent.removeSpan(userNameColorSpan);
+            if (messageNumberStart != -1) {
+                textContent.setSpan(new StrikethroughSpan(), messageNumberStart, messageNumberEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                textContent.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_READ, 0xFFc84e4e)), userNameStart, userNameEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+
+
     }
     public void setScale(float scale) {
         textScale *= scale;
@@ -424,9 +493,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         //
         spanOffset = ssb.length();
         String name = '@' + jmsg.User.UName;
+        int userNameStart = ssb.length();
         ssb.append(name);
-        ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int userNameEnd = ssb.length();
+        StyleSpan userNameBoldSpan;
+        ForegroundColorSpan userNameColorSpan;
+        ssb.setSpan(userNameBoldSpan = new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(userNameColorSpan = new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.append(' ');
         spanOffset = ssb.length();
 
@@ -450,6 +523,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             spanOffset = ssb.length();
         }
+        int messageNumberStart = -1, messageNumberEnd = -1;
         if (showNumbers(ctx) && !condensed) {
             //
             // numbers
@@ -461,7 +535,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 }
                 ssb.append(" ");
             } else {
-                ssb.append("#"+jmsg.MID+" ");
+                messageNumberStart = ssb.length();
+                ssb.append("#"+jmsg.MID);
+                messageNumberEnd = ssb.length();
+                ssb.append(" ");
             }
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.MESSAGE_ID, 0xFFa0a5bd)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             spanOffset = ssb.length();
@@ -524,7 +601,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        return new ParsedMessage(ssb, urls);
+        ParsedMessage parsedMessage = new ParsedMessage(ssb, urls);
+        parsedMessage.userNameBoldSpan = userNameBoldSpan;
+        parsedMessage.userNameColorSpan = userNameColorSpan;
+        parsedMessage.userNameStart = userNameStart;
+        parsedMessage.userNameEnd = userNameEnd;
+        parsedMessage.messageNumberStart = messageNumberStart;
+        parsedMessage.messageNumberEnd = messageNumberEnd;
+        return parsedMessage;
     }
 
     private ParsedMessage formatFirstMessageText(JuickMessage jmsg) {
@@ -654,7 +738,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 progressBarText.setVisibility(View.VISIBLE);
                 final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
                 webView.setVisibility(View.GONE);
-                new Thread() {
+                new Thread("Image downloader") {
                     @Override
                     public void run() {
                         try {

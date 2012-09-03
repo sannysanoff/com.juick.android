@@ -76,7 +76,7 @@ public class XMPPService extends Service {
         final XMPPPreference.Value connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPPreference.Value.class);
         synchronized (connections) {
             if (useXMPP && connectionArgs != null && connections.size() == 0) {
-                (currentThread = new Thread() {
+                (currentThread = new Thread("XMPP worker") {
 
                     XMPPConnection connection;
 
@@ -302,7 +302,8 @@ public class XMPPService extends Service {
         }
     };
 
-    public void removeMessages(int mid) {
+    public void removeMessages(int mid, boolean keepReplyNotifications) {
+        boolean changed = false;
         synchronized (incomingMessages) {
             Iterator<IncomingMessage> iterator = incomingMessages.iterator();
             while (iterator.hasNext()) {
@@ -310,13 +311,18 @@ public class XMPPService extends Service {
                 if (next instanceof JuickIncomingMessage) {
                     JuickIncomingMessage jim = (JuickIncomingMessage)next;
                     if (jim.getPureThread() == mid) {
+                        if (keepReplyNotifications && jim instanceof JuickThreadIncomingMessage) {
+                            continue;
+                        }
                         removeMessageFile(jim.id);
                         iterator.remove();
+                        changed = true;
                     }
                 }
             }
         }
-        maybeCancelNotification();
+        if (changed)
+            maybeCancelNotification();
     }
 
     public void maybeCancelNotification() {

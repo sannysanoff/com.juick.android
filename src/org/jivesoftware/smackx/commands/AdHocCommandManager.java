@@ -371,7 +371,7 @@ public class AdHocCommandManager {
                 }
             }
 
-        });
+        },"XMPP session sweeper");
         sessionsSweeper.setDaemon(true);
     }
 

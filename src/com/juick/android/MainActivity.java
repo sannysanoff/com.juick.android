@@ -88,6 +88,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.registerOnSharedPreferenceChangeListener(this);
         toggleXMPP();
+        startService(new Intent(this, DatabaseService.class));
 
         clearObsoleteImagesInCache();
 
@@ -139,7 +140,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             Toast.makeText(this, "Invalid 'days to keep cache' value - number format", Toast.LENGTH_SHORT).show();
         }
         final int finalDaysToKeep = daysToKeep;
-        new Thread() {
+        new Thread("clearObsoleteImagesInCache") {
             @Override
             public void run() {
                 String[] list = cacheDir.list();
@@ -237,6 +238,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         boolean shouldCommit = true;
         if (itemPosition == 0) {
             args.putBoolean("home", true);
+        } else if (itemPosition == 1) {
+            args.putBoolean("all", true);
         } else if (itemPosition == 2) {
             args.putBoolean("popular", true);
         } else if (itemPosition == 3) {
@@ -259,7 +262,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                         final String value = input.getText().toString();
                         if (value.length() > 0) {
                             final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
-                            new Thread() {
+                            new Thread("UserID obtainer") {
                                 @Override
                                 public void run() {
                                     String fullName = value;

@@ -82,6 +82,7 @@ public class ColorsTheme {
         COMMON_BACKGROUND,
         COMMON_FOREGROUND,
         USERNAME,
+        USERNAME_READ,
         TAGS,
         URLS,
         MESSAGE_ID,
