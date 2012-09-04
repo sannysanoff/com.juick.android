@@ -7,6 +7,7 @@
         <item>С фото</item>
         <item>Мой блог</item>
         <item>Срачики</item>
+        <item>Все сообщения - нечитанные</item>
     </string-array>
     <string-array name="prefsRefreshIntervalTitles">
         <item>Никогда</item>

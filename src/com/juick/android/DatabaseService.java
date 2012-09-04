@@ -16,6 +16,7 @@ import com.juick.android.api.JuickMessage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.zip.GZIPOutputStream;
 
 
@@ -132,6 +133,9 @@ public class DatabaseService extends Service {
                             cv.put("msgid", parsed.MID);
                             cv.put("tm", parsed.Timestamp.getTime());
                             cv.put("prevmsgid", parsed.previousMID);
+                            if (Math.abs(parsed.previousMID - parsed.MID) > 30) {
+                                cv = cv;
+                            }
                             cv.put("nextmsgid", nextmsgid);
                             cv.put("body", compressGZIP(json));
                             if (-1 == db.insert("message", null, cv)) {
@@ -185,16 +189,7 @@ public class DatabaseService extends Service {
         new Thread("getMessageReadStatus: "+messageId) {
             @Override
             public void run() {
-                Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{"" + messageId});
-                MessageReadStatus mrs = new MessageReadStatus();
-                if (cursor.getCount() > 0) {
-                    cursor.moveToFirst();
-                    mrs.read = true;
-                    int nreplies = cursor.getInt(cursor.getColumnIndex("nreplies"));
-                    mrs.nreplies = nreplies;
-                }
-                cursor.close();
-                mrs.messageId = messageId;
+                MessageReadStatus mrs = getMessageReadStatus0(messageId);
                 synchronized (cachedMRS) {
                     if (cachedMRS.size() > 10) {
                         cachedMRS.remove(0);
@@ -205,6 +200,43 @@ public class DatabaseService extends Service {
                 super.run();    //To change body of overridden methods use File | Settings | File Templates.
             }
         }.start();
+    }
+
+    private MessageReadStatus getMessageReadStatus0(int messageId) {
+        Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{"" + messageId});
+        MessageReadStatus mrs = new MessageReadStatus();
+        if (cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            mrs.read = true;
+            int nreplies = cursor.getInt(cursor.getColumnIndex("nreplies"));
+            mrs.nreplies = nreplies;
+        }
+        cursor.close();
+        mrs.messageId = messageId;
+        return mrs;
+    }
+
+    class QuickMessageInfo {
+        long tm;
+        int mid;
+
+        QuickMessageInfo(int mid, long tm) {
+            this.mid = mid;
+            this.tm = tm;
+        }
+    }
+
+    private QuickMessageInfo getMessageExistStatus0(int messageId) {
+        Cursor cursor = db.rawQuery("select * from message where msgid=?", new String[]{"" + messageId});
+        if (cursor.moveToFirst()) {
+            int msgid = cursor.getInt(cursor.getColumnIndex("msgid"));
+            long tm = cursor.getLong(cursor.getColumnIndex("tm"));
+            cursor.close();
+            return new QuickMessageInfo(msgid, tm);
+        } else {
+            cursor.close();
+            return null;
+        }
     }
 
     long lastDBReport = 0;
@@ -288,6 +320,176 @@ public class DatabaseService extends Service {
         }
     }
 
+    class Period {
+        boolean read;
+        Date startDate;
+        Date endDate;
+
+        // for read messages
+        int startMid;
+        int endMid;
+        int numberOfMessages;
+
+        // for unread
+        int beforeMid;
+
+        @Override
+        public String toString() {
+            return "Period{" +
+                    "startDate=" + startDate +
+                    ", endDate=" + endDate +
+                    ", read=" + read +
+                    '}';
+        }
+    }
+
+    class MessageLink {
+        int id;
+        int prev;
+        int next;
+
+        @Override
+        public String toString() {
+            return "MessageLink{" +
+                    "id=" + id +
+                    ", prev=" + prev +
+                    ", next=" + next +
+                    '}';
+        }
+
+        MessageLink(int id, int prev, int next) {
+            this.id = id;
+            this.prev = prev;
+            this.next = next;
+        }
+    }
+
+    public ArrayList<Period> getPeriods(int days) {
+        ArrayList<Period> retval = new ArrayList<Period>();
+        Cursor cursor = db.rawQuery("select min(msgid), max(msgid) from message where tm > ?", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
+        cursor.moveToFirst();
+        if (cursor.isNull(1)) {
+            cursor.close();
+            return retval;
+        }
+        int bottomMsgid = cursor.getInt(0);
+        int newestMsgid = cursor.getInt(1);
+        cursor.close();
+        cursor = db.rawQuery("select * from message_read where msgid > ? order by msgid desc", new String[]{"" + bottomMsgid});
+        cursor.moveToFirst();
+        int msgidIndex = cursor.getColumnIndex("msgid");
+        int savedMsgid = newestMsgid;
+        while(!cursor.isAfterLast()) {
+            int thisMid = cursor.getInt(msgidIndex);
+            if (savedMsgid != -1 && Math.abs(thisMid - savedMsgid) > 50) {   // UNREAD HOLE
+                Period period = new Period();
+                QuickMessageInfo savedMsgStatus = getMessageExistStatus0(savedMsgid);
+                period.startMid = savedMsgid-1;
+                period.beforeMid = savedMsgid-1;
+                period.startDate = new Date(savedMsgStatus.tm);
+                QuickMessageInfo thisMsgStatus = getMessageExistStatus0(thisMid);
+                period.endMid =thisMid+1;
+                period.endDate = new Date(thisMsgStatus.tm);
+                period.read = false;
+                retval.add(period);
+                period = null;
+            }
+            savedMsgid = thisMid;
+            cursor.moveToNext();
+        }
+        // coalesce periods
+        for (int i = 0; i < retval.size() - 1; i++) {
+            Period curr = retval.get(i);
+            Period next = retval.get(i+1);
+            if (Math.abs(next.startMid - curr.endMid) < 6) { // removing single reads
+                curr.endMid = next.endMid;
+                curr.endDate = next.endDate;
+                retval.remove(i+1);
+                i--;
+            }
+        }
+        return retval;
+    }
+
+    public ArrayList<Period> getPeriodsBad(int days) {
+        ArrayList<Period> retval = new ArrayList<Period>();
+        Cursor cursor = db.rawQuery("select * from message where tm > ? order by tm desc", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
+        cursor.moveToFirst();
+        int tmIndex = cursor.getColumnIndex("tm");
+        int prevMsgIdIndex = cursor.getColumnIndex("prevmsgid");
+        int nextMsgIdIndex = cursor.getColumnIndex("nextmsgid");
+        int msgidIndex = cursor.getColumnIndex("msgid");
+        Period period = new Period();
+        ArrayList<MessageLink> links = new ArrayList<MessageLink>();
+        int previousMID = -1;
+        while(!cursor.isAfterLast()) {
+            int prevMsgId = cursor.getInt(prevMsgIdIndex);
+            int nextMsgId = cursor.getInt(nextMsgIdIndex);
+            if (prevMsgId == -1 && nextMsgId == -1) continue; // random nonlinear message
+            int thisMid = cursor.getInt(msgidIndex);
+            links.add(new MessageLink(thisMid, prevMsgId, nextMsgId));
+            Date thisDate = new Date(cursor.getLong(tmIndex));
+            if (period.startDate == null) {
+                period.startDate = thisDate;
+                period.startMid = thisMid;
+                period.read = true;
+                period.endMid = period.startMid;
+                period.endDate = period.startDate;
+            }
+            if (prevMsgId == -1 && period.startMid != thisMid || previousMID != -1 && Math.abs(previousMID - thisMid) > 10) {
+                // next period start; message without prev
+                retval.add(period);
+                Period prevPeriod = period;
+                period = new Period();
+                period.read = false;
+                period.beforeMid = prevPeriod.endMid;
+                period.startDate = prevPeriod.endDate;
+                period.endDate = thisDate;
+                retval.add(period);
+                period = new Period();
+            } else {
+                period.endMid = thisMid;
+                period.endDate = thisDate;
+                period.numberOfMessages++;
+            }
+            previousMID = thisMid;
+            cursor.moveToNext();
+        }
+        // coalesce periods
+        for (int i = 1; i < retval.size() - 1; i++) {
+            Period period1 = retval.get(i);
+            if (period1.read && period1.numberOfMessages < 10) {
+                retval.remove(i);
+                Period nextEmpty = retval.remove(i);
+                Period previous = retval.get(i-1);
+                previous.endDate = nextEmpty.endDate;
+                i--;
+            }
+        }
+        for (int i = 0; i < retval.size() - 1; i++) {
+            Period period1 = retval.get(i);
+            if (period1.read) {
+                Period nextEmpty = retval.get(i+1);
+                int rdMessages = 0;
+                for(int m=period1.startMid; m >= period1.endMid; m--) {
+                    QuickMessageInfo messageExistStatus0 = getMessageExistStatus0(m);
+                    if (messageExistStatus0 != null) {
+                        if (getMessageReadStatus0(m).read) {
+                            rdMessages++;
+                            continue;
+                        } else {
+                            nextEmpty.beforeMid = m+1;
+                            nextEmpty.startDate = new Date(messageExistStatus0.tm);
+                            period1.numberOfMessages = rdMessages;
+                            period1.endMid = m + 1;
+                            period1.endDate = nextEmpty.startDate;
+                        }
+                    }
+                }
+            }
+        }
+        return retval;
+    }
 
     public final static long DBREPORT_PERIOD_MSEC = 2 * 60 * 1000L;     // 2 minutes
     private void reportDBError(final String errmsg) {

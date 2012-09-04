@@ -320,6 +320,35 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         } else if (itemPosition == 5) {
             args.putBoolean("srachiki", true);
+        } else if (itemPosition == 6) {
+            shouldCommit = false;
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(this);
+            final AlertDialog alerDialog = builder
+                    .setTitle("Choose unread segment")
+                    .setView(unreadSegmentsView)
+                    .setCancelable(true)
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                            ActionBar.Tab tabAt = getSupportActionBar().getTabAt(lastNavigationPosition);
+                            getSupportActionBar().setSelectedNavigationItem(lastNavigationPosition);
+                        }
+                    }).create();
+            unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                @Override
+                public void onPeriodClicked(DatabaseService.Period period) {
+                    alerDialog.dismiss();
+                    int beforeMid = period.beforeMid;
+                    lastNavigationPosition = itemPosition;
+                    args.putInt("before_mid", beforeMid);
+                    args.putBoolean("all", true);
+                    replaceFragment(mf, args);
+                }
+            });
+            alerDialog.show();
+            MainActivity.restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
         }
         if (shouldCommit) {
             lastNavigationPosition = itemPosition;

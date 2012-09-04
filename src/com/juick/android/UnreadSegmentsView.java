@@ -1,0 +1,123 @@
+package com.juick.android;
+
+import android.R;
+import android.app.Activity;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.*;
+
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: san
+ * Date: 9/3/12
+ * Time: 10:49 PM
+ * To change this template use File | Settings | File Templates.
+ */
+public class UnreadSegmentsView extends ListView {
+
+    ArrayList<DatabaseService.Period> unreads;
+    private PeriodListener listener;
+
+    public interface PeriodListener {
+        void onPeriodClicked(DatabaseService.Period period);
+    }
+
+    public void setListener(PeriodListener listener) {
+        this.listener = listener;
+    }
+
+    public UnreadSegmentsView(final Activity activity) {
+        super(activity);
+        ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View retval = super.getView(position, convertView, parent);
+                MainActivity.restyleChildrenOrWidget(retval);
+                return retval;
+            }
+        };
+        listAdapter.add("Loading...");
+        setAdapter(listAdapter);
+        final Utils.ServiceGetter<DatabaseService> databaseServiceGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+        MainActivity.restyleChildrenOrWidget(this);
+        setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                DatabaseService.Period period = unreads.get(i);
+                if (listener != null)
+                    listener.onPeriodClicked(period);
+            }
+        });
+        new Thread() {
+            @Override
+            public void run() {
+                databaseServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                    @Override
+                    public void withService(DatabaseService service) {
+                        ArrayList<DatabaseService.Period> periods = service.getPeriods(10);
+                        unreads = new ArrayList<DatabaseService.Period>();
+                        for (DatabaseService.Period period : periods) {
+                            if (!period.read)
+                                unreads.add(period);
+                        }
+                        final BaseAdapter listAdapter = new BaseAdapter() {
+                            @Override
+                            public int getCount() {
+                                return unreads.size();
+                            }
+
+                            @Override
+                            public Object getItem(int i) {
+                                return unreads.get(i);
+                            }
+
+                            @Override
+                            public long getItemId(int i) {
+                                return i;
+                            }
+
+                            @Override
+                            public View getView(int i, View view, ViewGroup viewGroup) {
+                                if (view == null)
+                                    view = activity.getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                                if (view instanceof TextView) {
+                                    TextView tv = (TextView)view;
+                                    DatabaseService.Period period = unreads.get(i);
+                                    StringBuilder sb = new StringBuilder();
+                                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM HH:mm");
+                                    sb.append(sdf.format(period.startDate));
+                                    if (period.endDate != null) {
+                                        double hours = ((period.startDate.getTime() - period.endDate.getTime()) / 1000) / (60 * 60.0);
+                                        DecimalFormat df = new DecimalFormat();
+                                        df.setMaximumFractionDigits(1);
+                                        sb.append(" - " + df.format(hours) + " hours");
+                                    } else {
+                                        sb.append(" - many hours");
+                                    }
+                                    tv.setText(sb.toString());
+                                    MainActivity.restyleChildrenOrWidget(tv);
+                                }
+                                return view;
+                            }
+                        };
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                UnreadSegmentsView.this.setAdapter(listAdapter);
+                            }
+                        });
+
+
+                    }
+                });
+                super.run();
+            }
+        }.start();
+    }
+}

@@ -159,11 +159,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 apiurl += "&media=all";
             } else {
                 // just "last messages"
-
+                int beforeMid = args != null ? args.getInt("before_mid", -1) : -1;
+                if (beforeMid != -1) {
+                    apiurl += "&before_mid=" + beforeMid;
+                }
                 if (sp.getBoolean("persistLastMessagesPosition", false)) {
-                    int lastMessagesSavedPosition = sp.getInt("lastMessagesSavedPosition", -1);
-                    if (lastMessagesSavedPosition != -1) {
-                        apiurl += "&before_mid=" + lastMessagesSavedPosition;
+                    if (apiurl.indexOf("before_mid=") == -1) {
+                        int lastMessagesSavedPosition = sp.getInt("lastMessagesSavedPosition", -1);
+                        if (lastMessagesSavedPosition != -1) {
+                            apiurl += "&before_mid=" + lastMessagesSavedPosition;
+                        }
                     }
                     mSaveLastMessagesPosition = true;
                 }
