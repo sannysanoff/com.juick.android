@@ -158,162 +158,172 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 mf.clearSavedPosition(MainActivity.this);
             }
         });
-        navigationItems.add(new NavigationItem(R.string.navigationTop) {
-            @Override
-            void action() {
-                final Bundle args = new Bundle();
-                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("popular", "1"));
-                runDefaultFragmentWithBundle(args, this);
-            }
-        });
-        navigationItems.add(new NavigationItem(R.string.navigationPhoto) {
-            @Override
-            void action() {
-                final Bundle args = new Bundle();
-                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("media", "all"));
-                runDefaultFragmentWithBundle(args, this);
-            }
-        });
-        navigationItems.add(new NavigationItem(R.string.navigationMy) {
-            @Override
-            void action() {
-                if (sp.getString("myUserId", "").equals("")) {
-                    AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
-
-                    alert.setTitle(R.string.Your_User_Name);
-                    alert.setMessage(R.string.Your_User_Name_Explain);
-
-                    // Set an EditText view to get user input
-                    final EditText input = new EditText(MainActivity.this);
-                    alert.setView(input);
-
-                    alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            final String value = input.getText().toString();
-                            if (value.length() > 0) {
-                                final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
-                                new Thread("UserID obtainer") {
-                                    @Override
-                                    public void run() {
-                                        String fullName = value;
-                                        if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                                        HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
-                                        try {
-                                            String retval = httpClient.execute(httpGet, new BasicResponseHandler());
-                                            String SEARCH_MARKER = "http://i.juick.com/a/";
-                                            int ix = retval.indexOf(SEARCH_MARKER);
-                                            if (ix < 0) {
-                                                throw new RuntimeException("Website returned unrecognized response");
-                                            }
-                                            int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
-                                            if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                                                throw new RuntimeException("Website returned unrecognized response");
-                                            }
-                                            final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    sp.edit().putString("myUserId", uidS).commit();
-                                                    action();
-                                                }
-                                            });
-
-                                        } catch (final Exception e) {
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    Toast.makeText(MainActivity.this, "Unable to detect nick: " + e.toString(), Toast.LENGTH_LONG).show();
-                                                }
-                                            });
-                                        } finally {
-                                            httpClient.close();
-                                        }
-                                    }
-                                }.start();
-
-
-                            }
-                        }
-                    });
-
-                    alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            restoreLastNavigationPosition();
-                        }
-                    });
-
-                    alert.show();
-
-                } else {
+        if (sp.getBoolean("msrcTopMessages", true)) {
+            navigationItems.add(new NavigationItem(R.string.navigationTop) {
+                @Override
+                void action() {
                     final Bundle args = new Bundle();
-                    args.putSerializable("messagesSource",
-                            new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788")));
+                    args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("popular", "1"));
                     runDefaultFragmentWithBundle(args, this);
                 }
-            }
-        });
-        navigationItems.add(new NavigationItem(R.string.navigationSrachiki) {
-            @Override
-            void action() {
-                final Bundle args = new Bundle();
-                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api"));
-                runDefaultFragmentWithBundle(args, this);
-            }
-        });
-        navigationItems.add(new NavigationItem(R.string.navigationUnread) {
-            @Override
-            void action() {
-                final NavigationItem thisNi = this;
-                final ProgressDialog pd = new ProgressDialog(MainActivity.this);
-                pd.setIndeterminate(true);
-                pd.setTitle(R.string.navigationUnread);
-                pd.setCancelable(true);
-                pd.show();
-                UnreadSegmentsView.loadPeriods(MainActivity.this, new Utils.Function<Void, ArrayList<DatabaseService.Period>>() {
-                    @Override
-                    public Void apply(ArrayList<DatabaseService.Period> periods) {
-                        if (pd.isShowing()) {
-                            pd.cancel();
-                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                            UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
-                            final int myIndex = navigationItems.indexOf(thisNi);
-                            final AlertDialog alerDialog = builder
-                                    .setTitle("Choose unread segment")
-                                    .setView(unreadSegmentsView)
-                                    .setCancelable(true)
-                                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            });
+        }
+        if (sp.getBoolean("msrcWithPhotos", true)) {
+            navigationItems.add(new NavigationItem(R.string.navigationPhoto) {
+                @Override
+                void action() {
+                    final Bundle args = new Bundle();
+                    args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("media", "all"));
+                    runDefaultFragmentWithBundle(args, this);
+                }
+            });
+        }
+        if (sp.getBoolean("msrcMyBlog", true)) {
+            navigationItems.add(new NavigationItem(R.string.navigationMy) {
+                @Override
+                void action() {
+                    if (sp.getString("myUserId", "").equals("")) {
+                        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+
+                        alert.setTitle(R.string.Your_User_Name);
+                        alert.setMessage(R.string.Your_User_Name_Explain);
+
+                        // Set an EditText view to get user input
+                        final EditText input = new EditText(MainActivity.this);
+                        alert.setView(input);
+
+                        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                final String value = input.getText().toString();
+                                if (value.length() > 0) {
+                                    final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
+                                    new Thread("UserID obtainer") {
                                         @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            dialogInterface.dismiss();
-                                            restoreLastNavigationPosition();
+                                        public void run() {
+                                            String fullName = value;
+                                            if (fullName.startsWith("@")) fullName = fullName.substring(1);
+                                            HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
+                                            try {
+                                                String retval = httpClient.execute(httpGet, new BasicResponseHandler());
+                                                String SEARCH_MARKER = "http://i.juick.com/a/";
+                                                int ix = retval.indexOf(SEARCH_MARKER);
+                                                if (ix < 0) {
+                                                    throw new RuntimeException("Website returned unrecognized response");
+                                                }
+                                                int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
+                                                if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
+                                                    throw new RuntimeException("Website returned unrecognized response");
+                                                }
+                                                final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        sp.edit().putString("myUserId", uidS).commit();
+                                                        action();
+                                                    }
+                                                });
+
+                                            } catch (final Exception e) {
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Toast.makeText(MainActivity.this, "Unable to detect nick: " + e.toString(), Toast.LENGTH_LONG).show();
+                                                    }
+                                                });
+                                            } finally {
+                                                httpClient.close();
+                                            }
                                         }
-                                    }).create();
-                            unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
-                                @Override
-                                public void onPeriodClicked(DatabaseService.Period period) {
-                                    alerDialog.dismiss();
-                                    int beforeMid = period.beforeMid;
-                                    Bundle args = new Bundle();
-                                    args.putSerializable(
-                                            "messagesSource",
-                                            new UnreadSegmentMessagesSource(
-                                                    getString(R.string.navigationUnread),
-                                                    MainActivity.this,
-                                                    period
-                                                    ));
-                                    getSupportActionBar().setSelectedNavigationItem(myIndex);
-                                    runDefaultFragmentWithBundle(args, thisNi);
+                                    }.start();
+
+
                                 }
-                            });
-                            alerDialog.show();
-                            restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
-                        }
-                        return null;
+                            }
+                        });
+
+                        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                restoreLastNavigationPosition();
+                            }
+                        });
+
+                        alert.show();
+
+                    } else {
+                        final Bundle args = new Bundle();
+                        args.putSerializable("messagesSource",
+                                new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788")));
+                        runDefaultFragmentWithBundle(args, this);
                     }
-                });
-                return;
-            }
-        });
+                }
+            });
+        }
+        if (sp.getBoolean("msrcSrachiki", false)) {
+            navigationItems.add(new NavigationItem(R.string.navigationSrachiki) {
+                @Override
+                void action() {
+                    final Bundle args = new Bundle();
+                    args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api"));
+                    runDefaultFragmentWithBundle(args, this);
+                }
+            });
+        }
+        if (sp.getBoolean("msrcUnread", false)) {
+            navigationItems.add(new NavigationItem(R.string.navigationUnread) {
+                @Override
+                void action() {
+                    final NavigationItem thisNi = this;
+                    final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                    pd.setIndeterminate(true);
+                    pd.setTitle(R.string.navigationUnread);
+                    pd.setCancelable(true);
+                    pd.show();
+                    UnreadSegmentsView.loadPeriods(MainActivity.this, new Utils.Function<Void, ArrayList<DatabaseService.Period>>() {
+                        @Override
+                        public Void apply(ArrayList<DatabaseService.Period> periods) {
+                            if (pd.isShowing()) {
+                                pd.cancel();
+                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
+                                final int myIndex = navigationItems.indexOf(thisNi);
+                                final AlertDialog alerDialog = builder
+                                        .setTitle("Choose unread segment")
+                                        .setView(unreadSegmentsView)
+                                        .setCancelable(true)
+                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                dialogInterface.dismiss();
+                                                restoreLastNavigationPosition();
+                                            }
+                                        }).create();
+                                unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                                    @Override
+                                    public void onPeriodClicked(DatabaseService.Period period) {
+                                        alerDialog.dismiss();
+                                        int beforeMid = period.beforeMid;
+                                        Bundle args = new Bundle();
+                                        args.putSerializable(
+                                                "messagesSource",
+                                                new UnreadSegmentMessagesSource(
+                                                        getString(R.string.navigationUnread),
+                                                        MainActivity.this,
+                                                        period
+                                                        ));
+                                        getSupportActionBar().setSelectedNavigationItem(myIndex);
+                                        runDefaultFragmentWithBundle(args, thisNi);
+                                    }
+                                });
+                                alerDialog.show();
+                                restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
+                            }
+                            return null;
+                        }
+                    });
+                    return;
+                }
+            });
+        }
         navigationItems.add(new NavigationItem(R.string.navigationSaved) {
             @Override
             void action() {

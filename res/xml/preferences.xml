@@ -261,6 +261,38 @@
             android:defaultValue="0xFFAAAAAA"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="Message sources">
+        <CheckBoxPreference
+            android:key="msrcTopMessages"
+            android:title="@string/navigationTop"
+            android:defaultValue="true"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcWithPhotos"
+            android:title="@string/navigationPhoto"
+            android:defaultValue="true"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcMyBlog"
+            android:title="@string/navigationMy"
+            android:defaultValue="true"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcSrachiki"
+            android:title="@string/navigationSrachiki"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcUnread"
+            android:title="@string/navigationUnread"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcSaved"
+            android:title="@string/navigationSaved"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
 <!--
     <PreferenceCategory android:title="@string/Appearance">
         <ListPreference

@@ -127,8 +127,8 @@
     <string name="navigationTop">Популярные</string>
     <string name="navigationPhoto">С фото</string>
     <string name="navigationMy">Мой блог</string>
-    <string name="navigationSrachiki">Срачики</string>
-    <string name="navigationUnread">Все-нечитанные</string>
+    <string name="navigationSrachiki">Срачики (jugregator)</string>
+    <string name="navigationUnread">Все нечитанные</string>
     <string name="navigationSaved">Сохраненные</string>
 
 
