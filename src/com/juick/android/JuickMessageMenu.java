@@ -30,12 +30,15 @@ import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
 import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.datasource.MessagesSource;
+import com.juick.android.datasource.SavedMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickMessage;
 import org.apache.http.client.HttpClient;
@@ -61,11 +64,13 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
     ArrayList<String> urls;
     ListView listView;
     JuickMessagesAdapter listAdapter;
+    private MessagesSource messagesSource;
 
-    public JuickMessageMenu(Activity activity, ListView listView, JuickMessagesAdapter listAdapter) {
+    public JuickMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
         this.activity = activity;
         this.listView = listView;
         this.listAdapter = listAdapter;
+        this.messagesSource = messagesSource;
     }
 
     ArrayList<RunnableItem> menuActions = new ArrayList<RunnableItem>();
@@ -140,6 +145,53 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 activity.startActivity(i);
             }
         });
+        if (messagesSource instanceof SavedMessagesSource) {
+            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsave_message)) {
+                @Override
+                public void run() {
+                    confirmAction(R.string.ReallyUnsaveMessage, new Runnable() {
+                        @Override
+                        public void run() {
+                            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                @Override
+                                public void withService(DatabaseService service) {
+                                    service.unsaveMessage(listSelectedItem);
+                                    for (int i = 0; i < listAdapter.getCount(); i++) {
+                                        JuickMessage jm = listAdapter.getItem(i);
+                                        if (jm.MID == listSelectedItem.MID) {
+                                            listAdapter.remove(jm);
+                                            listAdapter.notifyDataSetInvalidated();
+                                            break;
+                                        }
+                                    }
+                                    Toast.makeText(activity, activity.getString(R.string.Message_unsaved), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } else {
+            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Save_message)) {
+                @Override
+                public void run() {
+                    confirmAction(R.string.ReallySaveMessage, new Runnable() {
+                        @Override
+                        public void run() {
+                            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                @Override
+                                public void withService(DatabaseService service) {
+                                    service.saveMessage(listSelectedItem);
+                                    Toast.makeText(activity, activity.getString(R.string.Message_saved), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " @" + UName) {
             @Override
             public void run() {
@@ -165,7 +217,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " #" + listSelectedItem.MID) {
             @Override
             public void run() {
-                confirmAction(R.string.ReallySubscribePost, new Runnable() {
+                confirmAction(R.string.ReallyUnsubscribePost, new Runnable() {
                     @Override
                     public void run() {
                         postMessage("U #" + listSelectedItem.MID, activity.getResources().getString(R.string.Unsubscribed));
@@ -349,7 +401,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
-                View retval = adapter.getView(position, convertView, parent);
+                View retval = adapter.getView(position, null, parent);
                 if (retval instanceof TextView) {
                     TextView tv = (TextView)retval;
                     if (compressedMenu) {
@@ -357,7 +409,8 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                         tv.setMinHeight(minHeight);
                         tv.setMinimumHeight(minHeight);
                     }
-                    tv.measure(1000, 1000);
+                    tv.setSingleLine(true);
+                    tv.setEllipsize(TextUtils.TruncateAt.MIDDLE);
                     tv.setTextSize(22 * finalMenuFontScale);
                 }
                 return retval;

@@ -37,6 +37,7 @@ import android.view.ViewGroup;
 import android.widget.*;
 import com.juick.android.datasource.AllMessagesSource;
 import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.datasource.SavedMessagesSource;
 import com.juick.android.datasource.UnreadSegmentMessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
@@ -311,6 +312,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                     }
                 });
                 return;
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationSaved) {
+            @Override
+            void action() {
+                final Bundle args = new Bundle();
+                args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
+                runDefaultFragmentWithBundle(args, this);
             }
         });
 

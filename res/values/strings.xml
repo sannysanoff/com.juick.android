@@ -56,6 +56,10 @@
     <string name="Subscribed">Subscribed</string>
     <string name="Unsubscribed">Unsubscribed</string>
     <string name="Added_to_BL">Added to BL</string>
+    <string name="Save_message">Save message</string>
+    <string name="Unsave_message">Remove from saved</string>
+    <string name="Message_saved">Message saved</string>
+    <string name="Message_unsaved">Message removed from saved</string>
     <string name="Are_you_sure_recommend">Are you sure you want to recommend?</string>
     <string name="Are_you_sure_subscribe">Are you sure you want to subscribe?</string>
     <string name="Are_you_sure_blacklist">Are you sure you want to blacklist?</string>
@@ -116,7 +120,10 @@
     <string name="ReallyFilterOut">Really filter out user?</string>
     <string name="ReallyRecommend">Really recommend message?</string>
     <string name="ReallySubscribe">Really subscribe to user?</string>
+    <string name="ReallyUnsubscribePost">Really unsubscribe from post?</string>
     <string name="ReallySubscribePost">Really subscribe to post?</string>
+    <string name="ReallySaveMessage">Really save message?</string>
+    <string name="ReallyUnsaveMessage">Really remove message from saved?</string>
     <string name="ReallyBlacklist">Really blacklist user?</string>
     <string name="DownloadOriginal">Download and show original?</string>
     <string name="SendErrorReport">Exception occured. Send error report via email?</string>
@@ -151,5 +158,6 @@
     <string name="navigationMy">My blog</string>
     <string name="navigationSrachiki">Srachiki</string>
     <string name="navigationUnread">All-unread</string>
+    <string name="navigationSaved">Saved messages</string>
 
 </resources>

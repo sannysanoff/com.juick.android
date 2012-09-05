@@ -169,7 +169,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         getListView().setOnTouchListener(this);
         getListView().setOnScrollListener(this);
         getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
+        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), messagesSource, getListView(), listAdapter));
         getListView().setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -191,90 +191,104 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
             public void run() {
                 final MessagesLoadNotification notification = messagesLoadNotification;
-                final ArrayList<JuickMessage> messages;
-                Parcelable listPosition = null;
+                final Utils.Function<Void, RetainedData> then = new Utils.Function<Void, RetainedData>() {
+                    @Override
+                    public Void apply(final RetainedData mespos) {
+                        final ArrayList<JuickMessage> messages = mespos.messages;
+                        final Parcelable listPosition = mespos.viewState;
+                        if (isAdded()) {
+                            if (messages.size() == 0) {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        notification.statusText.setText("Download error: " + notification.lastError);
+                                        notification.progressBar.setVisibility(View.GONE);
+                                    }
+                                });
+                            }
+                            final Activity activity = getActivity();
+                            if (activity != null) {
+                                final Parcelable finalListPosition = listPosition;
+                                activity.runOnUiThread(new Runnable() {
+
+                                    public void run() {
+                                        try {
+                                            if (messages.size() != 0) {
+                                                listAdapter.clear();
+                                                listAdapter.addAllMessages(messages);
+                                                if (getListView().getFooterViewsCount() == 0) {
+                                                    getListView().addFooterView(viewLoading, null, false);
+                                                }
+                                                topMessageId = messages.get(0).MID;
+                                            } else {
+                                                topMessageId = -1;
+                                            }
+
+                                            if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
+                                                getListView().addHeaderView(mRefreshView, null, false);
+                                                mRefreshViewHeight = mRefreshView.getMeasuredHeight();
+                                            }
+
+                                            if (getListAdapter() != listAdapter) {
+                                                setListAdapter(listAdapter);
+                                            }
+
+                                            loading = false;
+                                            resetHeader();
+                                            getListView().invalidateViews();
+                                            getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
+                                                @Override
+                                                public void onMovedToScrapHeap(View view) {
+                                                    listAdapter.recycleView(view);
+                                                }
+                                            });
+                                            if (finalListPosition != null) {
+                                                getListView().onRestoreInstanceState(finalListPosition);
+                                            } else {
+                                                setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                            }
+                                        } catch (IllegalStateException e) {
+                                            Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        return null;
+                    }
+                };
                 if (restoreData == null) {
-                    messages = messagesSource.getFirst(notification);
+                    messagesSource.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                        @Override
+                        public Void apply(ArrayList<JuickMessage> juickMessages) {
+                            return then.apply(new RetainedData(juickMessages, null));
+                        }
+                    });
                 } else {
-                    messages = ((RetainedData) restoreData).messages;
-                    listPosition = ((RetainedData) restoreData).viewState;
-                }
-                if (isAdded()) {
-                    if (messages.size() == 0) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                notification.statusText.setText("Download error: " + notification.lastError);
-                                notification.progressBar.setVisibility(View.GONE);
-                            }
-                        });
-                    }
-                    final Activity activity = getActivity();
-                    if (activity != null) {
-                        final Parcelable finalListPosition = listPosition;
-                        activity.runOnUiThread(new Runnable() {
-
-                            public void run() {
-                                try {
-                                    if (messages.size() != 0) {
-                                        listAdapter.clear();
-                                        listAdapter.addAllMessages(messages);
-                                        if (getListView().getFooterViewsCount() == 0) {
-                                            getListView().addFooterView(viewLoading, null, false);
-                                        }
-                                        topMessageId = messages.get(0).MID;
-                                    } else {
-                                        topMessageId = -1;
-                                    }
-
-                                    if (getListView().getHeaderViewsCount() == 0) {
-                                        getListView().addHeaderView(mRefreshView, null, false);
-                                        mRefreshViewHeight = mRefreshView.getMeasuredHeight();
-                                    }
-
-                                    if (getListAdapter() != listAdapter) {
-                                        setListAdapter(listAdapter);
-                                    }
-
-                                    loading = false;
-                                    resetHeader();
-                                    getListView().invalidateViews();
-                                    getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
-                                        @Override
-                                        public void onMovedToScrapHeap(View view) {
-                                            listAdapter.recycleView(view);
-                                        }
-                                    });
-                                    if (finalListPosition != null) {
-                                        getListView().onRestoreInstanceState(finalListPosition);
-                                    } else {
-                                        setSelection(1);
-                                    }
-                                } catch (IllegalStateException e) {
-                                    Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
-                    }
+                    then.apply((RetainedData)restoreData);
+                    restoreData = null;
                 }
             }
         };
         thr.start();
     }
 
-    static class RetainedData {
+    public static class RetainedData {
         ArrayList<JuickMessage> messages;
         Parcelable viewState;
+
+        RetainedData(ArrayList<JuickMessage> messages, Parcelable viewState) {
+            this.messages = messages;
+            this.viewState = viewState;
+        }
     }
 
     public Object saveState() {
-        RetainedData rd = new RetainedData();
-        rd.messages = new ArrayList<JuickMessage>();
+        RetainedData rd = new RetainedData(new ArrayList<JuickMessage>(), getListView().onSaveInstanceState());
         int count = listAdapter.getCount();
         for (int i = 0; i < count; i++) {
             rd.messages.add(listAdapter.getItem(i));
         }
-        rd.viewState = getListView().onSaveInstanceState();
         return rd;
     }
 
@@ -340,14 +354,19 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         Thread thr = new Thread("Download messages (more)") {
 
             public void run() {
-                Activity activity = getActivity();
+                final Activity activity = getActivity();
                 if (activity != null && isAdded()) {
-                    final ArrayList<JuickMessage> messages = messagesSource.getNext(progressNotification);
-                    activity.runOnUiThread(new Runnable() {
+                    messagesSource.getNext(progressNotification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                        @Override
+                        public Void apply(final ArrayList<JuickMessage> messages) {
+                            activity.runOnUiThread(new Runnable() {
 
-                        public void run() {
-                            listAdapter.addAllMessages(messages);
-                            loading = false;
+                                public void run() {
+                                    listAdapter.addAllMessages(messages);
+                                    loading = false;
+                                }
+                            });
+                            return null;  //To change body of implemented methods use File | Settings | File Templates.
                         }
                     });
                 }
@@ -417,39 +436,41 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         } catch (Exception ex) {}
 
-        // When the refresh view is completely visible, change the text to say
-        // "Release to refresh..." and flip the arrow drawable.
-        if (mCurrentScrollState == SCROLL_STATE_TOUCH_SCROLL
-                && mRefreshState != REFRESHING) {
-            if (firstVisibleItem == 0) {
-                mRefreshViewImage.setVisibility(View.VISIBLE);
-                if ((mRefreshView.getBottom() >= mRefreshViewHeight + 20
-                        || mRefreshView.getTop() >= 0)
-                        && mRefreshState != RELEASE_TO_REFRESH) {
-                    mRefreshViewText.setText(R.string.pull_to_refresh_release_label);
-                    mRefreshViewImage.clearAnimation();
-                    mRefreshViewImage.startAnimation(mFlipAnimation);
-                    mRefreshState = RELEASE_TO_REFRESH;
-                } else if (mRefreshView.getBottom() < mRefreshViewHeight + 20
-                        && mRefreshState != PULL_TO_REFRESH) {
-                    mRefreshViewText.setText(R.string.pull_to_refresh_pull_label);
-                    if (mRefreshState != TAP_TO_REFRESH) {
+        if (messagesSource.supportsBackwardRefresh()) {
+            // When the refresh view is completely visible, change the text to say
+            // "Release to refresh..." and flip the arrow drawable.
+            if (mCurrentScrollState == SCROLL_STATE_TOUCH_SCROLL
+                    && mRefreshState != REFRESHING) {
+                if (firstVisibleItem == 0) {
+                    mRefreshViewImage.setVisibility(View.VISIBLE);
+                    if ((mRefreshView.getBottom() >= mRefreshViewHeight + 20
+                            || mRefreshView.getTop() >= 0)
+                            && mRefreshState != RELEASE_TO_REFRESH) {
+                        mRefreshViewText.setText(R.string.pull_to_refresh_release_label);
                         mRefreshViewImage.clearAnimation();
-                        mRefreshViewImage.startAnimation(mReverseFlipAnimation);
+                        mRefreshViewImage.startAnimation(mFlipAnimation);
+                        mRefreshState = RELEASE_TO_REFRESH;
+                    } else if (mRefreshView.getBottom() < mRefreshViewHeight + 20
+                            && mRefreshState != PULL_TO_REFRESH) {
+                        mRefreshViewText.setText(R.string.pull_to_refresh_pull_label);
+                        if (mRefreshState != TAP_TO_REFRESH) {
+                            mRefreshViewImage.clearAnimation();
+                            mRefreshViewImage.startAnimation(mReverseFlipAnimation);
+                        }
+                        mRefreshState = PULL_TO_REFRESH;
                     }
-                    mRefreshState = PULL_TO_REFRESH;
+                } else {
+                    mRefreshViewImage.setVisibility(View.GONE);
+                    resetHeader();
                 }
-            } else {
-                mRefreshViewImage.setVisibility(View.GONE);
-                resetHeader();
+            } else if (mCurrentScrollState == SCROLL_STATE_FLING
+                    && firstVisibleItem == 0
+                    && mRefreshState != REFRESHING) {
+                setSelection(1);
+                mBounceHack = true;
+            } else if (mBounceHack && mCurrentScrollState == SCROLL_STATE_FLING) {
+                setSelection(1);
             }
-        } else if (mCurrentScrollState == SCROLL_STATE_FLING
-                && firstVisibleItem == 0
-                && mRefreshState != REFRESHING) {
-            setSelection(1);
-            mBounceHack = true;
-        } else if (mBounceHack && mCurrentScrollState == SCROLL_STATE_FLING) {
-            setSelection(1);
         }
     }
 
@@ -466,17 +487,19 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 if (!getListView().isVerticalScrollBarEnabled()) {
                     getListView().setVerticalScrollBarEnabled(true);
                 }
-                if (getListView().getFirstVisiblePosition() == 0 && mRefreshState != REFRESHING) {
-                    if ((mRefreshView.getBottom() >= mRefreshViewHeight
-                            || mRefreshView.getTop() >= 0)
-                            && mRefreshState == RELEASE_TO_REFRESH) {
-                        // Initiate the refresh
-                        onClick(getListView());
-                    } else if (mRefreshView.getBottom() < mRefreshViewHeight
-                            || mRefreshView.getTop() <= 0) {
-                        // Abort refresh and scroll down below the refresh view
-                        resetHeader();
-                        setSelection(1);
+                if (messagesSource.supportsBackwardRefresh()) {
+                    if (getListView().getFirstVisiblePosition() == 0 && mRefreshState != REFRESHING) {
+                        if ((mRefreshView.getBottom() >= mRefreshViewHeight
+                                || mRefreshView.getTop() >= 0)
+                                && mRefreshState == RELEASE_TO_REFRESH) {
+                            // Initiate the refresh
+                            onClick(getListView());
+                        } else if (mRefreshView.getBottom() < mRefreshViewHeight
+                                || mRefreshView.getTop() <= 0) {
+                            // Abort refresh and scroll down below the refresh view
+                            resetHeader();
+                            setSelection(1);
+                        }
                     }
                 }
                 break;
@@ -576,7 +599,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     public void clearSavedPosition(Context context) {
         topMessageId = -1;
-        messagesSource.resetLastRead();
+        messagesSource.resetSavedPosition();
     }
 
 

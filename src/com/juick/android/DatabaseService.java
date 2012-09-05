@@ -11,13 +11,16 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
+import com.google.gson.Gson;
 import com.juick.android.api.JuickMessage;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 
@@ -32,9 +35,76 @@ public class DatabaseService extends Service {
 
     Handler handler;
 
+    public void saveMessage(final JuickMessage messag) {
+        writeJobs.add(new Utils.Function<Boolean, Void>() {
+            @Override
+            public Boolean apply(Void aVoid) {
+                Gson gson = new Gson();
+                final String value = gson.toJson(messag);
+                try {
+                    ContentValues cv = new ContentValues();
+                    cv.put("msgid", messag.MID);
+                    cv.put("tm", messag.Timestamp.getTime());
+                    cv.put("save_date", System.currentTimeMillis());
+                    cv.put("body", compressGZIP(value));
+                    db.insert("saved_message", null, cv);   // failed uniq constraint is handled here.
+                    db.setTransactionSuccessful();
+                } catch (Exception e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                return Boolean.TRUE;
+            }
+        });
+        synchronized (writeJobs) {
+            writeJobs.notify();
+        }
+    }
+
+    public void unsaveMessage(final JuickMessage message) {
+        writeJobs.add(new Utils.Function<Boolean, Void>() {
+            @Override
+            public Boolean apply(Void aVoid) {
+                try {
+                    db.execSQL("delete from saved_message where msgid=?", new Object[message.MID]);
+                    db.setTransactionSuccessful();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return Boolean.TRUE;
+            }
+        });
+        synchronized (writeJobs) {
+            writeJobs.notify();
+        }
+    }
+
+
+
+    public ArrayList<JuickMessage> getSavedMessages(long afterSavedDate) {
+        Cursor cursor = db.rawQuery("select * from saved_message where save_date < ? order by save_date desc limit 20", new String[]{"" + afterSavedDate});
+        ArrayList<JuickMessage> retval = new ArrayList<JuickMessage>();
+        cursor.moveToFirst();
+        int blobIndex = cursor.getColumnIndex("body");
+        int saveDateIndex = cursor.getColumnIndex("save_date");
+        while(!cursor.isAfterLast()) {
+            byte[] blob = cursor.getBlob(blobIndex);
+            String str = decompressGZIP(blob);
+            JuickMessage mesg = new Gson().fromJson(str, JuickMessage.class);
+            if (mesg != null) {
+                mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
+                mesg.messageSaveDate = cursor.getLong(saveDateIndex);
+                retval.add(mesg);
+            }
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return retval;
+
+    }
+
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 1;
+        public final static int CURRENT_VERSION = 3;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -52,8 +122,15 @@ public class DatabaseService extends Service {
 
         @Override
         public void onUpgrade(SQLiteDatabase sqLiteDatabase, int from, int to) {
-            sqLiteDatabase.execSQL("create table saved_message(msgid integer not null primary key, tm integer not null, body blob not null, save_date integer not null)");
-            sqLiteDatabase.execSQL("create index if not exists ix_message_next on message (nextmsgid)");
+            if (from == 1) {
+                from++;
+                //
+            }
+            if (from == 2) {
+                sqLiteDatabase.execSQL("create table saved_message(msgid integer not null primary key, tm integer not null, body blob not null, save_date integer not null)");
+                sqLiteDatabase.execSQL("create index if not exists ix_savedmessage_savedate on saved_message (save_date)");
+                from++;
+            }
         }
 
 
@@ -171,6 +248,23 @@ public class DatabaseService extends Service {
             gzos.finish();
             gzos.flush();
             return baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String decompressGZIP(byte[] gzipped) {
+        try {
+            GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(gzipped));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] arr = new byte[1024];
+            while(true) {
+                int rd = gzis.read(arr);
+                if (rd < 1) break;
+                baos.write(arr, 0, rd);
+            }
+            return baos.toString();
         } catch (IOException e) {
             e.printStackTrace();
             return null;

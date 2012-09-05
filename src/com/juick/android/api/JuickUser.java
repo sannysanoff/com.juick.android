@@ -28,7 +28,6 @@ public class JuickUser {
 
     public int UID = 0;
     public String UName = null;
-    public Object Avatar = null;
     public String FullName = null;
 
     public static JuickUser parseJSON(JSONObject json) throws JSONException {
