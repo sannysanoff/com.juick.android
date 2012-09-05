@@ -39,6 +39,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
 import de.quist.app.errorreporter.ExceptionReporter;
@@ -120,7 +121,8 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent i = new Intent(this, MessagesActivity.class);
-        i.putExtra("place_id", listAdapter.getItem(position).pid);
+        String placeName = listAdapter.getItem(position).name;
+        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Place_name_)+placeName, this).putArg("place_id", ""+listAdapter.getItem(position).pid));
         startActivity(i);
     }
 

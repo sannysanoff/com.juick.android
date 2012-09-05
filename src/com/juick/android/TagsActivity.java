@@ -18,9 +18,11 @@
 package com.juick.android;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
@@ -65,8 +67,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
 
     public void onTagLongClick(String tag) {
         Intent i = new Intent(this, MessagesActivity.class);
-        i.putExtra("tag", tag);
-        i.putExtra("uid", uid);
+        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Tag)+": " + tag, this).putArg("tag", Uri.encode(tag)).putArg("user_id",""+uid));
         startActivity(i);
     }
 }

@@ -49,12 +49,12 @@
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Recommend message</string>
     <string name="Subscribe_to">Subscribe to</string>
-    <string name="Toggle_Subscription_to">Toggle subscr. to</string>
+    <string name="Unsubscribe_from">Unsubscribe from</string>
     <string name="Blacklist">Blacklist</string>
     <string name="FilterOutUser">Filter out</string>
     <string name="Recommended">Recommended</string>
     <string name="Subscribed">Subscribed</string>
-    <string name="Changed">Changed</string>
+    <string name="Unsubscribed">Unsubscribed</string>
     <string name="Added_to_BL">Added to BL</string>
     <string name="Are_you_sure_recommend">Are you sure you want to recommend?</string>
     <string name="Are_you_sure_subscribe">Are you sure you want to subscribe?</string>
@@ -121,6 +121,7 @@
     <string name="DownloadOriginal">Download and show original?</string>
     <string name="SendErrorReport">Exception occured. Send error report via email?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< resuming from last time >>]]></string>
+    <string name="UnreadPeriodStart"><![CDATA[<< unread period start >>]]></string>
     <string name="EditFilters">List of filtered out users</string>
     <string name="Show_Numbers">Show message number</string>
     <string name="Compressed_Menu">Condensed menu</string>

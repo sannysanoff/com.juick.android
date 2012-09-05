@@ -42,16 +42,13 @@ import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.net.URI;
-import java.net.URLEncoder;
-import java.util.ArrayList;
 
 /**
  * @author Ugnich Anton
@@ -236,8 +233,9 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         int placeId = listAdapter.getItem(position).pid;
         if (placeId != 0) {
+            String placeName = listAdapter.getItem(position).name;
             Intent i = new Intent(this, MessagesActivity.class);
-            i.putExtra("place_id", placeId);
+            i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Place_name_)+placeName, this).putArg("place_id", ""+placeId));
             startActivity(i);
         }
         return true;

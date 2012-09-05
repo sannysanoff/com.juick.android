@@ -48,12 +48,12 @@
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Рекомендовать сообщение</string>
     <string name="Subscribe_to">Подписаться на</string>
-    <string name="Toggle_Subscription_to">Перекл.подписку на</string>
+    <string name="Unsubscribe_to">Отписаться от</string>
     <string name="Blacklist">Добавить в черный список</string>
     <string name="FilterOutUser">Не показывать</string>
     <string name="Recommended">Рекомендовано</string>
     <string name="Subscribed">Подписано</string>
-    <string name="Changed">Изменено</string>
+    <string name="Unsubscribed">Отписано</string>
     <string name="Added_to_BL">Добавлено в черный список</string>
     <string name="Are_you_sure_recommend">Вы уверены, что хотите рекомендовать?</string>
     <string name="Are_you_sure_subscribe">Вы уверены, что хотите подписаться?</string>
@@ -117,6 +117,7 @@
     <string name="Message_List">Список сообщений</string>
     <string name="ReallyFilterOut">В самом деле скрыть пользователя?</string>
     <string name="ResumingFromLastTime"><![CDATA[<< закончили читать здесь в прошлый раз >>]]></string>
+    <string name="UnreadPeriodStart"><![CDATA[<< начало нечитанных сообщений >>]]></string>
     <string name="Your_User_Name">Ваш жуйский ник</string>
     <string name="Your_User_Name_Explain">Juick API не предоставляет известного способа для получения вашего Nickname. Введите ваш Nickname для определения по нему вашего Id.
     </string>

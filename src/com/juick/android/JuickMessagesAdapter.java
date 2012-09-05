@@ -80,7 +80,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private static String Replies;
     private int type;
     private boolean allItemsEnabled = true;
-    private boolean isContinuationAdapter;
 
     private static Set<String> filteredOutUsers;
     private final double imageHeightPercent;
@@ -116,7 +115,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private SharedPreferences sp;
     private float defaultTextSize;
     private float textScale;
-    boolean enableMessageDB;
 
     public JuickMessagesAdapter(Context context, int type, int subtype) {
         super(context, R.layout.listitem_juickmessage);
@@ -133,7 +131,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         defaultTextSize = new TextView(context).getTextSize();
-        enableMessageDB = sp.getBoolean("enableMessageDB", true);
         textScale = 1;
         try {
             textScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
@@ -144,22 +141,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(context, XMPPService.class);
     }
 
-    public static ArrayList<JuickMessage> parseJSONpure(String jsonStr) {
-        ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
-        if (jsonStr != null) {
-            try {
-                JSONArray json = new JSONArray(jsonStr);
-                int cnt = json.length();
-                for (int i = 0; i < cnt; i++) {
-                    JSONObject jsonObject = json.getJSONObject(i);
-                    messages.add(JuickMessage.initFromJSON(jsonObject));
-                }
-            } catch (Exception e) {
-                Log.e("initOpinionsAdapter", e.toString());
-            }
-        }
-        return messages;
-    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -194,7 +175,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (type == TYPE_THREAD && jmsg.RID == 0) {
                 parsedMessage = formatFirstMessageText(jmsg);
             } else {
-                parsedMessage = formatMessageText(getContext(), jmsg, position == 0 && isContinuationAdapter, false);
+                parsedMessage = formatMessageText(getContext(), jmsg, false);
             }
             t.setTag(jmsg.MID);
             if (type != TYPE_THREAD && trackLastRead) {
@@ -479,13 +460,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return colorTheme;
     }
 
-    public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean addContinuation, boolean condensed) {
+    public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean condensed) {
         getColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
-        if (addContinuation) {
-            ctx.getResources().getString(R.string.ResumingFromLastTime);
-            ssb.append("<< resuming from last time>>\n");
+        if (jmsg.continuationInformation != null) {
+            ssb.append(jmsg.continuationInformation+"\n");
             ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         //
@@ -662,10 +642,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 add(message);
             }
         }
-    }
-
-    public void setContinuationAdapter(boolean continuationAdapter) {
-        isContinuationAdapter = continuationAdapter;
     }
 
     public static class ImageLoaderConfiguration {

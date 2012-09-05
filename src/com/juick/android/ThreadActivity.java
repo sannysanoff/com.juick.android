@@ -229,7 +229,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                     jm.Text = "@"+reply.User.UName+" "+jm.Text;
                 }
             }
-            JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(this, jm, false, true);
+            JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(this, jm, true);
             tv.setText(parsedMessage.textContent);
             MainActivity.restyleChildrenOrWidget(tv);
             new AlertDialog.Builder(this)

@@ -31,13 +31,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.util.Log;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.datasource.MessagesSource;
 import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 /**
@@ -47,7 +47,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     private JuickMessagesAdapter listAdapter;
     private View viewLoading;
-    private String apiurl;
     private boolean loading = true;
     private int page = 1;
     // Pull to refresh
@@ -67,7 +66,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private int mRefreshOriginalTopPadding;
     private int mLastMotionY;
     private boolean mBounceHack;
-    private boolean mSaveLastMessagesPosition;
     private ScaleGestureDetector mScaleDetector = null;
 
     Handler handler;
@@ -78,7 +76,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     Utils.ServiceGetter<DatabaseService> databaseGetter;
     boolean trackLastRead = false;
-    private boolean enableMessageDB;
 
 
     public MessagesFragment(Object restoreData) {
@@ -90,90 +87,26 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         implicitlyCreated = true;
     }
 
+    MessagesSource messagesSource;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
         handler = new Handler();
-        boolean home = false;
-        int uid = 0;
-        String uname = null;
-        String search = null;
-        String tag = null;
-        int place_id = 0;
-        boolean popular = false;
-        boolean media = false;
-        boolean myBlog = false;
-        boolean srachiki = false;
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
-        enableMessageDB = sp.getBoolean("enableMessageDB", false);
 
         Bundle args = getArguments();
+
         if (args != null) {
-            home = args.getBoolean("home", false);
-            uid = args.getInt("uid", 0);
-            uname = args.getString("uname");
-            search = args.getString("search");
-            tag = args.getString("tag");
-            place_id = args.getInt("place_id", 0);
-            popular = args.getBoolean("popular", false);
-            allMessages = args.getBoolean("all", false);
-            media = args.getBoolean("media", false);
-            myBlog = args.getBoolean("myBlog", false);
-            srachiki = args.getBoolean("srachiki", false);
+            messagesSource = (MessagesSource)args.getSerializable("messagesSource");
         }
 
-        if (home) {
-            apiurl = "http://api.juick.com/home?1=1";
-        } else if (srachiki) {
-            apiurl = "http://s.jugregator.org/api";
-        } else {
-            apiurl = "http://api.juick.com/messages?1=1";
-            if (uid > 0 && uname != null) {
-                apiurl += "&user_id=" + uid;
-            } else if (myBlog) {
-                String myUserId = sp.getString("myUserId", "12234567788");
-                apiurl += "&user_id=" + myUserId;
-            } else if (search != null) {
-                try {
-                    apiurl += "&search=" + URLEncoder.encode(search, "utf-8");
-                } catch (Exception e) {
-                    Log.e("ApiURL", e.toString());
-                }
-            } else if (tag != null) {
-                try {
-                    apiurl += "&tag=" + URLEncoder.encode(tag, "utf-8");
-                } catch (Exception e) {
-                    Log.e("ApiURL", e.toString());
-                }
-                if (uid == -1) {
-                    apiurl += "&user_id=-1";
-                }
-            } else if (place_id > 0) {
-                apiurl += "&place_id=" + place_id;
-            } else if (popular) {
-                apiurl += "&popular=1";
-            } else if (media) {
-                apiurl += "&media=all";
-            } else {
-                // just "last messages"
-                int beforeMid = args != null ? args.getInt("before_mid", -1) : -1;
-                if (beforeMid != -1) {
-                    apiurl += "&before_mid=" + beforeMid;
-                }
-                if (sp.getBoolean("persistLastMessagesPosition", false)) {
-                    if (apiurl.indexOf("before_mid=") == -1) {
-                        int lastMessagesSavedPosition = sp.getInt("lastMessagesSavedPosition", -1);
-                        if (lastMessagesSavedPosition != -1) {
-                            apiurl += "&before_mid=" + lastMessagesSavedPosition;
-                        }
-                    }
-                    mSaveLastMessagesPosition = true;
-                }
-            }
-        }
+        if (messagesSource == null)
+            messagesSource = new JuickCompatibleURLMessagesSource(getActivity());
+        messagesSource.setContext(getActivity());
 
         mFlipAnimation = new RotateAnimation(0, -180,
                 RotateAnimation.RELATIVE_TO_SELF, 0.5f,
@@ -202,12 +135,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         prefetchMessages = sp.getBoolean("prefetchMessages", false);
         super.onResume();
     }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
 
     @Override
     public void onDestroy() {
@@ -239,12 +166,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
 
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
-        if (mSaveLastMessagesPosition) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            if (sp.getInt("lastMessagesSavedPosition", -1) > 0)
-                listAdapter.setContinuationAdapter(true);
-        }
-
         getListView().setOnTouchListener(this);
         getListView().setOnScrollListener(this);
         getListView().setOnItemClickListener(this);
@@ -273,11 +194,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 final ArrayList<JuickMessage> messages;
                 Parcelable listPosition = null;
                 if (restoreData == null) {
-                    final String jsonStr = Utils.getJSON(getActivity(), apiurl, notification);
-                    URLParser parser = new URLParser(apiurl);
-                    String fromS = parser.getArgsMap().get("before_mid");
-                    messages = listAdapter.parseJSONpure(jsonStr);
-                    processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && allMessages ? Integer.parseInt(fromS) : -1);
+                    messages = messagesSource.getFirst(notification);
                 } else {
                     messages = ((RetainedData) restoreData).messages;
                     listPosition = ((RetainedData) restoreData).viewState;
@@ -302,7 +219,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                     if (messages.size() != 0) {
                                         listAdapter.clear();
                                         listAdapter.addAllMessages(messages);
-                                        if (messages.size() == 20 && getListView().getFooterViewsCount() == 0) {
+                                        if (getListView().getFooterViewsCount() == 0) {
                                             getListView().addFooterView(viewLoading, null, false);
                                         }
                                         topMessageId = messages.get(0).MID;
@@ -312,7 +229,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
                                     if (getListView().getHeaderViewsCount() == 0) {
                                         getListView().addHeaderView(mRefreshView, null, false);
-                                        //measureView(mRefreshView);
                                         mRefreshViewHeight = mRefreshView.getMeasuredHeight();
                                     }
 
@@ -344,24 +260,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         };
         thr.start();
-    }
-
-    public static void processPureMessages(Utils.ServiceGetter<DatabaseService> databaseGetter, ArrayList<JuickMessage> messages, int beforeMID) {
-        for(int i=0; i<messages.size(); i++) {
-            final JuickMessage juickMessage = messages.get(i);
-            if (databaseGetter != null) {
-                final String source = juickMessage.source;
-                juickMessage.previousMID = beforeMID;
-                beforeMID = juickMessage.MID;
-                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                    @Override
-                    public void withService(DatabaseService service) {
-                        service.storeMessage(juickMessage, source);
-                    }
-                });
-            }
-            juickMessage.source = null;
-        }
     }
 
     static class RetainedData {
@@ -442,35 +340,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         Thread thr = new Thread("Download messages (more)") {
 
             public void run() {
-                URLParser apiURL = new URLParser(apiurl);
-                apiURL.getArgsMap().put("before_mid", "" + jmsg.MID);
-                apiURL.getArgsMap().put("page", "" + page);
                 Activity activity = getActivity();
-                if (activity != null) {
-                    final String jsonStr = Utils.getJSON(activity, apiURL.getFullURL(), progressNotification);
-                    if (isAdded()) {
-    //                    if (jsonStr == null) {
-    //                        getActivity().runOnUiThread(new Runnable() {
-    //                            @Override
-    //                            public void run() {
-    //                                Toast.makeText(getActivity(), "More messages: "+progressNotification.lastError, Toast.LENGTH_LONG).show();
-    //                            }
-    //                        });
-    //                    }
-                        String fromS = apiURL.getArgsMap().get("before_mid");
-                        final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure(jsonStr);
-                        processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && allMessages ? Integer.parseInt(fromS) : -1);
-                        activity.runOnUiThread(new Runnable() {
+                if (activity != null && isAdded()) {
+                    final ArrayList<JuickMessage> messages = messagesSource.getNext(progressNotification);
+                    activity.runOnUiThread(new Runnable() {
 
-                            public void run() {
-                                listAdapter.addAllMessages(messages);
-    //                            if (messages.size() != 20) {
-    //                                MessagesFragment.this.getListView().removeFooterView(viewLoading);
-    //                            }
-                                loading = false;
-                            }
-                        });
-                    }
+                        public void run() {
+                            listAdapter.addAllMessages(messages);
+                            loading = false;
+                        }
+                    });
                 }
             }
         };
@@ -493,11 +372,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     @Override
     public void onStop() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        if (topMessageId != -1 && mSaveLastMessagesPosition) {
-            sp.edit().putInt("lastMessagesSavedPosition", topMessageId).commit();
+        if (topMessageId != -1) {
+            messagesSource.rememberSavedPosition(topMessageId);
         }
-        super.onStop();    //To change body of overridden methods use File | Settings | File Templates.
+        super.onStop();
     }
 
     int lastItemReported = 0;
@@ -669,27 +547,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             mRefreshViewProgress.setVisibility(View.GONE);
         }
     }
-    /*
-    private void measureView(View child) {
-    ViewGroup.LayoutParams p = child.getLayoutParams();
-    if (p == null) {
-    p = new ViewGroup.LayoutParams(
-    ViewGroup.LayoutParams.FILL_PARENT,
-    ViewGroup.LayoutParams.WRAP_CONTENT);
-    }
-    
-    int childWidthSpec = ViewGroup.getChildMeasureSpec(0,
-    0 + 0, p.width);
-    int lpHeight = p.height;
-    int childHeightSpec;
-    if (lpHeight > 0) {
-    childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
-    } else {
-    childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-    }
-    child.measure(childWidthSpec, childHeightSpec);
-    }
-     */
 
     public void onScrollStateChanged(AbsListView view, int scrollState) {
         mCurrentScrollState = scrollState;
@@ -712,22 +569,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         mRefreshState = REFRESHING;
 
-        if (mSaveLastMessagesPosition) {
-            clearSavedPosition(getActivity());
-            mSaveLastMessagesPosition = true;   // restore
-            listAdapter.setContinuationAdapter(false);
-            URLParser parser = new URLParser(apiurl);
-            parser.getArgsMap().remove("before_mid");
-            apiurl = parser.getFullURL(); // and continue default way
-        }
+        clearSavedPosition(getActivity());
 
         MainActivity.restyleChildrenOrWidget(mRefreshView);
     }
 
     public void clearSavedPosition(Context context) {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        sp.edit().remove("lastMessagesSavedPosition").commit();
-        mSaveLastMessagesPosition = false;
+        topMessageId = -1;
+        messagesSource.resetLastRead();
     }
 
 

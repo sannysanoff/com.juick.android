@@ -46,6 +46,7 @@ public class JuickMessage {
     public String Video = null;
     public boolean translated;
     public String source;
+    public String continuationInformation;
 
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();

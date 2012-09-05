@@ -1,5 +1,6 @@
 package com.juick.android;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -7,7 +8,7 @@ import java.util.Map;
 /**
  * @author sannysanoff
  */
-public class URLParser {
+public class URLParser implements Serializable {
     private final String protocol;
     private final String host;
     private String port;

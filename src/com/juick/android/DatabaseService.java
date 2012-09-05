@@ -320,13 +320,13 @@ public class DatabaseService extends Service {
         }
     }
 
-    class Period {
+    public static class Period {
         boolean read;
         Date startDate;
         Date endDate;
 
         // for read messages
-        int startMid;
+        public int startMid;
         int endMid;
         int numberOfMessages;
 
@@ -408,6 +408,7 @@ public class DatabaseService extends Service {
                 i--;
             }
         }
+        cursor.close();
         return retval;
     }
 

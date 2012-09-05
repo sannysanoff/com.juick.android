@@ -32,20 +32,31 @@ public class UnreadSegmentsView extends ListView {
         this.listener = listener;
     }
 
-    public UnreadSegmentsView(final Activity activity) {
-        super(activity);
-        ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View retval = super.getView(position, convertView, parent);
-                MainActivity.restyleChildrenOrWidget(retval);
-                return retval;
-            }
-        };
-        listAdapter.add("Loading...");
-        setAdapter(listAdapter);
+    public static void loadPeriods(final Activity activity, final Utils.Function<Void, ArrayList<DatabaseService.Period>> callback) {
         final Utils.ServiceGetter<DatabaseService> databaseServiceGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
-        MainActivity.restyleChildrenOrWidget(this);
+        databaseServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+            @Override
+            public void withService(final DatabaseService service) {
+                super.withService(service);    //To change body of overridden methods use File | Settings | File Templates.
+                new Thread("Calculating periods") {
+                    @Override
+                    public void run() {
+                        final ArrayList<DatabaseService.Period> periods = service.getPeriods(10);
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.apply(periods);
+                            }
+                        });
+                    }
+                }.start();
+            }
+        });
+
+    }
+
+    public UnreadSegmentsView(final Activity activity, ArrayList<DatabaseService.Period> periods) {
+        super(activity);
         setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -54,70 +65,52 @@ public class UnreadSegmentsView extends ListView {
                     listener.onPeriodClicked(period);
             }
         });
-        new Thread() {
+        unreads = new ArrayList<DatabaseService.Period>();
+        for (DatabaseService.Period period : periods) {
+            if (!period.read)
+                unreads.add(period);
+        }
+        final BaseAdapter listAdapter = new BaseAdapter() {
             @Override
-            public void run() {
-                databaseServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                    @Override
-                    public void withService(DatabaseService service) {
-                        ArrayList<DatabaseService.Period> periods = service.getPeriods(10);
-                        unreads = new ArrayList<DatabaseService.Period>();
-                        for (DatabaseService.Period period : periods) {
-                            if (!period.read)
-                                unreads.add(period);
-                        }
-                        final BaseAdapter listAdapter = new BaseAdapter() {
-                            @Override
-                            public int getCount() {
-                                return unreads.size();
-                            }
-
-                            @Override
-                            public Object getItem(int i) {
-                                return unreads.get(i);
-                            }
-
-                            @Override
-                            public long getItemId(int i) {
-                                return i;
-                            }
-
-                            @Override
-                            public View getView(int i, View view, ViewGroup viewGroup) {
-                                if (view == null)
-                                    view = activity.getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
-                                if (view instanceof TextView) {
-                                    TextView tv = (TextView)view;
-                                    DatabaseService.Period period = unreads.get(i);
-                                    StringBuilder sb = new StringBuilder();
-                                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM HH:mm");
-                                    sb.append(sdf.format(period.startDate));
-                                    if (period.endDate != null) {
-                                        double hours = ((period.startDate.getTime() - period.endDate.getTime()) / 1000) / (60 * 60.0);
-                                        DecimalFormat df = new DecimalFormat();
-                                        df.setMaximumFractionDigits(1);
-                                        sb.append(" - " + df.format(hours) + " hours");
-                                    } else {
-                                        sb.append(" - many hours");
-                                    }
-                                    tv.setText(sb.toString());
-                                    MainActivity.restyleChildrenOrWidget(tv);
-                                }
-                                return view;
-                            }
-                        };
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                UnreadSegmentsView.this.setAdapter(listAdapter);
-                            }
-                        });
-
-
-                    }
-                });
-                super.run();
+            public int getCount() {
+                return unreads.size();
             }
-        }.start();
+
+            @Override
+            public Object getItem(int i) {
+                return unreads.get(i);
+            }
+
+            @Override
+            public long getItemId(int i) {
+                return i;
+            }
+
+            @Override
+            public View getView(int i, View view, ViewGroup viewGroup) {
+                if (view == null)
+                    view = activity.getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                if (view instanceof TextView) {
+                    TextView tv = (TextView) view;
+                    DatabaseService.Period period = unreads.get(i);
+                    StringBuilder sb = new StringBuilder();
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM HH:mm");
+                    sb.append(sdf.format(period.startDate));
+                    if (period.endDate != null) {
+                        double hours = ((period.startDate.getTime() - period.endDate.getTime()) / 1000) / (60 * 60.0);
+                        DecimalFormat df = new DecimalFormat();
+                        df.setMaximumFractionDigits(1);
+                        sb.append(" - " + df.format(hours) + " hours");
+                    } else {
+                        sb.append(" - many hours");
+                    }
+                    tv.setText(sb.toString());
+                }
+                MainActivity.restyleChildrenOrWidget(view);
+                return view;
+            }
+        };
+        UnreadSegmentsView.this.setAdapter(listAdapter);
+        MainActivity.restyleChildrenOrWidget(UnreadSegmentsView.this);
     }
 }

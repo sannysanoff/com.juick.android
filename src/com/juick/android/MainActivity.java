@@ -35,6 +35,9 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.juick.android.datasource.AllMessagesSource;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.datasource.UnreadSegmentMessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.apache.http.client.methods.HttpGet;
@@ -73,16 +76,16 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         }
 
-        void runDefaultFragmentWithBundle(Bundle args) {
-            mf = new MessagesFragment(restoreData);
-            restoreData = null;
-            lastNavigationItem = this;
-            replaceFragment(mf, args);
-        }
     }
 
     ArrayList<NavigationItem> navigationItems = new ArrayList<NavigationItem>();
 
+    void runDefaultFragmentWithBundle(Bundle args, NavigationItem ni) {
+        mf = new MessagesFragment(restoreData);
+        restoreData = null;
+        lastNavigationItem = ni;
+        replaceFragment(mf, args);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,16 +140,16 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                args.putBoolean("home", true);
-                runDefaultFragmentWithBundle(args);
+                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home"));
+                runDefaultFragmentWithBundle(args, this);
             }
         });
         navigationItems.add(new NavigationItem(R.string.navigationAll) {
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                args.putBoolean("all", true);
-                runDefaultFragmentWithBundle(args);
+                args.putSerializable("messagesSource", new AllMessagesSource(MainActivity.this));
+                runDefaultFragmentWithBundle(args, this);
             }
 
             @Override
@@ -158,16 +161,16 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                args.putBoolean("popular", true);
-                runDefaultFragmentWithBundle(args);
+                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("popular", "1"));
+                runDefaultFragmentWithBundle(args, this);
             }
         });
         navigationItems.add(new NavigationItem(R.string.navigationPhoto) {
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                args.putBoolean("media", true);
-                runDefaultFragmentWithBundle(args);
+                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("media", "all"));
+                runDefaultFragmentWithBundle(args, this);
             }
         });
         navigationItems.add(new NavigationItem(R.string.navigationMy) {
@@ -242,8 +245,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
                 } else {
                     final Bundle args = new Bundle();
-                    args.putBoolean("myBlog", true);
-                    runDefaultFragmentWithBundle(args);
+                    args.putSerializable("messagesSource",
+                            new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788")));
+                    runDefaultFragmentWithBundle(args, this);
                 }
             }
         });
@@ -251,39 +255,62 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                args.putBoolean("srachiki", true);
-                runDefaultFragmentWithBundle(args);
+                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api"));
+                runDefaultFragmentWithBundle(args, this);
             }
         });
         navigationItems.add(new NavigationItem(R.string.navigationUnread) {
             @Override
             void action() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this);
-                final AlertDialog alerDialog = builder
-                        .setTitle("Choose unread segment")
-                        .setView(unreadSegmentsView)
-                        .setCancelable(true)
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                                restoreLastNavigationPosition();
-                            }
-                        }).create();
-                unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                final NavigationItem thisNi = this;
+                final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                pd.setIndeterminate(true);
+                pd.setTitle(R.string.navigationUnread);
+                pd.setCancelable(true);
+                pd.show();
+                UnreadSegmentsView.loadPeriods(MainActivity.this, new Utils.Function<Void, ArrayList<DatabaseService.Period>>() {
                     @Override
-                    public void onPeriodClicked(DatabaseService.Period period) {
-                        alerDialog.dismiss();
-                        int beforeMid = period.beforeMid;
-                        Bundle args = new Bundle();
-                        args.putInt("before_mid", beforeMid);
-                        args.putBoolean("all", true);
-                        runDefaultFragmentWithBundle(args);
+                    public Void apply(ArrayList<DatabaseService.Period> periods) {
+                        if (pd.isShowing()) {
+                            pd.cancel();
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                            UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
+                            final int myIndex = navigationItems.indexOf(thisNi);
+                            final AlertDialog alerDialog = builder
+                                    .setTitle("Choose unread segment")
+                                    .setView(unreadSegmentsView)
+                                    .setCancelable(true)
+                                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            dialogInterface.dismiss();
+                                            restoreLastNavigationPosition();
+                                        }
+                                    }).create();
+                            unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                                @Override
+                                public void onPeriodClicked(DatabaseService.Period period) {
+                                    alerDialog.dismiss();
+                                    int beforeMid = period.beforeMid;
+                                    Bundle args = new Bundle();
+                                    args.putSerializable(
+                                            "messagesSource",
+                                            new UnreadSegmentMessagesSource(
+                                                    getString(R.string.navigationUnread),
+                                                    MainActivity.this,
+                                                    period
+                                                    ));
+                                    getSupportActionBar().setSelectedNavigationItem(myIndex);
+                                    runDefaultFragmentWithBundle(args, thisNi);
+                                }
+                            });
+                            alerDialog.show();
+                            restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
+                        }
+                        return null;
                     }
                 });
-                alerDialog.show();
-                MainActivity.restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
+                return;
             }
         });
 
@@ -573,6 +600,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         if (view == null) return;
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         boolean pressed = view.isPressed();
+        if (view instanceof AbsListView) {
+            ((AbsListView)view).setCacheColorHint(colorTheme.getBackground(pressed));
+        }
         if (view instanceof EditText) {
             EditText et = (EditText) view;
             et.setTextColor(colorTheme.getForeground(pressed));
@@ -602,4 +632,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             toggleXMPP();
         }
     }
+
+
 }

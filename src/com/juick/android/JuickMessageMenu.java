@@ -28,7 +28,6 @@ import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
-import android.os.Message;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -36,15 +35,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickMessage;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -140,8 +136,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             @Override
             public void run() {
                 Intent i = new Intent(activity, MessagesActivity.class);
-                i.putExtra("uid", listSelectedItem.User.UID);
-                i.putExtra("uname", listSelectedItem.User.UName);
+                i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + listSelectedItem.User.UName, activity).putArg("user_id", ""+listSelectedItem.User.UID));
                 activity.startActivity(i);
             }
         });
@@ -156,13 +151,24 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 });
             }
         });
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Toggle_Subscription_to) + " #" + listSelectedItem.MID) {
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + listSelectedItem.MID) {
             @Override
             public void run() {
                 confirmAction(R.string.ReallySubscribePost, new Runnable() {
                     @Override
                     public void run() {
-                        postMessage("S #" + listSelectedItem.MID, activity.getResources().getString(R.string.Changed));
+                        postMessage("S #" + listSelectedItem.MID, activity.getResources().getString(R.string.Subscribed));
+                    }
+                });
+            }
+        });
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " #" + listSelectedItem.MID) {
+            @Override
+            public void run() {
+                confirmAction(R.string.ReallySubscribePost, new Runnable() {
+                    @Override
+                    public void run() {
+                        postMessage("U #" + listSelectedItem.MID, activity.getResources().getString(R.string.Unsubscribed));
                     }
                 });
             }
@@ -185,7 +191,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                     confirmAction(R.string.ReallyRecommend, new Runnable() {
                         @Override
                         public void run() {
-                            postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Changed));
+                            postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
                         }
                     });
                 }

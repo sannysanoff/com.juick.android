@@ -22,11 +22,11 @@ import android.content.SharedPreferences;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
-import android.support.v4.view.*;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.support.v4.app.ListFragment;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickUser;
 
@@ -170,14 +170,14 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), getListView(), listAdapter));
 
         notification = new MessagesLoadNotification(getActivity(), handler);
+        final JuickCompatibleURLMessagesSource juickSource = new JuickCompatibleURLMessagesSource(getActivity());
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
                 final ArrayList<JuickMessage> messages;
                 final Parcelable listPosition;
                 if (restoreData == null) {
-                    final String jsonStr = Utils.getJSONWithRetries(getActivity(), "http://api.juick.com/thread?mid=" + mid, notification);
-                    messages = listAdapter.parseJSONpure(jsonStr);
+                    messages = juickSource.getChildren(mid, notification);
                     listPosition = null;
                 } else {
                     messages = ((RetainedData)restoreData).messages;
@@ -306,7 +306,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             return;
         }
         if (jsonStr != null) {
-            final ArrayList<JuickMessage> messages = listAdapter.parseJSONpure("[" + jsonStr + "]");
+            JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(getActivity());
+            final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + jsonStr + "]");
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -354,7 +355,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             while(reply != null) {
                 totalCount += reply.Text.length();
                 if (totalCount > 500 || ll.getChildCount() > 10) break;
-                JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(getActivity(), reply, false, true);
+                JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(getActivity(), reply, true);
                 TextView child = new TextView(getActivity());
                 ll.addView(child, 0);
                 child.setText(parsedMessage.textContent);
