@@ -67,6 +67,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private int mLastMotionY;
     private boolean mBounceHack;
     private ScaleGestureDetector mScaleDetector = null;
+    SharedPreferences sp;
 
     Handler handler;
     private Object restoreData;
@@ -94,8 +95,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         super.onCreate(savedInstanceState);
         databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
         handler = new Handler();
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
 
         Bundle args = getArguments();
@@ -131,7 +131,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     boolean prefetchMessages = false;
     @Override
     public void onResume() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         prefetchMessages = sp.getBoolean("prefetchMessages", false);
         super.onResume();
     }
@@ -419,12 +418,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                 @Override
                                 public void withService(DatabaseService service) {
                                     JuickMessage item = (JuickMessage) getListAdapter().getItem(itemToSave-1);
-                                    service.markAsRead(new DatabaseService.ReadMarker(item.MID, item.replies));
+                                    service.markAsRead(new DatabaseService.ReadMarker(item.MID, item.replies, item.Timestamp.getTime()));
                                 }
 
-                                @Override
-                                public void withoutService() {
-                                }
                             });
                         }
                         lastItemReported--;

@@ -284,36 +284,51 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                             if (pd.isShowing()) {
                                 pd.cancel();
                                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                                UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
-                                final int myIndex = navigationItems.indexOf(thisNi);
-                                final AlertDialog alerDialog = builder
-                                        .setTitle("Choose unread segment")
-                                        .setView(unreadSegmentsView)
-                                        .setCancelable(true)
-                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialogInterface, int i) {
-                                                dialogInterface.dismiss();
-                                                restoreLastNavigationPosition();
-                                            }
-                                        }).create();
-                                unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
-                                    @Override
-                                    public void onPeriodClicked(DatabaseService.Period period) {
-                                        alerDialog.dismiss();
-                                        int beforeMid = period.beforeMid;
-                                        Bundle args = new Bundle();
-                                        args.putSerializable(
-                                                "messagesSource",
-                                                new UnreadSegmentMessagesSource(
-                                                        getString(R.string.navigationUnread),
-                                                        MainActivity.this,
-                                                        period
-                                                        ));
-                                        getSupportActionBar().setSelectedNavigationItem(myIndex);
-                                        runDefaultFragmentWithBundle(args, thisNi);
-                                    }
-                                });
+                                final AlertDialog alerDialog;
+                                if (periods.size() == 0) {
+                                    alerDialog = builder
+                                            .setTitle("Unread segments")
+                                            .setMessage("You have not enabled last read markers in prefs, or you have not collected enough read history")
+                                            .setCancelable(true)
+                                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                    dialogInterface.dismiss();
+                                                    restoreLastNavigationPosition();
+                                                }
+                                            }).create();
+                                } else {
+                                    UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
+                                    final int myIndex = navigationItems.indexOf(thisNi);
+                                    alerDialog = builder
+                                            .setTitle("Choose unread segment")
+                                            .setView(unreadSegmentsView)
+                                            .setCancelable(true)
+                                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                    dialogInterface.dismiss();
+                                                    restoreLastNavigationPosition();
+                                                }
+                                            }).create();
+                                    unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                                        @Override
+                                        public void onPeriodClicked(DatabaseService.Period period) {
+                                            alerDialog.dismiss();
+                                            int beforeMid = period.beforeMid;
+                                            Bundle args = new Bundle();
+                                            args.putSerializable(
+                                                    "messagesSource",
+                                                    new UnreadSegmentMessagesSource(
+                                                            getString(R.string.navigationUnread),
+                                                            MainActivity.this,
+                                                            period
+                                                            ));
+                                            getSupportActionBar().setSelectedNavigationItem(myIndex);
+                                            runDefaultFragmentWithBundle(args, thisNi);
+                                        }
+                                    });
+                                }
                                 alerDialog.show();
                                 restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
                             }

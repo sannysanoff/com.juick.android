@@ -49,6 +49,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     boolean implicitlyCreated;
     Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
     MessagesLoadNotification notification;
+    SharedPreferences sp;
+    private boolean trackLastRead;
 
 
     @Override
@@ -56,8 +58,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         super.onCreate(savedInstanceState);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
+        sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        trackLastRead = sp.getBoolean("lastReadMessages", false);
         if (Build.VERSION.SDK_INT >= 8) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
             if (sp.getBoolean("enableScaleByGesture", true)) {
                 mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
             }
@@ -222,7 +225,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                         databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                             @Override
                                             public void withService(DatabaseService service) {
-                                                service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1));
+                                                service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1, messages.get(0).Timestamp.getDate()));
                                             }
 
                                             @Override
@@ -313,7 +316,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + jsonStr + "]");
             getActivity().runOnUiThread(new Runnable() {
                 public void run() {
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     if (sp.getBoolean("current_vibration_enabled", true))
                         ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
                     listAdapter.addAllMessages(messages);

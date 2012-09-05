@@ -104,7 +104,7 @@ public class DatabaseService extends Service {
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 3;
+        public final static int CURRENT_VERSION = 4;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -118,6 +118,7 @@ public class DatabaseService extends Service {
             sqLiteDatabase.execSQL("create index if not exists ix_message_date on message (tm)");
             sqLiteDatabase.execSQL("create index if not exists ix_message_prev on message (prevmsgid)");
             sqLiteDatabase.execSQL("create index if not exists ix_message_next on message (nextmsgid)");
+            onUpgrade(sqLiteDatabase, 1, CURRENT_VERSION);
         }
 
         @Override
@@ -129,6 +130,11 @@ public class DatabaseService extends Service {
             if (from == 2) {
                 sqLiteDatabase.execSQL("create table saved_message(msgid integer not null primary key, tm integer not null, body blob not null, save_date integer not null)");
                 sqLiteDatabase.execSQL("create index if not exists ix_savedmessage_savedate on saved_message (save_date)");
+                from++;
+            }
+            if (from == 3) {
+                sqLiteDatabase.execSQL("alter table message_read add column message_date integer");
+                sqLiteDatabase.execSQL("update message_read set message_date=tm");
                 from++;
             }
         }
@@ -147,11 +153,13 @@ public class DatabaseService extends Service {
 
     public static class ReadMarker {
         int mid;
+        long messageDate;
         int nreplies;
 
-        ReadMarker(int mid, int nreplies) {
+        ReadMarker(int mid, int nreplies, long messageDate) {
             this.mid = mid;
             this.nreplies = nreplies;
+            this.messageDate = messageDate;
         }
     }
 
@@ -312,26 +320,15 @@ public class DatabaseService extends Service {
         return mrs;
     }
 
-    class QuickMessageInfo {
-        long tm;
-        int mid;
-
-        QuickMessageInfo(int mid, long tm) {
-            this.mid = mid;
-            this.tm = tm;
-        }
-    }
-
-    private QuickMessageInfo getMessageExistStatus0(int messageId) {
-        Cursor cursor = db.rawQuery("select * from message where msgid=?", new String[]{"" + messageId});
+    private long getMessageDate(int messageId) {
+        Cursor cursor = db.rawQuery("select message_date from message_read where msgid=?", new String[]{"" + messageId});
         if (cursor.moveToFirst()) {
-            int msgid = cursor.getInt(cursor.getColumnIndex("msgid"));
-            long tm = cursor.getLong(cursor.getColumnIndex("tm"));
+            long tm = cursor.getLong(cursor.getColumnIndex("message_date"));
             cursor.close();
-            return new QuickMessageInfo(msgid, tm);
+            return tm;
         } else {
             cursor.close();
-            return null;
+            return -1;
         }
     }
 
@@ -356,6 +353,7 @@ public class DatabaseService extends Service {
                         contentValues.put("msgid", readMarker.mid);
                         contentValues.put("tm", System.currentTimeMillis());
                         contentValues.put("nreplies", readMarker.nreplies);
+                        contentValues.put("message_date", readMarker.messageDate);
                         if (-1 == db.insert("message_read", null, contentValues)) {
                             throw new SQLException("Insert into message_read failed");
                         }
@@ -462,7 +460,7 @@ public class DatabaseService extends Service {
 
     public ArrayList<Period> getPeriods(int days) {
         ArrayList<Period> retval = new ArrayList<Period>();
-        Cursor cursor = db.rawQuery("select min(msgid), max(msgid) from message where tm > ?", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
+        Cursor cursor = db.rawQuery("select min(msgid), max(msgid) from message_read where tm > ?", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
         cursor.moveToFirst();
         if (cursor.isNull(1)) {
             cursor.close();
@@ -471,29 +469,27 @@ public class DatabaseService extends Service {
         int bottomMsgid = cursor.getInt(0);
         int newestMsgid = cursor.getInt(1);
         cursor.close();
-        cursor = db.rawQuery("select * from message where msgid > ? order by msgid desc", new String[]{"" + bottomMsgid});
+        cursor = db.rawQuery("select * from message_read where msgid > ? order by msgid desc", new String[]{"" + bottomMsgid});
         cursor.moveToFirst();
         int msgidIndex = cursor.getColumnIndex("msgid");
+        int messageDateIndex = cursor.getColumnIndex("message_date");
         int savedMsgid = newestMsgid;
+        long savedMsgDate = getMessageDate(savedMsgid);
         while(!cursor.isAfterLast()) {
             int thisMid = cursor.getInt(msgidIndex);
+            long thisMessageDate = cursor.getLong(messageDateIndex);
             if (savedMsgid != -1 && Math.abs(thisMid - savedMsgid) > 50) {   // UNREAD HOLE
-                QuickMessageInfo thisMsgStatus = getMessageExistStatus0(thisMid);
-                if (thisMsgStatus == null) {
-                    continue;
-                }
                 Period period = new Period();
-                QuickMessageInfo savedMsgStatus = getMessageExistStatus0(savedMsgid);
                 period.startMid = savedMsgid-1;
                 period.beforeMid = savedMsgid-1;
-                period.startDate = new Date(savedMsgStatus.tm);
+                period.startDate = new Date(savedMsgDate);
                 period.endMid =thisMid+1;
-                period.endDate = new Date(thisMsgStatus.tm);
+                period.endDate = new Date(thisMessageDate);
                 period.read = false;
                 retval.add(period);
-                period = null;
             }
             savedMsgid = thisMid;
+            savedMsgDate = thisMessageDate;
             cursor.moveToNext();
         }
         // coalesce periods
@@ -508,86 +504,6 @@ public class DatabaseService extends Service {
             }
         }
         cursor.close();
-        return retval;
-    }
-
-    public ArrayList<Period> getPeriodsBad(int days) {
-        ArrayList<Period> retval = new ArrayList<Period>();
-        Cursor cursor = db.rawQuery("select * from message where tm > ? order by tm desc", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
-        cursor.moveToFirst();
-        int tmIndex = cursor.getColumnIndex("tm");
-        int prevMsgIdIndex = cursor.getColumnIndex("prevmsgid");
-        int nextMsgIdIndex = cursor.getColumnIndex("nextmsgid");
-        int msgidIndex = cursor.getColumnIndex("msgid");
-        Period period = new Period();
-        ArrayList<MessageLink> links = new ArrayList<MessageLink>();
-        int previousMID = -1;
-        while(!cursor.isAfterLast()) {
-            int prevMsgId = cursor.getInt(prevMsgIdIndex);
-            int nextMsgId = cursor.getInt(nextMsgIdIndex);
-            if (prevMsgId == -1 && nextMsgId == -1) continue; // random nonlinear message
-            int thisMid = cursor.getInt(msgidIndex);
-            links.add(new MessageLink(thisMid, prevMsgId, nextMsgId));
-            Date thisDate = new Date(cursor.getLong(tmIndex));
-            if (period.startDate == null) {
-                period.startDate = thisDate;
-                period.startMid = thisMid;
-                period.read = true;
-                period.endMid = period.startMid;
-                period.endDate = period.startDate;
-            }
-            if (prevMsgId == -1 && period.startMid != thisMid || previousMID != -1 && Math.abs(previousMID - thisMid) > 10) {
-                // next period start; message without prev
-                retval.add(period);
-                Period prevPeriod = period;
-                period = new Period();
-                period.read = false;
-                period.beforeMid = prevPeriod.endMid;
-                period.startDate = prevPeriod.endDate;
-                period.endDate = thisDate;
-                retval.add(period);
-                period = new Period();
-            } else {
-                period.endMid = thisMid;
-                period.endDate = thisDate;
-                period.numberOfMessages++;
-            }
-            previousMID = thisMid;
-            cursor.moveToNext();
-        }
-        // coalesce periods
-        for (int i = 1; i < retval.size() - 1; i++) {
-            Period period1 = retval.get(i);
-            if (period1.read && period1.numberOfMessages < 10) {
-                retval.remove(i);
-                Period nextEmpty = retval.remove(i);
-                Period previous = retval.get(i-1);
-                previous.endDate = nextEmpty.endDate;
-                i--;
-            }
-        }
-        for (int i = 0; i < retval.size() - 1; i++) {
-            Period period1 = retval.get(i);
-            if (period1.read) {
-                Period nextEmpty = retval.get(i+1);
-                int rdMessages = 0;
-                for(int m=period1.startMid; m >= period1.endMid; m--) {
-                    QuickMessageInfo messageExistStatus0 = getMessageExistStatus0(m);
-                    if (messageExistStatus0 != null) {
-                        if (getMessageReadStatus0(m).read) {
-                            rdMessages++;
-                            continue;
-                        } else {
-                            nextEmpty.beforeMid = m+1;
-                            nextEmpty.startDate = new Date(messageExistStatus0.tm);
-                            period1.numberOfMessages = rdMessages;
-                            period1.endMid = m + 1;
-                            period1.endDate = nextEmpty.startDate;
-                        }
-                    }
-                }
-            }
-        }
         return retval;
     }
 
