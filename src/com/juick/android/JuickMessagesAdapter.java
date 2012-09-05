@@ -706,63 +706,67 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
                     }
                 }
-                httpGet = new HttpGet(loadURl);
-                loading = true;
-                View progressBar = imageHolder.findViewById(R.id.progressbar);
-                progressBar.setVisibility(View.VISIBLE);
-                TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
-                progressBarText.setVisibility(View.VISIBLE);
-                final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
-                webView.setVisibility(View.GONE);
-                new Thread("Image downloader") {
-                    @Override
-                    public void run() {
-                        try {
+                try {
+                    httpGet = new HttpGet(loadURl);
+                    loading = true;
+                    View progressBar = imageHolder.findViewById(R.id.progressbar);
+                    progressBar.setVisibility(View.VISIBLE);
+                    TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
+                    progressBarText.setVisibility(View.VISIBLE);
+                    final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
+                    webView.setVisibility(View.GONE);
+                    new Thread("Image downloader") {
+                        @Override
+                        public void run() {
+                            try {
 
-                            httpClient.execute(httpGet, new ResponseHandler<HttpResponse>() {
-                                @Override
-                                public HttpResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                                    updateStatus("Load..");
-                                    HttpEntity entity = response.getEntity();
-                                    InputStream content = entity.getContent();
-                                    long l = System.currentTimeMillis();
-                                    if (content != null) {
-                                        OutputStream outContent = new FileOutputStream(destFile);
-                                        byte[] buf = new byte[4096];
-                                        while (true) {
-                                            int rd = content.read(buf);
-                                            if (rd <= 0) break;
-                                            totalRead += rd;
-                                            outContent.write(buf, 0, rd);
-                                            if (System.currentTimeMillis() - l > 300) {
-                                                final int finalTotalRead = totalRead;
-                                                updateStatus("Load.." + (finalTotalRead / 1024) + "K - " + suffix);
-                                                l = System.currentTimeMillis();
+                                httpClient.execute(httpGet, new ResponseHandler<HttpResponse>() {
+                                    @Override
+                                    public HttpResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+                                        updateStatus("Load..");
+                                        HttpEntity entity = response.getEntity();
+                                        InputStream content = entity.getContent();
+                                        long l = System.currentTimeMillis();
+                                        if (content != null) {
+                                            OutputStream outContent = new FileOutputStream(destFile);
+                                            byte[] buf = new byte[4096];
+                                            while (true) {
+                                                int rd = content.read(buf);
+                                                if (rd <= 0) break;
+                                                totalRead += rd;
+                                                outContent.write(buf, 0, rd);
+                                                if (System.currentTimeMillis() - l > 300) {
+                                                    final int finalTotalRead = totalRead;
+                                                    updateStatus("Load.." + (finalTotalRead / 1024) + "K - " + suffix);
+                                                    l = System.currentTimeMillis();
+                                                }
+                                            }
+                                            content.close();
+                                            outContent.close();
+                                            final int finalTotalRead1 = totalRead;
+                                            updateStatus("Done.." + (finalTotalRead1 / 1024) + "K");
+                                            loading = false;
+                                            if (!terminated) {
+                                                activity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        updateWebView(destFile);
+                                                    }
+                                                });
                                             }
                                         }
-                                        content.close();
-                                        outContent.close();
-                                        final int finalTotalRead1 = totalRead;
-                                        updateStatus("Done.." + (finalTotalRead1 / 1024) + "K");
-                                        loading = false;
-                                        if (!terminated) {
-                                            activity.runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    updateWebView(destFile);
-                                                }
-                                            });
-                                        }
+                                        return null;
                                     }
-                                    return null;
-                                }
-                            });
+                                });
 
-                        } catch (IOException e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            } catch (IOException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            }
                         }
-                    }
-                }.start();
+                    }.start();
+                } catch (Exception e) {
+                    updateStatus("Error: "+e.toString());
+                }
             }
         }
 
