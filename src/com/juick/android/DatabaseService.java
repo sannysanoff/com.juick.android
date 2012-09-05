@@ -15,6 +15,7 @@ import com.juick.android.api.JuickMessage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.zip.GZIPOutputStream;
@@ -320,7 +321,7 @@ public class DatabaseService extends Service {
         }
     }
 
-    public static class Period {
+    public static class Period implements Serializable {
         boolean read;
         Date startDate;
         Date endDate;
