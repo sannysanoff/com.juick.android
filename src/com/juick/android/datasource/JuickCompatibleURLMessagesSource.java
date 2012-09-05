@@ -77,10 +77,14 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
 
     @Override
     public void getFirst(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+        urlParser.getArgsMap().remove("before_mid");
+        urlParser.getArgsMap().remove("page");
+        page = 0;
+        lastRetrievedMID = -1;
         fetchURLAndProcess(notification, cont);
     }
 
-    private void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         final String jsonStr = Utils.getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
         ArrayList<JuickMessage> messages = parseAndProcess(jsonStr);
         if (messages.size() > 0) {

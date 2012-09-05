@@ -34,7 +34,7 @@ public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
             }
         }
         final boolean finalAddContinuation = addContinuation;
-        super.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+        fetchURLAndProcess(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
             @Override
             public Void apply(ArrayList<JuickMessage> first) {
                 if (first.size() > 0 && finalAddContinuation) {
@@ -50,6 +50,10 @@ public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
     public void resetSavedPosition() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         sp.edit().remove("lastMessagesSavedPosition").commit();
+        lastRetrievedMID = -1;
+        page = 0;
+        urlParser.getArgsMap().remove("before_mid");
+        urlParser.getArgsMap().remove("page");
     }
 
     @Override

@@ -27,6 +27,11 @@ public class UnreadSegmentMessagesSource extends JuickCompatibleURLMessagesSourc
     }
 
     @Override
+    public boolean supportsBackwardRefresh() {
+        return false;
+    }
+
+    @Override
     public void getFirst(Utils.Notification notification, final Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         putArg("before_mid", ""+period.startMid);
