@@ -52,7 +52,8 @@ public class DatabaseService extends Service {
 
         @Override
         public void onUpgrade(SQLiteDatabase sqLiteDatabase, int from, int to) {
-
+            sqLiteDatabase.execSQL("create table saved_message(msgid integer not null primary key, tm integer not null, body blob not null, save_date integer not null)");
+            sqLiteDatabase.execSQL("create index if not exists ix_message_next on message (nextmsgid)");
         }
 
 
@@ -376,19 +377,22 @@ public class DatabaseService extends Service {
         int bottomMsgid = cursor.getInt(0);
         int newestMsgid = cursor.getInt(1);
         cursor.close();
-        cursor = db.rawQuery("select * from message_read where msgid > ? order by msgid desc", new String[]{"" + bottomMsgid});
+        cursor = db.rawQuery("select * from message where msgid > ? order by msgid desc", new String[]{"" + bottomMsgid});
         cursor.moveToFirst();
         int msgidIndex = cursor.getColumnIndex("msgid");
         int savedMsgid = newestMsgid;
         while(!cursor.isAfterLast()) {
             int thisMid = cursor.getInt(msgidIndex);
             if (savedMsgid != -1 && Math.abs(thisMid - savedMsgid) > 50) {   // UNREAD HOLE
+                QuickMessageInfo thisMsgStatus = getMessageExistStatus0(thisMid);
+                if (thisMsgStatus == null) {
+                    continue;
+                }
                 Period period = new Period();
                 QuickMessageInfo savedMsgStatus = getMessageExistStatus0(savedMsgid);
                 period.startMid = savedMsgid-1;
                 period.beforeMid = savedMsgid-1;
                 period.startDate = new Date(savedMsgStatus.tm);
-                QuickMessageInfo thisMsgStatus = getMessageExistStatus0(thisMid);
                 period.endMid =thisMid+1;
                 period.endDate = new Date(thisMsgStatus.tm);
                 period.read = false;
