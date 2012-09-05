@@ -225,12 +225,24 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             }
                             if (messages.size() != 0) {
                                 Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
+                                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
                                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                                     @Override
                                     public void withService(XMPPService service) {
                                         service.removeMessages(mid, false);
                                     }
                                 });
+                                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                    @Override
+                                    public void withService(DatabaseService service) {
+                                        service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1));
+                                    }
+
+                                    @Override
+                                    public void withoutService() {
+                                    }
+                                });
+
                             }
 
                         }

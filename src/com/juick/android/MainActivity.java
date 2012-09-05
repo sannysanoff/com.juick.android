@@ -55,9 +55,34 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     public static final int ACTIVITY_PREFERENCES = 3;
     public static final int PENDINGINTENT_CONSTANT = 713242183;
 
-    int lastNavigationPosition = -1;
+    NavigationItem lastNavigationItem = null;
     MessagesFragment mf;
     Object restoreData;
+    private SharedPreferences sp;
+
+    class NavigationItem {
+        int labelId;
+
+        NavigationItem(int labelId) {
+            this.labelId = labelId;
+        }
+
+        void action() {}
+
+        void restoreReadMarker() {
+
+        }
+
+        void runDefaultFragmentWithBundle(Bundle args) {
+            mf = new MessagesFragment(restoreData);
+            restoreData = null;
+            lastNavigationItem = this;
+            replaceFragment(mf, args);
+        }
+    }
+
+    ArrayList<NavigationItem> navigationItems = new ArrayList<NavigationItem>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,17 +110,18 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         startPreferencesStorage(this);
 
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.registerOnSharedPreferenceChangeListener(this);
         toggleXMPP();
         startService(new Intent(this, DatabaseService.class));
 
         clearObsoleteImagesInCache();
+        updateNavigation();
 
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-        bar.setListNavigationCallbacks(ArrayAdapter.createFromResource(this, R.array.messagesLists, android.R.layout.simple_list_item_1), this);
+
 //        if (getIntent().hasExtra("lastNavigationPosition")) {
 //            int lastNavigationPosition1 = getIntent().getExtras().getInt("lastNavigationPosition");
 //            bar.selectTab(bar.getTabAt(lastNavigationPosition1));
@@ -103,7 +129,213 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
+    }
 
+    public void updateNavigation() {
+        navigationItems = new ArrayList<NavigationItem>();
+        navigationItems.add(new NavigationItem(R.string.navigationSubscriptions) {
+            @Override
+            void action() {
+                final Bundle args = new Bundle();
+                args.putBoolean("home", true);
+                runDefaultFragmentWithBundle(args);
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationAll) {
+            @Override
+            void action() {
+                final Bundle args = new Bundle();
+                args.putBoolean("all", true);
+                runDefaultFragmentWithBundle(args);
+            }
+
+            @Override
+            void restoreReadMarker() {
+                mf.clearSavedPosition(MainActivity.this);
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationTop) {
+            @Override
+            void action() {
+                final Bundle args = new Bundle();
+                args.putBoolean("popular", true);
+                runDefaultFragmentWithBundle(args);
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationPhoto) {
+            @Override
+            void action() {
+                final Bundle args = new Bundle();
+                args.putBoolean("media", true);
+                runDefaultFragmentWithBundle(args);
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationMy) {
+            @Override
+            void action() {
+                if (sp.getString("myUserId", "").equals("")) {
+                    AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+
+                    alert.setTitle(R.string.Your_User_Name);
+                    alert.setMessage(R.string.Your_User_Name_Explain);
+
+                    // Set an EditText view to get user input
+                    final EditText input = new EditText(MainActivity.this);
+                    alert.setView(input);
+
+                    alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            final String value = input.getText().toString();
+                            if (value.length() > 0) {
+                                final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
+                                new Thread("UserID obtainer") {
+                                    @Override
+                                    public void run() {
+                                        String fullName = value;
+                                        if (fullName.startsWith("@")) fullName = fullName.substring(1);
+                                        HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
+                                        try {
+                                            String retval = httpClient.execute(httpGet, new BasicResponseHandler());
+                                            String SEARCH_MARKER = "http://i.juick.com/a/";
+                                            int ix = retval.indexOf(SEARCH_MARKER);
+                                            if (ix < 0) {
+                                                throw new RuntimeException("Website returned unrecognized response");
+                                            }
+                                            int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
+                                            if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
+                                                throw new RuntimeException("Website returned unrecognized response");
+                                            }
+                                            final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    sp.edit().putString("myUserId", uidS).commit();
+                                                    action();
+                                                }
+                                            });
+
+                                        } catch (final Exception e) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    Toast.makeText(MainActivity.this, "Unable to detect nick: " + e.toString(), Toast.LENGTH_LONG).show();
+                                                }
+                                            });
+                                        } finally {
+                                            httpClient.close();
+                                        }
+                                    }
+                                }.start();
+
+
+                            }
+                        }
+                    });
+
+                    alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            restoreLastNavigationPosition();
+                        }
+                    });
+
+                    alert.show();
+
+                } else {
+                    final Bundle args = new Bundle();
+                    args.putBoolean("myBlog", true);
+                    runDefaultFragmentWithBundle(args);
+                }
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationSrachiki) {
+            @Override
+            void action() {
+                final Bundle args = new Bundle();
+                args.putBoolean("srachiki", true);
+                runDefaultFragmentWithBundle(args);
+            }
+        });
+        navigationItems.add(new NavigationItem(R.string.navigationUnread) {
+            @Override
+            void action() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this);
+                final AlertDialog alerDialog = builder
+                        .setTitle("Choose unread segment")
+                        .setView(unreadSegmentsView)
+                        .setCancelable(true)
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                                restoreLastNavigationPosition();
+                            }
+                        }).create();
+                unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                    @Override
+                    public void onPeriodClicked(DatabaseService.Period period) {
+                        alerDialog.dismiss();
+                        int beforeMid = period.beforeMid;
+                        Bundle args = new Bundle();
+                        args.putInt("before_mid", beforeMid);
+                        args.putBoolean("all", true);
+                        runDefaultFragmentWithBundle(args);
+                    }
+                });
+                alerDialog.show();
+                MainActivity.restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
+            }
+        });
+
+        final boolean compressedMenu = sp.getBoolean("compressedMenu", false);
+        float menuFontScale = 1;
+        try {
+            menuFontScale = Float.parseFloat(sp.getString("menuFontScale", "1.0"));
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        final float finalMenuFontScale = menuFontScale;
+        BaseAdapter navigationAdapter = new BaseAdapter() {
+            @Override
+            public int getCount() {
+                return navigationItems.size();
+            }
+
+            @Override
+            public Object getItem(int position) {
+                return navigationItems.get(position);
+            }
+
+            @Override
+            public long getItemId(int position) {
+                return position;
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                final int screenHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
+                View retval = convertView;
+                if (retval == null) {
+                    retval = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                }
+                if (retval instanceof TextView) {
+                    TextView tv = (TextView)retval;
+                    tv.setText(getString(navigationItems.get(position).labelId));
+                    if (compressedMenu) {
+                        int minHeight = (int)((screenHeight * 0.7) / getCount());
+                        tv.setMinHeight(minHeight);
+                        tv.setMinimumHeight(minHeight);
+                    }
+                    tv.measure(1000, 1000);
+                    tv.setTextSize(22 * finalMenuFontScale);
+                }
+                return retval;
+            }
+        };
+
+
+        ActionBar bar = getSupportActionBar();
+        bar.setListNavigationCallbacks(navigationAdapter, this);
 
     }
 
@@ -132,7 +364,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
     private void clearObsoleteImagesInCache() {
         final File cacheDir = new File(getCacheDir(), "image_cache");
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         int daysToKeep = 10;
         try {
             daysToKeep = Integer.parseInt(sp.getString("image.daystokeep", "10"));
@@ -169,12 +400,10 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.unregisterOnSharedPreferenceChangeListener(this);
     }
 
     private void toggleXMPP() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
         if (useXMPP) {
             startService(new Intent(this, XMPPService.class));
@@ -231,130 +460,20 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
     public boolean onNavigationItemSelected(final int itemPosition, long _) {
         restyle();
-        if (lastNavigationPosition == itemPosition) return false;       // happens during screen rotate
-        mf = new MessagesFragment(restoreData);
-        restoreData = null;
-        final Bundle args = new Bundle();
-        boolean shouldCommit = true;
-        if (itemPosition == 0) {
-            args.putBoolean("home", true);
-        } else if (itemPosition == 1) {
-            args.putBoolean("all", true);
-        } else if (itemPosition == 2) {
-            args.putBoolean("popular", true);
-        } else if (itemPosition == 3) {
-            args.putBoolean("media", true);
-        } else if (itemPosition == 4) {
-            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            if (sp.getString("myUserId", "").equals("")) {
-                shouldCommit = false;
-                AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-                alert.setTitle(R.string.Your_User_Name);
-                alert.setMessage(R.string.Your_User_Name_Explain);
-
-                // Set an EditText view to get user input
-                final EditText input = new EditText(this);
-                alert.setView(input);
-
-                alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        final String value = input.getText().toString();
-                        if (value.length() > 0) {
-                            final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
-                            new Thread("UserID obtainer") {
-                                @Override
-                                public void run() {
-                                    String fullName = value;
-                                    if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                                    HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
-                                    try {
-                                        String retval = httpClient.execute(httpGet, new BasicResponseHandler());
-                                        String SEARCH_MARKER = "http://i.juick.com/a/";
-                                        int ix = retval.indexOf(SEARCH_MARKER);
-                                        if (ix < 0) {
-                                            throw new RuntimeException("Website returned unrecognized response");
-                                        }
-                                        int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
-                                        if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                                            throw new RuntimeException("Website returned unrecognized response");
-                                        }
-                                        final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                sp.edit().putString("myUserId", uidS).commit();
-                                                lastNavigationPosition = itemPosition;
-                                                replaceFragment(mf, args);
-                                            }
-                                        });
-
-                                    } catch (final Exception e) {
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(MainActivity.this, "Unable to detect nick: " + e.toString(), Toast.LENGTH_LONG).show();
-                                            }
-                                        });
-                                    } finally {
-                                        httpClient.close();
-                                    }
-                                }
-                            }.start();
-
-
-                        }
-                    }
-                });
-
-                alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        // Canceled.
-                    }
-                });
-
-                alert.show();
-
-            }
-            args.putBoolean("myBlog", true);
-
-        } else if (itemPosition == 5) {
-            args.putBoolean("srachiki", true);
-        } else if (itemPosition == 6) {
-            shouldCommit = false;
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(this);
-            final AlertDialog alerDialog = builder
-                    .setTitle("Choose unread segment")
-                    .setView(unreadSegmentsView)
-                    .setCancelable(true)
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                            ActionBar.Tab tabAt = getSupportActionBar().getTabAt(lastNavigationPosition);
-                            getSupportActionBar().setSelectedNavigationItem(lastNavigationPosition);
-                        }
-                    }).create();
-            unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
-                @Override
-                public void onPeriodClicked(DatabaseService.Period period) {
-                    alerDialog.dismiss();
-                    int beforeMid = period.beforeMid;
-                    lastNavigationPosition = itemPosition;
-                    args.putInt("before_mid", beforeMid);
-                    args.putBoolean("all", true);
-                    replaceFragment(mf, args);
-                }
-            });
-            alerDialog.show();
-            MainActivity.restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
-        }
-        if (shouldCommit) {
-            lastNavigationPosition = itemPosition;
-            replaceFragment(mf, args);
-        }
+        NavigationItem thisItem = navigationItems.get(itemPosition);
+        if (lastNavigationItem == thisItem) return false;       // happens during screen rotate
+        thisItem.action();
         return true;
+    }
+
+    private void restoreLastNavigationPosition() {
+        for (int i = 0; i < navigationItems.size(); i++) {
+            NavigationItem navigationItem = navigationItems.get(i);
+            if (navigationItem == lastNavigationItem) {
+                getSupportActionBar().setSelectedNavigationItem(i);
+                break;
+            }
+        }
     }
 
     private void replaceFragment(MessagesFragment mf, Bundle args) {
@@ -379,7 +498,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             if (resultCode == RESULT_OK) {
                 Intent intent = getIntent();
                 finish();
-                intent.putExtra("lastNavigationPosition", lastNavigationPosition);
                 startActivity(intent);
 
             }
@@ -406,14 +524,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 startActivity(new Intent(this, ExploreActivity.class));
                 return true;
             case R.id.reload:
-                if (lastNavigationPosition != -1) {
-                    int oldPosition = lastNavigationPosition;
-                    if (lastNavigationPosition == 1) {
-                        // clear save pointer
-                        mf.clearSavedPosition(this);
-                    }
-                    lastNavigationPosition = -1;
-                    onNavigationItemSelected(oldPosition, -1);
+                if (lastNavigationItem != null) {
+                    NavigationItem oldItem = lastNavigationItem;
+                    lastNavigationItem.restoreReadMarker();
+                    lastNavigationItem = null;
+                    oldItem.action();
                 }
                 return true;
             default:

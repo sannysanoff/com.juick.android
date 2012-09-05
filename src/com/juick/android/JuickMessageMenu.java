@@ -113,14 +113,6 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             urls.add(listSelectedItem.Text.substring(m.start(), m.end()));
             pos = m.end();
         }
-        /*
-        pos = 0;
-        m = JuickMessagesAdapter.usrPattern.matcher(listSelectedItem.Text);
-        while (m.find(pos)) {
-        urls.add(listSelectedItem.Text.substring(m.start(), m.end()));
-        pos = m.end();
-        }
-         */
 
         if (urls.size() > 0) {
             for (final String url : urls) {

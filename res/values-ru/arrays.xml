@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string-array name="messagesLists">
-        <item>Подписки</item>
-        <item>Все сообщения</item>
-        <item>Популярные</item>
-        <item>С фото</item>
-        <item>Мой блог</item>
-        <item>Срачики</item>
-        <item>Все сообщения - нечитанные</item>
-    </string-array>
     <string-array name="prefsRefreshIntervalTitles">
         <item>Никогда</item>
         <item>5 минут</item>

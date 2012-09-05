@@ -142,4 +142,13 @@
     <string name="Colors">Colors</string>
     <string name="PostReply">Post a reply</string>
 
+
+    <string name="navigationSubscriptions">Subscriptions</string>
+    <string name="navigationAll">Last messages</string>
+    <string name="navigationTop">Top messages</string>
+    <string name="navigationPhoto">With photos</string>
+    <string name="navigationMy">My blog</string>
+    <string name="navigationSrachiki">Srachiki</string>
+    <string name="navigationUnread">All-unread</string>
+
 </resources>
