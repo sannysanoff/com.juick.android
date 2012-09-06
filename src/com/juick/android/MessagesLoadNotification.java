@@ -24,7 +24,7 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
     MessagesLoadNotification(Activity activity, Handler handler) {
         statusText = (TextView)activity.findViewById(R.id.status_text);
         progressBar = (ProgressBar)activity.findViewById(R.id.progress_bar);
-        statusText.setText("Loading..");
+        statusText.setText(activity.getString(R.string.Loading___));
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(activity);
         statusText.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
         this.handler = handler;
@@ -40,7 +40,7 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
         handler.post(new Runnable() {
             @Override
             public void run() {
-                String str = "Loading.. " + (progressBytes/1024)+"K ";
+                String str = statusText.getContext().getString(R.string.Loading___) + (progressBytes/1024)+"K ";
                 if (nretry>0)
                     str += " (retry "+(nretry+1)+")";
                 statusText.setText(str);
@@ -59,7 +59,7 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
         handler.post(new Runnable() {
             @Override
             public void run() {
-                statusText.setText("Loading.. retry="+nretry);
+                statusText.setText(statusText.getContext().getString(R.string.Loading___)+" retry="+nretry);
             }
         });
     }

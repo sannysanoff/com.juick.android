@@ -400,7 +400,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         allItemsEnabled = false;
         JuickMessage jmsg = new JuickMessage();
         jmsg.Text = txt;
-        insert(jmsg, position);
+        try {
+            insert(jmsg, position);
+        } catch (Exception e) {
+            // fsck them all
+        }
     }
 
     public void recycleView(View view) {

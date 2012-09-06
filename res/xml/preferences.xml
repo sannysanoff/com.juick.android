@@ -9,89 +9,89 @@
             android:defaultValue="5"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="XMPP client">
+    <PreferenceCategory android:title="@string/XMPP_client">
         <com.juick.android.XMPPPreference
                 android:key="xmpp_config"
                 android:defaultValue=""
-                android:summary="Not set up"
-                android:title="XMPP config"
+                android:summary="@string/Not_set_up"
+                android:title="@string/XMPP_config"
                 android:persistent="true">
         </com.juick.android.XMPPPreference>
         <CheckBoxPreference
             android:key="useXMPP"
-            android:title="XMPP enabled"
-            android:summary="Activate it after you finished setting up account details"
+            android:title="@string/XMPP_enabled"
+            android:summary="@string/Activate_when_finished"
             android:defaultValue="false"
             android:persistent="true"/>
         <ListPreference
             android:key="juickBotOn"
-            android:title="Send 'ON' command after connect?"
+            android:title="@string/Send_on_command"
             android:defaultValue="skip"
             android:entries="@array/juickBotOnLabels"
             android:entryValues="@array/juickBotOnValues"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="xmpp_verbose"
-            android:title="Verbose event notifications"
+            android:title="@string/VerboseEventNotifications"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Notifications">
+    <PreferenceCategory android:title="@string/Notifications">
         <RingtonePreference
                 android:key="ringtone_uri"
                 android:defaultValue=""
-                android:title="Choose sound"
+                android:title="@string/ChooseSound"
                 android:ringtoneType="all"
                 android:persistent="true">
         </RingtonePreference>
         <CheckBoxPreference
             android:key="ringtone_enabled"
-            android:title="Sound enabled"
+            android:title="@string/SoundEnabled"
             android:defaultValue="true"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="vibration_enabled"
-            android:title="Vibration enabled"
+            android:title="@string/VibrationEnabled"
             android:defaultValue="true"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="led_enabled"
-            android:title="LED enabled"
+            android:title="@string/LEDEnabled"
             android:defaultValue="true"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="current_vibration_enabled"
-            android:title="Vibration in current thread"
+            android:title="@string/VibrationInCurrentThread"
             android:defaultValue="true"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Load images">
+    <PreferenceCategory android:title="@string/LoadImages">
         <ListPreference
             android:key="image.loadMode"
-            android:summary="off / full / proxy ?"
-            android:title="Load image mode"
+            android:summary="@string/OnOffProxy"
+            android:title="@string/LoadImageMode"
             android:entries="@array/imageLoadMode"
             android:entryValues="@array/imageLoadModeValues"
             android:defaultValue="off"
             android:persistent="true"/>
         <EditTextPreference
             android:key="imageproxy.login"
-            android:title="Image Proxy login"
+            android:title="@string/ImageProxyLogin"
             android:defaultValue=""
             android:persistent="true"/>
         <EditTextPreference
             android:key="imageproxy.password"
-            android:title="Image Proxy password"
+            android:title="@string/ImageProxyPassword"
             android:defaultValue=""
             android:persistent="true"/>
         <EditTextPreference
             android:key="image.daystokeep"
-            android:title="Days to keep cached images"
+            android:title="@string/DaysToKeepCachedImages"
             android:defaultValue="10"
             android:persistent="true"/>
         <ListPreference
             android:key="image.height_percent"
-            android:title="Image height (% of screen)"
+            android:title="@string/ImageHeight"
             android:entries="@array/imageHeight"
             android:entryValues="@array/imageHeightValues"
             android:defaultValue="0.3"
@@ -106,8 +106,7 @@
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="lastReadMessages"
-            android:title="Mark already read messages"
-            android:summary="..without bold nick and crossed out message number"
+            android:title="@string/MarkAlreadyReadImages"
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
@@ -118,13 +117,13 @@
             android:persistent="true"/>
         <CheckBoxPreference
                 android:key="enableMessageDB"
-                android:title="Enable local storage"
-                android:summary="..for better life"
+                android:title="@string/EnableLocalStorage"
+                android:summary="@string/ForBetterLife"
                 android:defaultValue="false"
                 android:persistent="true"/>
         <EditTextPreference
                 android:key="messageDBperiod"
-                android:title="Days to keep stored messages"
+                android:title="@string/DaysToKeepStoredMessages"
                 android:defaultValue="30"
                 android:persistent="false"/>
         <CheckBoxPreference
@@ -142,7 +141,7 @@
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="enableScaleByGesture"
-            android:title="Enable fonts scale by gesture"
+            android:title="@string/EnableFontScaleByGesture"
             android:defaultValue="true"
             android:persistent="true"/>
         <ListPreference
@@ -158,61 +157,67 @@
             android:summary="@string/Compressed_Menu_Summary"
             android:defaultValue="false"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="singleLineMenu"
+            android:title="@string/SingleLine_Menu"
+            android:summary="@string/SingleLine_Menu_Summary"
+            android:defaultValue="false"
+            android:persistent="true"/>
         <EditTextPreference
             android:key="myUserId"
-            android:title="User ID for 'My Blog'"
-            android:summary="Leave it empty if unknown"
+            android:title="@string/UserIdForMyBlog"
+            android:summary="@string/LeaveItEmptyIfUnknown"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="prefetchMessages"
-            android:title="Prefetch more messages"
-            android:summary="...and never see `loading..`"
+            android:title="@string/PrefetchMoreMessages"
+            android:summary="@string/AndNeverSeeLoading"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/PostReply">
         <CheckBoxPreference
             android:key="previewReplies"
-            android:title="Preview your replies before send"
+            android:title="@string/PreviewRepliesBeforeSend"
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
             android:key="warnRepliesToBody"
-            android:title="Warn replies without 'In-reply-to'?"
+            android:title="@string/WarnRepliesWithoutReplyTo"
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
                 android:key="capitalizeReplies"
-                android:title="Auto-capitalize reply text"
-                android:summary="..when replying "
+                android:title="@string/CapitalizeReplyText"
+                android:summary="@string/WhenReplying"
                 android:defaultValue="false"
                 android:persistent="true"/>
         <ListPreference
                 android:key="locationAccuracy"
-                android:title="Accuracy of location"
+                android:title="@string/AccuracyOfLocation"
                 android:entries="@array/prefsAccuracyTitles"
                 android:entryValues="@array/prefsAccuracyValues"
                 android:defaultValue="ACCURACY_FINE"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Camera capture">
+    <PreferenceCategory android:title="@string/CameraCapture">
         <CheckBoxPreference
             android:key="useTempFileForCapture"
-            android:title="Capture into temp file (bugfix)"
+            android:title="@string/CaptureIntoTempFile"
             android:defaultValue="true"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Debug">
+    <PreferenceCategory android:title="@string/Debug">
         <CheckBoxPreference
             android:key="verboseDebug"
-            android:title="Enable diagnostic messages"
+            android:title="@string/EnableDiagnosticMessages"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/Colors">
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.COMMON_BACKGROUND"
-            android:title="Common background"
+            android:title="@string/CommonBackground"
             android:defaultValue="0xFFFFFFFF"
             android:persistent="true"/>
 <!--
@@ -224,56 +229,56 @@
 -->
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.COMMON_FOREGROUND"
-            android:title="Common foreground"
+            android:title="@string/CommonForeground"
             android:defaultValue="0xFF000000"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.DIVIDER"
-            android:title="List divider"
+            android:title="@string/ListDivider"
             android:defaultValue="0xFF808080"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.USERNAME"
-            android:title="Usernames"
+            android:title="@string/Usernames"
             android:defaultValue="0xFFC8934E"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.USERNAME_READ"
-            android:title="Usernames (read msgs)"
+            android:title="@string/UserNamesRead"
             android:defaultValue="0xFFc84e4e"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.TAGS"
-            android:title="Tags"
+            android:title="@string/Tags"
             android:defaultValue="0xFF0000CC"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.URLS"
-            android:title="URLs"
+            android:title="@string/URLs"
             android:defaultValue="0xFF0000CC"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.MESSAGE_ID"
-            android:title="Message IDs"
+            android:title="@string/MessageIDs"
             android:defaultValue="0xFFa0a5bd"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.NUMBER_OF_COMMENTS"
-            android:title="Number of comments"
+            android:title="@string/NumberOfrComments"
             android:defaultValue="0xFFC8934E"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.TRANSLATED_LABEL"
-            android:title="``Translated`` label"
+            android:title="@string/TranslatedLabel"
             android:defaultValue="0xFF4ec856"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.DATE"
-            android:title="Dates"
+            android:title="@string/Dates"
             android:defaultValue="0xFFAAAAAA"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Message sources">
+    <PreferenceCategory android:title="@string/MessageSources">
         <CheckBoxPreference
             android:key="msrcTopMessages"
             android:title="@string/navigationTop"

@@ -398,6 +398,10 @@ public class DatabaseService extends Service {
                             throw new SQLException("Job failed");
                         }
                         db.endTransaction();
+                    } catch (final IllegalStateException e) {
+                        // database closed
+                        // bad luck.
+                        break;
                     } catch (final SQLException e) {
                         synchronized (writeJobs) {
                             writeJobs.add(job);

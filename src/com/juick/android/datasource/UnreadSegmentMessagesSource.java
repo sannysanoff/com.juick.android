@@ -35,7 +35,7 @@ public class UnreadSegmentMessagesSource extends JuickCompatibleURLMessagesSourc
     public void getFirst(Utils.Notification notification, final Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         putArg("before_mid", ""+period.startMid);
-        super.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+        fetchURLAndProcess(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
             @Override
             public Void apply(ArrayList<JuickMessage> first) {
                 if (first.size() > 0) {

@@ -48,7 +48,7 @@
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Рекомендовать сообщение</string>
     <string name="Subscribe_to">Подписаться на</string>
-    <string name="Unsubscribe_to">Отписаться от</string>
+    <string name="Unsubscribe_from">Отписаться от</string>
     <string name="Blacklist">Добавить в черный список</string>
     <string name="FilterOutUser">Не показывать</string>
     <string name="Recommended">Рекомендовано</string>
@@ -58,6 +58,10 @@
     <string name="Are_you_sure_recommend">Вы уверены, что хотите рекомендовать?</string>
     <string name="Are_you_sure_subscribe">Вы уверены, что хотите подписаться?</string>
     <string name="Are_you_sure_blacklist">Вы уверены, что хотите добавить в черный список?</string>
+    <string name="Save_message">Сохранить</string>
+    <string name="Unsave_message">Удалить из сохраненных</string>
+    <string name="Message_saved">Сохранено</string>
+    <string name="Message_unsaved">Удалено из сохраненных</string>
 
     <!-- JuickMessagesAdapter -->
     <string name="Replies_">Ответов:</string>
@@ -108,6 +112,8 @@
     <string name="Refresh_interval">Интервал обновления</string>
     <string name="Compressed_Menu">Уплотненное меню сообщения</string>
     <string name="Compressed_Menu_Summary">На экран поместится больше пунктов меню</string>
+    <string name="SingleLine_Menu">Однострочные пункты меню</string>
+    <string name="SingleLine_Menu_Summary">Меню будет еще более сжатым</string>
     <string name="Appearance">Внешний вид</string>
     <string name="Theme">Тема оформления</string>
     <string name="Menu_font_scale_factor">Размер шрифта меню сообщения</string>
@@ -130,6 +136,62 @@
     <string name="navigationSrachiki">Срачики (jugregator)</string>
     <string name="navigationUnread">Все нечитанные</string>
     <string name="navigationSaved">Сохраненные</string>
+    <string name="XMPP_client">XMPP/Jabber клиент</string>
+    <string name="XMPP_config">XMPP/Jabber конфиг</string>
+    <string name="XMPP_enabled">XMPP/Jabber включено</string>
+    <string name="Not_set_up">Не настроено</string>
+    <string name="Activate_when_finished">Включите после успешной настройки</string>
+    <string name="Send_on_command">Отправлять команду \'ON\' после подключения?</string>
+    <string name="VerboseEventNotifications">Подробно извещать о статусе XMPP</string>
+    <string name="ChooseSound">Звук уведомления</string>
+    <string name="SoundEnabled">Играть звук</string>
+    <string name="VibrationEnabled">Вибрировать вибрацией</string>
+    <string name="LEDEnabled">Светить светодиодом</string>
+    <string name="VibrationInCurrentThread">Вибрация в текущем треде</string>
+    <string name="LoadImages">Загрузка картинок</string>
+    <string name="OnOffProxy">выкл / полная / прокси ?</string>
+    <string name="LoadImageMode">Режим загрузки картинок</string>
+    <string name="ImageProxyLogin">Логин для прокси</string>
+    <string name="ImageProxyPassword">Пароль для прокси</string>
+    <string name="DaysToKeepCachedImages">Сколько дней хранить картинки</string>
+    <string name="ImageHeight">Высота картинок (% от экрана)</string>
+    <string name="MarkAlreadyReadImages">Помечать прочитанные сообщ.</string>
+    <string name="EnableLocalStorage">Сохранять мессаги локально</string>
+    <string name="ForBetterLife">..для лучшей жизни</string>
+    <string name="DaysToKeepStoredMessages">Сколько дней их хранить</string>
+    <string name="EnableFontScaleByGesture">Менять размер шрифта жестом</string>
+    <string name="UserIdForMyBlog">ID юзера для \'Мой блог\'</string>
+    <string name="LeaveItEmptyIfUnknown">Оставьте пустым если не знаете</string>
+    <string name="PrefetchMoreMessages">Включить предзагрузку ленты</string>
+    <string name="AndNeverSeeLoading">...и больше не увидеть `Loading..`</string>
+    <string name="PreviewRepliesBeforeSend">Предпросмотр комментов перед отправкой</string>
+    <string name="WarnRepliesWithoutReplyTo">Подтверждать ответы без \'In-reply-to\'?</string>
+    <string name="CapitalizeReplyText">Ответы с большой буквы</string>
+    <string name="AccuracyOfLocation">Точность определения положения</string>
+    <string name="WhenReplying">..во время ответа</string>
+    <string name="CameraCapture">Камера</string>
+    <string name="CaptureIntoTempFile">Хранить во временном файле (багфикс)</string>
+    <string name="Debug">Отладка</string>
+    <string name="EnableDiagnosticMessages">Расширенная диагностика</string>
+    <string name="CommonBackground">Основной фон</string>
+    <string name="CommonForeground">Основной текст</string>
+    <string name="ListDivider">Разделитель в списке</string>
+    <string name="Usernames">Автор</string>
+    <string name="UserNamesRead">Автор (прочитанные)</string>
+    <string name="URLs">УРЛы</string>
+    <string name="MessageIDs">Номера мессаг</string>
+    <string name="NumberOfrComments">К-во комментов</string>
+    <string name="TranslatedLabel">метка ``Переведено`` </string>
+    <string name="Dates">Даты</string>
+    <string name="TranslateToRussian">Перевести на русский</string>
+    <string name="MessageSources">Источники мессаг</string>
+
+    <string name="Save_position">Сохранять позицию во "Всех"</string>
+    <string name="Show_Numbers">Номера сообщений</string>
+    <string name="Confirm_asctions">Подтверждать действия</string>
+    <string name="Such_as_blacklist_recommend">... - рекомендации,блеклист итд.</string>
+    <string name="SetupXMPP">Setup XMPP...</string>
+    <string name="Presets_">Presets:</string>
 
 
 </resources>

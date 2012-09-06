@@ -356,6 +356,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         final boolean compressedMenu = sp.getBoolean("compressedMenu", false);
+        final boolean singleLineMenu = sp.getBoolean("singleLineMenu", false);
         final float finalMenuFontScale = menuFontScale;
         final int screenHeight = activity.getWindow().getWindowManager().getDefaultDisplay().getHeight();
         alertDialog.getListView().setAdapter(new ListAdapter() {
@@ -409,8 +410,10 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                         tv.setMinHeight(minHeight);
                         tv.setMinimumHeight(minHeight);
                     }
-                    tv.setSingleLine(true);
-                    tv.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+                    if (singleLineMenu) {
+                        tv.setSingleLine(true);
+                        tv.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+                    }
                     tv.setTextSize(22 * finalMenuFontScale);
                 }
                 return retval;

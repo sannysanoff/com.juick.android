@@ -16,7 +16,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="right"
                     android:paddingRight="5sp"
-                    android:text="Presets:"/>
+                    android:text="@string/Presets_"/>
             <Spinner
                     android:id="@+id/template_selection"
                     android:layout_width="fill_parent"
