@@ -215,10 +215,22 @@
             android:title="Common background"
             android:defaultValue="0xFFFFFFFF"
             android:persistent="true"/>
+<!--
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Colors.BUTTON_BACKGROUND"
+            android:title="Button background"
+            android:defaultValue="0xFFFFFFFF"
+            android:persistent="true"/>
+-->
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.COMMON_FOREGROUND"
             android:title="Common foreground"
             android:defaultValue="0xFF000000"
+            android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:key="Colors.DIVIDER"
+            android:title="List divider"
+            android:defaultValue="0xFF808080"
             android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.USERNAME"

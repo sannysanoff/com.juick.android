@@ -27,6 +27,8 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.datasource.MessagesSource;
 import org.json.JSONArray;
 
 /**
@@ -55,10 +57,24 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
         Bundle args = getArguments();
         if (args != null) {
             uid = args.getInt("uid", 0);
+            if (uid == 0) {
+                MessagesSource messagesSource = (MessagesSource)args.get("messagesSource");
+                if (messagesSource instanceof JuickCompatibleURLMessagesSource) {
+                    JuickCompatibleURLMessagesSource jcums = (JuickCompatibleURLMessagesSource)messagesSource;
+                    String user_idS = jcums.getArg("user_id");
+                    if (user_idS != null) {
+                        try {
+                            uid = Integer.parseInt(user_idS);
+                        } catch (Throwable _) {}
+                    }
+                }
+            }
         }
 
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(this);
+
+        MessagesFragment.installDividerColor(getListView());
         MainActivity.restyleChildrenOrWidget(view);
 
         Thread thr = new Thread(new Runnable() {
@@ -105,18 +121,18 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        parentActivity.onTagClick((String) getListAdapter().getItem(position));
+        parentActivity.onTagClick((String) getListAdapter().getItem(position), uid);
     }
 
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        parentActivity.onTagLongClick((String) getListAdapter().getItem(position));
+        parentActivity.onTagLongClick((String) getListAdapter().getItem(position), uid);
         return true;
     }
 
     public interface TagsFragmentListener {
 
-        public void onTagClick(String tag);
+        public void onTagClick(String tag, int uid);
 
-        public void onTagLongClick(String tag);
+        public void onTagLongClick(String tag, int uid);
     }
 }

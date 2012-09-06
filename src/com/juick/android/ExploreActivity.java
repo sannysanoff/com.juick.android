@@ -47,10 +47,13 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         setContentView(R.layout.explore);
 
         etSearch = (EditText) findViewById(R.id.editSearch);
-        ((Button) findViewById(R.id.buttonFind)).setOnClickListener(this);
+        (findViewById(R.id.buttonFind)).setOnClickListener(this);
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         TagsFragment tf = new TagsFragment();
+        Bundle args = new Bundle();
+        args.putSerializable("messagesSource", getIntent().getSerializableExtra("messagesSource"));
+        tf.setArguments(args);
         ft.add(R.id.tagsfragment, tf);
         ft.commit();
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
@@ -67,13 +70,18 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         startActivity(i);
     }
 
-    public void onTagClick(String tag) {
+    public void onTagClick(String tag, int uid) {
         Intent i = new Intent(this, MessagesActivity.class);
-        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Tag)+": "+tag, this).putArg("tag", Uri.encode(tag)));
+        JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + tag, this);
+        jms.putArg("tag", Uri.encode(tag));
+        if (uid > 0) {
+            jms.putArg("user_id", "" + uid);
+        }
+        i.putExtra("messagesSource", jms);
         startActivity(i);
     }
 
-    public void onTagLongClick(String tag) {
-        onTagClick(tag);
+    public void onTagLongClick(String tag, int uid) {
+        onTagClick(tag, uid);
     }
 }

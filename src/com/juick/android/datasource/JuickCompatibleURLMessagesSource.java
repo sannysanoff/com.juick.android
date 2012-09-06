@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,6 +35,10 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
 
     @Override
     public boolean supportsBackwardRefresh() {
+        Map<String,String> argsMap = urlParser.getArgsMap();
+        if (argsMap.containsKey("tag") || argsMap.containsKey("user_id") || argsMap.containsKey("search")) {
+            return false;
+        }
         return true;
     }
 

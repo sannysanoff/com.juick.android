@@ -94,6 +94,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         System.out.println(AmbilWarnaPreference.class);
         ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
 
         super.onCreate(savedInstanceState);
 
@@ -114,7 +115,6 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         startPreferencesStorage(this);
 
 
-        sp = PreferenceManager.getDefaultSharedPreferences(this);
         sp.registerOnSharedPreferenceChangeListener(this);
         toggleXMPP();
         startService(new Intent(this, DatabaseService.class));
@@ -461,7 +461,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        sp.unregisterOnSharedPreferenceChangeListener(this);
+        if (sp != null)
+            sp.unregisterOnSharedPreferenceChangeListener(this);
     }
 
     private void toggleXMPP() {
@@ -582,7 +583,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 startActivity(new Intent(this, NewMessageActivity.class));
                 return true;
             case R.id.menuitem_search:
-                startActivity(new Intent(this, ExploreActivity.class));
+                if (mf != null) {
+                    Intent intent = new Intent(this, ExploreActivity.class);
+                    intent.putExtra("messagesSource", mf.messagesSource);
+                    startActivity(intent);
+                }
                 return true;
             case R.id.reload:
                 if (lastNavigationItem != null) {
@@ -642,9 +647,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             et.setTextColor(colorTheme.getForeground(pressed));
             et.setBackgroundColor(colorTheme.getBackground(pressed));
         } else if (view instanceof Button) {
-            Button btn = (Button) view;
-            btn.setTextColor(colorTheme.getForeground(pressed));
-            btn.setBackgroundColor(colorTheme.getBackground(pressed));
+//            Button btn = (Button) view;
+//            btn.setTextColor(colorTheme.getForeground(pressed));
+//            btn.setBackgroundColor(colorTheme.getButtonBackground());
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
             text.setTextColor(colorTheme.getForeground(pressed));

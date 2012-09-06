@@ -58,14 +58,14 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
-    public void onTagClick(String tag) {
+    public void onTagClick(String tag, int uid) {
         Intent i = new Intent();
         i.putExtra("tag", tag);
         setResult(RESULT_OK, i);
         finish();
     }
 
-    public void onTagLongClick(String tag) {
+    public void onTagLongClick(String tag, int uid) {
         Intent i = new Intent(this, MessagesActivity.class);
         i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Tag)+": " + tag, this).putArg("tag", Uri.encode(tag)).putArg("user_id",""+uid));
         startActivity(i);

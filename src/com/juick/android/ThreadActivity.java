@@ -232,7 +232,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(this, jm, true);
             tv.setText(parsedMessage.textContent);
             MainActivity.restyleChildrenOrWidget(tv);
-            new AlertDialog.Builder(this)
+            final AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle("Post reply - preview")
                     .setView(tv)
                     .setCancelable(true)
@@ -248,7 +248,14 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                             dialog.cancel();
                             sendReplyMain(msg);
                         }
-                    }).show();
+                    }).create();
+            dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                @Override
+                public void onShow(DialogInterface _) {
+                    MainActivity.restyleChildrenOrWidget(dialog.getWindow().getDecorView());
+                }
+            });
+            dialog.show();
         } else {
             sendReplyMain(msg);
         }

@@ -114,6 +114,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getListView().setOnTouchListener(this);
 
         initAdapter();
+        MessagesFragment.installDividerColor(getListView());
     }
 
     private void initWebSocket() {

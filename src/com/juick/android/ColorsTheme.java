@@ -69,6 +69,10 @@ public class ColorsTheme {
             return getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF);
         }
 
+        public int getButtonBackground() {
+            return getColor(ColorsTheme.ColorKey.BUTTON_BACKGROUND, getBackground());
+        }
+
         public int getBackground(boolean selected) {
             return selected ? getForeground() : getBackground();
         }
@@ -80,6 +84,8 @@ public class ColorsTheme {
 
     public enum ColorKey {
         COMMON_BACKGROUND,
+        BUTTON_BACKGROUND,
+        DIVIDER,
         COMMON_FOREGROUND,
         USERNAME,
         USERNAME_READ,

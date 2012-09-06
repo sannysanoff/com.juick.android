@@ -20,6 +20,7 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -163,13 +164,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshOriginalTopPadding = mRefreshView.getPaddingTop();
         mRefreshState = TAP_TO_REFRESH;
 
+        ListView listView = getListView();
+        installDividerColor(listView);
+
 
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
-        getListView().setOnTouchListener(this);
-        getListView().setOnScrollListener(this);
-        getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), messagesSource, getListView(), listAdapter));
-        getListView().setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        listView.setOnTouchListener(this);
+        listView.setOnScrollListener(this);
+        listView.setOnItemClickListener(this);
+        listView.setOnItemLongClickListener(new JuickMessageMenu(getActivity(), messagesSource, listView, listAdapter));
+        listView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 System.out.println();
@@ -181,6 +185,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         });
         init();
+    }
+
+    public static void installDividerColor(ListView listView) {
+        ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(listView.getContext());
+        ColorDrawable divider = new ColorDrawable(colorTheme.getColor(ColorsTheme.ColorKey.DIVIDER, 0xFF808080));
+        listView.setDivider(divider);
+        listView.setDividerHeight(1);
     }
 
     private void init() {

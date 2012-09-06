@@ -267,7 +267,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         if (v == bTags) {
             Intent i = new Intent(this, TagsActivity.class);
             i.setAction(Intent.ACTION_PICK);
-            i.putExtra("uid", (int) -1);
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            int uid = Integer.parseInt(sp.getString("myUserId", "-1"));
+            i.putExtra("uid", uid);
             startActivityForResult(i, ACTIVITY_TAGS);
         } else if (v == bLocationHint) {
             bLocationHint.setVisibility(View.GONE);

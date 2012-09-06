@@ -22,6 +22,9 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.Menu;
+import android.support.v4.view.MenuItem;
+import android.view.MenuInflater;
 import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juick.android.datasource.MessagesSource;
 import com.juickadvanced.R;
@@ -35,6 +38,7 @@ public class MessagesActivity extends FragmentActivity {
 
     MessagesFragment mf;
     Object restoreData;
+    MessagesSource messagesSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +47,7 @@ public class MessagesActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
 
         Intent i = getIntent();
-        MessagesSource messagesSource = (MessagesSource)i.getSerializableExtra("messagesSource");
+        messagesSource = (MessagesSource)i.getSerializableExtra("messagesSource");
         if (messagesSource == null) {
             messagesSource = new JuickCompatibleURLMessagesSource(this);
         }
@@ -91,5 +95,43 @@ public class MessagesActivity extends FragmentActivity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.messages, menu);
+        return true;
+    }
+
+    public int getUserId() {
+        if (messagesSource instanceof JuickCompatibleURLMessagesSource) {
+            String user_idS = ((JuickCompatibleURLMessagesSource) messagesSource).getArg("user_id");
+            if (user_idS != null) {
+                try {
+                    return Integer.parseInt(user_idS);
+                } catch (NumberFormatException e) {
+                }
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.menuitem_search).setVisible(getUserId() > 0);
+        return super.onPrepareOptionsMenu(menu);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menuitem_search:
+                Intent intent = new Intent(this, ExploreActivity.class);
+                intent.putExtra("messagesSource", messagesSource);
+                startActivity(intent);
+                break;
+        }
+        return super.onOptionsItemSelected(item);    //To change body of overridden methods use File | Settings | File Templates.
     }
 }
