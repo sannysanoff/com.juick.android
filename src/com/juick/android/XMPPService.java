@@ -18,10 +18,7 @@ import org.jivesoftware.smack.packet.Presence;
 
 import java.io.*;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  */
@@ -592,7 +589,18 @@ public class XMPPService extends Service {
                 JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), body);
                 saveMessage(messag);
                 incomingMessages.add(messag);
+                handled = messag;
             }
+        }
+        if (handled != null) {
+            Set<String> filteredOutUsers = JuickMessagesAdapter.getFilteredOutUsers(this);
+            if (filteredOutUsers.contains(handled.getFrom())) {
+                // kill-em
+                removeMessageFile(handled.id);
+                incomingMessages.remove(handled);
+                silent = true;
+            }
+
         }
         if (!silent)
             sendMyBroadcast();

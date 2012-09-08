@@ -325,6 +325,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                                 i--;
                             }
                         }
+                        JuickMessagesAdapter.filteredOutUsers = null;
                         Parcelable parcelable = listView.onSaveInstanceState();
                         listView.setAdapter(listAdapter);
                         try {

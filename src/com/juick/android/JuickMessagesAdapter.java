@@ -44,6 +44,7 @@ import android.view.ViewGroup;
 import com.juickadvanced.R;
 
 import java.io.*;
+import java.sql.RowId;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -81,7 +82,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private int type;
     private boolean allItemsEnabled = true;
 
-    private static Set<String> filteredOutUsers;
+    public static Set<String> filteredOutUsers;
     private final double imageHeightPercent;
     private final String imageLoadMode;
     private final String proxyPassword;
@@ -628,7 +629,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public void addAllMessages(ArrayList<JuickMessage> messages) {
         Set<String> filteredOutUsers1 = getFilteredOutUsers(getContext());
         for (JuickMessage message : messages) {
-            if (filteredOutUsers1.contains(message.User.UName)) continue;
+            if (filteredOutUsers1.contains(message.User.UName)) {
+                if (type == TYPE_THREAD && message.RID == 0) {
+                    // allow filtered as topic starter
+                } else {
+                    continue;
+                }
+            }
             boolean canAdd = true;
             if (message.RID > 0) {
                 // don't add duplicate replies coming from any source (XMPP/websocket)
