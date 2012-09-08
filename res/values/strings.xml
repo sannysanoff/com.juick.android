@@ -14,7 +14,7 @@
     <string name="Create">Create</string>
     <string name="Send">Send</string>
     <string name="Settings">Settings</string>
-    <string name="Filters">Filters</string>
+    <string name="Filters">User filter</string>
     <string name="Signout">Signout</string>
     <string name="Error">Error</string>
     <string name="blog">blog</string>
@@ -32,13 +32,13 @@
     <string name="Enter_a_name">Enter a name</string>
     <string name="Your_messages">Your messages</string>
     <string name="Juick_profile">Juick profile</string>
-    
+
     <!-- Pull-to-refresh -->
     <string name="pull_to_refresh_pull_label">Pull to refresh...</string>
     <string name="pull_to_refresh_release_label">Release to refresh...</string>
     <string name="pull_to_refresh_refreshing_label">Loading...</string>
     <string name="pull_to_refresh_tap_label">Tap to refresh...</string>
-    
+
     <!-- ExploreActivity -->
     <string name="Juick__Explore">Juick: Explore</string>
     <string name="Popular_tags">Popular tags</string>
@@ -144,7 +144,8 @@
     <string name="XMPPControl">XMPP control</string>
     <string name="Compressed_Menu_Summary">More items in message menu will fit on the screen</string>
     <string name="Your_User_Name">Your Juick Username</string>
-    <string name="Your_User_Name_Explain">Juick API does not provide means to know your Nickname. Please enter the Nickname to detect your user id.
+    <string name="Your_User_Name_Explain">Juick API does not provide means to know your Nickname. Please enter the
+        Nickname to detect your user id.
     </string>
     <string name="ColorsTheme">Colors/Theme</string>
     <string name="Colors">Colors</string>
@@ -211,5 +212,268 @@
     <string name="MessageSources">Message sources</string>
     <string name="SetupXMPP">Setup XMPP...</string>
     <string name="Presets_">Presets:</string>
+    <string name="Test__">Test..</string>
+    <string name="RightPartOf_">part after @</string>
+    <string name="LeftPartOf_">part before @</string>
+    <string name="Priority_">Priority:</string>
+    <string name="ReadThis">Read this..</string>
+    <string name="XMPPReadme"><![CDATA[
+            (see text after warning if you need help connecting)<br>
+
+            <b>Warning</b>!!!<br>
+
+            If you have activated XMPP in Juick Advanced, you need to make sure that it works the way you want.
+            Depending on your jabber server, you may or may not be able to receive messages on both desktop and mobile.
+            Make sure you set \'priority\' setting the same as your desktop jabber client.<br>
+            If not, all messages you received on your android device will be shown only here and not be received on desktop.
+            If that\'s ok for you, that\'s fine. If you don\'t like this, don\'t activate XMPP in Juick Advanced.
+
+            <br>
+            <b>Connection help</b><br>
+
+            You have JID username@server.com. Put username in <b>login</b> field. Put \'server.com\' in <b>service</b> field, or try to leave it empty.
+            Put \'server.com\' in <b>server</b> field.
+            Try to check <b>secure</b>, or leave it unchecked.
+            Make sure you use correct <b>port</b>, default is 5222, but in rare cases it may be different.
+            <b>Priority</b> and <b>resource</b> do not affect success of connection.<br>
+            If nothing helps, try to put your whole JID in <b>login</b> field and don\'t forget to play with <b>service</b> field.
+
+    ]]>
+    </string>
+
+    <string name="NewFeatures">New features</string>
+
+    <string name="rf_2012090502"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+
+            <b>8 сентября 2012</b>
+            <li>
+            (опция) Настройка команды, которуая будет посылаться juick-боту: ON/OFF/никакая
+            </li>
+            <li>
+            Добавлено subscribe/unsubscribe для треда, и работает.
+            </li>
+            <li>
+            В треде если тыцнуть на коммент, то кратко покажется вся цепочка реплик, предшествовавшая ему.
+            </li>
+            <li>
+            (опция) Во время отправления ответа в треде - превью/подтверждение.
+            </li>
+            <li>
+            (опция) Вибрация в текущем треде во время прихода очередной реплики.
+            </li>
+            <li>
+            Добавлена кнопа рефреш и настройки в треде
+            </li>
+            <li>
+            (опция) Срачики с jugregator.org
+            </li>
+            <li>
+            Во время добавления геграфического положения к новому посту позиция может определяться не только по GPS,
+            но и (опционально) приблизительно, зато быстро. После того, как когда позиция определена, спрашивается Гугл на тему
+            определить название текущего места. Из этого места сделается juick-овский place, если его выбрать из списка.
+            </li>
+            <li>
+            (опция) Авто-пометка прочитанных сообщений. Скроллинг сообщения за пределы экрана, а равно и просмотр треда отмечают
+            сообщение как прочитанное, и оно показывается альтернативным цветом впоследствии
+            </li>
+            <li>
+            Сообщения, которые понравились, можно записывать в список для дальнейшего просмотра в отдельной категории.
+             Например, если в сообщении видео, а вы едете в метро, то его можно будет сохранить, и просмотреть позже, когда рядом WIFI.
+             Список хранится локально. В дальнейшем (когда будет такая фича) его можно будет отправить себе на мыло, в жаббер
+             или куда еще.
+            </li>
+            <li>
+            (опция) Новая категория - нечитанные. Сканируются ваши метки прочитанных сообщений, и если вы не читали сообщений,
+            написанных в какой-то период времени, вам предлагается перейти на общую ленту и их почитать. Для любителей
+            читать общую ленту.
+            </li>
+            <li>
+            (опция) Настройка цвета линий-разделителей ленты сообщений.
+            </li>
+            <li>
+            Исправлена работа с тэгами. Они показываются в текущем контексте (ваши, или пользователя чью ленту вы
+            смотрите), равно и search.
+            </li>
+            <li>
+            (опция) Категория \"мой блог\". В самом начале спросит ваш nickname, полезет на сайт, узнает ваш ID,
+            будет его пользовать для просмотра сообщений. ID можно поменять в настройках. Категорию нужно разрешить
+            в настройках.
+            </li>
+            <li>
+            (опция) в меню треда, можно сделать чтобы каждый пункт был одной строкой, без переносов.
+            Добавляет точечки (ellipsis) в середину строки.
+            </li>
+            <li>
+            Русская локализация настроек, более полная.
+            </li>
+            </ul>
+            <hr>
+            Все фичи можно посмотреть в настройках, если нажать там кнопку Меню.
+            ]]>
+    </string>
+
+    <string name="rf_2012082601"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+
+            <b>26 августа 2012</b>
+            <li>
+            (опция) настраиваемые цвета / тема
+            </li>
+            <li>
+            (опция) настройка рингтона для входящих xmpp сообщений
+            </li>
+            <li>
+            (опция) предзагрузка сообщений, когда листаешь ленту вниз, чтобы не ждать, когда оно доходит до конца
+            </li>
+            <li>
+            (опция) xmpp/jabber - используется для нотификаций о новых сообщениях.
+            </li>
+            </ul>
+
+            <hr>
+            Все фичи можно посмотреть в настройках, если нажать там кнопку Меню.
+            ]]>
+    </string>
+
+    <string name="rf_2012081901"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+
+            <b>19 августа 2012</b>
+            <li>
+            при повороте не происходит перезакачка мессаг на андроид 4+
+            </li>
+            <li>
+            подключение к google talk
+            </li>
+            </ul>
+            <hr>
+            Все фичи можно посмотреть в настройках, если нажать там кнопку Меню.
+            ]]>
+    </string>
+
+    <string name="rf_2012081701"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+
+            <b>17 августа 2012</b>
+            <li>
+            вгрузил угничевские изменения, пофиксил камеру в комментариях
+            </li>
+            <li>
+            добавил отправление ошибок мне, когда оно свалилось.
+            </li>
+            <li>
+            (опция) подтверждение действий: подписка, блеклист итд
+            </li>
+            <li>
+            (опция) во время написания комментария будет автоматом большая буква
+            </li>
+            <li>
+            (опция) багфикс (отличная от угничской реализация) получения картинок с камеры.
+            </li>
+            <li>
+            (опция) google translate (переводчик на русский) любого сообщения или коммента
+            </li>
+            <li>
+            (опция) настраиваемый размер шрифта мессаг
+            </li>
+            <li>
+            (опция) блеклист арабов (клиентский) или нежелательных личностей (полезно в общей ленте).
+            Редактирование блеклиста.
+            </li>
+            <li>
+            (опция) показывать картинки, ссылки на которые есть в сообщении. Если картинок несколько, они
+            скроллируются горизонтально. Поддерживаются все урлы на ресурсы с расширениями .jpg/.png/.gif.
+            Если на картинку тыцнуть, покажется инфа. Если на картинку тыцнуть 2 раза, загрузится оригинал.
+            Это полезно, если пользуется прокси, и если это анимированный гиф, или если картинка сильно пережата.
+            </li>
+            </ul>
+            <hr>
+            Все фичи можно посмотреть в настройках, если нажать там кнопку Меню.
+            ]]>
+    </string>
+
+    <string name="privacy_policy"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+
+            <b>Политика приватности.</b>
+            <br>
+
+            На сервер <b><i>juick.com</i></b> ходят следующие данные:
+            <ul>
+            <li>
+            Посты которые вы читаете и пишете, вместе с вашей идентификацией
+            </li>
+            <li>
+            Картинки и геолокация, если таковая используется вами в ваших постах или комментах.
+            </li>
+            <li>
+            Короче, всё ходит.
+            </li>
+            </ul>
+
+            <br>
+            На сервер <b><i>jugregator.com</i></b> ходят запросы на срачики, без вашей жуйковской идентификации.
+            <br>
+            На сервера <b><i>проксей картинок</i></b> уходят запросы на картинки с вашей авторизацией для прокси, если она есть.
+            <br>
+            На <b><i>XMPP/jabber сервер</i></b> уходит только ваша XMPP авторизация, если вы его включили.
+
+            <br>
+            На <b><i>сайт разработчика</i></b> (меня, @SannySanoff) уходит информация о падениях программы (только если вы ее
+            отправляете соответствующей кнопкой), в которую входит информация об ошибке и версии программы, версия
+            вашего андроида и модель телефона, количество памяти.
+            <br> Кроме того, только если вы разрешили анонимную статистику, то туда же уходит, изредка:
+            <ul>
+            <li>
+            Уникальный номер инсталляляции, который состоит из MD5 хеша идентификатора вашего девайса
+            (чтобы он не засветился наружу или мне) и даты инсталляции программы.
+            </li>
+            <li>
+            Количество запусков программы и проведенного в ленте времени, количество прочитываемых мессаг.
+            </li>
+            <li>
+            Фичи, используемые за последний период: выбранные пункты меню, активизированные фичи в настройках итд.
+            </li>
+            </ul>
+            Больше ничего не отправляется. Я собираюсь использовать собранную анонимную информацию для своего будущего доминирования над всем миром, я гарантирую это.
+
+
+            ]]>
+    </string>
+
+
+    <string name="WhatsNew">What\'s new</string>
+    <string name="Privacy_Policy">Privacy Policy</string>
+    <string name="EnableUsageStatistics">Enable anonymous usage statistics?</string>
+    <string name="UsageStatistics">Usage statistics</string>
+
+    <string name="us_send">Enable usage report</string>
+    <string name="us_send_wifi">Enable, report over Wi-Fi only</string>
+    <string name="us_no_hello">No, but say hello to author once.</string>
+    <string name="us_no">No, don\'t report, i do not exist.</string>
+    <string name="Done">Done</string>
+    <string name="ReadPrivacyPolicy">Read privacy policy...</string>
+
 
 </resources>

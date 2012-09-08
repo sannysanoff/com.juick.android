@@ -24,6 +24,7 @@ import android.app.Service;
 import android.content.*;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -31,6 +32,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.Toast;
 import com.juickadvanced.R;
 
@@ -63,6 +65,20 @@ public class Utils {
                 }
             });
         }
+    }
+
+    public static void setupWebView(WebView wv, String content) {
+        try {
+            File file = new File(wv.getContext().getCacheDir(), "temp.html");
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(content);
+            fileWriter.close();
+            Uri uri = Uri.fromFile(file);
+            wv.loadUrl(uri.toString());
+        } catch (IOException e) {
+            //
+        }
+
     }
 
     public static interface Function<T, A> {
@@ -248,7 +264,7 @@ public class Utils {
             HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
 
             String basicAuth = getBasicAuthString(context);
-            if (basicAuth.length() > 0) {
+            if (basicAuth.length() > 0 && url.indexOf("api.juick.com") != -1) {
                 conn.setRequestProperty("Authorization", basicAuth);
             }
 

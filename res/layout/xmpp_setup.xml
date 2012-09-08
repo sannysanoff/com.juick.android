@@ -38,7 +38,6 @@
                     android:text="Login:"/>
             <EditText
                     android:id="@+id/login"
-                    android:text="LOGIN!"
                     android:paddingRight="10dp"
                     android:paddingLeft="10dp"
                     android:paddingTop="0dp"
@@ -64,6 +63,7 @@
                     android:paddingLeft="10dp"
                     android:paddingTop="0dp"
                     android:paddingBottom="0dp"
+                    android:hint="@string/LeftPartOf_"
                     android:textSize="20dp"
                     android:layout_height="32dp"
                     />
@@ -74,6 +74,7 @@
                     android:layout_height="wrap_content"
                     android:paddingRight="5sp"
                     android:gravity="right"
+                    android:hint="@string/RightPartOf_"
                     android:text="Service:"/>
             <EditText
                     android:id="@+id/service"
@@ -155,7 +156,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="right"
                     android:paddingRight="5sp"
-                    android:text="Priority:"/>
+                    android:text="@string/Priority_"/>
             <EditText
                     android:id="@+id/priority"
                     android:text="55"
@@ -196,12 +197,24 @@
                     android:layout_height="wrap_content"
                     >
             </LinearLayout>
-            <Button
-                    android:id="@+id/test_button"
+            <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20sp"
-                    android:text="Test.."/>
+                    android:orientation="horizontal">
+                <Button
+                        android:id="@+id/test_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20sp"
+                        android:text="@string/Test__"/>
+                <Button
+                        android:id="@+id/readme_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20sp"
+                        android:text="@string/ReadThis"/>
+
+                    </LinearLayout>
         </TableRow>
     </TableLayout>
 </ScrollView>

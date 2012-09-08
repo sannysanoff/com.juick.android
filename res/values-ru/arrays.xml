@@ -12,16 +12,43 @@
     </string-array>
     
     
-    
-    
-    
-    
-    
-    
-    
-    
+    <string-array name="xmppTemplate">
+        <item>Выберите шаблон</item>
+        <item>Обычный jabber сервер</item>
+        <item>Google Talk</item>
+    </string-array>
+
+    <string-array name="imageLoadMode">
+        <item>Не грузить картинки</item>
+        <item>Грузить как есть</item>
+        <item>fastun.com (нужна авторизация!) = JPG компрессия</item>
+        <item>images.weserv.nl = уменьшение</item>
+        <item>Два прокси подряд (нужна авторизация!)</item>
+    </string-array>
+
     <string-array name="prefsThemesTitles">
         <item>Светлая</item>
         <item>Тёмная</item>
     </string-array>
+
+    <string-array name="prefsAccuracyTitles">
+        <item>Высокая (GPS - медленно)</item>
+        <item>Средняя (GSM+Google - быстро)</item>
+        <item>Низкая (что бы это ни значило)</item>
+    </string-array>
+
+    <string-array name="activateUsageStatistics">
+        <item>Отправлять</item>
+        <item>Отправлять только через Wi-Fi</item>
+        <item>Не отправлять, но сказать разработчику Привет!</item>
+        <item>Не-не-не, не надо.</item>
+    </string-array>
+
+    <string-array name="activateUsageStatisticsValues">
+        <item>send</item>
+        <item>send_wifi</item>
+        <item>once</item>
+        <item>never</item>
+    </string-array>
+
 </resources>

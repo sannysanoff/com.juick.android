@@ -51,6 +51,7 @@
     <string name="Unsubscribe_from">Отписаться от</string>
     <string name="Blacklist">Добавить в черный список</string>
     <string name="FilterOutUser">Не показывать</string>
+    <string name="Filters">Фильтры юзеров</string>
     <string name="Recommended">Рекомендовано</string>
     <string name="Subscribed">Подписано</string>
     <string name="Unsubscribed">Отписано</string>
@@ -137,6 +138,7 @@
     <string name="navigationUnread">Все нечитанные</string>
     <string name="navigationSaved">Сохраненные</string>
     <string name="XMPP_client">XMPP/Jabber клиент</string>
+    <string name="XMPPControl">XMPP статус</string>
     <string name="XMPP_config">XMPP/Jabber конфиг</string>
     <string name="XMPP_enabled">XMPP/Jabber включено</string>
     <string name="Not_set_up">Не настроено</string>
@@ -190,8 +192,58 @@
     <string name="Show_Numbers">Номера сообщений</string>
     <string name="Confirm_asctions">Подтверждать действия</string>
     <string name="Such_as_blacklist_recommend">... - рекомендации,блеклист итд.</string>
-    <string name="SetupXMPP">Setup XMPP...</string>
-    <string name="Presets_">Presets:</string>
+    <string name="SetupXMPP">Настроить jabber...</string>
+    <string name="Presets_">Шаблоны:</string>
+    <string name="Test__">Попробовать..</string>
+    <string name="RightPartOf_">что справа от @</string>
+    <string name="LeftPartOf_">что слева от @</string>
+    <string name="Priority_">Приоритет:</string>
+    <string name="ReadThis">Внезапно..</string>
+    <string name="XMPPReadme"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+            (если проблемы с подключением - читаем там ниже)<br>
+
+            <b>Внимание</b>!!!<br>
+
+            Если вы решили использовать XMPP/Jabber в Juick Advanced, убедитесь что он работает как вы хотите.
+            Поставьте одинаковый <b>приоритет</b>, если вы хотите получать сообщения и на компьютер и на андроид.
+            Но даже если у вас стоит одинаковый приоритет, некоторые сервера всё равно случается отправляют только
+            на какое-то одно из подключений. Если вас это не устраивает, подумайте, нужно ли вам включать XMPP в Juick Advanced.
+            Некоторые даже заводят отдельный JID для Juick и отдельный для друзей.
+
+            <br>
+            <b>Как подключиться</b><br>
+
+            У вас есть JID <tt>username@server.com</tt>. Пропишите username в поле <b>login</b>. Пропишите "server.com" в поле <b>service</b>, или попробуйте оставит его пустым.
+            Пропишите "server.com" в поле <b>server</b>.
+            Поварьируйте кнопочкой <b>secure</b>.
+            Убедитесь что у вас правильный <b>port</b>, обычно пользуется 5222, но в редких случаях он отличается.
+            <b>Приоритет</b> и <b>resource</b> не влияют на успешность подключения.
+            <br>
+            Если ничего не получается, попробуйте засунуть JID целиком в поле <b>login</b>. Не забывайте про поле <b>service</b> при этом.
+            <br>
+            </body>
+            </html>
+
+
+    ]]>
+    </string>
+    <string name="NewFeatures">Новые фичи</string>
+    <string name="WhatsNew">Что нового</string>
+    <string name="Privacy_Policy">Приватность</string>
+    <string name="EnableUsageStatistics">Enable anonymous usage statistics?</string>
+    <string name="UsageStatistics">Usage statistics</string>
+
+    <string name="us_send">Отправлять</string>
+    <string name="us_send_wifi">Отправлять только через Wi-Fi</string>
+    <string name="us_no_hello">Не отправлять, но сказать разработчику Привет!</string>
+    <string name="us_no">Не-не-не, меня нет.</string>
+    <string name="Done">Готово</string>
+    <string name="ReadPrivacyPolicy">Подробнее...</string>
 
 
 </resources>

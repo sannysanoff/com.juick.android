@@ -4,8 +4,14 @@
     <item android:id="@+id/menuitem_filters"
         android:title="@string/Filters"
         android:showAsAction="never"/>
+    <item android:id="@+id/menuitem_whatsnew"
+        android:title="@string/WhatsNew"
+        android:showAsAction="never"/>
+    <item android:id="@+id/privacy_policy"
+        android:title="@string/Privacy_Policy"
+        android:showAsAction="never"/>
     <item android:id="@+id/menuitem_xmpp_control"
-        android:title="XMPP control"
+        android:title="@string/XMPPControl"
         android:showAsAction="never"/>
 
 </menu>

@@ -133,6 +133,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
+        new WhatsNew(this).runAll();
     }
 
     public void updateNavigation() {
@@ -650,6 +651,10 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 //            Button btn = (Button) view;
 //            btn.setTextColor(colorTheme.getForeground(pressed));
 //            btn.setBackgroundColor(colorTheme.getButtonBackground());
+        } else if (view instanceof RadioButton) {
+            RadioButton btn = (RadioButton) view;
+            btn.setTextColor(colorTheme.getForeground(pressed));
+            btn.setBackgroundColor(colorTheme.getButtonBackground());
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
             text.setTextColor(colorTheme.getForeground(pressed));

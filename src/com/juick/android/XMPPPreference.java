@@ -9,6 +9,7 @@ import android.preference.Preference;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.*;
 import com.google.gson.Gson;
 import com.juickadvanced.R;
@@ -91,6 +92,7 @@ public class XMPPPreference extends Preference {
                 final TextView priority = (TextView) view.findViewById(R.id.priority);
                 final TextView resource = (TextView) view.findViewById(R.id.resource);
                 final Button btn = (Button) view.findViewById(R.id.test_button);
+                final Button readmebtn = (Button) view.findViewById(R.id.readme_button);
                 AdapterView.OnItemSelectedListener templatesUpdater = new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onNothingSelected(AdapterView<?> parent) {
@@ -118,6 +120,18 @@ public class XMPPPreference extends Preference {
                     }
                 };
                 templates.setOnItemSelectedListener(templatesUpdater);
+                readmebtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        WebView wv = new WebView(getContext());
+                        Utils.setupWebView(wv, getContext().getString(R.string.XMPPReadme));
+                        new AlertDialog.Builder(getContext())
+                                .setTitle(R.string.ReadThis)
+                                .setView(wv)
+                                .setCancelable(true)
+                                .show();
+                    }
+                });
                 btn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
