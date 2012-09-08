@@ -65,7 +65,7 @@ public class DatabaseService extends Service {
             @Override
             public Boolean apply(Void aVoid) {
                 try {
-                    db.execSQL("delete from saved_message where msgid=?", new Object[message.MID]);
+                    db.execSQL("delete from saved_message where msgid=?", new Object[]{message.MID});
                     db.setTransactionSuccessful();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -482,18 +482,20 @@ public class DatabaseService extends Service {
         while(!cursor.isAfterLast()) {
             int thisMid = cursor.getInt(msgidIndex);
             long thisMessageDate = cursor.getLong(messageDateIndex);
-            if (savedMsgid != -1 && Math.abs(thisMid - savedMsgid) > 50) {   // UNREAD HOLE
-                Period period = new Period();
-                period.startMid = savedMsgid-1;
-                period.beforeMid = savedMsgid-1;
-                period.startDate = new Date(savedMsgDate);
-                period.endMid =thisMid+1;
-                period.endDate = new Date(thisMessageDate);
-                period.read = false;
-                retval.add(period);
+            if (thisMessageDate > 200) {    // bug hider :-E
+                if (savedMsgid != -1 && Math.abs(thisMid - savedMsgid) > 50) {   // UNREAD HOLE
+                    Period period = new Period();
+                    period.startMid = savedMsgid-1;
+                    period.beforeMid = savedMsgid-1;
+                    period.startDate = new Date(savedMsgDate);
+                    period.endMid =thisMid+1;
+                    period.endDate = new Date(thisMessageDate);
+                    period.read = false;
+                    retval.add(period);
+                }
+                savedMsgid = thisMid;
+                savedMsgDate = thisMessageDate;
             }
-            savedMsgid = thisMid;
-            savedMsgDate = thisMessageDate;
             cursor.moveToNext();
         }
         // coalesce periods
