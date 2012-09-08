@@ -36,44 +36,44 @@ public class DatabaseService extends Service {
     Handler handler;
 
     public void saveMessage(final JuickMessage messag) {
-        writeJobs.add(new Utils.Function<Boolean, Void>() {
-            @Override
-            public Boolean apply(Void aVoid) {
-                Gson gson = new Gson();
-                final String value = gson.toJson(messag);
-                try {
-                    ContentValues cv = new ContentValues();
-                    cv.put("msgid", messag.MID);
-                    cv.put("tm", messag.Timestamp.getTime());
-                    cv.put("save_date", System.currentTimeMillis());
-                    cv.put("body", compressGZIP(value));
-                    db.insert("saved_message", null, cv);   // failed uniq constraint is handled here.
-                    db.setTransactionSuccessful();
-                } catch (Exception e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-                return Boolean.TRUE;
-            }
-        });
         synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    Gson gson = new Gson();
+                    final String value = gson.toJson(messag);
+                    try {
+                        ContentValues cv = new ContentValues();
+                        cv.put("msgid", messag.MID);
+                        cv.put("tm", messag.Timestamp.getTime());
+                        cv.put("save_date", System.currentTimeMillis());
+                        cv.put("body", compressGZIP(value));
+                        db.insert("saved_message", null, cv);   // failed uniq constraint is handled here.
+                        db.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                    return Boolean.TRUE;
+                }
+            });
             writeJobs.notify();
         }
     }
 
     public void unsaveMessage(final JuickMessage message) {
-        writeJobs.add(new Utils.Function<Boolean, Void>() {
-            @Override
-            public Boolean apply(Void aVoid) {
-                try {
-                    db.execSQL("delete from saved_message where msgid=?", new Object[]{message.MID});
-                    db.setTransactionSuccessful();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return Boolean.TRUE;
-            }
-        });
         synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    try {
+                        db.execSQL("delete from saved_message where msgid=?", new Object[]{message.MID});
+                        db.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return Boolean.TRUE;
+                }
+            });
             writeJobs.notify();
         }
     }
