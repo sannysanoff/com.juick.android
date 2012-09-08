@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:background="@android:color/background_dark"
+              android:layout_height="fill_parent">
+
+    <RadioGroup
+            android:id="@+id/enable_options"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            >
+        <RadioButton
+                android:id="@+id/us_send"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/us_send"
+                android:textColor="@android:color/white"
+                />
+        <RadioButton
+                android:id="@+id/us_send_wifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/us_send_wifi"
+                android:textColor="@android:color/white"
+                />
+        <RadioButton
+                android:id="@+id/us_no_hello"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/us_no_hello"
+                android:textColor="@android:color/white"
+                />
+        <RadioButton
+                android:id="@+id/us_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/us_no"
+                android:textColor="@android:color/white"
+                />
+    </RadioGroup>
+    <LinearLayout android:orientation="horizontal"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:paddingTop="20sp"
+                  android:gravity="center"
+            >
+        <Button
+                android:id="@+id/read_privacy_policy"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="0.5"
+                android:text="@string/ReadPrivacyPolicy"
+                />
+        <Button
+                android:id="@+id/ok"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:text="@string/Done"
+                />
+    </LinearLayout>
+
+</LinearLayout>
