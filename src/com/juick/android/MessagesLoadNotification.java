@@ -14,12 +14,17 @@ import org.apache.http.client.HttpClient;
 * Time: 1:27 AM
 * To change this template use File | Settings | File Templates.
 */
-public class MessagesLoadNotification implements Utils.DownloadProgressNotification, Utils.RetryNotification, Utils.DownloadErrorNotification {
+public class MessagesLoadNotification implements
+        Utils.DownloadProgressNotification,
+        Utils.RetryNotification,
+        Utils.BackupServerNotification,
+        Utils.DownloadErrorNotification {
     int nretry = 0;
     TextView statusText;
     ProgressBar progressBar;
     Handler handler;
     String lastError;
+    boolean backup;
 
     MessagesLoadNotification(Activity activity, Handler handler) {
         statusText = (TextView)activity.findViewById(R.id.status_text);
@@ -40,7 +45,7 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
         handler.post(new Runnable() {
             @Override
             public void run() {
-                String str = statusText.getContext().getString(R.string.Loading___) + (progressBytes/1024)+"K ";
+                String str = statusText.getContext().getString(backup ? R.string.LoadingBackup___ : R.string.Loading___) + (progressBytes/1024)+"K ";
                 if (nretry>0)
                     str += " (retry "+(nretry+1)+")";
                 statusText.setText(str);
@@ -59,8 +64,13 @@ public class MessagesLoadNotification implements Utils.DownloadProgressNotificat
         handler.post(new Runnable() {
             @Override
             public void run() {
-                statusText.setText(statusText.getContext().getString(R.string.Loading___)+" retry="+nretry);
+                statusText.setText(statusText.getContext().getString(backup ? R.string.LoadingBackup___ : R.string.Loading___)+" retry="+nretry);
             }
         });
+    }
+
+    @Override
+    public void notifyBackupInUse(boolean backup) {
+        this.backup = backup;
     }
 }

@@ -22,6 +22,7 @@ import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.sax.StartElementListener;
@@ -51,6 +52,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -93,6 +95,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     Utils.ServiceGetter<XMPPService> xmppServiceGetter;
     private boolean trackLastRead;
     private int subtype;
+    private final boolean indirectImages;
+    Handler handler;
 
 
     public static Set<String> getFilteredOutUsers(Context ctx) {
@@ -131,6 +135,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         imageLoadMode = sp.getString("image.loadMode", "off");
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
+        indirectImages = sp.getBoolean("image.indirect", true);
         defaultTextSize = new TextView(context).getTextSize();
         textScale = 1;
         try {
@@ -140,6 +145,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
         databaseGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
         xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(context, XMPPService.class);
+        handler = new Handler();
     }
 
 
@@ -187,8 +193,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             @Override
                             public Void apply(DatabaseService.MessageReadStatus messageReadStatus) {
                                 if (messageReadStatus.read) {
-                                    Activity a = (Activity)t.getContext();
-                                    a.runOnUiThread(new Runnable() {
+                                    handler.post(new Runnable() {
                                         @Override
                                         public void run() {
                                             if (t.getTag().equals(jmsg.MID)) {
@@ -361,7 +366,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     private String unescapeURL(String url) {
-        if (url.indexOf("www.dropbox.com/") != -1) {
+        if (url.indexOf("www.dropbox.com/") != -1 && url.indexOf("dl=1") == -1) {
             url += "&dl=1";
         }
         if (url.indexOf("gyazo.com/") != -1) {
@@ -385,7 +390,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     private boolean isValidImageURl(String urlLower) {
         if (urlLower.indexOf("http://gyazo.com") != -1) return true;
+        if (isHTMLSource(urlLower)) return true;
         return urlLower.endsWith(".png") || urlLower.endsWith(".gif") || urlLower.endsWith(".jpg") || urlLower.endsWith(".jpeg");
+    }
+
+    private boolean isHTMLSource(String url) {
+        if (!indirectImages) return false;
+        if (url.indexOf("gelbooru.com/") != -1) return true;
+        return false;
     }
 
     @Override
@@ -681,8 +693,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         DefaultHttpClient httpClient;
         HttpGet httpGet;
 
+        String suffix;
 
-        public ImageLoader(final String url, View imageHolder, int destHeight, LinearLayout listRow, boolean forceOriginalImage) {
+        public ImageLoader(final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage) {
             this.url = url;
             this.listRow = listRow;
             this.destHeight = destHeight;
@@ -690,7 +703,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             this.imageHolder = imageHolder;
             updateUIBindings();
             final File destFile = getDestFile();
-            final String suffix = getSuffix(destFile);
+            suffix = getSuffix(destFile);
             if (destFile.exists()) {
                 updateWebView(destFile);
             } else {
@@ -698,24 +711,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 httpClient = new DefaultHttpClient();
                 String loadURl = url;
 
-                if (!forceOriginalImage) {
-                    if (imageLoadMode.contains("weserv")) {
-                        final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
-                        // WESERV.NL
-                        if (url.startsWith("https://")) {
-                            loadURl  = "http://images.weserv.nl/?url=ssl:" + Uri.encode(url.substring(8))+"&h="+HEIGHT+"&q=0.5";
-                        } else if (url.startsWith("http://")) {
-                            loadURl  = "http://images.weserv.nl/?url=" + Uri.encode(url.substring(7))+"&h="+HEIGHT+"&q=0.5";
-                        } else  {
-                            progressBarText.setText("bad scheme");
-                            return;
-                        }
-                    }
-                    if (imageLoadMode.contains("fastun") && proxyLogin.length() > 0 && proxyPassword.length() > 0) {
-                        httpClient.getCredentialsProvider().setCredentials(new AuthScope("fastun.com",7000), new UsernamePasswordCredentials(proxyLogin, proxyPassword));
-                        HttpHost proxy = new HttpHost("fastun.com", 7000);
-                        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-                    }
+                if (!forceOriginalImage && !isHTMLSource(url)) {
+                    loadURl = setupProxyForURL(url);
                 }
                 try {
                     httpGet = new HttpGet(loadURl);
@@ -736,8 +733,18 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     public HttpResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
                                         updateStatus("Load..");
                                         HttpEntity entity = response.getEntity();
+                                        String type = "image";
+                                        Header contentType = entity.getContentType();
+                                        if (contentType != null)
+                                            type = contentType.getValue();
+                                        long len = entity.getContentLength();
+                                        String maybeTotalSize = "K";
+                                        if (len > 0) {
+                                            maybeTotalSize = "/"+(len/1024)+"K";
+                                        }
                                         InputStream content = entity.getContent();
                                         long l = System.currentTimeMillis();
+                                        StringBuffer sb = new StringBuffer();
                                         if (content != null) {
                                             OutputStream outContent = new FileOutputStream(destFile);
                                             byte[] buf = new byte[4096];
@@ -746,19 +753,56 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                 if (rd <= 0) break;
                                                 totalRead += rd;
                                                 outContent.write(buf, 0, rd);
+                                                if (type.equals("text/html")) {
+                                                    try {
+                                                        sb.append(new String(buf, 0, rd));
+                                                    } catch (Exception e) {
+                                                        // invalid encoding goes here
+                                                    }
+                                                }
                                                 if (System.currentTimeMillis() - l > 300) {
-                                                    final int finalTotalRead = totalRead;
-                                                    updateStatus("Load.." + (finalTotalRead / 1024) + "K - " + suffix);
+                                                    updateStatus("Load.." + (totalRead / 1024) + maybeTotalSize +" - " + suffix);
                                                     l = System.currentTimeMillis();
                                                 }
                                             }
                                             content.close();
                                             outContent.close();
-                                            final int finalTotalRead1 = totalRead;
-                                            updateStatus("Done.." + (finalTotalRead1 / 1024) + "K");
+                                            updateStatus("Done.." + (totalRead / 1024) + "K");
+                                            if (type.equals("text/html")) {
+                                                String html = sb.toString();
+                                                String imageURL = null;
+                                                if (html.indexOf("gelbooru") != -1) {
+                                                    // <img src="http://cdn1.gelbooru.com//samples/1397/sample_8f31057149f27c1c211f587d8251cedb.jpg?1608984" id="image" ...
+                                                    int idimage = html.indexOf("id=\"image\"");
+                                                    if (idimage != -1) {
+                                                        html = html.substring(0, idimage);
+                                                        int src = html.lastIndexOf("src=");
+                                                        if (src != -1) {
+                                                            html = html.substring(src+5);
+                                                            int quote = html.lastIndexOf("\"");
+                                                            if (quote != -1) {
+                                                                html = html.substring(0, quote-1);
+                                                                imageURL = html;
+                                                                suffix = "png";
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                if (imageURL != null) {
+                                                    totalRead = 0;
+                                                    if (!forceOriginalImage)
+                                                        setupProxyForURL(url);
+                                                    updateStatus("Img load starts..");
+                                                    httpGet = new HttpGet(imageURL);
+                                                    httpClient.execute(httpGet, this);
+                                                    return null;
+                                                } else {
+                                                    updateStatus("Invalid HTML");
+                                                }
+                                            }
                                             loading = false;
                                             if (!terminated) {
-                                                activity.runOnUiThread(new Runnable() {
+                                                handler.post(new Runnable() {
                                                     @Override
                                                     public void run() {
                                                         updateWebView(destFile);
@@ -781,9 +825,30 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
         }
 
+        private String setupProxyForURL(String url) {
+            String loadURl = url;
+            if (imageLoadMode.contains("weserv")) {
+                final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
+                // WESERV.NL
+                if (url.startsWith("https://")) {
+                    loadURl  = "http://images.weserv.nl/?url=ssl:" + Uri.encode(url.substring(8))+"&h="+HEIGHT+"&q=0.5";
+                } else if (url.startsWith("http://")) {
+                    loadURl  = "http://images.weserv.nl/?url=" + Uri.encode(url.substring(7))+"&h="+HEIGHT+"&q=0.5";
+                } else  {
+                    // keep url
+                }
+            }
+            if (imageLoadMode.contains("fastun") && proxyLogin.length() > 0 && proxyPassword.length() > 0) {
+                httpClient.getCredentialsProvider().setCredentials(new AuthScope("fastun.com",7000), new UsernamePasswordCredentials(proxyLogin, proxyPassword));
+                HttpHost proxy = new HttpHost("fastun.com", 7000);
+                httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+            }
+            return loadURl;
+        }
+
         private void updateStatus(final String text) {
             this.status = text;
-            activity.runOnUiThread(new Runnable() {
+            handler.post(new Runnable() {
                 @Override
                 public void run() {
                     progressBarText.setText(text);
@@ -826,7 +891,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 View content = imageHolder.findViewById(R.id.content);
                 content.getLayoutParams().width = scaledW;
                 content.getLayoutParams().height = scaledH;
-                activity.runOnUiThread(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         View progressBar = imageHolder.findViewById(R.id.progressbar);

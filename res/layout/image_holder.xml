@@ -7,7 +7,7 @@
 
     <LinearLayout
             android:id="@+id/content"
-            android:layout_width="100sp"
+            android:layout_width="180sp"
             android:orientation="vertical"
             android:layout_height="100sp">
         <WebView
@@ -18,7 +18,8 @@
                 />
         <TextView
                 android:id="@+id/progressbar_text"
-                android:layout_width="fill_parent"
+                android:layout_width="180sp"
+                android:singleLine="true"
                 android:layout_height="wrap_content"
                 >
         </TextView>

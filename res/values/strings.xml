@@ -6,6 +6,7 @@
 
     <string name="Juick">Juick Advanced</string>
     <string name="Loading___">Loading...</string>
+    <string name="LoadingBackup___">Loading (backup)...</string>
     <string name="Please_wait___">Please wait...</string>
     <string name="OK">OK</string>
     <string name="Cancel">Cancel</string>
@@ -250,7 +251,16 @@
             </head>
             <body>
 
-            <b>8 сентября 2012</b>
+            <b>13 сентября 2012</b>
+            <li>
+            (опция) Использовать резервный сервер когда juick тормозит. В опции указывается длительность ожидания
+             жуйка, после которой вступает в действие бакупный сервер, если жуйк не отвечает. Доступны разные
+              таймауты, опция \'всегда\' и \'никогда\'.<br>
+              Недавно был насетаплен бакупный сервер, который может отдавать список всех мессаг,
+              и отдельные мессаги через juick http api. Сервер постоянно вытягивает из жуйка
+            последние сообщения и комментарии, благо juick http api это позволяет делать почти не нагружая сервер.
+            Сервер будет использоваться в будущем и для других фишек.
+            </li>
             <li>
             (опция) Настройка команды, которуая будет посылаться juick-боту: ON/OFF/никакая
             </li>
@@ -474,6 +484,10 @@
     <string name="us_no">No, don\'t report, i do not exist.</string>
     <string name="Done">Done</string>
     <string name="ReadPrivacyPolicy">Read privacy policy...</string>
+    <string name="ChooseFirstOption">If you don\'t know what to choose, choose first option</string>
+    <string name="IndirectImages">Indirect images</string>
+    <string name="Gelbooru">...from known sites like gelbooru.com. Requires extra traffic.</string>
+    <string name="UserBackupServer">Use backup server where possible</string>
 
 
 </resources>

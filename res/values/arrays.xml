@@ -112,4 +112,26 @@
         <item>Coarse (GSM+Google - fast)</item>
         <item>Low (whatever it means)</item>
     </string-array>
+    <string-array name="useJABackupTitles">
+        <item>Never</item>
+        <item>Always</item>
+        <item>After 0.5 sec timeout</item>
+        <item>After 1 sec timeout</item>
+        <item>After 1.5 sec timeout</item>
+        <item>After 2 sec timeout</item>
+        <item>After 3 sec timeout</item>
+        <item>After 5 sec timeout</item>
+        <item>After 10 sec timeout</item>
+    </string-array>
+    <string-array name="useJABackup">
+        <item>-1</item>
+        <item>0</item>
+        <item>0.5</item>
+        <item>1</item>
+        <item>1.5</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
 </resources>

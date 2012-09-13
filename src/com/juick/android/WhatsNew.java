@@ -9,6 +9,8 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.Toast;
 import com.juickadvanced.R;
 
 /**
@@ -44,40 +46,73 @@ public class WhatsNew {
     }
 
     void maybeRunFeedbackAndMore() {
-        Runnable after = new Runnable() {
+        final Runnable after = new Runnable() {
             @Override
             public void run() {
                 //
             }
         };
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        View stat = context.getLayoutInflater().inflate(R.layout.enable_statistics, null);
-        stat.findViewById(R.id.read_privacy_policy).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                WebView wv = new WebView(context);
-                Utils.setupWebView(wv, context.getString(R.string.privacy_policy));
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        String currentSetting = sp.getString("usage_statistics", "");
+        if (currentSetting.length() == 0) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            final View stat = context.getLayoutInflater().inflate(R.layout.enable_statistics, null);
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(context)
-                        .setTitle(R.string.Privacy_Policy)
-                        .setView(wv)
-                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        })
-                        .setCancelable(true);
-                builder.show();
-            }
-        });
-        final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
-                .setMessage(context.getString(R.string.EnableUsageStatistics))
-                .setCancelable(false)
-                .setView(stat)
-                .create();
-        alert.show();
+            stat.findViewById(R.id.read_privacy_policy).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    WebView wv = new WebView(context);
+                    Utils.setupWebView(wv, context.getString(R.string.privacy_policy));
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                            .setTitle(R.string.Privacy_Policy)
+                            .setView(wv)
+                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            })
+                            .setCancelable(true);
+                    builder.show();
+                }
+            });
+            final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
+                    .setMessage(context.getString(R.string.EnableUsageStatistics))
+                    .setCancelable(false)
+                    .setView(stat)
+                    .create();
+            stat.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    RadioButton us_send = (RadioButton)stat.findViewById(R.id.us_send);
+                    RadioButton us_send_wifi = (RadioButton)stat.findViewById(R.id.us_send_wifi);
+                    RadioButton us_no_hello = (RadioButton)stat.findViewById(R.id.us_no_hello);
+                    RadioButton us_no = (RadioButton)stat.findViewById(R.id.us_no);
+                    String option = "";
+                    if (us_send.isChecked())
+                        option  = "send";
+                    if (us_send_wifi.isChecked())
+                        option  = "send_wifi";
+                    if (us_no_hello.isChecked())
+                        option  = "no_hello";
+                    if (us_no.isChecked())
+                        option  = "us_no";
+                    if (option.length() != 0) {
+                        sp.edit().putString("usage_statistics", option).commit();
+                        alert.dismiss();
+                        after.run();
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.ChooseFirstOption), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            alert.show();
+        } else {
+            after.run();
+        }
     }
+
 
     public void runAll() {
         Runnable after = new Runnable() {

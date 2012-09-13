@@ -89,6 +89,12 @@
             android:title="@string/DaysToKeepCachedImages"
             android:defaultValue="10"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="image.indirect"
+            android:title="@string/IndirectImages"
+            android:summary="@string/Gelbooru"
+            android:defaultValue="true"
+            android:persistent="true"/>
         <ListPreference
             android:key="image.height_percent"
             android:title="@string/ImageHeight"
@@ -114,6 +120,13 @@
             android:title="@string/Show_Numbers"
             android:summary="@string/Message_numbers_will_be_shown"
             android:defaultValue="false"
+            android:persistent="true"/>
+        <ListPreference
+            android:key="useBackupServer"
+            android:title="@string/UseBackupServer"
+            android:entries="@array/useJABackupTitles"
+            android:entryValues="@array/useJABackup"
+            android:defaultValue="-1"
             android:persistent="true"/>
         <CheckBoxPreference
                 android:key="enableMessageDB"

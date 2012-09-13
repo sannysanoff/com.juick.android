@@ -9,8 +9,8 @@ import java.util.Map;
  * @author sannysanoff
  */
 public class URLParser implements Serializable {
-    private final String protocol;
-    private final String host;
+    private String protocol;
+    private String host;
     private String port;
     private String path;
     private final Map<String, String> argsMap = new HashMap<String, String>();
@@ -109,5 +109,21 @@ public class URLParser implements Serializable {
 
     public Map<String, String> getArgsMap() {
         return argsMap;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
     }
 }

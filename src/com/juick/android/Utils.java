@@ -44,7 +44,21 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.BasicManagedEntity;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.SingleClientConnManager;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicHeader;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -232,6 +246,10 @@ public class Utils {
         public void notifyRetryIsInProgress(int retry);
     }
 
+    public static interface BackupServerNotification extends Notification {
+        public void notifyBackupInUse(boolean backup);
+    }
+
     public static interface DownloadProgressNotification extends Notification {
         public void notifyDownloadProgress(int progressBytes);
         public void notifyHttpClientObtained(HttpClient client);
@@ -258,38 +276,50 @@ public class Utils {
     }
 
     public static String getJSON(Context context, String url, Notification progressNotification) {
-        String ret = null;
-        try {
-            URL jsonURL = new URL(url);
-            HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
+        return getJSON(context, url, progressNotification, -1);
+    }
 
+    public static String getJSON(Context context, String url, final Notification progressNotification, int timeout) {
+        final String[] ret = new String[]{null};
+        DefaultHttpClient client = new DefaultHttpClient();
+        try {
+            HttpGet httpGet = new HttpGet(url);
+            if (timeout > 0) {
+                client.getParams().setParameter("http.connection.timeout", new Integer(timeout));
+                httpGet.getParams().setParameter("http.socket.timeout", new Integer(timeout));
+                httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
+            }
             String basicAuth = getBasicAuthString(context);
             if (basicAuth.length() > 0 && url.indexOf("api.juick.com") != -1) {
-                conn.setRequestProperty("Authorization", basicAuth);
+                httpGet.addHeader(new BasicHeader("Authorization", basicAuth));
+                //conn.setRequestProperty("Authorization", basicAuth);
             }
-
-            conn.setUseCaches(false);
-            conn.setDoInput(true);
-            conn.connect();
-            if (conn.getResponseCode() == 200) {
-                if (progressNotification instanceof DownloadProgressNotification) {
-                    ((DownloadProgressNotification)progressNotification).notifyDownloadProgress(0);
+            client.execute(httpGet, new ResponseHandler<Object>() {
+                @Override
+                public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
+                    if (o.getStatusLine().getStatusCode() == 200) {
+                        HttpEntity e = o.getEntity();
+                        if (progressNotification instanceof DownloadProgressNotification) {
+                            ((DownloadProgressNotification)progressNotification).notifyDownloadProgress(0);
+                        }
+                        ret[0] = streamToString(e.getContent(), progressNotification);
+                    } else {
+                        if (progressNotification instanceof DownloadErrorNotification) {
+                            ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP response code: "+o.getStatusLine().getStatusCode());
+                        }
+                    }
+                    return o;
                 }
-                ret = streamToString(conn.getInputStream(), progressNotification);
-            } else {
-                if (progressNotification instanceof DownloadErrorNotification) {
-                    ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP response code: "+conn.getResponseCode());
-                }
-            }
-
-            conn.disconnect();
+            });
         } catch (Exception e) {
             if (progressNotification instanceof DownloadErrorNotification) {
                 ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP connect: "+e.toString());
             }
             Log.e("getJSON", e.toString());
+        } finally {
+            client.getConnectionManager().shutdown();
         }
-        return ret;
+        return ret[0];
     }
 
     public static String postJSON(Context context, String url, String data) {

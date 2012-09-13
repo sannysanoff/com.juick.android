@@ -6,6 +6,7 @@
 
 
     <string name="Loading___">Загрузка...</string>
+    <string name="LoadingBackup___">Загрузка (резервный)...</string>
     <string name="Please_wait___">Пожалуйста, ждите...</string>
     <string name="OK">ОК</string>
     <string name="Cancel">Отмена</string>
@@ -244,6 +245,10 @@
     <string name="us_no">Не-не-не, меня нет.</string>
     <string name="Done">Готово</string>
     <string name="ReadPrivacyPolicy">Подробнее...</string>
+    <string name="ChooseFirstOption">Если вы без понятия о чем речь, выбирайте первую опцию.</string>
+    <string name="IndirectImages">Грузить непрямые ссылки</string>
+    <string name="Gelbooru">..с некоторых сайтов (например gelbooru.com). Кушает лишний траффик, размером с HTML страницу. </string>
+    <string name="UseBackupServer">Пользовать запасной сервер</string>
 
 
 </resources>
