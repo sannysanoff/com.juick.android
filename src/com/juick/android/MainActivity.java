@@ -23,6 +23,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
@@ -58,6 +60,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
     public static final int ACTIVITY_SIGNIN = 2;
     public static final int ACTIVITY_PREFERENCES = 3;
     public static final int PENDINGINTENT_CONSTANT = 713242183;
+
+    public static int displayWidth;
+    public static int displayHeight;
 
     NavigationItem lastNavigationItem = null;
     MessagesFragment mf;
@@ -97,6 +102,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
         super.onCreate(savedInstanceState);
+        displayWidth = getWindow().getWindowManager().getDefaultDisplay().getWidth();
+        displayHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -121,6 +128,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
         clearObsoleteImagesInCache();
         updateNavigation();
+        maybeSendUsageReport();
 
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
@@ -136,13 +144,40 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         new WhatsNew(this).runAll();
     }
 
+    public static Thread usageReportThread;
+
+    private void maybeSendUsageReport() {
+        if (usageReportThread != null) return;
+        String sendStats = sp.getString("usage_statistics", "no");
+        if (!sendStats.equals("send") && !sendStats.equals("send_wifi")) return;
+        long last_usage_sent = sp.getLong("last_usage_sent", 0);
+        if (last_usage_sent == 0) {
+            sp.edit().putLong("last_usage_sent", System.currentTimeMillis()).commit();
+            return;
+        }
+        if (System.currentTimeMillis() - last_usage_sent > WhatsNew.REPORT_SEND_PERIOD) {
+            ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            if (sendStats.equals("send_wifi") && !wifi.isConnected()) return;
+            usageReportThread = new Thread() {
+                @Override
+                public void run() {
+                    new WhatsNew(MainActivity.this).reportUsage();
+                }
+            };
+            usageReportThread.start();
+        }
+    }
+
     public void updateNavigation() {
         navigationItems = new ArrayList<NavigationItem>();
         navigationItems.add(new NavigationItem(R.string.navigationSubscriptions) {
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home"));
+                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home");
+                ms.setKind("home");
+                args.putSerializable("messagesSource", ms);
                 runDefaultFragmentWithBundle(args, this);
             }
         });
@@ -164,7 +199,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 @Override
                 void action() {
                     final Bundle args = new Bundle();
-                    args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("popular", "1"));
+                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("popular", "1");
+                    ms.setKind("popular");
+                    args.putSerializable("messagesSource", ms);
                     runDefaultFragmentWithBundle(args, this);
                 }
             });
@@ -174,7 +211,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 @Override
                 void action() {
                     final Bundle args = new Bundle();
-                    args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("media", "all"));
+                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("media", "all");
+                    ms.setKind("media");
+                    args.putSerializable("messagesSource", ms);
                     runDefaultFragmentWithBundle(args, this);
                 }
             });
@@ -252,8 +291,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
 
                     } else {
                         final Bundle args = new Bundle();
-                        args.putSerializable("messagesSource",
-                                new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788")));
+                        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788"));
+                        ms.setKind("my_home");
+                        args.putSerializable("messagesSource",ms);
                         runDefaultFragmentWithBundle(args, this);
                     }
                 }
@@ -264,7 +304,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 @Override
                 void action() {
                     final Bundle args = new Bundle();
-                    args.putSerializable("messagesSource", new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api"));
+                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api");
+                    ms.setKind("srachiki");
+                    args.putSerializable("messagesSource", ms);
                     runDefaultFragmentWithBundle(args, this);
                 }
             });

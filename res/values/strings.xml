@@ -457,21 +457,35 @@
             <ul>
             <li>
             Уникальный номер инсталляляции, который состоит из MD5 хеша идентификатора вашего девайса
-            (чтобы он не засветился наружу или мне) и даты инсталляции программы.
+            (чтобы он не засветился наружу или мне) и даты инсталляции программы. Идентификатор строится
+            из wifi mac address и Settings.Secure.ANDROID_ID, который сгенерился случайно в момент инсталляции android.
             </li>
             <li>
-            Количество запусков программы и проведенного в ленте времени, количество прочитываемых мессаг.
+            Количество проведенного в ленте времени, по каждому разделу.
             </li>
             <li>
-            Фичи, используемые за последний период: выбранные пункты меню, активизированные фичи в настройках итд.
+            Активизированные фичи в настройках.
+            </li>
+            <li>
+            Модель телефона, размер экрана.
             </li>
             </ul>
-            Больше ничего не отправляется. Я собираюсь использовать собранную анонимную информацию для своего будущего доминирования над всем миром, я гарантирую это.
-
-
+            Больше ничего не отправляется. Отправляемую информацию можно посмотреть в настройках, нажав MENU.
+            Отправляемые данные занимают около 1КБ.
+             <br>
+            Я собираюсь использовать собранную анонимную информацию для
+            своего будущего доминирования над всем миром, я гарантирую это.
             ]]>
     </string>
 
+    <string name="HTMLStart"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+    ]]>
+    </string>
 
     <string name="WhatsNew">What\'s new</string>
     <string name="Privacy_Policy">Privacy Policy</string>
@@ -481,13 +495,16 @@
     <string name="us_send">Enable usage report</string>
     <string name="us_send_wifi">Enable, report over Wi-Fi only</string>
     <string name="us_no_hello">No, but say hello to author once.</string>
+    <string name="us_no_hello_done">Said HELLO to author once</string>
     <string name="us_no">No, don\'t report, i do not exist.</string>
+    <string name="statistics_mode">Anon usage sending mode: </string>
     <string name="Done">Done</string>
     <string name="ReadPrivacyPolicy">Read privacy policy...</string>
     <string name="ChooseFirstOption">If you don\'t know what to choose, choose first option</string>
     <string name="IndirectImages">Indirect images</string>
     <string name="Gelbooru">...from known sites like gelbooru.com. Requires extra traffic.</string>
     <string name="UserBackupServer">Use backup server where possible</string>
+    <string name="Usage_Report">Usage Report</string>
 
 
 </resources>

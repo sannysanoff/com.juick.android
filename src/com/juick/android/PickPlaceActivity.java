@@ -235,7 +235,9 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
         if (placeId != 0) {
             String placeName = listAdapter.getItem(position).name;
             Intent i = new Intent(this, MessagesActivity.class);
-            i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Place_name_)+placeName, this).putArg("place_id", ""+placeId));
+            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(R.string.Place_name_) + placeName, this).putArg("place_id", "" + placeId);
+            ms.setKind("place");
+            i.putExtra("messagesSource", ms);
             startActivity(i);
         }
         return true;

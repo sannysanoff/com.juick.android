@@ -67,5 +67,8 @@ public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
         return true;
     }
 
-
+    @Override
+    public String getKind() {
+        return "all_messages";
+    }
 }

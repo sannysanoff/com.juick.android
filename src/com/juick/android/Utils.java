@@ -39,6 +39,8 @@ import com.juickadvanced.R;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -66,6 +68,10 @@ import org.json.JSONObject;
  * @author Ugnich Anton
  */
 public class Utils {
+
+    public static final String JA_IP = "192.168.1.77";
+    //public static final String JA_IP = "79.133.74.9";
+    public static final String JA_PORT = "8080";
 
     public static void verboseDebug(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
@@ -252,6 +258,7 @@ public class Utils {
 
     public static interface DownloadProgressNotification extends Notification {
         public void notifyDownloadProgress(int progressBytes);
+
         public void notifyHttpClientObtained(HttpClient client);
     }
 
@@ -261,11 +268,11 @@ public class Utils {
 
     public static String getJSONWithRetries(Context context, String url, Notification notification) {
         String retval = null;
-        for(int i=0; i<5; i++) {
-            retval = getJSON(context, url, notification instanceof DownloadProgressNotification ? (DownloadProgressNotification)notification : null);
+        for (int i = 0; i < 5; i++) {
+            retval = getJSON(context, url, notification instanceof DownloadProgressNotification ? (DownloadProgressNotification) notification : null);
             if (retval == null) {
                 if (notification instanceof RetryNotification) {
-                    ((RetryNotification)notification).notifyRetryIsInProgress(i+1);
+                    ((RetryNotification) notification).notifyRetryIsInProgress(i + 1);
                 }
                 continue;
             } else {
@@ -300,12 +307,12 @@ public class Utils {
                     if (o.getStatusLine().getStatusCode() == 200) {
                         HttpEntity e = o.getEntity();
                         if (progressNotification instanceof DownloadProgressNotification) {
-                            ((DownloadProgressNotification)progressNotification).notifyDownloadProgress(0);
+                            ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(0);
                         }
                         ret[0] = streamToString(e.getContent(), progressNotification);
                     } else {
                         if (progressNotification instanceof DownloadErrorNotification) {
-                            ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP response code: "+o.getStatusLine().getStatusCode());
+                            ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP response code: " + o.getStatusLine().getStatusCode());
                         }
                     }
                     return o;
@@ -313,7 +320,7 @@ public class Utils {
             });
         } catch (Exception e) {
             if (progressNotification instanceof DownloadErrorNotification) {
-                ((DownloadErrorNotification)progressNotification).notifyDownloadError("HTTP connect: "+e.toString());
+                ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
             }
             Log.e("getJSON", e.toString());
         } finally {
@@ -354,28 +361,72 @@ public class Utils {
         return ret;
     }
 
+    public static String postJSONHome(Context context, String path, String data) {
+        String ret = null;
+        try {
+            URL jsonURL = new URL("http://" + JA_IP + ":" + JA_PORT + path);
+            HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
+
+            conn.setUseCaches(false);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setRequestMethod("POST");
+            conn.connect();
+
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(data);
+            wr.close();
+
+            if (conn.getResponseCode() == 200) {
+                ret = streamToString(conn.getInputStream(), null);
+            }
+
+            conn.disconnect();
+        } catch (Exception e) {
+            Log.e("getJSONHome", e.toString());
+        }
+        return ret;
+    }
+
+
     public static String streamToString(InputStream is, Notification progressNotification) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             long l = System.currentTimeMillis();
-            while(true) {
+            while (true) {
                 int c = is.read();
                 if (c <= 0) break;
                 baos.write(c);
                 if (System.currentTimeMillis() - l > 100) {
                     l = System.currentTimeMillis();
                     if (progressNotification instanceof DownloadProgressNotification)
-                        ((DownloadProgressNotification)progressNotification).notifyDownloadProgress(baos.size());
+                        ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(baos.size());
                 }
             }
-            return new String(baos.toByteArray(),"UTF-8");
+            return new String(baos.toByteArray(), "UTF-8");
         } catch (Exception e) {
             if (progressNotification instanceof DownloadErrorNotification)
-                ((DownloadErrorNotification)progressNotification).notifyDownloadError(e.toString());
+                ((DownloadErrorNotification) progressNotification).notifyDownloadError(e.toString());
             Log.e("streamReader", e.toString());
         }
         return null;
     }
+
+    public static String getMD5DigestForString(String str) {
+        final MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        final byte[] bytes = str.getBytes();
+        md.update(bytes, 0, bytes.length);
+        byte[] digest = md.digest();
+        StringBuffer sb = new StringBuffer();
+        Base64.encode(digest, 0, digest.length, sb);
+        return sb.toString();
+    }
+
 
     public static Bitmap downloadImage(String url) {
         try {
@@ -418,6 +469,7 @@ public class Utils {
         if (value == null || value.length() == 0) return def;
         return value;
     }
+
 
 
 }

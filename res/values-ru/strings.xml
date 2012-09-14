@@ -200,6 +200,7 @@
     <string name="LeftPartOf_">что слева от @</string>
     <string name="Priority_">Приоритет:</string>
     <string name="ReadThis">Внезапно..</string>
+
     <string name="XMPPReadme"><![CDATA[
             <html>
             <head>
@@ -236,19 +237,22 @@
     <string name="NewFeatures">Новые фичи</string>
     <string name="WhatsNew">Что нового</string>
     <string name="Privacy_Policy">Приватность</string>
-    <string name="EnableUsageStatistics">Enable anonymous usage statistics?</string>
-    <string name="UsageStatistics">Usage statistics</string>
+    <string name="EnableUsageStatistics">Отправлять анонимную статистику?</string>
+    <string name="UsageStatistics">Анонимная статистика</string>
 
     <string name="us_send">Отправлять</string>
     <string name="us_send_wifi">Отправлять только через Wi-Fi</string>
     <string name="us_no_hello">Не отправлять, но сказать разработчику Привет!</string>
-    <string name="us_no">Не-не-не, меня нет.</string>
+    <string name="us_no_hello_done">Отправлено однажды ПРИВЕТ</string>
+    <string name="us_no">Не-не-не, меня нет (не отправлять).</string>
+    <string name="statistics_mode">Режим отправки статистики: </string>
     <string name="Done">Готово</string>
     <string name="ReadPrivacyPolicy">Подробнее...</string>
     <string name="ChooseFirstOption">Если вы без понятия о чем речь, выбирайте первую опцию.</string>
     <string name="IndirectImages">Грузить непрямые ссылки</string>
     <string name="Gelbooru">..с некоторых сайтов (например gelbooru.com). Кушает лишний траффик, размером с HTML страницу. </string>
     <string name="UseBackupServer">Пользовать запасной сервер</string>
+    <string name="Usage_Report">Анон. стат.</string>
 
 
 </resources>

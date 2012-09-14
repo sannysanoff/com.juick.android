@@ -29,6 +29,7 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     int page = 0;
     int useBackupServer = -1;
     String title;
+    String kind;
 
 
 
@@ -189,8 +190,8 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
                 URLParser urlParser = new URLParser(url);
                 urlParser.setPath("api/" + urlParser.getPathPart());
                 //urlParser.setHost("192.168.1.77");
-                urlParser.setHost("79.133.74.9");
-                urlParser.setPort("8080");
+                urlParser.setHost(Utils.JA_IP);
+                urlParser.setPort(Utils.JA_PORT);
                 String s = Utils.getJSON(ctx,urlParser.getFullURL(), notifications);
                 if (s != null && s.length() > 0) return s;
                 if (notifications instanceof Utils.RetryNotification) {
@@ -215,5 +216,15 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
         if (tag.equals("media")) return true;
         if (tag.equals("place_id")) return true;
         return false;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    @Override
+    public String getKind() {
+        if (kind != null) return kind;
+        return super.getKind();
     }
 }

@@ -140,7 +140,25 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
+        new WhatsNew(getActivity()).reportFeature("fragment_usage_"+messagesSource.getKind(), ""+totalRuntime);
     }
+
+    long totalRuntime = 0;
+    long startTime = 0;
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        totalRuntime += System.currentTimeMillis() - startTime;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        startTime = System.currentTimeMillis();
+    }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

@@ -51,5 +51,8 @@ public class UnreadSegmentMessagesSource extends JuickCompatibleURLMessagesSourc
         return true;
     }
 
-
+    @Override
+    public String getKind() {
+        return "unread_segments";
+    }
 }

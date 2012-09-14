@@ -4,20 +4,25 @@ import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.juick.android.api.JuickMessage;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.zip.GZIPInputStream;
@@ -57,6 +62,18 @@ public class DatabaseService extends Service {
                 }
             });
             writeJobs.notify();
+        }
+    }
+
+    public void runGenericWriteJob(final Utils.Function<Void, DatabaseService> job) {
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    job.apply(DatabaseService.this);
+                    return true;
+                }
+            });
         }
     }
 
@@ -102,9 +119,24 @@ public class DatabaseService extends Service {
 
     }
 
+    public void reportFeature(String feature_name, String feature_value) {
+        ContentValues cv = new ContentValues();
+        cv.put("feature_name", feature_name);
+        cv.put("feature_value", feature_value);
+        db.insert("feature_usage", null, cv);
+        db.setTransactionSuccessful();
+    }
+
+    public void cleanupUsageData() {
+        db.beginTransaction();
+        db.delete("feature_usage", "1=1", new String[]{});
+        db.setTransactionSuccessful();
+        db.endTransaction();
+    }
+
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 4;
+        public final static int CURRENT_VERSION = 5;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -135,6 +167,10 @@ public class DatabaseService extends Service {
             if (from == 3) {
                 sqLiteDatabase.execSQL("alter table message_read add column message_date integer");
                 sqLiteDatabase.execSQL("update message_read set message_date=tm");
+                from++;
+            }
+            if (from == 4) {
+                sqLiteDatabase.execSQL("create table feature_usage(feature_name text not null, feature_value text not null)");
                 from++;
             }
         }
@@ -523,6 +559,104 @@ public class DatabaseService extends Service {
                 Toast.makeText(DatabaseService.this, errmsg, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    public JsonObject prepareUsageReportValue() {
+        JsonObject jo = new JsonObject();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        copyBoolean(jo, sp, "useXMPP", false);
+        copyBoolean(jo, sp, "persistLastMessagesPosition", false);
+        copyBoolean(jo, sp, "lastReadMessages", false);
+        copyBoolean(jo, sp, "showNumbers", false);
+        copyBoolean(jo, sp, "enableMessageDB", false);
+        copyBoolean(jo, sp, "confirmActions", true);
+        copyBoolean(jo, sp, "enableScaleByGesture", true);
+        copyBoolean(jo, sp, "compressedMenu", false);
+        copyBoolean(jo, sp, "singleLineMenu", false);
+        copyBoolean(jo, sp, "prefetchMessages", false);
+        copyString(jo, sp, "messagesFontScale", "1.0");
+        copyInteger(jo, sp, "Colors.COMMON_BACKGROUND", -1);
+        copyString(jo, sp, "locationAccuracy", "ACCURACY_FINE");
+        copyString(jo, sp, "menuFontScale", "1.0");
+        copyString(jo, sp, "useBackupServer", "-1");
+        copyString(jo, sp, "juickBotOn", "skip");
+        copyString(jo, sp, "image.loadMode", "off");
+        copyString(jo, sp, "image.height_percent", "0.3");
+        copyBoolean(jo, sp, "ringtone_enabled", true);
+        copyBoolean(jo, sp, "vibration_enabled", true);
+        copyBoolean(jo, sp, "led_enabled", true);
+        copyBoolean(jo, sp, "current_vibration_enabled", true);
+        copyBoolean(jo, sp, "image.indirect", true);
+
+        copyBoolean(jo, sp, "msrcTopMessages", true);
+        copyBoolean(jo, sp, "msrcWithPhotos", true);
+        copyBoolean(jo, sp, "msrcMyBlog", true);
+        copyBoolean(jo, sp, "msrcSrachiki", true);
+        copyBoolean(jo, sp, "msrcUnread", true);
+        copyBoolean(jo, sp, "msrcSaved", true);
+
+        jo.addProperty("manufacturer", Build.MANUFACTURER);
+        jo.addProperty("model", Build.MODEL);
+        jo.addProperty("brand", Build.BRAND);
+        jo.addProperty("display", Build.DISPLAY);
+        jo.addProperty("display_width", MainActivity.displayWidth);
+        jo.addProperty("display_height", MainActivity.displayHeight);
+        String uniqueId = getUniqueInstallationId();
+        jo.addProperty("device_install_id", uniqueId);
+
+
+        Cursor cursor = db.rawQuery("select feature_name, sum(feature_value) from feature_usage group by feature_name", new String[]{});
+        while(cursor.moveToNext()) {
+            String name = cursor.getString(0);
+            String value = cursor.getString(1);
+            jo.addProperty(name, value);
+        }
+        cursor.close();
+        return jo;
+    }
+
+    public String getUniqueInstallationId() {
+        String uniqueId = "";
+        WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            String wifiMac = wifiManager.getConnectionInfo().getMacAddress();
+            uniqueId += wifiMac;
+        }
+        String androidID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        if (androidID != null)
+            uniqueId += androidID;
+        if (uniqueId.length() == 0) {
+            uniqueId = "UNKNOWN_ID";
+        } else {
+            uniqueId = Utils.getMD5DigestForString(uniqueId);
+        }
+        uniqueId += "__";
+
+
+        try {
+            PackageManager pm = getPackageManager();
+            ApplicationInfo appInfo = pm.getApplicationInfo(getPackageName(), 0);
+            String appFile = appInfo.sourceDir;
+            long installed = new File(appFile).lastModified(); //Epoch Time
+            uniqueId += ""+installed;
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+        return uniqueId;
+    }
+
+    private void copyBoolean(JsonObject jo, SharedPreferences sp, String prefname, boolean dflt) {
+        boolean value = sp.getBoolean(prefname, dflt);
+        jo.addProperty(prefname.replace('.','_'), value);
+    }
+
+    private void copyString(JsonObject jo, SharedPreferences sp, String prefname, String dflt) {
+        String value = sp.getString(prefname, dflt);
+        jo.addProperty(prefname.replace('.','_'), value);
+    }
+
+    private void copyInteger(JsonObject jo, SharedPreferences sp, String prefname, int dflt) {
+        int value = sp.getInt(prefname, dflt);
+        jo.addProperty(prefname.replace('.','_'), ""+value);
     }
 
 

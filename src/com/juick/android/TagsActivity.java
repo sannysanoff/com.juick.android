@@ -67,7 +67,9 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
 
     public void onTagLongClick(String tag, int uid) {
         Intent i = new Intent(this, MessagesActivity.class);
-        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Tag)+": " + tag, this).putArg("tag", Uri.encode(tag)).putArg("user_id",""+uid));
+        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + tag, this).putArg("tag", Uri.encode(tag)).putArg("user_id", "" + uid);
+        ms.setKind("user_tag");
+        i.putExtra("messagesSource", ms);
         startActivity(i);
     }
 }

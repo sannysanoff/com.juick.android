@@ -5,12 +5,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.Toast;
+import com.google.gson.JsonObject;
 import com.juickadvanced.R;
 
 /**
@@ -21,6 +24,9 @@ import com.juickadvanced.R;
  * To change this template use File | Settings | File Templates.
  */
 public class WhatsNew {
+
+    public static final long REPORT_SEND_PERIOD = 2 * 24 * 60 * 60 * 1000L;
+
 
     class ReleaseFeatures {
         int textId;
@@ -46,13 +52,34 @@ public class WhatsNew {
     }
 
     void maybeRunFeedbackAndMore() {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         final Runnable after = new Runnable() {
             @Override
             public void run() {
-                //
+                String chosen = sp.getString("usage_statistics", "no");
+                if (chosen.equals("no_hello")) {
+                    // say hello
+                    sp.edit().putString("usage_statistics","no").commit();
+                    Utils.ServiceGetter<DatabaseService> databaseServiceServiceGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
+                    databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                        @Override
+                        public void withService(final DatabaseService service) {
+                            final JsonObject jo = new JsonObject();
+                            String uniqueInstallationId = service.getUniqueInstallationId();
+                            jo.addProperty("device_install_id", uniqueInstallationId);
+                            new Thread() {
+                                @Override
+                                public void run() {
+                                    Utils.postJSONHome(service, "/usage_report_handler", jo.toString());
+                                }
+
+                            }.start();
+                        }
+                    });
+                }
+                // continue here
             }
         };
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         String currentSetting = sp.getString("usage_statistics", "");
         if (currentSetting.length() == 0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -61,20 +88,7 @@ public class WhatsNew {
             stat.findViewById(R.id.read_privacy_policy).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    WebView wv = new WebView(context);
-                    Utils.setupWebView(wv, context.getString(R.string.privacy_policy));
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(context)
-                            .setTitle(R.string.Privacy_Policy)
-                            .setView(wv)
-                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.cancel();
-                                }
-                            })
-                            .setCancelable(true);
-                    builder.show();
+                    showPrivacyPolicy();
                 }
             });
             final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
@@ -97,7 +111,7 @@ public class WhatsNew {
                     if (us_no_hello.isChecked())
                         option  = "no_hello";
                     if (us_no.isChecked())
-                        option  = "us_no";
+                        option  = "no";
                     if (option.length() != 0) {
                         sp.edit().putString("usage_statistics", option).commit();
                         alert.dismiss();
@@ -111,6 +125,23 @@ public class WhatsNew {
         } else {
             after.run();
         }
+    }
+
+    public void showPrivacyPolicy() {
+        WebView wv = new WebView(context);
+        Utils.setupWebView(wv, context.getString(R.string.privacy_policy));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                .setTitle(R.string.Privacy_Policy)
+                .setView(wv)
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setCancelable(true);
+        builder.show();
     }
 
 
@@ -177,4 +208,135 @@ public class WhatsNew {
         }
         builder.show();
     }
+
+    public void report(Context context) {
+        final TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        final String deviceId = telephonyManager.getDeviceId();
+
+    }
+
+    public static class FeatureSaver {
+        public void saveFeature(DatabaseService db) {
+
+        }
+    }
+
+    public void reportFeature(final String feature_name, final String feature_value) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        String chosen = sp.getString("usage_statistics", "no");
+        if (chosen.startsWith("send")) {
+            reportFeature(new FeatureSaver() {
+                @Override
+                public void saveFeature(DatabaseService db) {
+                    db.reportFeature(feature_name, feature_value);
+                }
+            });
+        }
+    }
+
+    public void reportFeature(final FeatureSaver saver) {
+        Utils.ServiceGetter<DatabaseService> databaseServiceServiceGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
+        databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+            @Override
+            public void withService(DatabaseService service) {
+                service.runGenericWriteJob(new Utils.Function<Void, DatabaseService>() {
+                    @Override
+                    public Void apply(DatabaseService databaseService) {
+                        saver.saveFeature(databaseService);
+                        return null;
+                    }
+                });
+            }
+        });
+    }
+
+    public void reportUsage() {
+        final Utils.ServiceGetter<DatabaseService> databaseServiceServiceGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
+        databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+            @Override
+            public void withService(final DatabaseService service) {
+                final JsonObject jsonObject = service.prepareUsageReportValue();
+                new Thread() {
+                    @Override
+                    public void run() {
+                        String usageReport = jsonObject.toString();
+                        if ("OK".equals(Utils.postJSONHome(service, "/usage_report_handler", usageReport))) {
+                            databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                @Override
+                                public void withService(DatabaseService service) {
+                                    service.cleanupUsageData();
+                                    service.handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                                            sp.edit().putLong("last_usage_sent", System.currentTimeMillis()).commit();
+                                            MainActivity.usageReportThread = null;
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            //error
+                            service.handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // try again in 3 hours
+                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                                    sp.edit().putLong("last_usage_sent", System.currentTimeMillis() - REPORT_SEND_PERIOD + 3 * 60 * 60 * 1000L).commit();
+                                    MainActivity.usageReportThread = null;
+                                }
+                            });
+                        }
+                    }
+                }.start();
+
+
+            }
+        });
+    }
+
+    public void showUsageReport() {
+        Utils.ServiceGetter<DatabaseService> databaseServiceServiceGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
+        databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+            @Override
+            public void withService(final DatabaseService service) {
+                final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                String chosen = sp.getString("usage_statistics", "no");
+                String decodedUsageStatistics = decodeUsageStatistics(chosen);
+                StringBuilder sb = new StringBuilder();
+                sb.append(context.getString(R.string.statistics_mode));
+                sb.append(decodedUsageStatistics);
+                sb.append("<br><hr>");
+                JsonObject jsonObject = service.prepareUsageReportValue();
+                String unsafeString = jsonObject.toString();
+                String safeString = unsafeString.replace("<","&lt;");
+                sb.append(safeString);
+                WebView wv = new WebView(service);
+                String htmlContent = sb.toString();
+                Utils.setupWebView(wv, context.getString(R.string.HTMLStart) + htmlContent);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                        .setTitle(R.string.Privacy_Policy)
+                        .setView(wv)
+                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        })
+                        .setCancelable(true);
+                builder.show();
+            }
+        });
+    }
+
+    private String decodeUsageStatistics(String chosen) {
+        if (chosen.equals("no")) return context.getString(R.string.us_no);
+        if (chosen.equals("no_hello")) return context.getString(R.string.us_no_hello_done);
+        if (chosen.equals("send_wifi")) return context.getString(R.string.us_send_wifi);
+        if (chosen.equals("send")) return context.getString(R.string.us_send);
+        return "???";
+    }
+
+
 }

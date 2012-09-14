@@ -65,4 +65,9 @@ public class SavedMessagesSource extends MessagesSource {
     public CharSequence getTitle() {
         return ctx.getString(R.string.navigationSaved);
     }
+
+    @Override
+    public String getKind() {
+        return "saved_messages";
+    }
 }

@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.*;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -42,6 +43,12 @@ public class JuickPreferencesActivity extends PreferencesActivity {
                 break;
             case R.id.menuitem_xmpp_control:
                 startActivity(new Intent(this, XMPPControlActivity.class));
+                break;
+            case R.id.privacy_policy:
+                new WhatsNew(this).showPrivacyPolicy();
+                break;
+            case R.id.usage_report:
+                new WhatsNew(this).showUsageReport();
                 break;
             case R.id.menuitem_whatsnew:
                 final WhatsNew whatsNew = new WhatsNew(this);
