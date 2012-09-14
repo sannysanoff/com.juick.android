@@ -69,8 +69,8 @@ import org.json.JSONObject;
  */
 public class Utils {
 
-    public static final String JA_IP = "192.168.1.77";
-    //public static final String JA_IP = "79.133.74.9";
+    //public static final String JA_IP = "192.168.1.77";
+    public static final String JA_IP = "79.133.74.9";
     public static final String JA_PORT = "8080";
 
     public static void verboseDebug(final Activity context, final String s) {
