@@ -25,7 +25,6 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
-import android.sax.StartElementListener;
 import android.text.Layout.Alignment;
 import android.text.style.StrikethroughSpan;
 import android.view.MotionEvent;
@@ -38,20 +37,19 @@ import android.text.SpannableStringBuilder;
 import android.text.style.AlignmentSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import com.juickadvanced.R;
 
 import java.io.*;
-import java.sql.RowId;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.juickadvanced.imaging.*;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -63,8 +61,6 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  *
@@ -77,7 +73,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public static final int TYPE_THREAD = 1;
     public static final int SUBTYPE_ALL = 1;
     public static final int SUBTYPE_OTHER = 2;
-    public static Pattern urlPattern = Pattern.compile("((?<=\\A)|(?<=\\s))(ht|f)tps?://[a-z0-9\\-\\.]+[a-z]{2,}/?[^\\s\\n]*", Pattern.CASE_INSENSITIVE);
     public static Pattern msgPattern = Pattern.compile("#[0-9]+");
 //    public static Pattern usrPattern = Pattern.compile("@[a-zA-Z0-9\\-]{2,16}");
     private static String Replies;
@@ -359,25 +354,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             String urlLower = url.toLowerCase();
             urlLower = trimRequest(urlLower);
             if (isValidImageURl(urlLower)) {
-                retval.add(unescapeURL(url));
+                retval.add(ImageURLConvertor.convertURLToDownloadable(url));
             }
         }
         return retval;
-    }
-
-    private String unescapeURL(String url) {
-        if (url.indexOf("www.dropbox.com/") != -1 && url.indexOf("dl=1") == -1) {
-            url += "&dl=1";
-        }
-        if (url.indexOf("gyazo.com/") != -1) {
-            if (url.lastIndexOf(".") < url.length() - 10) {
-                url += ".png";
-            }
-        }
-        if (url.indexOf("%") != 1) {
-            return Uri.decode(url);
-        }
-        return url;
     }
 
     private String trimRequest(String url) {
@@ -388,16 +368,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return url;
     }
 
-    private boolean isValidImageURl(String urlLower) {
-        if (urlLower.indexOf("http://gyazo.com") != -1) return true;
+    public boolean isValidImageURl(String urlLower) {
         if (isHTMLSource(urlLower)) return true;
-        return urlLower.endsWith(".png") || urlLower.endsWith(".gif") || urlLower.endsWith(".jpg") || urlLower.endsWith(".jpeg");
+        return ValidImageURLDetector.isValidImageURL0(urlLower);
     }
 
     private boolean isHTMLSource(String url) {
         if (!indirectImages) return false;
-        if (url.indexOf("gelbooru.com/") != -1) return true;
-        return false;
+        return HTMLSourceDetector.isHTMLSource0(url);
     }
 
     @Override
@@ -554,18 +532,16 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
         ssb.append(txt);
         // Highlight links http://example.com/
-        int pos = 0;
-        Matcher m = urlPattern.matcher(txt);
+        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
         ArrayList<String> urls = new ArrayList<String>();
-        while (m.find(pos)) {
-            urls.add(ssb.subSequence(spanOffset + m.start(), spanOffset + m.end()).toString());
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            pos = m.end();
+        for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            urls.add(foundURL.getUrl());
         }
 
         // Highlight messages #1234
-        pos = 0;
-        m = msgPattern.matcher(txt);
+        int pos = 0;
+        Matcher m = msgPattern.matcher(txt);
         while (m.find(pos)) {
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             pos = m.end();
@@ -627,13 +603,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         int paddingt = tags.length();
-        int pos = 0;
-        Matcher m = urlPattern.matcher(txt);
+        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
         ArrayList<String> urls = new ArrayList<String>();
-        while (m.find(pos)) {
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), paddingt + m.start(), paddingt + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            urls.add(ssb.subSequence(paddingt + m.start(), paddingt + m.end()).toString());
-            pos = m.end();
+        for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
+            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), paddingt + foundURL.getStart(), paddingt + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            urls.add(foundURL.getUrl());
         }
         return new ParsedMessage(ssb, urls);
     }
@@ -769,32 +743,19 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             outContent.close();
                                             updateStatus("Done.." + (totalRead / 1024) + "K");
                                             if (type.equals("text/html")) {
-                                                String html = sb.toString();
-                                                String imageURL = null;
-                                                if (html.indexOf("gelbooru") != -1) {
-                                                    // <img src="http://cdn1.gelbooru.com//samples/1397/sample_8f31057149f27c1c211f587d8251cedb.jpg?1608984" id="image" ...
-                                                    int idimage = html.indexOf("id=\"image\"");
-                                                    if (idimage != -1) {
-                                                        html = html.substring(0, idimage);
-                                                        int src = html.lastIndexOf("src=");
-                                                        if (src != -1) {
-                                                            html = html.substring(src+5);
-                                                            int quote = html.lastIndexOf("\"");
-                                                            if (quote != -1) {
-                                                                html = html.substring(0, quote-1);
-                                                                imageURL = html;
-                                                                suffix = "png";
-                                                            }
-                                                        }
-                                                    }
-                                                }
+                                                String imageURL = ExtractImageURLFromHTML.extractImageURLFromHTML(sb);
                                                 if (imageURL != null) {
+                                                    suffix = "jpg";
                                                     totalRead = 0;
                                                     if (!forceOriginalImage)
                                                         setupProxyForURL(url);
                                                     updateStatus("Img load starts..");
-                                                    httpGet = new HttpGet(imageURL);
-                                                    httpClient.execute(httpGet, this);
+                                                    try {
+                                                        httpGet = new HttpGet(imageURL);
+                                                        httpClient.execute(httpGet, this);
+                                                    } catch (IOException e) {
+                                                        updateStatus("Error: "+e);
+                                                    }
                                                     return null;
                                                 } else {
                                                     updateStatus("Invalid HTML");
@@ -815,7 +776,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 });
 
                             } catch (IOException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                updateStatus("Error:"+e);
                             }
                         }
                     }.start();
@@ -824,6 +785,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 }
             }
         }
+
 
         private String setupProxyForURL(String url) {
             String loadURl = url;
@@ -1005,4 +967,5 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             return suffix;
         }
     }
+
 }

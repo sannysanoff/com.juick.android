@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="AmbilWarna" />
     <orderEntry type="module" module-name="Library" />
     <orderEntry type="library" name="libs" level="project" />
+    <orderEntry type="module" module-name="common" />
   </component>
 </module>
 

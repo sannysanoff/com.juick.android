@@ -244,14 +244,14 @@
 
     <string name="NewFeatures">New features</string>
 
-    <string name="rf_2012090502"><![CDATA[
+    <string name="rf_2012091402"><![CDATA[
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
             </head>
             <body>
 
-            <b>13 сентября 2012</b>
+            <b>14 сентября 2012</b>
             <li>
             (экспериментальая опция) Использовать резервный сервер когда juick тормозит. В опции указывается длительность ожидания
              жуйка, после которой вступает в действие резервный сервер (JA), если жуйк не отвечает. Доступны разные

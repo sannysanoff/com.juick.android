@@ -4,11 +4,11 @@
     <option name="DEFAULT_COMPILER" value="Javac" />
     <excludeFromCompile>
       <directory url="file://$PROJECT_DIR$/gen" includeSubdirectories="true" />
-      <directory url="file://$PROJECT_DIR$/../../../san2/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/san2/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen" includeSubdirectories="true" />
       <directory url="file://$USER_HOME$/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen" includeSubdirectories="true" />
-      <directory url="file://$PROJECT_DIR$/../../../san2/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen/gen" includeSubdirectories="true" />
-      <directory url="file://$PROJECT_DIR$/../../../san2/tmp/com.juick.android/gen" includeSubdirectories="true" />
-      <directory url="file://$PROJECT_DIR$/../../../san2/tmp/ActionBarSherlock/library/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/san2/Downloads/JakeWharton-ActionBarSherlock-88fc341/library/gen/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/san2/tmp/com.juick.android/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/san2/tmp/ActionBarSherlock/library/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/../ActionBarSherlock/library/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/gen/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/gen" includeSubdirectories="true" />

@@ -41,6 +41,7 @@ import com.juick.android.datasource.MessagesSource;
 import com.juick.android.datasource.SavedMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickMessage;
+import com.juickadvanced.imaging.ExtractURLFromMessage;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -101,15 +102,12 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             urls.add(listSelectedItem.Video);
         }
 
-        int pos = 0;
-        Matcher m = JuickMessagesAdapter.urlPattern.matcher(listSelectedItem.Text);
-        while (m.find(pos)) {
-            urls.add(listSelectedItem.Text.substring(m.start(), m.end()));
-            pos = m.end();
+        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(listSelectedItem.Text);
+        for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
+            urls.add(foundURL.getUrl());
         }
-
-        pos = 0;
-        m = JuickMessagesAdapter.msgPattern.matcher(listSelectedItem.Text);
+        int pos = 0;
+        Matcher m = JuickMessagesAdapter.msgPattern.matcher(listSelectedItem.Text);
         while (m.find(pos)) {
             urls.add(listSelectedItem.Text.substring(m.start(), m.end()));
             pos = m.end();

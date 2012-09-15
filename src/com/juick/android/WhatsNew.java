@@ -5,12 +5,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.view.View;
 import android.webkit.WebView;
-import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.Toast;
 import com.google.gson.JsonObject;
@@ -39,7 +37,7 @@ public class WhatsNew {
     }
 
     ReleaseFeatures[] features = new ReleaseFeatures[] {
-            new ReleaseFeatures("2012090502", R.string.rf_2012090502),
+            new ReleaseFeatures("2012091402", R.string.rf_2012091402),
             new ReleaseFeatures("2012082601", R.string.rf_2012082601),
             new ReleaseFeatures("2012081901", R.string.rf_2012081901),
             new ReleaseFeatures("2012081701", R.string.rf_2012081701),
