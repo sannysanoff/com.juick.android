@@ -375,7 +375,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     private boolean isHTMLSource(String url) {
         if (!indirectImages) return false;
-        return HTMLSourceDetector.isHTMLSource0(url);
+        return HTMLImageSourceDetector.isHTMLImageSource0(url);
     }
 
     @Override
@@ -754,7 +754,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                         httpGet = new HttpGet(imageURL);
                                                         httpClient.execute(httpGet, this);
                                                     } catch (IOException e) {
-                                                        updateStatus("Error: "+e);
+                                                        updateStatus("Error: " + e);
                                                     }
                                                     return null;
                                                 } else {
