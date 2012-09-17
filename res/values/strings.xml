@@ -244,6 +244,25 @@
 
     <string name="NewFeatures">New features</string>
 
+    <string name="rf_2012091701"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+
+            <b>14 сентября 2012</b>
+            <li>
+            (опция)Добавил juick advanced прокси для картинок. Он самый быстрый и самый лучший, потому
+            что он мониторит ленту жуйка и закачивает в себя картинки сразу, как только автор
+            запостил пост, и стало быть до того, как юзер картинку попросит.
+            Пережимает он без вопросов как надо, graphcismagick jpeg quality 35.
+            </li>
+            <hr>
+            Все фичи можно посмотреть в настройках, если нажать там кнопку Меню.
+            ]]>
+    </string>
+
     <string name="rf_2012091402"><![CDATA[
             <html>
             <head>
@@ -513,6 +532,9 @@
     <string name="Gelbooru">...from known sites like gelbooru.com. Requires extra traffic.</string>
     <string name="UseBackupServer">Use backup server where possible</string>
     <string name="Usage_Report">Usage Report</string>
+    <string name="EnableHttpCompression">Enable HTTP compression</string>
+    <string name="CompressionSlowsDown">HTTP compression may actually slow down fetch, but certainly will save traffic</string>
+    <string name="JustSame">No, just same</string>
 
 
 </resources>

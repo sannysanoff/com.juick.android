@@ -253,6 +253,9 @@
     <string name="Gelbooru">..с некоторых сайтов (например gelbooru.com). Кушает лишний траффик, размером с HTML страницу. </string>
     <string name="UseBackupServer">Пользовать запасной сервер</string>
     <string name="Usage_Report">Анон. стат.</string>
+    <string name="EnableHttpCompression">Сжатие HTTP трафика</string>
+    <string name="CompressionSlowsDown">Сжатие, вопреки ожиданиям, может замедлять работу, но трафик экономит</string>
+    <string name="JustSame">Просто reload</string>
 
 
 </resources>

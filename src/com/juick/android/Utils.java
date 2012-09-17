@@ -45,9 +45,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
@@ -56,11 +56,13 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.BasicManagedEntity;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HttpContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -286,9 +288,15 @@ public class Utils {
         return getJSON(context, url, progressNotification, -1);
     }
 
-    public static String getJSON(Context context, String url, final Notification progressNotification, int timeout) {
+    static boolean reportTimes = false;
+
+    public static String getJSON(Context context, final String url, final Notification progressNotification, int timeout) {
+        boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
         final String[] ret = new String[]{null};
         DefaultHttpClient client = new DefaultHttpClient();
+        long l = System.currentTimeMillis();
+        if (compression)
+            initCompressionSupport(client);
         try {
             HttpGet httpGet = new HttpGet(url);
             if (timeout > 0) {
@@ -318,6 +326,10 @@ public class Utils {
                     return o;
                 }
             });
+            l  = System.currentTimeMillis() - l;
+            if (reportTimes) {
+                Toast.makeText(context, "Load time="+l+" msec", Toast.LENGTH_LONG).show();
+            }
         } catch (Exception e) {
             if (progressNotification instanceof DownloadErrorNotification) {
                 ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
@@ -327,6 +339,68 @@ public class Utils {
             client.getConnectionManager().shutdown();
         }
         return ret[0];
+    }
+
+    public static class GzipDecompressingEntity extends HttpEntityWrapper {
+
+        public GzipDecompressingEntity(final HttpEntity entity) {
+            super(entity);
+        }
+
+        @Override
+        public InputStream getContent()
+            throws IOException, IllegalStateException {
+
+              // the wrapped entity's getContent() decides about repeatability
+            InputStream wrappedin = wrappedEntity.getContent();
+
+            return new GZIPInputStream(wrappedin);
+        }
+
+        @Override
+        public long getContentLength() {
+            // length of ungzipped content not known in advance
+            return -1;
+        }
+
+    } // class GzipDecompressingEntity
+
+    private static void initCompressionSupport(DefaultHttpClient httpclient) {
+
+
+
+        httpclient.addRequestInterceptor(new HttpRequestInterceptor() {
+            public void process(
+                    final HttpRequest request,
+                    final HttpContext context) throws HttpException, IOException {
+                if (!request.containsHeader("Accept-Encoding")) {
+                    request.addHeader("Accept-Encoding", "gzip");
+                }
+            }
+
+        });
+
+        httpclient.addResponseInterceptor(new HttpResponseInterceptor() {
+            public void process(
+                    final HttpResponse response,
+                    final HttpContext context) throws HttpException, IOException {
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    Header ceheader = entity.getContentEncoding();
+                    if (ceheader != null) {
+                        HeaderElement[] codecs = ceheader.getElements();
+                        for (int i = 0; i < codecs.length; i++) {
+                            if (codecs[i].getName().equalsIgnoreCase("gzip")) {
+                                response.setEntity(
+                                        new GzipDecompressingEntity(response.getEntity()));
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+        });
     }
 
     public static String postJSON(Context context, String url, String data) {
@@ -469,7 +543,6 @@ public class Utils {
         if (value == null || value.length() == 0) return def;
         return value;
     }
-
 
 
 }

@@ -18,6 +18,8 @@
 package com.juick.android;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
@@ -50,10 +52,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.juickadvanced.imaging.*;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
@@ -231,17 +230,33 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
                             if (System.currentTimeMillis() - lastClick < 500) {
                                 if (!imageLoader.useOriginal) {
-                                    JuickMessageMenu.confirmAction(R.string.DownloadOriginal, (Activity)getContext(), true, new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                            imageLoader.useOriginal = true;
-                                            imageLoader.loader.getDestFile().delete();
-                                            ImageLoader oldLoader = imageLoader.loader;
-                                            imageLoader.loader = null;
-                                            oldLoader.resetAdapter();
-                                        }
-                                    } );
+                                    new AlertDialog.Builder(getContext())
+                                            .setTitle(R.string.DownloadOriginal)
+                                            .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    imageLoader.useOriginal = true;
+                                                    imageLoader.loader.getDestFile().delete();
+                                                    ImageLoader oldLoader = imageLoader.loader;
+                                                    imageLoader.loader = null;
+                                                    oldLoader.resetAdapter();
+                                                }
+                                            })
+                                            .setNeutralButton(R.string.JustSame, new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    imageLoader.loader.getDestFile().delete();
+                                                    ImageLoader oldLoader = imageLoader.loader;
+                                                    imageLoader.loader = null;
+                                                    oldLoader.resetAdapter();
+                                                }
+                                            })
+                                            .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            }).show();
                                 }
                             }
                             lastClick = System.currentTimeMillis();
@@ -375,6 +390,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     private boolean isHTMLSource(String url) {
         if (!indirectImages) return false;
+        if (imageLoadMode.contains("japroxy")) return false;
         return HTMLImageSourceDetector.isHTMLImageSource0(url);
     }
 
@@ -706,6 +722,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     @Override
                                     public HttpResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
                                         updateStatus("Load..");
+                                        if (response.getStatusLine().getStatusCode() != 200) {
+                                            destFile.delete();
+                                            updateStatus("ERR:" + response.getStatusLine().getStatusCode());
+                                            return response;
+                                        }
                                         HttpEntity entity = response.getEntity();
                                         String type = "image";
                                         Header contentType = entity.getContentType();
@@ -742,13 +763,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             content.close();
                                             outContent.close();
                                             updateStatus("Done.." + (totalRead / 1024) + "K");
-                                            if (type.equals("text/html")) {
+                                            if (type.startsWith("text")) {
                                                 String imageURL = ExtractImageURLFromHTML.extractImageURLFromHTML(sb);
                                                 if (imageURL != null) {
                                                     suffix = "jpg";
                                                     totalRead = 0;
                                                     if (!forceOriginalImage)
-                                                        setupProxyForURL(url);
+                                                        imageURL = setupProxyForURL(imageURL);
                                                     updateStatus("Img load starts..");
                                                     try {
                                                         httpGet = new HttpGet(imageURL);
@@ -789,6 +810,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         private String setupProxyForURL(String url) {
             String loadURl = url;
+            if (imageLoadMode.contains("japroxy")) {
+                final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
+                final int WIDTH = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth());
+                loadURl  = "http://ja.ip.rt.ru:8080/img?url=" + Uri.encode(url)+"&height="+HEIGHT+"&width="+WIDTH;
+            }
             if (imageLoadMode.contains("weserv")) {
                 final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
                 // WESERV.NL
