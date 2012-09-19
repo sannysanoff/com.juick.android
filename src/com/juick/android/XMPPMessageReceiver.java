@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -57,6 +58,12 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 updateInfo(context, nMessages, false);
             }
         }
+        if (intent.getAction().equals(XMPPService.ACTION_LAUNCH_MESSAGELIST)) {
+            Intent nintent = new Intent(context, XMPPIncomingMessagesActivity.class);
+            nintent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            nintent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(nintent);
+        }
     }
 
     public static void updateInfo(Context context, int nMessages, boolean silent) {
@@ -78,8 +85,10 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
             }
         }
         notif.defaults = silent ? 0 : notification;
-        Intent nintent = new Intent(context, XMPPIncomingMessagesActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
+        Intent intent = new Intent();
+        intent.setAction(XMPPService.ACTION_LAUNCH_MESSAGELIST);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1000, intent, 0);
+        //PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
         notif.setLatestEventInfo(context, "Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : ""), tickerText, pendingIntent);
         nm.notify("", 2, notif);
     }

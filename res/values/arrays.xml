@@ -136,4 +136,14 @@
         <item>5</item>
         <item>10</item>
     </string-array>
+    <string-array name="usageStatistics">
+        <item>send</item>
+        <item>send_wifi</item>
+        <item>no</item>
+    </string-array>
+    <string-array name="usageStatisticsLabels">
+        <item>Send</item>
+        <item>Send over wireless only</item>
+        <item>Do not send</item>
+    </string-array>
 </resources>

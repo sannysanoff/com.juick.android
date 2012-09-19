@@ -22,7 +22,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <application android:icon="@drawable/ic_launcher" android:label="@string/Juick" android:theme="@android:style/Theme.Light">
         <provider android:name="com.juick.android.CachedImageContentProvider"  android:authorities="com.juick.android.imagecache" />
-        <uses-library android:name="com.google.android.maps"/>
+        <!--<uses-library android:name="com.google.android.maps"/>-->
         <activity android:name="com.juick.android.MainActivity" android:theme="@style/Theme.Sherlock.Light" android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -63,11 +63,12 @@
         <activity android:name="com.juick.android.JuickPreferencesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.EditFiltersActivity" android:label="@string/EditFilters" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.PickLocationActivity" android:label="@string/Pick_a_location" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events" android:launchMode="singleTop" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events" android:launchMode="singleTask" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.XMPPControlActivity" android:label="@string/XMPPControl" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <receiver android:name="com.juick.android.XMPPMessageReceiver" >
             <intent-filter>
                 <action android:name="com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED"/>
+                <action android:name="com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST"/>
             </intent-filter>
         </receiver>
 

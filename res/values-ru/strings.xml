@@ -256,6 +256,9 @@
     <string name="EnableHttpCompression">Сжатие HTTP трафика</string>
     <string name="CompressionSlowsDown">Сжатие, вопреки ожиданиям, может замедлять работу, но трафик экономит</string>
     <string name="JustSame">Просто reload</string>
+    <string name="GettingYourId">Получаем ваш идентификатор</string>
+    <string name="ConnectingToWwwJuick">Качаем с www.juick.com...</string>
+    <string name="navigationJuboRSS">JuBo RSS</string>
 
 
 </resources>

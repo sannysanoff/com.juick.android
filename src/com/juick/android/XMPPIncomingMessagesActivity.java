@@ -60,7 +60,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
-        refreshList();
         ListView lv = (ListView)findViewById(R.id.list);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -105,6 +104,13 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+
+
+    @Override
     protected void onPause() {
         XMPPMessageReceiver.listeners.remove(this);
         super.onPause();    //To change body of overridden methods use File | Settings | File Templates.
@@ -122,6 +128,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             @Override
             public void withService(XMPPService service) {
                 synchronized (service.incomingMessages) {
+                    Toast.makeText(XMPPIncomingMessagesActivity.this, "NMessages="+service.incomingMessages.size(), Toast.LENGTH_SHORT).show();
                     refreshListWithAllMessages(service, service.incomingMessages);
                     service.maybeCancelNotification();
                 }
@@ -138,7 +145,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     private void refreshListWithAllMessages(XMPPService service, ArrayList<XMPPService.IncomingMessage> allMessages) {
-
         ArrayList<Item> privateMessages = new ArrayList<Item>();
         ArrayList<Item> jabberMessages = new ArrayList<Item>();
         ArrayList<Item> subscriptions = new ArrayList<Item>();

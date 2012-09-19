@@ -18,10 +18,7 @@
 package com.juick.android;
 
 import android.app.*;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -55,7 +52,9 @@ import java.util.*;
  *         todo: http://juick.com/Umnik/1612234
  *         todo: subscribe to thread
  */
-public class MainActivity extends FragmentActivity implements ActionBar.OnNavigationListener, SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends FragmentActivity implements
+        ActionBar.OnNavigationListener,
+        SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final int ACTIVITY_SIGNIN = 2;
     public static final int ACTIVITY_PREFERENCES = 3;
@@ -133,6 +132,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+
 
 //        if (getIntent().hasExtra("lastNavigationPosition")) {
 //            int lastNavigationPosition1 = getIntent().getExtras().getInt("lastNavigationPosition");
@@ -236,14 +236,19 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                             public void onClick(DialogInterface dialog, int whichButton) {
                                 final String value = input.getText().toString();
                                 if (value.length() > 0) {
+                                    final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                                    pd.setTitle(getString(R.string.GettingYourId));
+                                    pd.setMessage(getString(R.string.ConnectingToWwwJuick));
+                                    pd.setIndeterminate(true);
+                                    pd.show();
                                     final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
                                     new Thread("UserID obtainer") {
                                         @Override
                                         public void run() {
                                             String fullName = value;
                                             if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                                            HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
                                             try {
+                                                HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
                                                 String retval = httpClient.execute(httpGet, new BasicResponseHandler());
                                                 String SEARCH_MARKER = "http://i.juick.com/a/";
                                                 int ix = retval.indexOf(SEARCH_MARKER);
@@ -272,6 +277,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                                                 });
                                             } finally {
                                                 httpClient.close();
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        pd.hide();
+                                                    }
+                                                });
                                             }
                                         }
                                     }.start();
@@ -382,14 +393,26 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
                 }
             });
         }
-        navigationItems.add(new NavigationItem(R.string.navigationSaved) {
-            @Override
-            void action() {
-                final Bundle args = new Bundle();
-                args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
-                runDefaultFragmentWithBundle(args, this);
-            }
-        });
+        if (sp.getBoolean("msrcSaved", false)) {
+            navigationItems.add(new NavigationItem(R.string.navigationSaved) {
+                @Override
+                void action() {
+                    final Bundle args = new Bundle();
+                    args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
+                    runDefaultFragmentWithBundle(args, this);
+                }
+            });
+        }
+        if (sp.getBoolean("msrcJubo", false)) {
+            navigationItems.add(new NavigationItem(R.string.navigationJuboRSS) {
+                @Override
+                void action() {
+                    final Bundle args = new Bundle();
+                    args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
+                    runDefaultFragmentWithBundle(args, this);
+                }
+            });
+        }
 
         final boolean compressedMenu = sp.getBoolean("compressedMenu", false);
         float menuFontScale = 1;
@@ -718,6 +741,5 @@ public class MainActivity extends FragmentActivity implements ActionBar.OnNaviga
             toggleXMPP();
         }
     }
-
 
 }

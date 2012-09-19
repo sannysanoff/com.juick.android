@@ -232,6 +232,13 @@
             android:title="@string/EnableDiagnosticMessages"
             android:defaultValue="false"
             android:persistent="true"/>
+        <ListPreference
+            android:key="usage_statistics"
+            android:title="Send anon usage reports"
+            android:entryValues="@array/usageStatistics"
+            android:entries="@array/usageStatisticsLabels"
+            android:defaultValue="no"
+            android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/Colors">
         <yuku.ambilwarna.widget.AmbilWarnaPreference
@@ -327,6 +334,16 @@
             android:key="msrcSaved"
             android:title="@string/navigationSaved"
             android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcJubo"
+            android:title="@string/navigationJuboRSS"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="juboRssURL"
+            android:title="JuBo RSS url"
+            android:summary="Leave empty if unknown"
             android:persistent="true"/>
     </PreferenceCategory>
 <!--

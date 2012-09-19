@@ -29,6 +29,7 @@ public class XMPPService extends Service {
     Chat juickChat;
     ArrayList<Utils.Function<Void,Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
     public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
+    public static final String ACTION_LAUNCH_MESSAGELIST = "com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
     int reconnectDelay = 10000;
     int messagesReceived = 0;
@@ -594,7 +595,11 @@ public class XMPPService extends Service {
         }
         if (handled != null) {
             Set<String> filteredOutUsers = JuickMessagesAdapter.getFilteredOutUsers(this);
-            if (filteredOutUsers.contains(handled.getFrom())) {
+            String fromm = handled.getFrom();
+            if (fromm.startsWith("@")) {
+                fromm = fromm.substring(1);
+            }
+            if (filteredOutUsers.contains(fromm)) {
                 // kill-em
                 removeMessageFile(handled.id);
                 incomingMessages.remove(handled);
@@ -636,6 +641,10 @@ public class XMPPService extends Service {
     }
 
     private void handleTextMessage(Message message) {
+        if (message.getBody() == null || message.getBody().length() == 0) {
+            // other, non-text, transport-related messages
+            return;
+        }
         synchronized (incomingMessages) {
             JabberIncomingMessage msg = new JabberIncomingMessage(message.getFrom(), message.getBody());
             saveMessage(msg);

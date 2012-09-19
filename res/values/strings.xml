@@ -253,13 +253,13 @@
 
             <b>14 сентября 2012</b>
             <li>
-            (опция)Добавил juick advanced прокси для картинок. Он самый быстрый и самый лучший, потому
-            что он мониторит ленту жуйка и закачивает в себя картинки сразу, как только автор
-            запостил пост, и стало быть до того, как юзер картинку попросит.
+            (опция)Добавил juick advanced прокси для картинок. Этот прокси имеет неоспоримое преимущество
+            перед другими проксями: он мониторит ленту жуйка и закачивает в себя картинки сразу, как только автор
+            запостил пост, и стало быть еще до того, как юзер картинку попросит.
             Пережимает он без вопросов как надо, graphcismagick jpeg quality 35.
             </li>
             <hr>
-            Все фичи можно посмотреть в настройках, если нажать там кнопку Меню.
+            Все фичи Juick Advanced можно посмотреть в настройках, если нажать там кнопку Меню.
             ]]>
     </string>
 
@@ -535,6 +535,9 @@
     <string name="EnableHttpCompression">Enable HTTP compression</string>
     <string name="CompressionSlowsDown">HTTP compression may actually slow down fetch, but certainly will save traffic</string>
     <string name="JustSame">No, just same</string>
+    <string name="GettingYourId">Getting your UID</string>
+    <string name="ConnectingToWwwJuick">Connecting to www.juick.com...</string>
+    <string name="navigationJuboRSS">JuBo RSS</string>
 
 
 </resources>
