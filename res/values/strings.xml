@@ -538,6 +538,11 @@
     <string name="GettingYourId">Getting your UID</string>
     <string name="ConnectingToWwwJuick">Connecting to www.juick.com...</string>
     <string name="navigationJuboRSS">JuBo RSS</string>
+    <string name="ChooseUnreadSegment">Choose unread segment</string>
+    <string name="UnreadSegments">Unread segments</string>
+    <string name="YouHaveNotEnabledForUnreadSegments">You have not enabled last read markers in prefs, or you have not
+        collected enough read history
+    </string>
 
 
 </resources>

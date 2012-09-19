@@ -259,6 +259,11 @@
     <string name="GettingYourId">Получаем ваш идентификатор</string>
     <string name="ConnectingToWwwJuick">Качаем с www.juick.com...</string>
     <string name="navigationJuboRSS">JuBo RSS</string>
+    <string name="ChooseUnreadSegment">Выберите нечитанный сегмент</string>
+    <string name="UnreadSegments">Нечитанные сегменты</string>
+    <string name="YouHaveNotEnabledForUnreadSegments">Вы не включили сохранение маркеров прочитанных мессаг в настройках,
+        или же у вас их пока недостаточно собрано
+    </string>
 
 
 </resources>

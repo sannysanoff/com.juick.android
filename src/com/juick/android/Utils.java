@@ -305,7 +305,7 @@ public class Utils {
                 httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
             }
             String basicAuth = getBasicAuthString(context);
-            if (basicAuth.length() > 0 && url.indexOf("api.juick.com") != -1) {
+            if (basicAuth.length() > 0 && url.startsWith("http://api.juick.com")) {
                 httpGet.addHeader(new BasicHeader("Authorization", basicAuth));
                 //conn.setRequestProperty("Authorization", basicAuth);
             }

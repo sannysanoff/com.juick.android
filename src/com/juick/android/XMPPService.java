@@ -27,6 +27,7 @@ public class XMPPService extends Service {
     ArrayList<XMPPConnection> connections = new ArrayList<XMPPConnection>();
     Handler handler;
     Chat juickChat;
+    Chat juboChat;
     ArrayList<Utils.Function<Void,Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
     public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
     public static final String ACTION_LAUNCH_MESSAGELIST = "com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST";
@@ -34,8 +35,10 @@ public class XMPPService extends Service {
     int reconnectDelay = 10000;
     int messagesReceived = 0;
     public boolean botOnline;
+    public boolean juboOnline;
     static HashMap<Integer, JuickIncomingMessage> cachedTopicStarters = new HashMap<Integer, XMPPService.JuickIncomingMessage>();
-
+    public String juboRSS;
+    public String juboRSSError;
 
 
     @Override
@@ -52,7 +55,9 @@ public class XMPPService extends Service {
             cleanup(message);
             stopSelf();
         } else {
-            startup();
+            if (startId != 2) {     // i don't know what is this, really
+                startup();
+            }
         }
         return super.onStartCommand(intent, flags, startId);
     }
@@ -68,6 +73,7 @@ public class XMPPService extends Service {
     public void startup() {
         lastException = null;
         botOnline = false;
+        juboOnline = false;
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
         Gson gson = new Gson();
@@ -209,6 +215,10 @@ public class XMPPService extends Service {
 
                                 @Override
                                 public void presenceChanged(final Presence presence) {
+                                    boolean fromJubo = presence.getFrom().equals(JUBO_ID);
+                                    if (fromJubo) {
+                                        juboOnline = presence.isAvailable();
+                                    }
                                     if (presence.getFrom().equals(JUICK_ID)) {
                                         botOnline = presence.isAvailable();
                                         handler.post(new Runnable() {
@@ -362,6 +372,38 @@ public class XMPPService extends Service {
 
 
     static int message_seq = 0;
+
+    public void askJuboRSS() {
+        juboRSSError = "No response from JuBo";
+        juboChat = connections.get(connections.size()-1).getChatManager().createChat(JUBO_ID, new MessageListener() {
+            @Override
+            public void processMessage(Chat chat, Message message) {
+                String mbody = message.getBody();
+                if (mbody.contains("rss start")) {
+                    try {
+                        juboRSSError = "Response to 'rss start' did not come yet";
+                        juboChat.sendMessage("rss start");
+                    } catch (XMPPException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                }
+                if (mbody.contains("http://") && mbody.contains("/rss/")) {
+                    int start = mbody.indexOf("http://");
+                    int end = mbody.indexOf(".xml");
+                    if (start != -1 && end != -1) {
+                        end += 4;
+                    }
+                    juboRSS = mbody.substring(start, end);
+                }
+            }
+        });
+        try {
+            juboChat.sendMessage("rss");
+        } catch (XMPPException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
     public static abstract class IncomingMessage implements Serializable {
         protected String from;
         String body;
@@ -676,6 +718,7 @@ public class XMPPService extends Service {
                         currentThread = null;
                     }
                     botOnline = false;
+                    juboOnline = false;
                     if (reason != null) {
                         handler.post(new Runnable() {
                             @Override

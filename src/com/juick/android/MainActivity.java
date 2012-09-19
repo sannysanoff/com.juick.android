@@ -25,6 +25,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.*;
 import android.support.v4.app.ActionBar;
@@ -33,11 +34,9 @@ import android.support.v4.view.*;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.*;
-import com.juick.android.datasource.AllMessagesSource;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
-import com.juick.android.datasource.SavedMessagesSource;
-import com.juick.android.datasource.UnreadSegmentMessagesSource;
+import com.juick.android.datasource.*;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.apache.http.client.methods.HttpGet;
@@ -67,6 +66,9 @@ public class MainActivity extends FragmentActivity implements
     MessagesFragment mf;
     Object restoreData;
     private SharedPreferences sp;
+    Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
+    Handler handler;
+
 
     class NavigationItem {
         int labelId;
@@ -99,8 +101,10 @@ public class MainActivity extends FragmentActivity implements
         ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
+        handler = new Handler();
 
         super.onCreate(savedInstanceState);
+        xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         displayWidth = getWindow().getWindowManager().getDefaultDisplay().getWidth();
         displayHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
 
@@ -341,8 +345,8 @@ public class MainActivity extends FragmentActivity implements
                                 final AlertDialog alerDialog;
                                 if (periods.size() == 0) {
                                     alerDialog = builder
-                                            .setTitle("Unread segments")
-                                            .setMessage("You have not enabled last read markers in prefs, or you have not collected enough read history")
+                                            .setTitle(getString(R.string.UnreadSegments))
+                                            .setMessage(getString(R.string.YouHaveNotEnabledForUnreadSegments))
                                             .setCancelable(true)
                                             .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                                                 @Override
@@ -355,10 +359,10 @@ public class MainActivity extends FragmentActivity implements
                                     UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
                                     final int myIndex = navigationItems.indexOf(thisNi);
                                     alerDialog = builder
-                                            .setTitle("Choose unread segment")
+                                            .setTitle(getString(R.string.ChooseUnreadSegment))
                                             .setView(unreadSegmentsView)
                                             .setCancelable(true)
-                                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialogInterface, int i) {
                                                     dialogInterface.dismiss();
@@ -407,10 +411,62 @@ public class MainActivity extends FragmentActivity implements
             navigationItems.add(new NavigationItem(R.string.navigationJuboRSS) {
                 @Override
                 void action() {
-                    final Bundle args = new Bundle();
-                    args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
-                    runDefaultFragmentWithBundle(args, this);
+                    final int myIndex = navigationItems.indexOf(this);
+                    String juboRssURL = sp.getString("juboRssURL", "");
+                    if (juboRssURL.length() == 0) {
+                        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                            @Override
+                            public void withService(XMPPService service) {
+                                boolean canAskJubo = false;
+                                String message = "JuBo RSS URL is unknown. You need to ask JuBo for the URL and enter it manually.";
+                                if (!service.juboOnline) {
+                                    boolean useXMPP = sp.getBoolean("useXMPP", false);
+                                    if (!useXMPP) {
+                                        message += "I could ask JuBo right now, but you don't have XMPP enabled";
+                                    } else {
+                                        if (service.botOnline) {
+                                            message += "I could ask JuBo right now, but even if your XMPP connection is ON, i cannot see JuBo online";
+                                        } else {
+                                            message += "I could ask JuBo right now, but your XMPP connection seems not working";
+                                        }
+                                    }
+                                } else {
+                                    canAskJubo = true;
+                                    message += " Or, I can ask JuBo right now over XMPP, though.";
+                                }
+                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
+                                        .setTitle(R.string.navigationJuboRSS)
+                                        .setMessage(message)
+                                        .setCancelable(true)
+                                        .setNeutralButton("Enter URL manually", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                enterJuboURLManually(myIndex);
+                                            }
+                                        })
+                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialogInterface, int i) {
+                                                dialogInterface.dismiss();
+                                                restoreLastNavigationPosition();
+                                            }
+                                        });
+                                if (canAskJubo) {
+                                    builder.setPositiveButton("Ask JuBo", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            askJuboFirst(myIndex);
+                                        }
+                                    });
+                                }
+                                builder.show();
+                            }
+                        });
+                    } else {
+                        openJuboMessages(myIndex);
+                    }
                 }
+
             });
         }
 
@@ -464,6 +520,86 @@ public class MainActivity extends FragmentActivity implements
         ActionBar bar = getSupportActionBar();
         bar.setListNavigationCallbacks(navigationAdapter, this);
 
+    }
+
+    private void askJuboFirst(final int juboIndex) {
+        final ProgressDialog pd = new ProgressDialog(this);
+        pd.setIndeterminate(true);
+        pd.setMessage("Talking to JuBo, please wait 10 seconds");
+        pd.show();
+        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+            @Override
+            public void withService(XMPPService service) {
+                service.askJuboRSS();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        checkJuboReturnedRSS(juboIndex, pd);
+                    }
+                }, 10000);
+            }
+        });
+    }
+
+    private void checkJuboReturnedRSS(final int juboIndex, final ProgressDialog pd) {
+        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+            @Override
+            public void withService(XMPPService service) {
+                pd.hide();
+                if (service.juboRSS != null) {
+                    sp.edit().putString("juboRssURL", service.juboRSS).commit();
+                    openJuboMessages(juboIndex);
+                } else {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle(R.string.navigationJuboRSS)
+                            .setMessage(service.juboRSSError)
+                            .setCancelable(true)
+                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialog) {
+                                    restoreLastNavigationPosition();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                    restoreLastNavigationPosition();
+                                }
+                            }).show();
+                }
+            }
+        });
+    }
+
+    private void enterJuboURLManually(final int myIndex) {
+        final EditText et = new EditText(this);
+        et.setSingleLine(true);
+        et.setInputType(EditorInfo.TYPE_TEXT_VARIATION_URI);
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Enter JuBo RSS URL")
+                .setView(et)
+                .setCancelable(true)
+                .setPositiveButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        sp.edit().putString("juboRssURL", ""+et.getText()).commit();
+                        openJuboMessages(myIndex);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                        restoreLastNavigationPosition();
+                    }
+                }).show();
+    }
+
+    private void openJuboMessages(int myIndex) {
+        final Bundle args = new Bundle();
+        args.putSerializable("messagesSource", new JuboMessagesSource(MainActivity.this));
+        runDefaultFragmentWithBundle(args, navigationItems.get(myIndex));
     }
 
     @Override
