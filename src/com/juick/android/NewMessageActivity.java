@@ -457,9 +457,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             if (progressDialogCancel.bool) {
                 return false;
             } else {
-                return (conn.getResponseCode() == 200);
+                boolean b = conn.getResponseCode() == 200;
+                if (!b) {
+                    Toast.makeText(context, "HTTP "+conn.getResponseCode()+": " +conn.getResponseMessage(), Toast.LENGTH_LONG).show();
+                }
+                return b;
             }
         } catch (Exception e) {
+            Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
             Log.e("sendOpinion", e.toString());
         }
         return false;
