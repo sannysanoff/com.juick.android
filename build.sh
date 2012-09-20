@@ -6,5 +6,8 @@ cd tmp
 jar cvf ../libs/common.jar *
 cd ..
 rm -rf tmp
+rm ../ActionBarSherlock/library/gen/com/actionbarsherlock/R.java
+rm ../yuku-android-util/AmbilWarna/gen/yuku/ambilwarna/R.java
+rm ../com.juick.android/gen/com/juickadvanced/R.java
 ant release
 rm -rf libs/common.jar
