@@ -186,7 +186,7 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
                 if (location.hasAccuracy()) {
                     url += "&acc=" + String.valueOf(location.getAccuracy());
                 }
-                final String jsonStr = Utils.getJSON(PlacesActivity.this, url, null);
+                final String jsonStr = Utils.getJSON(PlacesActivity.this, url, null).getResult();
                 PlacesActivity.this.runOnUiThread(new Runnable() {
 
                     public void run() {

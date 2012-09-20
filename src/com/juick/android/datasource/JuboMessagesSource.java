@@ -57,7 +57,7 @@ public class JuboMessagesSource extends MessagesSource {
         String juboRssURL = sp.getString("juboRssURL", "");
         if (juboRssURL != null) {
             try {
-                String result = Utils.getJSON(ctx, juboRssURL, notifications);
+                String result = Utils.getJSON(ctx, juboRssURL, notifications).getResult();
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 DocumentBuilder documentBuilder = dbf.newDocumentBuilder();
                 Document doc = documentBuilder.parse(new ByteArrayInputStream(result.getBytes("UTF-8")));

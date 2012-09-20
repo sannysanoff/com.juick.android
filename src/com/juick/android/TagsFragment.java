@@ -84,7 +84,7 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
                 if (uid != 0) {
                     url += "?user_id=" + uid;
                 }
-                final String jsonStr = Utils.getJSON(getActivity(), url, null);
+                final String jsonStr = Utils.getJSON(getActivity(), url, null).getResult();
                 if (isAdded()) {
                     getActivity().runOnUiThread(new Runnable() {
 

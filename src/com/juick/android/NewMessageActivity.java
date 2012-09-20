@@ -41,6 +41,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.*;
 import com.juickadvanced.R;
 
@@ -195,7 +196,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     jsonUrl += "?lat=" + loc.getLatitude() + "&lon=" + loc.getLongitude() + "&acc=" + loc.getAccuracy() + "&fixage=" + Math.round((System.currentTimeMillis() - loc.getTime()) / 1000);
                 }
 
-                final String jsonStr = Utils.getJSON(NewMessageActivity.this, jsonUrl, null);
+                final String jsonStr = Utils.getJSON(NewMessageActivity.this, jsonUrl, null).getResult();
 
                 NewMessageActivity.this.runOnUiThread(new Runnable() {
 
@@ -341,16 +342,20 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 Toast.makeText(NewMessageActivity.this, res ? R.string.Message_posted : R.string.Error, Toast.LENGTH_LONG).show();
                                 getPhotoCaptureFile().delete(); // if any
                             } else {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
-                                builder.setNeutralButton(R.string.OK, null);
-                                if (res) {
-                                    builder.setIcon(android.R.drawable.ic_dialog_info);
-                                    builder.setMessage(R.string.Message_posted);
-                                } else {
-                                    builder.setIcon(android.R.drawable.ic_dialog_alert);
-                                    builder.setMessage(R.string.Error);
+                                try {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
+                                    builder.setNeutralButton(R.string.OK, null);
+                                    if (res) {
+                                        builder.setIcon(android.R.drawable.ic_dialog_info);
+                                        builder.setMessage(R.string.Message_posted);
+                                    } else {
+                                        builder.setIcon(android.R.drawable.ic_dialog_alert);
+                                        builder.setMessage(R.string.Error);
+                                    }
+                                    builder.show();
+                                } catch (WindowManager.BadTokenException e) {
+                                    // window is not active
                                 }
-                                builder.show();
                             }
                         }
                     });

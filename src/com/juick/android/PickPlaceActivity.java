@@ -183,7 +183,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                             Thread thr = new Thread(new Runnable() {
 
                                 public void run() {
-                                    final String jsonStr = Utils.postJSON(PickPlaceActivity.this, "http://api.juick.com/place_add", dataf);
+                                    final String jsonStr = Utils.postJSON(PickPlaceActivity.this, "http://api.juick.com/place_add", dataf).getResult();
                                     String error = null;
                                     try {
                                         JSONObject json = new JSONObject(jsonStr);
@@ -293,7 +293,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                 if (location.hasAccuracy()) {
                     url += "&acc=" + String.valueOf(location.getAccuracy());
                 }
-                final String jsonStr = Utils.getJSON(PickPlaceActivity.this, url, null);
+                final String jsonStr = Utils.getJSON(PickPlaceActivity.this, url, null).getResult();
                 PickPlaceActivity.this.runOnUiThread(new Runnable() {
 
                     public void run() {
@@ -311,7 +311,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
 
             public void run() {
                 String url = "http://maps.googleapis.com/maps/api/geocode/json?language=ru&sensor=true&latlng=" + String.valueOf(location.getLatitude()) + "," + String.valueOf(location.getLongitude());
-                final String jsonStr = Utils.getJSON(PickPlaceActivity.this, url, null);
+                final String jsonStr = Utils.getJSON(PickPlaceActivity.this, url, null).getResult();
                 PickPlaceActivity.this.runOnUiThread(new Runnable() {
 
                     public void run() {
@@ -339,7 +339,11 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                             if (added)
                                 listAdapter.notifyDataSetChanged();
                         } finally {
-                            progressDialog.dismiss();
+                            try {
+                                progressDialog.dismiss();
+                            } catch (Exception e) {
+                                // view not attached
+                            }
                         }
                     }
                 });

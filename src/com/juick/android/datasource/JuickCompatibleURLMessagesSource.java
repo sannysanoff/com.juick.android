@@ -98,7 +98,7 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     }
 
     protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        final String jsonStr = getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
+        final String jsonStr = getJSONWithRetries(ctx, urlParser.getFullURL(), notification).getResult();
         ArrayList<JuickMessage> messages = parseAndProcess(jsonStr);
         if (messages.size() > 0) {
             JuickMessage juickMessage = messages.get(messages.size() - 1);
@@ -152,11 +152,11 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
 
     @Override
     public void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        final String jsonStr = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + mid, notifications);
+        final String jsonStr = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + mid, notifications).getResult();
         cont.apply(parseJSONpure(jsonStr));
     }
 
-    private String getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
+    private Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
         boolean backupServerApplies = false;
         if (url.contains("api.juick.com/messages") || url.contains("api.juick.com/thread")) {
             URLParser urlParser = new URLParser(url);
@@ -170,6 +170,7 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
             }
         }
         if (useBackupServer < 0) backupServerApplies = false;
+        Utils.RESTResponse lastResponse = null;
         if (backupServerApplies) {
             int retry = 0;
             for(int i=0; i<5; i++) {
@@ -178,8 +179,9 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
                     ((Utils.BackupServerNotification)notifications).notifyBackupInUse(false);
                 }
                 if (timeout != 0) {
-                    String s = Utils.getJSON(ctx,url, notifications, timeout);
-                    if (s != null && s.length() > 0) return s;
+                    Utils.RESTResponse s = Utils.getJSON(ctx,url, notifications, timeout);
+                    if (s.getResult() != null && s.getResult().length() > 0) return s;
+                    lastResponse = s;
                     if (notifications instanceof Utils.RetryNotification) {
                         ((Utils.RetryNotification)notifications).notifyRetryIsInProgress(++retry);
                     }
@@ -187,13 +189,14 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
                 if (notifications instanceof Utils.BackupServerNotification) {
                     ((Utils.BackupServerNotification)notifications).notifyBackupInUse(true);
                 }
+                // backup
                 URLParser urlParser = new URLParser(url);
                 urlParser.setPath("api/" + urlParser.getPathPart());
-                //urlParser.setHost("192.168.1.77");
                 urlParser.setHost(Utils.JA_IP);
                 urlParser.setPort(Utils.JA_PORT);
-                String s = Utils.getJSON(ctx,urlParser.getFullURL(), notifications);
-                if (s != null && s.length() > 0) return s;
+                Utils.RESTResponse s = Utils.getJSON(ctx,urlParser.getFullURL(), notifications);
+                if (s.getResult() != null && s.getResult().length() > 0) return s;
+                lastResponse = s;
                 if (notifications instanceof Utils.RetryNotification) {
                     ((Utils.RetryNotification)notifications).notifyRetryIsInProgress(++retry);
                 }
@@ -201,7 +204,7 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
         } else {
             return Utils.getJSONWithRetries(ctx,url, notifications);
         }
-        return null;  //To change body of created methods use File | Settings | File Templates.
+        return lastResponse;
     }
 
     @Override

@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -224,7 +225,12 @@ public class DatabaseService extends Service {
         synchronized (writeJobs) {
             writerThread.interrupt();
         }
-        db.releaseReference();
+        try {
+            db.releaseReference();
+        } catch (Exception e) {
+            Log.e("JuickAdvanced", "db.releaseReference", e);
+            //e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }

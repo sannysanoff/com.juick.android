@@ -128,7 +128,7 @@ public class PlaceEditActivity extends MapActivity implements OnClickListener, T
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    final String jsonStr = Utils.postJSON(PlaceEditActivity.this, "http://api.juick.com/place_add", dataf);
+                    final String jsonStr = Utils.postJSON(PlaceEditActivity.this, "http://api.juick.com/place_add", dataf).getResult();
                     PlaceEditActivity.this.runOnUiThread(new Runnable() {
 
                         public void run() {

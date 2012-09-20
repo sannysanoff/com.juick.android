@@ -473,11 +473,12 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
 
             public void run() {
                 try {
-                    final String ret = Utils.postJSON(activity, "http://api.juick.com/post", "body=" + URLEncoder.encode(body, "utf-8"));
+                    final Utils.RESTResponse restResponse = Utils.postJSON(activity, "http://api.juick.com/post", "body=" + URLEncoder.encode(body, "utf-8"));
+                    final String ret = restResponse.getResult();
                     activity.runOnUiThread(new Runnable() {
 
                         public void run() {
-                            Toast.makeText(activity, (ret != null) ? ok : activity.getResources().getString(R.string.Error), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(activity, (ret != null) ? ok : restResponse.getErrorText(), Toast.LENGTH_SHORT).show();
                         }
                     });
                 } catch (Exception e) {

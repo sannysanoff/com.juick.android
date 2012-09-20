@@ -436,21 +436,24 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         try {
             JuickMessage jm;
             if (firstVisibleItem != 0) {
-                jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem-1);
+                ListAdapter listAdapter = getListAdapter();
+                jm = (JuickMessage)listAdapter.getItem(firstVisibleItem-1);
                 topMessageId = jm.MID;
                 if (firstVisibleItem > 1 && trackLastRead) {
                     final int itemToReport = firstVisibleItem - 1;
                     if (lastItemReported < itemToReport) {
                         for(lastItemReported++; lastItemReported <= itemToReport; lastItemReported++) {
                             final int itemToSave = lastItemReported;
-                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                                @Override
-                                public void withService(DatabaseService service) {
-                                    JuickMessage item = (JuickMessage) getListAdapter().getItem(itemToSave-1);
-                                    service.markAsRead(new DatabaseService.ReadMarker(item.MID, item.replies, item.Timestamp.getTime()));
-                                }
+                            if (itemToSave - 1 < listAdapter.getCount()) {  // some async delete could happen
+                                final JuickMessage item = (JuickMessage) listAdapter.getItem(itemToSave - 1);
+                                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                    @Override
+                                    public void withService(DatabaseService service) {
+                                        service.markAsRead(new DatabaseService.ReadMarker(item.MID, item.replies, item.Timestamp.getTime()));
+                                    }
 
-                            });
+                                });
+                            }
                         }
                         lastItemReported--;
                     }

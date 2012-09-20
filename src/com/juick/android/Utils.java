@@ -215,10 +215,10 @@ public class Utils {
     }
 
     public static String getAuthHash(Context context) {
-        String jsonStr = getJSON(context, "http://api.juick.com/auth", null);
-        if (jsonStr != null && !jsonStr.equals("")) {
+        RESTResponse jsonStr = getJSON(context, "http://api.juick.com/auth", null);
+        if (jsonStr.result != null && !jsonStr.result.equals("")) {
             try {
-                JSONObject json = new JSONObject(jsonStr);
+                JSONObject json = new JSONObject(jsonStr.result);
                 if (json.has("hash")) {
                     return json.getString("hash");
                 }
@@ -268,11 +268,11 @@ public class Utils {
         public void notifyDownloadError(String error);
     }
 
-    public static String getJSONWithRetries(Context context, String url, Notification notification) {
-        String retval = null;
+    public static RESTResponse getJSONWithRetries(Context context, String url, Notification notification) {
+        RESTResponse retval = null;
         for (int i = 0; i < 5; i++) {
             retval = getJSON(context, url, notification instanceof DownloadProgressNotification ? (DownloadProgressNotification) notification : null);
-            if (retval == null) {
+            if (retval.result == null) {
                 if (notification instanceof RetryNotification) {
                     ((RetryNotification) notification).notifyRetryIsInProgress(i + 1);
                 }
@@ -284,15 +284,15 @@ public class Utils {
         return retval;
     }
 
-    public static String getJSON(Context context, String url, Notification progressNotification) {
+    public static RESTResponse getJSON(Context context, String url, Notification progressNotification) {
         return getJSON(context, url, progressNotification, -1);
     }
 
     static boolean reportTimes = false;
 
-    public static String getJSON(Context context, final String url, final Notification progressNotification, int timeout) {
+    public static RESTResponse getJSON(Context context, final String url, final Notification progressNotification, int timeout) {
         boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
-        final String[] ret = new String[]{null};
+        final RESTResponse[] ret = new RESTResponse[]{null};
         DefaultHttpClient client = new DefaultHttpClient();
         long l = System.currentTimeMillis();
         if (compression)
@@ -317,11 +317,14 @@ public class Utils {
                         if (progressNotification instanceof DownloadProgressNotification) {
                             ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(0);
                         }
-                        ret[0] = streamToString(e.getContent(), progressNotification);
+                        InputStream content = e.getContent();
+                        ret[0] = streamToString(content, progressNotification);
+                        content.close();
                     } else {
                         if (progressNotification instanceof DownloadErrorNotification) {
                             ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP response code: " + o.getStatusLine().getStatusCode());
                         }
+                        ret[0] = new RESTResponse("HTTP: "+o.getStatusLine().getStatusCode()+" " + o.getStatusLine().getReasonPhrase(), false, null);
                     }
                     return o;
                 }
@@ -335,6 +338,7 @@ public class Utils {
                 ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
             }
             Log.e("getJSON", e.toString());
+            return new RESTResponse(e.toString(), true, null);
         } finally {
             client.getConnectionManager().shutdown();
         }
@@ -403,8 +407,32 @@ public class Utils {
         });
     }
 
-    public static String postJSON(Context context, String url, String data) {
-        String ret = null;
+    public static class RESTResponse {
+        String result;
+        String errorText;
+        boolean mayRetry;
+
+        public RESTResponse(String errorText, boolean mayRetry, String result) {
+            this.errorText = errorText;
+            this.mayRetry = mayRetry;
+            this.result = result;
+        }
+
+        public String getResult() {
+            return result;
+        }
+
+        public boolean isMayRetry() {
+            return mayRetry;
+        }
+
+        public String getErrorText() {
+            return errorText;
+        }
+    }
+
+    public static RESTResponse postJSON(Context context, String url, String data) {
+        RESTResponse ret = null;
         try {
             URL jsonURL = new URL(url);
             HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
@@ -425,18 +453,23 @@ public class Utils {
             wr.close();
 
             if (conn.getResponseCode() == 200) {
-                ret = streamToString(conn.getInputStream(), null);
+                InputStream inputStream = conn.getInputStream();
+                ret = streamToString(inputStream, null);
+                inputStream.close();
+            } else {
+                return new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
             }
 
             conn.disconnect();
+            return ret;
         } catch (Exception e) {
             Log.e("getJSON", e.toString());
+            return new RESTResponse(e.toString(), false, null);
         }
-        return ret;
     }
 
-    public static String postJSONHome(Context context, String path, String data) {
-        String ret = null;
+    public static RESTResponse postJSONHome(Context context, String path, String data) {
+        RESTResponse ret = null;
         try {
             URL jsonURL = new URL("http://" + JA_IP + ":" + JA_PORT + path);
             HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
@@ -452,18 +485,23 @@ public class Utils {
             wr.close();
 
             if (conn.getResponseCode() == 200) {
-                ret = streamToString(conn.getInputStream(), null);
+                InputStream inputStream = conn.getInputStream();
+                ret = streamToString(inputStream, null);
+                inputStream.close();
+            } else {
+                return new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
             }
 
             conn.disconnect();
+            return ret;
         } catch (Exception e) {
             Log.e("getJSONHome", e.toString());
+            return new RESTResponse(e.toString(), false, null);
         }
-        return ret;
     }
 
 
-    public static String streamToString(InputStream is, Notification progressNotification) {
+    public static RESTResponse streamToString(InputStream is, Notification progressNotification) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             long l = System.currentTimeMillis();
@@ -477,13 +515,13 @@ public class Utils {
                         ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(baos.size());
                 }
             }
-            return new String(baos.toByteArray(), "UTF-8");
+            return new RESTResponse(null, false, new String(baos.toByteArray(), "UTF-8"));
         } catch (Exception e) {
             if (progressNotification instanceof DownloadErrorNotification)
                 ((DownloadErrorNotification) progressNotification).notifyDownloadError(e.toString());
             Log.e("streamReader", e.toString());
+            return new RESTResponse(e.toString(), true, null);
         }
-        return null;
     }
 
     public static String getMD5DigestForString(String str) {

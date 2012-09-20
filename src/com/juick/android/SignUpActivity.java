@@ -85,7 +85,7 @@ public class SignUpActivity extends Activity implements View.OnClickListener {
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                String jsonStr = Utils.getJSON(SignUpActivity.this, "http://api.juick.com/captcha", null);
+                String jsonStr = Utils.getJSON(SignUpActivity.this, "http://api.juick.com/captcha", null).getResult();
                 if (jsonStr != null) {
                     try {
                         JSONObject json = new JSONObject(jsonStr);

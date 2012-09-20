@@ -798,7 +798,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     }
                                 });
 
-                            } catch (IOException e) {
+                            } catch (Exception e) {
                                 updateStatus("Error:"+e);
                             }
                         }

@@ -184,31 +184,35 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             }
         } else if (view == bSend) {
             final String msg = etMessage.getText().toString();
-            if (msg.length() < 3) {
+            if (msg.length() < 1) {
                 Toast.makeText(this, R.string.Enter_a_message, Toast.LENGTH_SHORT).show();
                 return;
             }
             final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            if (sp.getBoolean("warnRepliesToBody", false) && rid == 0 && tf.getListView().getAdapter().getCount() > 3) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Post reply")
-                        .setMessage("Replying to topic starter? (or select recipient)")
-                        .setCancelable(true)
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        })
-                        .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                                previewAndSendReply(msg);
-                            }
-                        }).show();
-            } else {
-                previewAndSendReply(msg);
+            try {
+                if (sp.getBoolean("warnRepliesToBody", false) && rid == 0 && tf.getListView().getAdapter().getCount() > 3) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Post reply")
+                            .setMessage("Replying to topic starter? (or select recipient)")
+                            .setCancelable(true)
+                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            })
+                            .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                    previewAndSendReply(msg);
+                                }
+                            }).show();
+                } else {
+                    previewAndSendReply(msg);
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -282,7 +286,8 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             
             public void run() {
                 try {
-                    final String ret = Utils.postJSON(ThreadActivity.this, "http://api.juick.com/post", "body=" + URLEncoder.encode(body, "utf-8"));
+                    final Utils.RESTResponse restResponse = Utils.postJSON(ThreadActivity.this, "http://api.juick.com/post", "body=" + URLEncoder.encode(body, "utf-8"));
+                    final String ret = restResponse.getResult();
                     ThreadActivity.this.runOnUiThread(new Runnable() {
                         
                         public void run() {
@@ -290,7 +295,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                                 Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_SHORT).show();
                                 resetForm();
                             } else {
-                                Toast.makeText(ThreadActivity.this, R.string.Error, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ThreadActivity.this, restResponse.getErrorText(), Toast.LENGTH_SHORT).show();
                                 setFormEnabled(true);
                             }
                         }

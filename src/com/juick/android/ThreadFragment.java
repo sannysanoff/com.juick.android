@@ -189,7 +189,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
                                 public void run() {
                                     Bundle args = getArguments();
-                                    boolean scrollToBottom = args.getBoolean("scrollToBottom", false);
+                                    boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
                                     if (scrollToBottom) {
                                         getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
                                         getListView().setStackFromBottom(true);
@@ -199,7 +199,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                     getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
                                     getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
 
-                                    if (messages.size() > 0) {
+                                    if (listAdapter.getCount() > 0) {   // could be filtered out!
                                         initAdapterStageTwo();
                                     }
                                     if (listPosition != null) {
@@ -214,25 +214,28 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
                                         }
                                     }
-                                    if (messages.size() != 0) {
+                                    if (listAdapter.getCount() != 0 && messages.size() > 0) {   // could be filtered out!
                                         Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
-                                        Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
-                                        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                            @Override
-                                            public void withService(XMPPService service) {
-                                                service.removeMessages(mid, false);
-                                            }
-                                        });
-                                        databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                                            @Override
-                                            public void withService(DatabaseService service) {
-                                                service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1, messages.get(0).Timestamp.getDate()));
-                                            }
+                                        Activity activity = getActivity();
+                                        if (activity != null) {
+                                            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+                                            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                                @Override
+                                                public void withService(XMPPService service) {
+                                                    service.removeMessages(mid, false);
+                                                }
+                                            });
+                                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                                @Override
+                                                public void withService(DatabaseService service) {
+                                                    service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1, messages.get(0).Timestamp.getDate()));
+                                                }
 
-                                            @Override
-                                            public void withoutService() {
-                                            }
-                                        });
+                                                @Override
+                                                public void withoutService() {
+                                                }
+                                            });
+                                        }
 
                                     }
 
