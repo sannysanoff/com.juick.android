@@ -367,7 +367,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ArrayList<String> retval = new ArrayList<String>();
         for (String url : urls) {
             String urlLower = url.toLowerCase();
-            urlLower = trimRequest(urlLower);
             if (isValidImageURl(urlLower)) {
                 retval.add(ImageURLConvertor.convertURLToDownloadable(url));
             }
@@ -385,6 +384,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public boolean isValidImageURl(String urlLower) {
         if (isHTMLSource(urlLower)) return true;
+        if (imageLoadMode.contains("japroxy") && HTMLImageSourceDetector.isHTMLImageSource0(urlLower)) {
+            return true;
+        }
         return ValidImageURLDetector.isValidImageURL0(urlLower);
     }
 
@@ -813,7 +815,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (imageLoadMode.contains("japroxy")) {
                 final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
                 final int WIDTH = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth());
-                loadURl  = "http://ja.ip.rt.ru:8080/img?url=" + Uri.encode(url)+"&height="+HEIGHT+"&width="+WIDTH;
+                //String host = "ja.ip.rt.ru:8080";
+                String host = "192.168.1.77:8080";
+                loadURl  = "http://"+host+"/img?url=" + Uri.encode(url)+"&height="+HEIGHT+"&width="+WIDTH;
             }
             if (imageLoadMode.contains("weserv")) {
                 final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
