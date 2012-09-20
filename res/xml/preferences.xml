@@ -225,6 +225,12 @@
             android:title="@string/CaptureIntoTempFile"
             android:defaultValue="true"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="askForResize"
+            android:title="@string/AskForPhotoResize"
+            android:summary="@string/OnlyWorksWithAboveCheckboxOn"
+            android:defaultValue="false"
+            android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/Debug">
         <CheckBoxPreference

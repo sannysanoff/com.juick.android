@@ -37,7 +37,7 @@ public class WhatsNew {
     }
 
     ReleaseFeatures[] features = new ReleaseFeatures[] {
-            new ReleaseFeatures("2012091701", R.string.rf_2012091701),
+            new ReleaseFeatures("2012092001", R.string.rf_2012092001),
             new ReleaseFeatures("2012091402", R.string.rf_2012091402),
             new ReleaseFeatures("2012082601", R.string.rf_2012082601),
             new ReleaseFeatures("2012081901", R.string.rf_2012081901),

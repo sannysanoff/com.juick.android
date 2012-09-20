@@ -848,14 +848,14 @@ public class MainActivity extends FragmentActivity implements
             EditText et = (EditText) view;
             et.setTextColor(colorTheme.getForeground(pressed));
             et.setBackgroundColor(colorTheme.getBackground(pressed));
+        } else if (view instanceof RadioButton) {
+            RadioButton btn = (RadioButton) view;
+            btn.setTextColor(colorTheme.getForeground(pressed));
+            btn.setBackgroundColor(colorTheme.getBackground());
         } else if (view instanceof Button) {
 //            Button btn = (Button) view;
 //            btn.setTextColor(colorTheme.getForeground(pressed));
 //            btn.setBackgroundColor(colorTheme.getButtonBackground());
-        } else if (view instanceof RadioButton) {
-            RadioButton btn = (RadioButton) view;
-            btn.setTextColor(colorTheme.getForeground(pressed));
-            btn.setBackgroundColor(colorTheme.getButtonBackground());
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
             text.setTextColor(colorTheme.getForeground(pressed));

@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -24,7 +25,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -37,20 +39,15 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
-import android.widget.Toast;
+import android.widget.*;
 import com.juickadvanced.R;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONException;
@@ -521,9 +518,133 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     attachmentUri = data.getDataString();
                 } else if (getPhotoCaptureFile().exists()) {
                     attachmentUri = Uri.fromFile(getPhotoCaptureFile()).toString();
+                    if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
+                        maybeResizeCapturedImage(this, attachmentUri, new Utils.Function<Void, String>() {
+                            @Override
+                            public Void apply(String s) {
+                                attachmentUri = s;
+                                bAttachment.setSelected(attachmentUri != null);
+                                return null;
+                            }
+                        });
+                    }
                 }
                 attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
                 bAttachment.setSelected(attachmentUri != null);
+            }
+        }
+    }
+
+    public static void maybeResizeCapturedImage(final Activity parent, final String attachmentUri, final Utils.Function<Void, String> function) {
+        boolean askForResize = PreferenceManager.getDefaultSharedPreferences(parent).getBoolean("askForResize", false);
+        if (askForResize) {
+            Uri parse = Uri.parse(attachmentUri);
+            final File file = new File(parse.getPath());
+            final BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(file.getPath(), opts);
+            int outHeight = opts.outHeight;
+            int outWidth = opts.outWidth;
+            LinearLayout ll = new LinearLayout(parent);
+            ll.setOrientation(LinearLayout.VERTICAL);
+            if (outHeight > 400 || outWidth > 400) {
+                AlertDialog.Builder builder =
+                        new AlertDialog.Builder(parent)
+                        .setView(ll)
+                        .setTitle(parent.getString(R.string.ResizeImage));
+
+                TextView tv = new TextView(parent);
+                tv.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                tv.setText(parent.getString(R.string.Current__) + outWidth + " x " + outHeight + " " + parent.getString(R.string.FileSize_) + " " + file.length() / 1024 + " KB");
+                ll.addView(tv);
+                RadioGroup rg = new RadioGroup(parent);
+                rg.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                final ArrayList<RadioButton> rbs = new ArrayList<RadioButton>();
+                for(int i=2; i<6; i++) {
+                    RadioButton rb = new RadioButton(parent);
+                    rb.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                    int nh = outHeight / i;
+                    int nw = outWidth / i;
+                    rb.setText(parent.getString(R.string.Resize__)+" " + nw + " x " + nh);
+                    rbs.add(rb);
+                    rg.addView(rb);
+                    rb.setTag(new Integer(i));
+                    if (i == 2) {
+                        rb.setChecked(true);
+                    }
+                }
+                ll.addView(rg);
+                builder.setCancelable(true);
+                builder.setNeutralButton(parent.getString(R.string.DontAttach), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        function.apply(null);
+                        dialog.cancel();
+                    }
+                });
+                builder.setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.setPositiveButton(parent.getString(R.string.Preview), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        for (RadioButton rb : rbs) {
+                            if (rb.isChecked()) {
+                                Integer skipSize = (Integer)rb.getTag();
+                                BitmapFactory.Options opts = new BitmapFactory.Options();
+                                opts.inJustDecodeBounds = false;
+                                opts.inSampleSize = Math.max(skipSize, skipSize);
+                                Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), opts);
+                                try {
+                                    final File outFile = new File(parent.getCacheDir(), "juick_capture_resized.jpg");
+                                    outFile.delete();
+                                    FileOutputStream fos = new FileOutputStream(outFile);
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
+                                    fos.close();
+
+                                    new AlertDialog.Builder(parent)
+                                    .setTitle(parent.getString(R.string.ScaleResult))
+                                    .setMessage(parent.getString(R.string.NewSize__) + " " + bitmap.getWidth() + " x " + bitmap.getHeight() + " "  + parent.getString(R.string.FileSize_) + " "+outFile.length() / 1024 + " KB")
+                                    .setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.cancel();
+                                        }
+                                    })
+                                    .setPositiveButton(parent.getString(R.string.Finish), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            function.apply(Uri.fromFile(outFile).toString());
+                                        }
+                                    })
+                                    .setNeutralButton(parent.getString(R.string.TryOther), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            maybeResizeCapturedImage(parent, attachmentUri, function);
+                                        }
+                                    })
+                                    .show();
+                                } catch (IOException e) {
+                                    Toast.makeText(parent, "Error: "+e.toString(), Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                });
+                MainActivity.restyleChildrenOrWidget(ll);
+                final AlertDialog alertDialog = builder.create();
+                alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialog) {
+                        MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
+                    }
+                });
+                alertDialog.show();
             }
         }
     }

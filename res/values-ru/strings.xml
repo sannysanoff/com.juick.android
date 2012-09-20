@@ -274,6 +274,19 @@
     <string name="TalkingToJuBo">Общение с JuBo, ждите 10 секунд</string>
     <string name="WebSiteReturnedBad">Сайт вернул невразумительный ответ</string>
     <string name="UnableToDetectNick">Невозможно определить User Id:</string>
+    <string name="ResizeImage">Уменьшить фотку?</string>
+    <string name="Current__">Текущая:</string>
+    <string name="FileSize_">Файл:</string>
+    <string name="Resize__">Уменьшить:</string>
+    <string name="DontAttach">Не аттачить</string>
+    <string name="KeepOrigSize">Keep orig size</string>
+    <string name="Preview">Ну-ка..</string>
+    <string name="ScaleResult">Результат уменьшения</string>
+    <string name="NewSize__">Новый размер:</string>
+    <string name="Finish">Годится такая</string>
+    <string name="TryOther">Другой размер..</string>
+    <string name="AskForPhotoResize">Предлагать уменьшить фото</string>
+    <string name="OnlyWorksWithAboveCheckboxOn">Работает только с включенной предыдущей опцией</string>
 
 
 </resources>

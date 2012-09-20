@@ -244,19 +244,27 @@
 
     <string name="NewFeatures">New features</string>
 
-    <string name="rf_2012091701"><![CDATA[
+    <string name="rf_2012092001"><![CDATA[
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
             </head>
             <body>
 
-            <b>14 сентября 2012</b>
+            <b>20 сентября 2012</b>
             <li>
-            (опция)Добавил juick advanced прокси для картинок. Этот прокси имеет неоспоримое преимущество
+            (опция) Добавил juick advanced прокси для картинок (еще один сервер). Этот прокси имеет неоспоримое преимущество
             перед другими проксями: он мониторит ленту жуйка и закачивает в себя картинки сразу, как только автор
-            запостил пост, и стало быть еще до того, как юзер картинку попросит.
-            Пережимает он без вопросов как надо, graphcismagick jpeg quality 35.
+            запостил пост, и стало быть еще до того, как юзер картинку попросит. И стало быть, отдает ее очень сразу.
+            Пережимает он без вопросов как надо, graphiсsmagick jpeg quality 35.
+            <br>
+            Вдобавок, добавил еще немного источников картинок.
+            </li>
+            <li>
+            (опция) Добавил JuBo RSS, то есть можно посмотреть ленту от JuBo. Делается это так. У бота
+            спрашивается автоматически адрес вашей ленты, если у вас настроен Jabber в Juick Advanced. Если
+            не настроен - вводите руками. Количество комментов на каждый пост, который вернул JuBo, увы,
+            [пока?] не показывается.
             </li>
             <hr>
             Все фичи Juick Advanced можно посмотреть в настройках, если нажать там кнопку Меню.
@@ -558,6 +566,19 @@
     <string name="TalkingToJuBo">Talking to JuBo, please wait 10 seconds</string>
     <string name="WebSiteReturnedBad">Website returned unrecognized response</string>
     <string name="UnableToDetectNick">Unable to detect User Id:</string>
+    <string name="ResizeImage">Resize image?</string>
+    <string name="Current__">Current:</string>
+    <string name="FileSize_">Filesize:</string>
+    <string name="Resize__">Resize:</string>
+    <string name="DontAttach">Don\'t attach</string>
+    <string name="KeepOrigSize">Ориг.размер</string>
+    <string name="Preview">Preview</string>
+    <string name="ScaleResult">Scale result</string>
+    <string name="NewSize__">New size:</string>
+    <string name="Finish">Finish</string>
+    <string name="TryOther">Try other..</string>
+    <string name="AskForPhotoResize">Ask for photo resize</string>
+    <string name="OnlyWorksWithAboveCheckboxOn">Only works with above checkbox on</string>
 
 
 </resources>
