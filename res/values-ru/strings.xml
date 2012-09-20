@@ -287,6 +287,7 @@
     <string name="TryOther">Другой размер..</string>
     <string name="AskForPhotoResize">Предлагать уменьшить фото</string>
     <string name="OnlyWorksWithAboveCheckboxOn">Работает только с включенной предыдущей опцией</string>
+    <string name="OlderFeatures">Предыдущие...</string>
 
 
 </resources>

@@ -37,7 +37,7 @@ public class WhatsNew {
     }
 
     ReleaseFeatures[] features = new ReleaseFeatures[] {
-            new ReleaseFeatures("2012092001", R.string.rf_2012092001),
+            new ReleaseFeatures("2012092002", R.string.rf_2012092001),
             new ReleaseFeatures("2012091402", R.string.rf_2012091402),
             new ReleaseFeatures("2012082601", R.string.rf_2012082601),
             new ReleaseFeatures("2012081901", R.string.rf_2012081901),
@@ -173,7 +173,7 @@ public class WhatsNew {
 
     }
 
-    public void reportFeatures(int sequence, boolean cycle, final Runnable notCycle) {
+    public void reportFeatures(final int sequence, final boolean cycle, final Runnable notCycle) {
         WebView wv = new WebView(context);
         ReleaseFeatures feature = features[sequence];
         Utils.setupWebView(wv, context.getString(feature.textId));
@@ -198,10 +198,10 @@ public class WhatsNew {
                 })
                 .setCancelable(true);
         if (sequence < features.length - 1 && cycle) {
-            builder.setPositiveButton("Есть еще...", new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(context.getString(R.string.OlderFeatures), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    runAll();
+                    reportFeatures(sequence+1, cycle, notCycle);
                 }
             });
         }
