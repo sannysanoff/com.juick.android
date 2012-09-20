@@ -543,6 +543,21 @@
     <string name="YouHaveNotEnabledForUnreadSegments">You have not enabled last read markers in prefs, or you have not
         collected enough read history
     </string>
+    <string name="JuboRSSURLIsUnknown">JuBo RSS URL is unknown. You need to ask JuBo for the URL and enter it
+        manually.
+    </string>
+    <string name="ICouldAskButXMPPIsOff">I could ask JuBo right now, but you don\'t have XMPP enabled</string>
+    <string name="JuboNotThere">I could ask JuBo right now, but even if your XMPP connection is ON, i cannot see JuBo
+        online
+    </string>
+    <string name="ICouldButXMPPIfNotWorking">I could ask JuBo right now, but your XMPP connection seems not working
+    </string>
+    <string name="OrICanAskJuboNoe">Or, I can ask JuBo right now over XMPP, though.</string>
+    <string name="EnterJuboRSSURLManually">Enter JuBo RSS URL manually</string>
+    <string name="AskJuBo">Ask JuBo</string>
+    <string name="TalkingToJuBo">Talking to JuBo, please wait 10 seconds</string>
+    <string name="WebSiteReturnedBad">Website returned unrecognized response</string>
+    <string name="UnableToDetectNick">Unable to detect User Id:</string>
 
 
 </resources>

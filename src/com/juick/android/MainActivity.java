@@ -257,11 +257,11 @@ public class MainActivity extends FragmentActivity implements
                                                 String SEARCH_MARKER = "http://i.juick.com/a/";
                                                 int ix = retval.indexOf(SEARCH_MARKER);
                                                 if (ix < 0) {
-                                                    throw new RuntimeException("Website returned unrecognized response");
+                                                    throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
                                                 }
                                                 int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
                                                 if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                                                    throw new RuntimeException("Website returned unrecognized response");
+                                                    throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
                                                 }
                                                 final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
                                                 runOnUiThread(new Runnable() {
@@ -276,7 +276,7 @@ public class MainActivity extends FragmentActivity implements
                                                 runOnUiThread(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        Toast.makeText(MainActivity.this, "Unable to detect nick: " + e.toString(), Toast.LENGTH_LONG).show();
+                                                        Toast.makeText(MainActivity.this, getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
                                                     }
                                                 });
                                             } finally {
@@ -418,33 +418,33 @@ public class MainActivity extends FragmentActivity implements
                             @Override
                             public void withService(XMPPService service) {
                                 boolean canAskJubo = false;
-                                String message = "JuBo RSS URL is unknown. You need to ask JuBo for the URL and enter it manually.";
+                                String message = getString(R.string.JuboRSSURLIsUnknown);
                                 if (!service.juboOnline) {
                                     boolean useXMPP = sp.getBoolean("useXMPP", false);
                                     if (!useXMPP) {
-                                        message += "I could ask JuBo right now, but you don't have XMPP enabled";
+                                        message += getString(R.string.ICouldAskButXMPPIsOff);
                                     } else {
                                         if (service.botOnline) {
-                                            message += "I could ask JuBo right now, but even if your XMPP connection is ON, i cannot see JuBo online";
+                                            message += getString(R.string.JuboNotThere);
                                         } else {
-                                            message += "I could ask JuBo right now, but your XMPP connection seems not working";
+                                            message += getString(R.string.ICouldButXMPPIfNotWorking);
                                         }
                                     }
                                 } else {
                                     canAskJubo = true;
-                                    message += " Or, I can ask JuBo right now over XMPP, though.";
+                                    message += getString(R.string.OrICanAskJuboNoe);
                                 }
                                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
                                         .setTitle(R.string.navigationJuboRSS)
                                         .setMessage(message)
                                         .setCancelable(true)
-                                        .setNeutralButton("Enter URL manually", new DialogInterface.OnClickListener() {
+                                        .setNeutralButton(getString(R.string.EnterJuboRSSURLManually), new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
                                                 enterJuboURLManually(myIndex);
                                             }
                                         })
-                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialogInterface, int i) {
                                                 dialogInterface.dismiss();
@@ -452,7 +452,7 @@ public class MainActivity extends FragmentActivity implements
                                             }
                                         });
                                 if (canAskJubo) {
-                                    builder.setPositiveButton("Ask JuBo", new DialogInterface.OnClickListener() {
+                                    builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
                                             askJuboFirst(myIndex);
@@ -525,7 +525,7 @@ public class MainActivity extends FragmentActivity implements
     private void askJuboFirst(final int juboIndex) {
         final ProgressDialog pd = new ProgressDialog(this);
         pd.setIndeterminate(true);
-        pd.setMessage("Talking to JuBo, please wait 10 seconds");
+        pd.setMessage(getString(R.string.TalkingToJuBo));
         pd.show();
         xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
             @Override
@@ -577,7 +577,7 @@ public class MainActivity extends FragmentActivity implements
         et.setSingleLine(true);
         et.setInputType(EditorInfo.TYPE_TEXT_VARIATION_URI);
         new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Enter JuBo RSS URL")
+                .setTitle(R.string.EnterJuboRSSURLManually)
                 .setView(et)
                 .setCancelable(true)
                 .setPositiveButton(android.R.string.cancel, new DialogInterface.OnClickListener() {

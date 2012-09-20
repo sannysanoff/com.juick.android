@@ -264,6 +264,16 @@
     <string name="YouHaveNotEnabledForUnreadSegments">Вы не включили сохранение маркеров прочитанных мессаг в настройках,
         или же у вас их пока недостаточно собрано
     </string>
+    <string name="JuboRSSURLIsUnknown">JuBo RSS URL не настроен. Спросите его у JuBo и введите ручками.</string>
+    <string name="ICouldAskButXMPPIsOff">Если бы настоили свой jabber/XMPP в Juick Advanced, можно было бы сделать это автоматом.</string>
+    <string name="JuboNotThere">Можно было бы сделать это автоматом, но что-то JuBo в офлайне, хотя juick bot в онлайне.</string>
+    <string name="ICouldButXMPPIfNotWorking">Можно было бы сделать это автоматом, но что-то XMPP/Jabber подключение у вас не поднято, хотя и вроде разрешено</string>
+    <string name="OrICanAskJuboNoe"> Или, можно автоматически прямо щас спросить JuBo отсюда.</string>
+    <string name="EnterJuboRSSURLManually">Введите здесь адрес JuBo RSS ленты</string>
+    <string name="AskJuBo">Спросить JuBo</string>
+    <string name="TalkingToJuBo">Общение с JuBo, ждите 10 секунд</string>
+    <string name="WebSiteReturnedBad">Сайт вернул невразумительный ответ</string>
+    <string name="UnableToDetectNick">Невозможно определить User Id:</string>
 
 
 </resources>
