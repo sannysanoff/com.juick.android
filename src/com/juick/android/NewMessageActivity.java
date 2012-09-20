@@ -323,7 +323,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    final boolean res = sendMessage(NewMessageActivity.this, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
+                    final Utils.RESTResponse res = sendMessage(NewMessageActivity.this, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
                     NewMessageActivity.this.runOnUiThread(new Runnable() {
 
                         public void run() {
@@ -335,22 +335,22 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 }
                             }
                             setFormEnabled(true);
-                            if (res) {
+                            if (res.getResult() != null) {
                                 resetForm();
                             }
-                            if (res && attachmentUri == null) {
-                                Toast.makeText(NewMessageActivity.this, res ? R.string.Message_posted : R.string.Error, Toast.LENGTH_LONG).show();
+                            if (res.getResult() != null && attachmentUri == null) {
+                                Toast.makeText(NewMessageActivity.this, res.getResult() != null ? getString(R.string.Message_posted) : res.getErrorText(), Toast.LENGTH_LONG).show();
                                 getPhotoCaptureFile().delete(); // if any
                             } else {
                                 try {
                                     AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
                                     builder.setNeutralButton(R.string.OK, null);
-                                    if (res) {
+                                    if (res.getResult() != null) {
                                         builder.setIcon(android.R.drawable.ic_dialog_info);
                                         builder.setMessage(R.string.Message_posted);
                                     } else {
                                         builder.setIcon(android.R.drawable.ic_dialog_alert);
-                                        builder.setMessage(R.string.Error);
+                                        builder.setMessage(res.getErrorText());
                                     }
                                     builder.show();
                                 } catch (WindowManager.BadTokenException e) {
@@ -365,14 +365,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
     }
 
-    public static boolean sendMessage(Context context, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, final ProgressDialog progressDialog, Handler progressHandler, BooleanReference progressDialogCancel) {
+    public static Utils.RESTResponse sendMessage(final Context context, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, final ProgressDialog progressDialog, Handler progressHandler, BooleanReference progressDialogCancel) {
         try {
             final String end = "\r\n";
             final String twoHyphens = "--";
             final String boundary = "****+++++******+++++++********";
 
             URL apiUrl = new URL("http://api.juick.com/post");
-            HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
+            final HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
             conn.setConnectTimeout(10000);
             conn.setDoOutput(true);
             conn.setUseCaches(false);
@@ -455,19 +455,19 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             out.close();
 
             if (progressDialogCancel.bool) {
-                return false;
+                return new Utils.RESTResponse("Cancelled", false, null);
             } else {
                 boolean b = conn.getResponseCode() == 200;
                 if (!b) {
-                    Toast.makeText(context, "HTTP "+conn.getResponseCode()+": " +conn.getResponseMessage(), Toast.LENGTH_LONG).show();
+                    return new Utils.RESTResponse("HTTP "+conn.getResponseCode()+": "+conn.getResponseMessage(), false, null);
+                } else {
+                    return new Utils.RESTResponse(null, false, "OK");
                 }
-                return b;
             }
-        } catch (Exception e) {
-            Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+        } catch (final Exception e) {
             Log.e("sendOpinion", e.toString());
+            return new Utils.RESTResponse(e.toString(), false, null);
         }
-        return false;
     }
 
     public void onClick(DialogInterface dialog, int which) {

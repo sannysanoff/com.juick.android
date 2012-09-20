@@ -323,7 +323,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         Thread thr = new Thread(new Runnable() {
             
             public void run() {
-                final boolean res = NewMessageActivity.sendMessage(ThreadActivity.this, body, 0, 0, 0, 0, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
+                final Utils.RESTResponse res = NewMessageActivity.sendMessage(ThreadActivity.this, body, 0, 0, 0, 0, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
                 ThreadActivity.this.runOnUiThread(new Runnable() {
                     
                     public void run() {
@@ -331,22 +331,22 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                             progressDialog.dismiss();
                         }
                         setFormEnabled(true);
-                        if (res) {
+                        if (res.getResult() != null) {
                             resetForm();
                         }
-                        if (res && attachmentUri == null) {
+                        if (res.getResult() != null && attachmentUri == null) {
                             Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
                         } else {
                             NewMessageActivity.getPhotoCaptureFile().delete(); // if any
                             try {
                                 AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
                                 builder.setNeutralButton(R.string.OK, null);
-                                if (res) {
+                                if (res.getResult() != null) {
                                     builder.setIcon(android.R.drawable.ic_dialog_info);
                                     builder.setMessage(R.string.Message_posted);
                                 } else {
                                     builder.setIcon(android.R.drawable.ic_dialog_alert);
-                                    builder.setMessage(R.string.Error);
+                                    builder.setMessage(res.getErrorText());
                                 }
                                 builder.show();
                             } catch (Exception e) {
