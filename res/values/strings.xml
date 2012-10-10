@@ -585,6 +585,7 @@
     <string name="AskForPhotoResize">Ask for photo resize</string>
     <string name="OnlyWorksWithAboveCheckboxOn">Only works with above checkbox on</string>
     <string name="OlderFeatures">Older features..</string>
+    <string name="EndOfMessages">No more messages</string>
 
 
 </resources>

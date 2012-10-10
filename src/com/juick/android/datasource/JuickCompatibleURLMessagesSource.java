@@ -30,6 +30,7 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     int useBackupServer = -1;
     String title;
     String kind;
+    public boolean canNext = true;
 
 
 
@@ -229,5 +230,10 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     public String getKind() {
         if (kind != null) return kind;
         return super.getKind();
+    }
+
+    @Override
+    public boolean canNext() {
+        return canNext;
     }
 }

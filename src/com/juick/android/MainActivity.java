@@ -306,6 +306,7 @@ public class MainActivity extends FragmentActivity implements
                     void action() {
                         final Bundle args = new Bundle();
                         JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api");
+                        ms.canNext = false;
                         ms.setKind("srachiki");
                         args.putSerializable("messagesSource", ms);
                         runDefaultFragmentWithBundle(args, this);

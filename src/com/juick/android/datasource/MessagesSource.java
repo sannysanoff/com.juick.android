@@ -40,6 +40,11 @@ public abstract  class MessagesSource implements Serializable {
 
     public abstract void getNext(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
 
+    public boolean canNext() {
+        return true;
+    };
+
+
     public abstract void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
 
     public abstract CharSequence getTitle();

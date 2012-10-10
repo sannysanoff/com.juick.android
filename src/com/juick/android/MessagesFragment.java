@@ -172,6 +172,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         LayoutInflater li = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         viewLoading = li.inflate(R.layout.listitem_loading, null);
+        if (!messagesSource.canNext()) {
+            viewLoading.findViewById(R.id.loadingg).setVisibility(View.GONE);
+            viewLoading.findViewById(R.id.end_of_messages).setVisibility(View.VISIBLE);
+            viewLoading.findViewById(R.id.progress_bar).setVisibility(View.GONE);
+            viewLoading.findViewById(R.id.progress_loading_more).setVisibility(View.GONE);
+        }
 
         mRefreshView = (RelativeLayout) li.inflate(R.layout.pull_to_refresh_header, null);
         mRefreshViewText = (TextView) mRefreshView.findViewById(R.id.pull_to_refresh_text);
@@ -431,7 +437,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         int prefetchMessagesSize = prefetchMessages ? 20:0;
         if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && loading == false) {
-            loadMore();
+            if (messagesSource.canNext()) {
+                loadMore();
+            }
         }
         try {
             JuickMessage jm;

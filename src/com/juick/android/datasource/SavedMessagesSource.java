@@ -70,4 +70,9 @@ public class SavedMessagesSource extends MessagesSource {
     public String getKind() {
         return "saved_messages";
     }
+
+    @Override
+    public boolean canNext() {
+        return false;
+    }
 }

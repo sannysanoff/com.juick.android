@@ -289,6 +289,7 @@
     <string name="AskForPhotoResize">Предлагать уменьшить фото</string>
     <string name="OnlyWorksWithAboveCheckboxOn">Работает только с включенной предыдущей опцией</string>
     <string name="OlderFeatures">Предыдущие...</string>
+    <string name="EndOfMessages">Конец мессаг</string>
 
 
 </resources>

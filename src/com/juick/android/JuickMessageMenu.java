@@ -26,6 +26,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.DataSetObserver;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Parcelable;
@@ -338,14 +339,23 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        CharSequence[] items = new CharSequence[menuActions.size()];
+        final CharSequence[] items = new CharSequence[menuActions.size()];
         for (int j = 0; j < items.length; j++) {
             items[j] = menuActions.get(j).title;
         }
         builder.setItems(items, this);
-        AlertDialog alertDialog = builder.create();
-
+        final AlertDialog alertDialog = builder.create();
+        alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(activity);
+                ColorDrawable divider = new ColorDrawable(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF));
+                alertDialog.getListView().setDivider(divider);
+                alertDialog.getListView().setDividerHeight(1);
+            }
+        });
         alertDialog.show();
+
         final ListAdapter adapter = alertDialog.getListView().getAdapter();
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         float menuFontScale = 1;
@@ -381,7 +391,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
 
             @Override
             public int getCount() {
-                return adapter.getCount();
+                return items.length;
             }
 
             @Override

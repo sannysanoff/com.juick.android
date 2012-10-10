@@ -132,4 +132,9 @@ public class JuboMessagesSource extends MessagesSource {
     public CharSequence getTitle() {
         return ctx.getString(R.string.navigationJuboRSS);
     }
+
+    @Override
+    public boolean canNext() {
+        return false;
+    }
 }

@@ -6,6 +6,7 @@
     android:gravity="center"
     android:padding="5dip">
     <ProgressBar
+        android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:indeterminate="true"
@@ -13,9 +14,16 @@
         android:layout_marginRight="5dip"
         style="?android:attr/android:progressBarStyleSmall"/>
     <TextView
+        android:id="@+id/loadingg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/Loading___"/>
+    <TextView
+            android:id="@+id/end_of_messages"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="@string/EndOfMessages"/>
     <TextView
         android:id="@+id/progress_loading_more"
         android:layout_width="wrap_content"
