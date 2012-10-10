@@ -228,6 +228,18 @@ public class Utils {
         return null;
     }
 
+    static String accountName;
+    public static String getAccountName(Context context) {
+        if (accountName == null) {
+            AccountManager am = AccountManager.get(context);
+            Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
+            if (accs.length > 0) {
+                accountName = accs[0].name;
+            }
+        }
+        return accountName;
+    }
+
     public static String getBasicAuthString(Context context) {
         AccountManager am = AccountManager.get(context);
         Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));

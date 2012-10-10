@@ -40,10 +40,14 @@ import com.juick.android.datasource.*;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.ClientPNames;
 import org.apache.http.impl.client.BasicResponseHandler;
 import yuku.ambilwarna.widget.AmbilWarnaPreference;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 
 /**
@@ -77,7 +81,8 @@ public class MainActivity extends FragmentActivity implements
             this.labelId = labelId;
         }
 
-        void action() {}
+        void action() {
+        }
 
         void restoreReadMarker() {
 
@@ -226,300 +231,282 @@ public class MainActivity extends FragmentActivity implements
             navigationItems.add(new NavigationItem(R.string.navigationMy) {
                 @Override
                 void action() {
-                    if (sp.getString("myUserId", "").equals("")) {
-                        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+                    String myUserId = sp.getString("myUserId", "");
+                    if (myUserId.equals("")) {
+                        final String value = Utils.getAccountName(MainActivity.this);
+                        final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                        pd.setTitle(getString(R.string.GettingYourId));
+                        pd.setMessage(getString(R.string.ConnectingToWwwJuick));
+                        pd.setIndeterminate(true);
+                        pd.show();
+                        final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
+                        new Thread("UserID obtainer") {
+                            @Override
+                            public void run() {
+                                String fullName = value;
+                                if (fullName.startsWith("@")) fullName = fullName.substring(1);
+                                try {
+                                    URL u = new URL("http://juick.com/" + fullName.trim() + "/");
+                                    HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
+                                    urlConnection.setInstanceFollowRedirects(true);
+                                    Utils.RESTResponse response = Utils.streamToString((InputStream) urlConnection.getContent(), null);
+                                    if (response.getErrorText() != null) {
+                                        throw new IOException(response.getErrorText());
+                                    } else {
+                                        String retval = response.getResult();
+                                        String SEARCH_MARKER = "http://i.juick.com/a/";
+                                        int ix = retval.indexOf(SEARCH_MARKER);
+                                        if (ix < 0) {
+                                            throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
+                                        }
+                                        int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
+                                        if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
+                                            throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
+                                        }
+                                        final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                sp.edit().putString("myUserId", uidS).commit();
+                                                action();
+                                            }
+                                        });
+                                    }
 
-                        alert.setTitle(R.string.Your_User_Name);
-                        alert.setMessage(R.string.Your_User_Name_Explain);
-
-                        // Set an EditText view to get user input
-                        final EditText input = new EditText(MainActivity.this);
-                        alert.setView(input);
-
-                        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int whichButton) {
-                                final String value = input.getText().toString();
-                                if (value.length() > 0) {
-                                    final ProgressDialog pd = new ProgressDialog(MainActivity.this);
-                                    pd.setTitle(getString(R.string.GettingYourId));
-                                    pd.setMessage(getString(R.string.ConnectingToWwwJuick));
-                                    pd.setIndeterminate(true);
-                                    pd.show();
-                                    final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
-                                    new Thread("UserID obtainer") {
+                                } catch (final Exception e) {
+                                    runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            String fullName = value;
-                                            if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                                            try {
-                                                HttpGet httpGet = new HttpGet("http://juick.com/" + fullName + "/");
-                                                String retval = httpClient.execute(httpGet, new BasicResponseHandler());
-                                                String SEARCH_MARKER = "http://i.juick.com/a/";
-                                                int ix = retval.indexOf(SEARCH_MARKER);
-                                                if (ix < 0) {
-                                                    throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
-                                                }
-                                                int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
-                                                if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                                                    throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
-                                                }
-                                                final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        sp.edit().putString("myUserId", uidS).commit();
-                                                        action();
-                                                    }
-                                                });
-
-                                            } catch (final Exception e) {
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        Toast.makeText(MainActivity.this, getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
-                                                    }
-                                                });
-                                            } finally {
-                                                httpClient.close();
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        pd.hide();
-                                                    }
-                                                });
-                                            }
+                                            Toast.makeText(MainActivity.this, getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
                                         }
-                                    }.start();
-
-
+                                    });
+                                } finally {
+                                    httpClient.close();
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            pd.hide();
+                                        }
+                                    });
                                 }
                             }
-                        });
-
-                        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int whichButton) {
-                                restoreLastNavigationPosition();
-                            }
-                        });
-
-                        alert.show();
-
+                        }.start();
                     } else {
                         final Bundle args = new Bundle();
                         JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788"));
                         ms.setKind("my_home");
-                        args.putSerializable("messagesSource",ms);
+                        args.putSerializable("messagesSource", ms);
                         runDefaultFragmentWithBundle(args, this);
                     }
                 }
             });
-        }
-        if (sp.getBoolean("msrcSrachiki", false)) {
-            navigationItems.add(new NavigationItem(R.string.navigationSrachiki) {
-                @Override
-                void action() {
-                    final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api");
-                    ms.setKind("srachiki");
-                    args.putSerializable("messagesSource", ms);
-                    runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcUnread", false)) {
-            navigationItems.add(new NavigationItem(R.string.navigationUnread) {
-                @Override
-                void action() {
-                    final NavigationItem thisNi = this;
-                    final ProgressDialog pd = new ProgressDialog(MainActivity.this);
-                    pd.setIndeterminate(true);
-                    pd.setTitle(R.string.navigationUnread);
-                    pd.setCancelable(true);
-                    pd.show();
-                    UnreadSegmentsView.loadPeriods(MainActivity.this, new Utils.Function<Void, ArrayList<DatabaseService.Period>>() {
-                        @Override
-                        public Void apply(ArrayList<DatabaseService.Period> periods) {
-                            if (pd.isShowing()) {
-                                pd.cancel();
-                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                                final AlertDialog alerDialog;
-                                if (periods.size() == 0) {
-                                    alerDialog = builder
-                                            .setTitle(getString(R.string.UnreadSegments))
-                                            .setMessage(getString(R.string.YouHaveNotEnabledForUnreadSegments))
+            if (sp.getBoolean("msrcSrachiki", false)) {
+                navigationItems.add(new NavigationItem(R.string.navigationSrachiki) {
+                    @Override
+                    void action() {
+                        final Bundle args = new Bundle();
+                        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://s.jugregator.org/api");
+                        ms.setKind("srachiki");
+                        args.putSerializable("messagesSource", ms);
+                        runDefaultFragmentWithBundle(args, this);
+                    }
+                });
+            }
+            if (sp.getBoolean("msrcUnread", false)) {
+                navigationItems.add(new NavigationItem(R.string.navigationUnread) {
+                    @Override
+                    void action() {
+                        final NavigationItem thisNi = this;
+                        final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                        pd.setIndeterminate(true);
+                        pd.setTitle(R.string.navigationUnread);
+                        pd.setCancelable(true);
+                        pd.show();
+                        UnreadSegmentsView.loadPeriods(MainActivity.this, new Utils.Function<Void, ArrayList<DatabaseService.Period>>() {
+                            @Override
+                            public Void apply(ArrayList<DatabaseService.Period> periods) {
+                                if (pd.isShowing()) {
+                                    pd.cancel();
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                    final AlertDialog alerDialog;
+                                    if (periods.size() == 0) {
+                                        alerDialog = builder
+                                                .setTitle(getString(R.string.UnreadSegments))
+                                                .setMessage(getString(R.string.YouHaveNotEnabledForUnreadSegments))
+                                                .setCancelable(true)
+                                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                                        dialogInterface.dismiss();
+                                                        restoreLastNavigationPosition();
+                                                    }
+                                                }).create();
+                                    } else {
+                                        UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
+                                        final int myIndex = navigationItems.indexOf(thisNi);
+                                        alerDialog = builder
+                                                .setTitle(getString(R.string.ChooseUnreadSegment))
+                                                .setView(unreadSegmentsView)
+                                                .setCancelable(true)
+                                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                                        dialogInterface.dismiss();
+                                                        restoreLastNavigationPosition();
+                                                    }
+                                                }).create();
+                                        unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
+                                            @Override
+                                            public void onPeriodClicked(DatabaseService.Period period) {
+                                                alerDialog.dismiss();
+                                                int beforeMid = period.beforeMid;
+                                                Bundle args = new Bundle();
+                                                args.putSerializable(
+                                                        "messagesSource",
+                                                        new UnreadSegmentMessagesSource(
+                                                                getString(R.string.navigationUnread),
+                                                                MainActivity.this,
+                                                                period
+                                                        ));
+                                                getSupportActionBar().setSelectedNavigationItem(myIndex);
+                                                runDefaultFragmentWithBundle(args, thisNi);
+                                            }
+                                        });
+                                    }
+                                    alerDialog.show();
+                                    restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
+                                }
+                                return null;
+                            }
+                        });
+                        return;
+                    }
+                });
+            }
+            if (sp.getBoolean("msrcSaved", false)) {
+                navigationItems.add(new NavigationItem(R.string.navigationSaved) {
+                    @Override
+                    void action() {
+                        final Bundle args = new Bundle();
+                        args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
+                        runDefaultFragmentWithBundle(args, this);
+                    }
+                });
+            }
+            if (sp.getBoolean("msrcJubo", false)) {
+                navigationItems.add(new NavigationItem(R.string.navigationJuboRSS) {
+                    @Override
+                    void action() {
+                        final int myIndex = navigationItems.indexOf(this);
+                        String juboRssURL = sp.getString("juboRssURL", "");
+                        if (juboRssURL.length() == 0) {
+                            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                @Override
+                                public void withService(XMPPService service) {
+                                    boolean canAskJubo = false;
+                                    String message = getString(R.string.JuboRSSURLIsUnknown);
+                                    if (!service.juboOnline) {
+                                        boolean useXMPP = sp.getBoolean("useXMPP", false);
+                                        if (!useXMPP) {
+                                            message += getString(R.string.ICouldAskButXMPPIsOff);
+                                        } else {
+                                            if (service.botOnline) {
+                                                message += getString(R.string.JuboNotThere);
+                                            } else {
+                                                message += getString(R.string.ICouldButXMPPIfNotWorking);
+                                            }
+                                        }
+                                    } else {
+                                        canAskJubo = true;
+                                        message += getString(R.string.OrICanAskJuboNoe);
+                                    }
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
+                                            .setTitle(R.string.navigationJuboRSS)
+                                            .setMessage(message)
                                             .setCancelable(true)
-                                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            .setNeutralButton(getString(R.string.EnterJuboRSSURLManually), new DialogInterface.OnClickListener() {
                                                 @Override
-                                                public void onClick(DialogInterface dialogInterface, int i) {
-                                                    dialogInterface.dismiss();
-                                                    restoreLastNavigationPosition();
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    enterJuboURLManually(myIndex);
                                                 }
-                                            }).create();
-                                } else {
-                                    UnreadSegmentsView unreadSegmentsView = new UnreadSegmentsView(MainActivity.this, periods);
-                                    final int myIndex = navigationItems.indexOf(thisNi);
-                                    alerDialog = builder
-                                            .setTitle(getString(R.string.ChooseUnreadSegment))
-                                            .setView(unreadSegmentsView)
-                                            .setCancelable(true)
+                                            })
                                             .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialogInterface, int i) {
                                                     dialogInterface.dismiss();
                                                     restoreLastNavigationPosition();
                                                 }
-                                            }).create();
-                                    unreadSegmentsView.setListener(new UnreadSegmentsView.PeriodListener() {
-                                        @Override
-                                        public void onPeriodClicked(DatabaseService.Period period) {
-                                            alerDialog.dismiss();
-                                            int beforeMid = period.beforeMid;
-                                            Bundle args = new Bundle();
-                                            args.putSerializable(
-                                                    "messagesSource",
-                                                    new UnreadSegmentMessagesSource(
-                                                            getString(R.string.navigationUnread),
-                                                            MainActivity.this,
-                                                            period
-                                                            ));
-                                            getSupportActionBar().setSelectedNavigationItem(myIndex);
-                                            runDefaultFragmentWithBundle(args, thisNi);
-                                        }
-                                    });
-                                }
-                                alerDialog.show();
-                                restyleChildrenOrWidget(alerDialog.getWindow().getDecorView());
-                            }
-                            return null;
-                        }
-                    });
-                    return;
-                }
-            });
-        }
-        if (sp.getBoolean("msrcSaved", false)) {
-            navigationItems.add(new NavigationItem(R.string.navigationSaved) {
-                @Override
-                void action() {
-                    final Bundle args = new Bundle();
-                    args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
-                    runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcJubo", false)) {
-            navigationItems.add(new NavigationItem(R.string.navigationJuboRSS) {
-                @Override
-                void action() {
-                    final int myIndex = navigationItems.indexOf(this);
-                    String juboRssURL = sp.getString("juboRssURL", "");
-                    if (juboRssURL.length() == 0) {
-                        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                            @Override
-                            public void withService(XMPPService service) {
-                                boolean canAskJubo = false;
-                                String message = getString(R.string.JuboRSSURLIsUnknown);
-                                if (!service.juboOnline) {
-                                    boolean useXMPP = sp.getBoolean("useXMPP", false);
-                                    if (!useXMPP) {
-                                        message += getString(R.string.ICouldAskButXMPPIsOff);
-                                    } else {
-                                        if (service.botOnline) {
-                                            message += getString(R.string.JuboNotThere);
-                                        } else {
-                                            message += getString(R.string.ICouldButXMPPIfNotWorking);
-                                        }
-                                    }
-                                } else {
-                                    canAskJubo = true;
-                                    message += getString(R.string.OrICanAskJuboNoe);
-                                }
-                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
-                                        .setTitle(R.string.navigationJuboRSS)
-                                        .setMessage(message)
-                                        .setCancelable(true)
-                                        .setNeutralButton(getString(R.string.EnterJuboRSSURLManually), new DialogInterface.OnClickListener() {
+                                            });
+                                    if (canAskJubo) {
+                                        builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                enterJuboURLManually(myIndex);
-                                            }
-                                        })
-                                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialogInterface, int i) {
-                                                dialogInterface.dismiss();
-                                                restoreLastNavigationPosition();
+                                                askJuboFirst(myIndex);
                                             }
                                         });
-                                if (canAskJubo) {
-                                    builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            askJuboFirst(myIndex);
-                                        }
-                                    });
+                                    }
+                                    builder.show();
                                 }
-                                builder.show();
-                            }
-                        });
-                    } else {
-                        openJuboMessages(myIndex);
+                            });
+                        } else {
+                            openJuboMessages(myIndex);
+                        }
                     }
+
+                });
+            }
+
+            final boolean compressedMenu = sp.getBoolean("compressedMenu", false);
+            float menuFontScale = 1;
+            try {
+                menuFontScale = Float.parseFloat(sp.getString("menuFontScale", "1.0"));
+            } catch (Exception e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            final float finalMenuFontScale = menuFontScale;
+            BaseAdapter navigationAdapter = new BaseAdapter() {
+                @Override
+                public int getCount() {
+                    return navigationItems.size();
                 }
 
-            });
-        }
-
-        final boolean compressedMenu = sp.getBoolean("compressedMenu", false);
-        float menuFontScale = 1;
-        try {
-            menuFontScale = Float.parseFloat(sp.getString("menuFontScale", "1.0"));
-        } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-        final float finalMenuFontScale = menuFontScale;
-        BaseAdapter navigationAdapter = new BaseAdapter() {
-            @Override
-            public int getCount() {
-                return navigationItems.size();
-            }
-
-            @Override
-            public Object getItem(int position) {
-                return navigationItems.get(position);
-            }
-
-            @Override
-            public long getItemId(int position) {
-                return position;
-            }
-
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                final int screenHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
-                View retval = convertView;
-                if (retval == null) {
-                    retval = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                @Override
+                public Object getItem(int position) {
+                    return navigationItems.get(position);
                 }
-                if (retval instanceof TextView) {
-                    TextView tv = (TextView)retval;
-                    tv.setText(getString(navigationItems.get(position).labelId));
-                    if (compressedMenu) {
-                        int minHeight = (int)((screenHeight * 0.7) / getCount());
-                        tv.setMinHeight(minHeight);
-                        tv.setMinimumHeight(minHeight);
+
+                @Override
+                public long getItemId(int position) {
+                    return position;
+                }
+
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    final int screenHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
+                    View retval = convertView;
+                    if (retval == null) {
+                        retval = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
                     }
-                    tv.measure(1000, 1000);
-                    tv.setTextSize(22 * finalMenuFontScale);
+                    if (retval instanceof TextView) {
+                        TextView tv = (TextView) retval;
+                        tv.setText(getString(navigationItems.get(position).labelId));
+                        if (compressedMenu) {
+                            int minHeight = (int) ((screenHeight * 0.7) / getCount());
+                            tv.setMinHeight(minHeight);
+                            tv.setMinimumHeight(minHeight);
+                        }
+                        tv.measure(1000, 1000);
+                        tv.setTextSize(22 * finalMenuFontScale);
+                    }
+                    return retval;
                 }
-                return retval;
-            }
-        };
+            };
 
 
-        ActionBar bar = getSupportActionBar();
-        bar.setListNavigationCallbacks(navigationAdapter, this);
+            ActionBar bar = getSupportActionBar();
+            bar.setListNavigationCallbacks(navigationAdapter, this);
 
+        }
     }
 
     private void askJuboFirst(final int juboIndex) {
@@ -583,7 +570,7 @@ public class MainActivity extends FragmentActivity implements
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        sp.edit().putString("juboRssURL", ""+et.getText()).commit();
+                        sp.edit().putString("juboRssURL", "" + et.getText()).commit();
                         openJuboMessages(myIndex);
                     }
                 })
@@ -842,7 +829,7 @@ public class MainActivity extends FragmentActivity implements
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         boolean pressed = view.isPressed();
         if (view instanceof AbsListView) {
-            ((AbsListView)view).setCacheColorHint(colorTheme.getBackground(pressed));
+            ((AbsListView) view).setCacheColorHint(colorTheme.getBackground(pressed));
         }
         if (view instanceof EditText) {
             EditText et = (EditText) view;
