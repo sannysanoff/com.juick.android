@@ -293,10 +293,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         view.setMinimumHeight(HEIGHT);
                         ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
                         if (imageLoader == null) {
-                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(images.get(i), view, HEIGHT, ll, false), false);
+                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(images.get(i), view, HEIGHT, ll, false, images.size() > 1), false);
                             imageLoaders.put(i, imageLoader);
                         } else if (imageLoader.loader == null) {
-                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(images.get(i), view, HEIGHT, ll, imageLoader.useOriginal), imageLoader.useOriginal);
+                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(images.get(i), view, HEIGHT, ll, imageLoader.useOriginal, images.size() > 1), imageLoader.useOriginal);
                             imageLoaders.put(i, imageLoader);
                         } else {
                             imageLoader.loader.setDestinationView(view);
@@ -684,13 +684,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         TextView progressBarText;
         DefaultHttpClient httpClient;
         HttpGet httpGet;
+        boolean notOnlyImage;
 
         String suffix;
 
-        public ImageLoader(final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage) {
+        public ImageLoader(final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
             this.url = url;
             this.listRow = listRow;
             this.destHeight = destHeight;
+            this.notOnlyImage = notOnlyImage;
             activity = (Activity)getContext();
             this.imageHolder = imageHolder;
             updateUIBindings();
@@ -865,9 +867,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             imageH = opts.outHeight;
             int screenWidth = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth();
             double scaleFactor = (((double)destHeight) / imageH);
-            if (scaleFactor * imageW > screenWidth) {
+            double screenWidthLimiter = notOnlyImage ? 0.8 : 0.96;   // gallery scrolls poorly if image width = screen width
+            if (scaleFactor * imageW > (screenWidth * screenWidthLimiter)) {
                 // image does not fit by width, gallery will crop it. Preventing this:
-                scaleFactor = (((double)screenWidth) / imageW);
+                scaleFactor = (((double)(screenWidth * screenWidthLimiter)) / imageW);
                 final Gallery gallery = (Gallery) listRow.findViewById(R.id.gallery);
                 if (gallery.getAdapter().getCount() == 1) { // no other children
                     //final LinearLayout content = (LinearLayout)listRow.findViewById(R.id.content);
