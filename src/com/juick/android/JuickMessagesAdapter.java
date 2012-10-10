@@ -75,7 +75,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public static Pattern msgPattern = Pattern.compile("#[0-9]+");
 //    public static Pattern usrPattern = Pattern.compile("@[a-zA-Z0-9\\-]{2,16}");
     private static String Replies;
-    private int type;
+    public int type;
     private boolean allItemsEnabled = true;
 
     public static Set<String> filteredOutUsers;
@@ -631,15 +631,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public void addAllMessages(ArrayList<JuickMessage> messages) {
-        Set<String> filteredOutUsers1 = getFilteredOutUsers(getContext());
         for (JuickMessage message : messages) {
-            if (filteredOutUsers1.contains(message.User.UName)) {
-                if (type == TYPE_THREAD && message.RID == 0) {
-                    // allow filtered as topic starter
-                } else {
-                    continue;
-                }
-            }
             boolean canAdd = true;
             if (message.RID > 0) {
                 // don't add duplicate replies coming from any source (XMPP/websocket)

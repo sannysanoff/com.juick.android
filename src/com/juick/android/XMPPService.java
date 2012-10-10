@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.juick.android.api.JuickMessage;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
@@ -28,7 +29,7 @@ public class XMPPService extends Service {
     Handler handler;
     Chat juickChat;
     Chat juboChat;
-    ArrayList<Utils.Function<Void,Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
+    ArrayList<Utils.Function<Void, Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
     public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
     public static final String ACTION_LAUNCH_MESSAGELIST = "com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
@@ -39,7 +40,11 @@ public class XMPPService extends Service {
     static HashMap<Integer, JuickIncomingMessage> cachedTopicStarters = new HashMap<Integer, XMPPService.JuickIncomingMessage>();
     public String juboRSS;
     public String juboRSSError;
-
+    public static JuboMessageFilter juboMessageFilter;
+    public static JuickBlacklist juickBlacklist;
+    public static JuboMessageFilter juboMessageFilter_tmp;  // restored from file until fresh comes
+    public static JuickBlacklist juickBlacklist_tmp; // restored from file until fresh comes
+    public static long lastSuccessfulConnect;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -64,18 +69,25 @@ public class XMPPService extends Service {
 
 
     Thread currentThread;
+    SharedPreferences sp;
 
 
-    String JUICK_ID="juick@juick.com/Juick";
-    String JUBO_ID="jubo@nologin.ru/jubo";
+    String JUICK_ID = "juick@juick.com/Juick";
+    String JUBO_ID = "jubo@nologin.ru/jubo";
     Exception lastException;
 
     public void startup() {
         lastException = null;
         botOnline = false;
         juboOnline = false;
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sp == null)
+            sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
+        boolean useXMPPOnlyForBL = sp.getBoolean("useXMPPOnlyForBL", false);
+        if (useXMPP && useXMPPOnlyForBL && juboMessageFilter != null && juboMessageFilter != null) {
+            // we have everything.
+            useXMPP = false;
+        }
         Gson gson = new Gson();
         final XMPPPreference.Value connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPPreference.Value.class);
         synchronized (connections) {
@@ -94,7 +106,7 @@ public class XMPPService extends Service {
                             //configuration.setSASLAuthenticationEnabled(secure);
                             //configuration.setCompressionEnabled(true);
                             int delay = 1000;
-                            while(true) {
+                            while (true) {
                                 if (currentThread != Thread.currentThread()) return;        // we are abandoned!
                                 if (connection != null && connection.isConnected()) break;
                                 connection = new XMPPConnection(configuration);
@@ -111,8 +123,8 @@ public class XMPPService extends Service {
                                     return;
                                 }
                                 delay *= 2;
-                                if (delay > 15*60*1000) {
-                                    delay = 15*60*1000;
+                                if (delay > 15 * 60 * 1000) {
+                                    delay = 15 * 60 * 1000;
                                 }
                             }
                             reconnectDelay = 10000;     // reset value
@@ -158,7 +170,7 @@ public class XMPPService extends Service {
                             if (currentThread() == currentThread) {
                                 String message = e.toString();
                                 if (message.toLowerCase().indexOf("auth") >= 0)
-                                    message = "!"+message;
+                                    message = "!" + message;
                                 cleanup(message);
                             }
                             if (e.getWrappedThrowable() instanceof SocketException) {
@@ -169,6 +181,7 @@ public class XMPPService extends Service {
                         }
                         try {
                             if (currentThread() != currentThread) return;
+                            lastSuccessfulConnect = System.currentTimeMillis();
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -181,7 +194,7 @@ public class XMPPService extends Service {
                             juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
                                 @Override
                                 public void processMessage(Chat chat, Message message) {
-                                    for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void,Message>>) messageReceivers.clone()) {
+                                    for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void, Message>>) messageReceivers.clone()) {
                                         messageReceiver.apply(message);
                                     }
                                 }
@@ -218,6 +231,25 @@ public class XMPPService extends Service {
                                     boolean fromJubo = presence.getFrom().equals(JUBO_ID);
                                     if (fromJubo) {
                                         juboOnline = presence.isAvailable();
+
+                                        Chat chat = connections.get(connections.size() - 1).getChatManager().createChat(JUBO_ID, new MessageListener() {
+                                            @Override
+                                            public void processMessage(Chat chat, Message message) {
+                                                String mbody = message.getBody();
+                                                if (mbody.length() > 0) {
+                                                    String firstLine = mbody.split("\n")[0];
+                                                    if (firstLine.contains("на которые вы подписаны")) {
+                                                        parseJuboSubscriptions(mbody);
+
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        try {
+                                            chat.sendMessage("ls");
+                                        } catch (XMPPException e) {
+                                            //
+                                        }
                                     }
                                     if (presence.getFrom().equals(JUICK_ID)) {
                                         botOnline = presence.isAvailable();
@@ -241,6 +273,7 @@ public class XMPPService extends Service {
                                             if (sendOn.equals("off")) {
                                                 sendJuickMessage("OFF");
                                             }
+                                            sendJuickMessage("BL");
                                         }
                                     }
                                 }
@@ -260,6 +293,7 @@ public class XMPPService extends Service {
                         handler.removeCallbacksAndMessages(null);
                         handler.postDelayed(new Runnable() {
                             final Connection retryConnection = connection;
+
                             @Override
                             public void run() {
                                 scheduledForReconnect = false;
@@ -274,8 +308,216 @@ public class XMPPService extends Service {
         }
     }
 
+    public static JuboMessageFilter getAnyJuboMessageFilter() {
+        if (juboMessageFilter != null) return juboMessageFilter;
+        if (juboMessageFilter_tmp != null) return juboMessageFilter_tmp;
+        return null;
+    }
+
+    public static JuickBlacklist getAnyJuickBlacklist() {
+        if (juickBlacklist != null) return juickBlacklist;
+        if (juickBlacklist_tmp != null) return juickBlacklist_tmp;
+        return null;
+    }
+
+    public static class JuickBlacklist {
+        public ArrayList<String> stopUsers = new ArrayList<String>();
+        public ArrayList<String> stopTags = new ArrayList<String>();
+
+        public boolean allowMessage(JuickMessage message) {
+            for (String stopTag : stopTags) {
+                for (String tag : message.tags) {
+                    if (tag.startsWith("*")) tag = tag.substring(1);
+                    if (tag.toLowerCase().equals(stopTag)) return false;
+                }
+            }
+            for (String stopUser : stopUsers) {
+                if (stopUser.equals(message.User.UName.toLowerCase())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public boolean valid() {
+            return stopUsers != null && stopTags != null;
+        }
+
+        public String info() {
+            return (stopUsers.size()+stopTags.size())+" rules";
+        }
+    }
+
+    public static class JuboMessageFilter {
+        public ArrayList<String> stopWords = new ArrayList<String>();
+        public ArrayList<String> stopTags = new ArrayList<String>();
+        public ArrayList<String> subscribedWords = new ArrayList<String>();
+        public ArrayList<String> subscribedTags = new ArrayList<String>();
+
+        public boolean allowXMPPMessage(IncomingMessage message, SharedPreferences sp) {
+            if (message instanceof JuickThreadIncomingMessage) {
+                JuickSubscriptionIncomingMessage jtim = (JuickSubscriptionIncomingMessage)message;
+                for (String stopTag : stopTags) {
+                    for (String tag : jtim.tags) {
+                        if (tag.startsWith("*")) tag = tag.substring(1);
+                        if (tag.toLowerCase().equals(stopTag)) return false;
+                    }
+                }
+            }
+            String s = message.getBody().toLowerCase();
+            StringBuilder sb = preparePipedStringBuilder(s);
+            for (String stopWord : stopWords) {
+                if (sb.indexOf(stopWord) != -1) return false;
+            }
+            if (sp.getBoolean("juboFixJuickKeyword", true)) {
+                if (s.startsWith("http://i.juick.com/") && subscribedWords.indexOf("juick") != -1) {
+                    // jubo selectes these messages because of the "juick" word inside url.
+                    // i don't want that, Reparse manually.
+                    int endOfLine = s.indexOf("\n");
+                    sb.delete(0, endOfLine+1);
+                    // now we do not have url in the body.
+                    boolean pass = false;
+                    for (String subscribedWord : subscribedWords) {
+                        if (sb.indexOf(subscribedWord) != -1) {
+                            pass = true;
+                            break;
+                        }
+                    }
+                    if (!pass) {
+                        // whitelist not hit. go away.
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private StringBuilder preparePipedStringBuilder(String s) {
+            StringBuilder sb = new StringBuilder();
+            for(int i=0; i<s.length(); i++) {
+                char cha = s.charAt(i);
+                if (Character.isLetterOrDigit(cha) || cha == '#' || cha == '@') {
+                    sb.append(cha);
+                } else {
+                    sb.append("|");
+                }
+            }
+            return sb;
+        }
+
+        // only does blacklisting for ALL MESSAGES
+        public boolean allowMessage(JuickMessage message) {
+            for (String stopTag : stopTags) {
+                for (String tag : message.tags) {
+                    if (tag.startsWith("*")) tag = tag.substring(1);
+                    if (tag.toLowerCase().equals(stopTag)) return false;
+                }
+            }
+            StringBuilder sb = preparePipedStringBuilder(message.Text);
+            for (String stopWord : stopWords) {
+                if (sb.indexOf(stopWord) != -1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public boolean valid() {
+            return stopTags != null && stopWords != null && subscribedTags != null && subscribedWords != null;
+        }
+
+        public String info() {
+            return (stopTags.size() + stopWords.size() + subscribedTags.size() + subscribedWords.size()) + " rules";
+        }
+    }
+
+    private void parseJuboSubscriptions(String mbody) {
+        String[] split = mbody.split("\n");
+        boolean okToParse = false;
+        JuboMessageFilter filter = new JuboMessageFilter();
+        for (String s : split) {
+            if (s.startsWith("Ключевые слова")) {
+                okToParse = true;
+                continue;
+            }
+            s = s.trim();
+            if (okToParse && s.length() > 0) {
+                boolean tag = s.indexOf("{tag:*") != -1;
+                boolean stop = s.indexOf("-{") != -1 || s.indexOf("{tag:-*") != -1 || s.startsWith("-");
+                if (tag) {
+                    if (stop) {
+                        if (s.startsWith("-")) s = s.substring(1);
+                        if (s.indexOf("tag:-*") != -1) s = s.replace("tag:-*","");
+                    }
+                    if (tag) {
+                        s = s.replace("{tag:","").replace("}","").replace("*","");
+                    }
+                }
+                if (tag && stop) filter.stopTags.add(s.toLowerCase());
+                if (tag && !stop) filter.subscribedTags.add(s.toLowerCase());
+                if (!tag && stop) filter.stopWords.add(s.toLowerCase());
+                if (!tag && !stop) filter.subscribedWords.add(s.toLowerCase());
+            }
+        }
+        this.juboMessageFilter = filter;
+        this.juboMessageFilter_tmp = null;
+        try {
+            FileOutputStream fos = new FileOutputStream(getCachedJuboFile());
+            fos.write(new Gson().toJson(this.juboMessageFilter).getBytes());
+            fos.close();
+        } catch (IOException e) {
+            //
+        }
+        maybeTerminateXMPP();
+    }
+
+    private File getCachedJuboFile() {
+        return new File(getCacheDir(),"cached_jubo_filter.json");
+    }
+
+    private void parseJuickBlacklist(String mbody) {
+        String[] split = mbody.split("\n");
+        boolean okToParse = false;
+        JuickBlacklist filter = new JuickBlacklist();
+        for (String s : split) {
+            if (s.startsWith("Your blacklist:")) {
+                okToParse = true;
+                continue;
+            }
+            s = s.trim();
+            if (okToParse && s.length() > 0) {
+                if (s.startsWith("@")) {
+                    filter.stopUsers.add(s.substring(1).toLowerCase());
+                }
+                if (s.startsWith("*")) {
+                    filter.stopTags.add(s.substring(1).toLowerCase());
+                }
+            }
+        }
+        this.juickBlacklist = filter;
+        this.juickBlacklist_tmp = null;
+        try {
+            FileOutputStream fos = new FileOutputStream(getCachedJuickFile());
+            fos.write(new Gson().toJson(this.juickBlacklist).getBytes());
+            fos.close();
+        } catch (IOException e) {
+            //
+        }
+        maybeTerminateXMPP();
+
+    }
+
+    private void maybeTerminateXMPP() {
+        if (juickBlacklist != null && juboMessageFilter != null && sp.getBoolean("useXMPPOnlyForBL", false)) {
+            cleanup("blacklists obtained OK");
+        }
+    }
+
+    private File getCachedJuickFile() {
+        return new File(getCacheDir(),"cached_juick_blacklist.json");
+    }
+
     private boolean verboseXMPP() {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         return sp.getBoolean("xmpp_verbose", false);
     }
 
@@ -287,7 +529,7 @@ public class XMPPService extends Service {
         public void processPacket(Packet packet) {
             messagesReceived++;
             if (packet instanceof Message) {
-                Message msg = (Message)packet;
+                Message msg = (Message) packet;
                 if (JUBO_ID.equalsIgnoreCase(packet.getFrom())) {
                     handleJuickMessage(msg);
                 } else if (JUICK_ID.equals(packet.getFrom())) {
@@ -317,7 +559,7 @@ public class XMPPService extends Service {
             while (iterator.hasNext()) {
                 IncomingMessage next = iterator.next();
                 if (next instanceof JuickIncomingMessage) {
-                    JuickIncomingMessage jim = (JuickIncomingMessage)next;
+                    JuickIncomingMessage jim = (JuickIncomingMessage) next;
                     if (jim.getPureThread() == mid) {
                         if (keepReplyNotifications && jim instanceof JuickThreadIncomingMessage) {
                             continue;
@@ -366,7 +608,7 @@ public class XMPPService extends Service {
         try {
             if (juickChat != null) juickChat.sendMessage("#" + finalTopicMessageId);
         } catch (XMPPException e) {
-            Toast.makeText(this, "requestMessageBody: "+e.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "requestMessageBody: " + e.toString(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -375,11 +617,11 @@ public class XMPPService extends Service {
 
     public void askJuboRSS() {
         juboRSSError = "No response from JuBo";
-        juboChat = connections.get(connections.size()-1).getChatManager().createChat(JUBO_ID, new MessageListener() {
+        juboChat = connections.get(connections.size() - 1).getChatManager().createChat(JUBO_ID, new MessageListener() {
             @Override
             public void processMessage(Chat chat, Message message) {
                 String mbody = message.getBody();
-                if (mbody.contains("rss start")) {
+                if (mbody.contains("rss start")) {              // issue 'rss start' to start
                     try {
                         juboRSSError = "Response to 'rss start' did not come yet";
                         juboChat.sendMessage("rss start");
@@ -387,7 +629,7 @@ public class XMPPService extends Service {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
                 }
-                if (mbody.contains("http://") && mbody.contains("/rss/")) {
+                if (mbody.contains("http://") && mbody.contains("/rss/")) {     // rss start response
                     int start = mbody.indexOf("http://");
                     int end = mbody.indexOf(".xml");
                     if (start != -1 && end != -1) {
@@ -457,16 +699,18 @@ public class XMPPService extends Service {
             super(from, body);
             this.messageNo = messageNo;
         }
+
         public String getFrom() {
             if (from.startsWith("@")) return from;
-            return "@"+from;
+            return "@" + from;
         }
+
         public int getPureThread() {
             try {
                 int ix = messageNo.indexOf("/");
-                if (ix ==-1) return Integer.parseInt(messageNo.substring(1));
+                if (ix == -1) return Integer.parseInt(messageNo.substring(1));
                 int ix2 = messageNo.indexOf("#");   // -1 not found
-                return Integer.parseInt(messageNo.substring(ix2+1, ix));
+                return Integer.parseInt(messageNo.substring(ix2 + 1, ix));
             } catch (NumberFormatException e) {
                 return -1;
             }
@@ -505,8 +749,10 @@ public class XMPPService extends Service {
     }
 
     public static class JuickSubscriptionIncomingMessage extends JuickIncomingMessage {
-        public JuickSubscriptionIncomingMessage(String from, String body, String messageNo) {
+        String[] tags;
+        public JuickSubscriptionIncomingMessage(String from, String body, String messageNo, String[] tags) {
             super(from, body, messageNo);
+            this.tags = tags;
         }
     }
 
@@ -523,10 +769,12 @@ public class XMPPService extends Service {
         boolean silent = false;
         synchronized (incomingMessages) {
             String body = message.getBody();
-            if (body.startsWith("Найденные") && JUBO_ID.equalsIgnoreCase(message.getFrom()) || body.startsWith("Recommended by @") && JUICK_ID.equals(message.getFrom())) {
+            boolean isFromJuBo = JUBO_ID.equalsIgnoreCase(message.getFrom());
+            boolean isFromJuick = JUICK_ID.equals(message.getFrom());
+            if (body.startsWith("Найденные") && isFromJuBo || body.startsWith("Recommended by @") && isFromJuick) {
                 int cr = body.indexOf("\n");
                 if (cr != -1 && body.length() > cr) {
-                    body = body.substring(cr+1);
+                    body = body.substring(cr + 1);
                 }
             }
             String[] split = body.split("\n");
@@ -538,14 +786,14 @@ public class XMPPService extends Service {
                     String msgno = split[split.length - 1].trim().split(" ")[0].trim();
                     if (msgno.startsWith("#")) {
                         StringBuilder sb = new StringBuilder();
-                        for(int i=3; i<split.length-2; i++) {
+                        for (int i = 3; i < split.length - 2; i++) {
                             sb.append(split[i]);
                             sb.append("\n");
                         }
                         JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno);
                         XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getPureThread());
                         if (topicStarter == null) {
-                            topicStarter = new JuickThreadIncomingMessage("@???","","#"+threadIncomingMessage.getPureThread());    // put placeholder for details
+                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getPureThread());    // put placeholder for details
                             cachedTopicStarters.put(threadIncomingMessage.getPureThread(), topicStarter);
                             requestMessageBody(threadIncomingMessage.getPureThread());
                         } else {
@@ -570,12 +818,12 @@ public class XMPPService extends Service {
                                 String msgno = split[split.length - 1].trim().split(" ")[0].trim();
                                 if (msgno.startsWith("#")) {
                                     StringBuilder sb = new StringBuilder();
-                                    for(int i=1; i<split.length-4; i++) {
+                                    for (int i = 1; i < split.length - 4; i++) {
                                         sb.append(split[i]);
                                         sb.append("\n");
                                     }
-                                    if (sb.length() > 1 && sb.charAt(sb.length()-2) == '\n') {
-                                        sb. setLength(sb.length()-1);       // remove last empty line
+                                    if (sb.length() > 1 && sb.charAt(sb.length() - 2) == '\n') {
+                                        sb.setLength(sb.length() - 1);       // remove last empty line
 
                                     }
                                     JuickPrivateIncomingMessage object = new JuickPrivateIncomingMessage(username, sb.toString(), msgno);
@@ -588,18 +836,19 @@ public class XMPPService extends Service {
                             }
                         }
                     } else {
-                        String last = split[split.length-1];
+                        String last = split[split.length - 1];
                         String[] msgNoAndURL = last.trim().split(" ");
                         if (msgNoAndURL.length >= 2 && msgNoAndURL[0].trim().startsWith("#")) {
                             String msgNo = msgNoAndURL[0].trim();
-                            String url = msgNoAndURL[msgNoAndURL.length-1].trim();
-                            if (url.equals("http://juick.com/"+msgNo.substring(1))) {
+                            String url = msgNoAndURL[msgNoAndURL.length - 1].trim();
+                            if (url.equals("http://juick.com/" + msgNo.substring(1))) {
                                 StringBuilder sb = new StringBuilder();
-                                for(int i=1; i<split.length-1; i++) {
+                                for (int i = 1; i < split.length - 1; i++) {
                                     sb.append(split[i]);
                                     sb.append("\n");
                                 }
-                                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo);
+                                String[] tags = head.substring(colon+1).split(" ");
+                                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, tags);
                                 JuickIncomingMessage topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getPureThread());
                                 if (topicStarter != null && topicStarter.getBody().length() == 0) {
                                     cachedTopicStarters.put(subscriptionIncomingMessage.getPureThread(), subscriptionIncomingMessage);
@@ -629,25 +878,41 @@ public class XMPPService extends Service {
 
             }
             if (handled == null && !silent) {
-                JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), body);
-                saveMessage(messag);
-                incomingMessages.add(messag);
-                handled = messag;
+                if (isFromJuBo) {
+                    silent = true;
+                    // keep silence
+                } else if (isFromJuick && message.getBody().startsWith("Your blacklist:")) {
+                    parseJuickBlacklist(message.getBody());
+                    silent = true;
+                } else {
+                    JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), body);
+                    saveMessage(messag);
+                    incomingMessages.add(messag);
+                    handled = messag;
+                }
             }
-        }
-        if (handled != null) {
-            Set<String> filteredOutUsers = JuickMessagesAdapter.getFilteredOutUsers(this);
-            String fromm = handled.getFrom();
-            if (fromm.startsWith("@")) {
-                fromm = fromm.substring(1);
-            }
-            if (filteredOutUsers.contains(fromm)) {
-                // kill-em
-                removeMessageFile(handled.id);
-                incomingMessages.remove(handled);
-                silent = true;
-            }
+            if (handled != null) {
+                Set<String> filteredOutUsers = JuickMessagesAdapter.getFilteredOutUsers(this);
+                String fromm = handled.getFrom();
+                if (fromm.startsWith("@")) {
+                    fromm = fromm.substring(1);
+                }
+                boolean shouldDelete = filteredOutUsers.contains(fromm);
 
+                if (!shouldDelete) {
+                    if (isFromJuBo && getAnyJuboMessageFilter() != null) {
+                        shouldDelete = !getAnyJuboMessageFilter().allowXMPPMessage(handled, sp);
+                    }
+                }
+
+                if (shouldDelete) {
+                    // kill-em
+                    removeMessageFile(handled.id);
+                    incomingMessages.remove(handled);
+                    silent = true;
+                }
+
+            }
         }
         if (!silent)
             sendMyBroadcast();
@@ -705,6 +970,14 @@ public class XMPPService extends Service {
 
     public void cleanup(final String reason) {
         synchronized (connections) {
+            if (juickBlacklist != null) {
+                juickBlacklist_tmp = juickBlacklist;
+                juickBlacklist = null;
+            }
+            if (juboMessageFilter != null) {
+                juboMessageFilter_tmp = juboMessageFilter;
+                juboMessageFilter = null;
+            }
             for (XMPPConnection connection : connections) {
                 if (connection != null) {
                     try {
@@ -712,7 +985,6 @@ public class XMPPService extends Service {
                     } catch (Exception e) {
                         //
                     }
-                    connection = null;
                     if (currentThread != null) {
                         currentThread.interrupt();
                         currentThread = null;
@@ -724,18 +996,52 @@ public class XMPPService extends Service {
                             @Override
                             public void run() {
                                 if (verboseXMPP() || reason.startsWith("!"))
-                                    Toast.makeText(XMPPService.this, "XMPP Disconnected: "+reason, Toast.LENGTH_LONG).show();
+                                    Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
                 }
             }
+            connections.clear();
+
+        }
+    }
+
+    public static String readFile(File f) {
+        if (!f.exists()) return null;
+        try {
+            FileInputStream fis = new FileInputStream(f);
+            byte[] arr = new byte[1024];
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while(true) {
+                int len = fis.read(arr);
+                if (len < 1) break;
+                baos.write(arr, 0, len);
+            }
+            fis.close();
+            return new String(baos.toByteArray());
+        } catch (IOException e) {
+            return null;
         }
     }
 
     @Override
     public void onCreate() {
         ExceptionReporter.register(this);
+        String cachedJubo = readFile(getCachedJuboFile());
+        if (cachedJubo != null) {
+            juboMessageFilter_tmp = new Gson().fromJson(cachedJubo, JuboMessageFilter.class);
+            if (juboMessageFilter_tmp != null && !juboMessageFilter_tmp.valid()) {
+                juboMessageFilter_tmp = null;
+            }
+        }
+        String cachedJuick = readFile(getCachedJuickFile());
+        if (cachedJuick != null) {
+            juickBlacklist_tmp = new Gson().fromJson(cachedJubo, JuickBlacklist.class);
+            if (juickBlacklist_tmp != null && !juickBlacklist_tmp.valid()) {
+                juickBlacklist_tmp = null;
+            }
+        }
         handler = new Handler();
         super.onCreate();
         File savedMessagesDirectory = getSavedMessagesDirectory();
@@ -756,6 +1062,7 @@ public class XMPPService extends Service {
         if (incomingMessages.size() > 0) {
             XMPPMessageReceiver.updateInfo(this, incomingMessages.size(), true);
         }
+
 
     }
 

@@ -586,6 +586,13 @@
     <string name="OnlyWorksWithAboveCheckboxOn">Only works with above checkbox on</string>
     <string name="OlderFeatures">Older features..</string>
     <string name="EndOfMessages">No more messages</string>
+    <string name="OnlyUseToDownloadBL">Only use to download BL</string>
+    <string name="DisconnectAsSoonAsBLDownloaded">Disconnect as soon as BL is obtained</string>
+    <string name="JuBoIntegration">JuBo integration</string>
+    <string name="JuBoRSSReader">JuBo RSS reader</string>
+    <string name="AddThisSourceToTheList">Add this source to the navigation list</string>
+    <string name="FixJuboJuickKeyword">Fix JuBo \'juick\' keyword</string>
+    <string name="ExcludeJuickImageMessages">Exclude messages with image attachment and subscribed juick keyword appearing only in image URL</string>
 
 
 </resources>

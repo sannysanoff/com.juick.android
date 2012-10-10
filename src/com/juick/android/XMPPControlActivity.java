@@ -10,6 +10,8 @@ import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.XMPPConnection;
 
+import java.util.Date;
+
 /**
  * Created with IntelliJ IDEA.
  * User: san
@@ -30,6 +32,10 @@ public class XMPPControlActivity extends Activity {
         final TextView lastException = (TextView) findViewById(R.id.last_exception);
         final TextView messagesReceived = (TextView) findViewById(R.id.messages_received);
         final TextView juickbot = (TextView) findViewById(R.id.xmpp_juickbot);
+        final TextView jubobot = (TextView) findViewById(R.id.xmpp_jubobot);
+        final TextView juickBlacklist = (TextView) findViewById(R.id.xmpp_juickblacklist);
+        final TextView juboBlacklist = (TextView) findViewById(R.id.xmpp_juboblacklist);
+        final TextView lastConnect = (TextView) findViewById(R.id.xmpp_last_connect);
         final Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final Button retry = (Button) findViewById(R.id.retry);
         retry.setOnClickListener(new View.OnClickListener() {
@@ -73,7 +79,21 @@ public class XMPPControlActivity extends Activity {
                         lastException.setText(service.lastException != null ? service.lastException.toString() : " --- ");
                         messagesReceived.setText(""+service.messagesReceived);
                         juickbot.setText(service.botOnline ? "ONLINE" : "offline");
-                        handler.postDelayed(thiz, 200);
+                        jubobot.setText(service.juboOnline ? "ONLINE" : "offline");
+                        if (XMPPService.juickBlacklist != null) {
+                            juickBlacklist.setText("Refreshed on connect; "+XMPPService.juickBlacklist.info());
+                        } else
+                            if (XMPPService.juickBlacklist_tmp != null) {
+                                juickBlacklist.setText("Cached; "+XMPPService.juickBlacklist_tmp.info());
+                            }
+                        if (XMPPService.juboMessageFilter != null) {
+                            juboBlacklist.setText("Refreshed on connect; "+XMPPService.juboMessageFilter.info());
+                        }
+                        if (XMPPService.juboMessageFilter_tmp != null) {
+                            juboBlacklist.setText("Cached; "+XMPPService.juboMessageFilter_tmp.info());
+                        }
+                        lastConnect.setText(XMPPService.lastSuccessfulConnect == 0 ? "never" : new Date(XMPPService.lastSuccessfulConnect).toString());
+                        handler.postDelayed(thiz, 2000);
                     }
                 });
 

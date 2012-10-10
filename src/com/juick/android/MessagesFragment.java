@@ -40,6 +40,8 @@ import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Ugnich Anton
@@ -228,7 +230,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 final Utils.Function<Void, RetainedData> then = new Utils.Function<Void, RetainedData>() {
                     @Override
                     public Void apply(final RetainedData mespos) {
-                        final ArrayList<JuickMessage> messages = mespos.messages;
+                        final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
                         final Parcelable listPosition = mespos.viewState;
                         if (isAdded()) {
                             if (messages.size() == 0) {
@@ -392,11 +394,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 if (activity != null && isAdded()) {
                     messagesSource.getNext(progressNotification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                         @Override
-                        public Void apply(final ArrayList<JuickMessage> messages) {
+                        public Void apply(ArrayList<JuickMessage> messages) {
+                            final ArrayList<JuickMessage> messagesFiltered = filterMessages(messages);
                             activity.runOnUiThread(new Runnable() {
 
                                 public void run() {
-                                    listAdapter.addAllMessages(messages);
+                                    listAdapter.addAllMessages(messagesFiltered);
                                     loading = false;
                                 }
                             });
@@ -407,6 +410,33 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         };
         thr.start();
+    }
+
+    private ArrayList<JuickMessage> filterMessages(ArrayList<JuickMessage> messages) {
+        Set<String> filteredOutUsers1 = JuickMessagesAdapter.getFilteredOutUsers(getActivity());
+        for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
+            JuickMessage message = iterator.next();
+            if (filteredOutUsers1.contains(message.User.UName)) {
+                iterator.remove();
+                continue;
+            }
+            if (message.RID == 0) {
+                // don't check comments
+                if (XMPPService.getAnyJuboMessageFilter() != null) {
+                    if (!XMPPService.getAnyJuboMessageFilter().allowMessage(message)) {
+                        iterator.remove();
+                        continue;
+                    }
+                }
+                if (XMPPService.getAnyJuickBlacklist() != null) {
+                    if (!XMPPService.getAnyJuickBlacklist().allowMessage(message)) {
+                        iterator.remove();
+                        continue;
+                    }
+                }
+            }
+        }
+        return messages;
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

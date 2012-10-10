@@ -26,6 +26,22 @@
         <TextView
                 android:layout_height="wrap_content"
                 android:layout_gravity="right"
+                android:text="Last succ. connect:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/xmpp_last_connect"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
                 android:text="Juick bot:"
                 android:textStyle="bold"
                 >
@@ -33,6 +49,57 @@
         </TextView>
         <TextView
                 android:id="@+id/xmpp_juickbot"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="JuBo bot:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/xmpp_jubobot"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Juick blacklist:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/xmpp_juickblacklist"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="JuBo blacklist:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/xmpp_juboblacklist"
                 android:layout_height="wrap_content"
                 android:paddingLeft="20sp"
                 android:text=""

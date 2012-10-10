@@ -128,7 +128,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             @Override
             public void withService(XMPPService service) {
                 synchronized (service.incomingMessages) {
-                    Toast.makeText(XMPPIncomingMessagesActivity.this, "NMessages="+service.incomingMessages.size(), Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(XMPPIncomingMessagesActivity.this, "NMessages="+service.incomingMessages.size(), Toast.LENGTH_SHORT).show();
                     refreshListWithAllMessages(service, service.incomingMessages);
                     service.maybeCancelNotification();
                 }

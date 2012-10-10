@@ -23,6 +23,12 @@
             android:summary="@string/Activate_when_finished"
             android:defaultValue="false"
             android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="useXMPPOnlyForBL"
+            android:title="@string/OnlyUseToDownloadBL"
+            android:summary="@string/DisconnectAsSoonAsBLDownloaded"
+            android:defaultValue="false"
+            android:persistent="true"/>
         <ListPreference
             android:key="juickBotOn"
             android:title="@string/Send_on_command"
@@ -310,6 +316,25 @@
             android:defaultValue="0xFFAAAAAA"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/JuBoIntegration">
+        <CheckBoxPreference
+            android:key="msrcJubo"
+            android:title="@string/JuBoRSSReader"
+            android:summary="@string/AddThisSourceToTheList"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <EditTextPreference
+            android:key="juboRssURL"
+            android:title="JuBo RSS url"
+            android:summary="Leave empty if unknown"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="juboFixJuickKeyword"
+            android:title="@string/FixJuboJuickKeyword"
+            android:summary="@string/ExcludeJuickImageMessages"
+            android:defaultValue="true"
+            android:persistent="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/MessageSources">
         <CheckBoxPreference
             android:key="msrcTopMessages"
@@ -340,16 +365,6 @@
             android:key="msrcSaved"
             android:title="@string/navigationSaved"
             android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcJubo"
-            android:title="@string/navigationJuboRSS"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <EditTextPreference
-            android:key="juboRssURL"
-            android:title="JuBo RSS url"
-            android:summary="Leave empty if unknown"
             android:persistent="true"/>
     </PreferenceCategory>
 <!--
