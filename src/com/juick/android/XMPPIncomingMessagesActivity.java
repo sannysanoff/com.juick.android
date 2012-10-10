@@ -176,28 +176,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         }
 
         displayItems = new ArrayList<Object>();
-        if (subscriptions.size() > 0) {
-            displayItems.add(new Header("Subscriptions messages: "+subscriptions.size(), new Runnable() {
-                @Override
-                public void run() {
-                    deleteMessages(XMPPService.JuickSubscriptionIncomingMessage.class);
-                }
-            }));
-            for (int i = subscriptions.size() - 1; i >= 0; i--) {
-                displayItems.add(subscriptions.get(i));
-            }
-        }
-        if (privateMessages.size() > 0) {
-            displayItems.add(new Header("Private messages: "+privateMessages.size(), new Runnable() {
-                @Override
-                public void run() {
-                    deleteMessages(XMPPService.JuickPrivateIncomingMessage.class);
-                }
-            }));
-            for (int i = privateMessages.size() - 1; i >= 0; i--) {
-                displayItems.add(privateMessages.get(i));
-            }
-        }
         if (threadMessages.size() > 0) {
             displayItems.add(new Header("Thread comments: " + nCommentsTotal+" total", new Runnable() {
                 @Override
@@ -215,6 +193,28 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
             });
             displayItems.addAll(sortee);
+        }
+        if (privateMessages.size() > 0) {
+            displayItems.add(new Header("Private messages: "+privateMessages.size(), new Runnable() {
+                @Override
+                public void run() {
+                    deleteMessages(XMPPService.JuickPrivateIncomingMessage.class);
+                }
+            }));
+            for (int i = privateMessages.size() - 1; i >= 0; i--) {
+                displayItems.add(privateMessages.get(i));
+            }
+        }
+        if (subscriptions.size() > 0) {
+            displayItems.add(new Header("Subscriptions messages: "+subscriptions.size(), new Runnable() {
+                @Override
+                public void run() {
+                    deleteMessages(XMPPService.JuickSubscriptionIncomingMessage.class);
+                }
+            }));
+            for (int i = subscriptions.size() - 1; i >= 0; i--) {
+                displayItems.add(subscriptions.get(i));
+            }
         }
         if (jabberMessages.size() > 0) {
             displayItems.add(new Header("Other messages: "+jabberMessages.size(), new Runnable() {

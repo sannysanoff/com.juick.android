@@ -240,7 +240,22 @@ public class Utils {
             }
             if (b != null) {
                 String authStr = b.getString(AccountManager.KEY_ACCOUNT_NAME) + ":" + b.getString(AccountManager.KEY_AUTHTOKEN);
-                return "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
+                final String auth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
+                if (context instanceof Activity) {
+                    final Activity act = (Activity)context;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                    boolean verboseDebug = sp.getBoolean("verboseDebug", false);
+                    if (verboseDebug) {
+                        act.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(act, "Auth: "+auth, Toast.LENGTH_LONG).show();
+                            }
+                        });
+
+                    }
+                }
+                return auth;
             }
         }
         return "";

@@ -119,6 +119,7 @@
     <string name="Appearance">Внешний вид</string>
     <string name="Theme">Тема оформления</string>
     <string name="Menu_font_scale_factor">Размер шрифта меню сообщения</string>
+    <string name="Message_font_scale_factor">Размер шрифта мессаг</string>
 
     <!-- ThreadActivity -->
     <string name="In_reply_to_">В ответ на:</string>
