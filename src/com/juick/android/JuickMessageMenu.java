@@ -202,6 +202,23 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 });
             }
         });
+        if (UName.equalsIgnoreCase(Utils.getAccountName(activity))) {
+            String midrid = ""+listSelectedItem.MID;
+            if (listSelectedItem.RID > 0)
+                midrid += "/"+listSelectedItem.RID;
+            final String finalMidrid = midrid;
+            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.DeleteMessage) + " #" + midrid) {
+                @Override
+                public void run() {
+                    confirmAction(R.string.ReallyDelete, new Runnable() {
+                        @Override
+                        public void run() {
+                            postMessage("D #" + finalMidrid, activity.getResources().getString(R.string.Deleted));
+                        }
+                    });
+                }
+            });
+        }
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + listSelectedItem.MID) {
             @Override
             public void run() {

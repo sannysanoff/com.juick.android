@@ -50,11 +50,13 @@
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Recommend message</string>
     <string name="Subscribe_to">Subscribe to</string>
+    <string name="DeleteMessage">Delete</string>
     <string name="Unsubscribe_from">Unsubscribe from</string>
     <string name="Blacklist">Blacklist</string>
     <string name="FilterOutUser">Filter out</string>
     <string name="Recommended">Recommended</string>
     <string name="Subscribed">Subscribed</string>
+    <string name="Deleted">Deleted (probably)</string>
     <string name="Unsubscribed">Unsubscribed</string>
     <string name="Added_to_BL">Added to BL</string>
     <string name="Save_message">Save message</string>
@@ -121,6 +123,7 @@
     <string name="ReallyFilterOut">Really filter out user?</string>
     <string name="ReallyRecommend">Really recommend message?</string>
     <string name="ReallySubscribe">Really subscribe to user?</string>
+    <string name="ReallyDelete">Really delete this message?</string>
     <string name="ReallyUnsubscribePost">Really unsubscribe from post?</string>
     <string name="ReallySubscribePost">Really subscribe to post?</string>
     <string name="ReallySaveMessage">Really save message?</string>
