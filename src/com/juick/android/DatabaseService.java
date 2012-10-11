@@ -135,9 +135,13 @@ public class DatabaseService extends Service {
         db.endTransaction();
     }
 
+    public static void rememberVisited(JuickMessage message) {
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 5;
+        public final static int CURRENT_VERSION = 6;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -174,6 +178,10 @@ public class DatabaseService extends Service {
                 sqLiteDatabase.execSQL("create table feature_usage(feature_name text not null, feature_value text not null)");
                 from++;
             }
+            if (from == 5) {
+                sqLiteDatabase.execSQL("create table last_visited_threads(msgid integer not null primary key, visit_date integer not null)");
+                from++;
+            }
         }
 
 
@@ -202,7 +210,7 @@ public class DatabaseService extends Service {
 
     public ArrayList<Utils.Function<Boolean, Void>> writeJobs = new ArrayList<Utils.Function<Boolean,Void>>();
     Thread writerThread;
-    SQLiteDatabase db;
+    static SQLiteDatabase db;
 
     public static class MessageReadStatus {
         public int messageId;
@@ -215,7 +223,8 @@ public class DatabaseService extends Service {
         super.onCreate();
         handler = new Handler();
         database = new DB(this);
-        db = database.getWritableDatabase();
+        if (db == null)
+            db = database.getWritableDatabase();
         writerThread = new WriterThread();
         writerThread.start();
     }
@@ -224,12 +233,6 @@ public class DatabaseService extends Service {
     public void onDestroy() {
         synchronized (writeJobs) {
             writerThread.interrupt();
-        }
-        try {
-            db.releaseReference();
-        } catch (Exception e) {
-            Log.e("JuickAdvanced", "db.releaseReference", e);
-            //e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
@@ -250,35 +253,16 @@ public class DatabaseService extends Service {
                         Cursor cursor = db.rawQuery("select * from message where msgid=?", new String[]{"" + parsed.MID});
                         int msgCount = cursor.getCount();
                         cursor.close();
-                        Cursor cursor2 = db.rawQuery("select * from message where prevmsgid=?", new String[]{"" + parsed.MID});
-                        int nextmsgid = -1;
-                        if (cursor2.getCount() > 0) {
-                            cursor2.moveToFirst();
-                            nextmsgid = cursor2.getInt(cursor2.getColumnIndex("msgid"));
-                        }
-                        cursor2.close();
                         if (msgCount == 0) {
                             ContentValues cv = new ContentValues();
                             cv.put("msgid", parsed.MID);
                             cv.put("tm", parsed.Timestamp.getTime());
-                            cv.put("prevmsgid", parsed.previousMID);
-                            if (Math.abs(parsed.previousMID - parsed.MID) > 30) {
-                                cv = cv;
-                            }
-                            cv.put("nextmsgid", nextmsgid);
+                            cv.put("prevmsgid", -1);
+                            cv.put("nextmsgid", -1);
                             cv.put("body", compressGZIP(json));
                             if (-1 == db.insert("message", null, cv)) {
                                 throw new SQLException("Insert into table MESSAGE filed");
                             }
-                        } else {
-                            if (parsed.previousMID != -1) {
-                                db.execSQL("update message set prevmsgid=? where msgid=?",
-                                        new Object[] {parsed.previousMID, parsed.MID});
-                            }
-                        }
-                        if (parsed.previousMID != -1) {
-                            db.execSQL("update message set nextmsgid=? where msgid=?",
-                                    new Object[] {parsed.MID, parsed.previousMID});
                         }
                     }
                     db.setTransactionSuccessful();
@@ -480,27 +464,6 @@ public class DatabaseService extends Service {
                     ", endDate=" + endDate +
                     ", read=" + read +
                     '}';
-        }
-    }
-
-    class MessageLink {
-        int id;
-        int prev;
-        int next;
-
-        @Override
-        public String toString() {
-            return "MessageLink{" +
-                    "id=" + id +
-                    ", prev=" + prev +
-                    ", next=" + next +
-                    '}';
-        }
-
-        MessageLink(int id, int prev, int next) {
-            this.id = id;
-            this.prev = prev;
-            this.next = next;
         }
     }
 

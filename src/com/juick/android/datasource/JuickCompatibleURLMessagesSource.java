@@ -71,7 +71,6 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     }
 
     public void processPureMessages(Utils.ServiceGetter<DatabaseService> databaseGetter, ArrayList<JuickMessage> messages, int beforeMID) {
-        databaseGetter = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
         for(int i=0; i<messages.size(); i++) {
             final JuickMessage juickMessage = messages.get(i);
             if (databaseGetter != null) {

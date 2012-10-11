@@ -93,7 +93,7 @@ public class MainActivity extends FragmentActivity implements
     ArrayList<NavigationItem> navigationItems = new ArrayList<NavigationItem>();
 
     void runDefaultFragmentWithBundle(Bundle args, NavigationItem ni) {
-        mf = new MessagesFragment(restoreData);
+        mf = new MessagesFragment(restoreData, this);
         restoreData = null;
         lastNavigationItem = ni;
         replaceFragment(mf, args);

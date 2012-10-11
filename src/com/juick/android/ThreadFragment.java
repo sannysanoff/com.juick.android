@@ -270,8 +270,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         String replies = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 1) + ")";
         listAdapter.addDisabledItem(replies, 1);
 
-        final JuickUser author = listAdapter.getItem(0).User;
-        parentActivity.onThreadLoaded(author.UID, author.UName);
+        parentActivity.onThreadLoaded(listAdapter.getItem(0));
     }
 
     @Override
@@ -394,7 +393,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     public interface ThreadFragmentListener {
 
-        public void onThreadLoaded(int uid, String nick);
+        public void onThreadLoaded(JuickMessage message);
 
         public void onReplySelected(int rid, String txt);
     }

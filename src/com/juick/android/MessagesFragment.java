@@ -80,11 +80,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     Utils.ServiceGetter<DatabaseService> databaseGetter;
     boolean trackLastRead = false;
+    private Activity parent;
 
 
-    public MessagesFragment(Object restoreData) {
+    public MessagesFragment(Object restoreData, Activity parent) {
         this.restoreData = restoreData;
         implicitlyCreated = false;
+        this.parent = parent;
     }
 
     public MessagesFragment() {
@@ -413,7 +415,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     private ArrayList<JuickMessage> filterMessages(ArrayList<JuickMessage> messages) {
-        Set<String> filteredOutUsers1 = JuickMessagesAdapter.getFilteredOutUsers(getActivity());
+        Set<String> filteredOutUsers1 = JuickMessagesAdapter.getFilteredOutUsers(parent);
         for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
             JuickMessage message = iterator.next();
             if (filteredOutUsers1.contains(message.User.UName)) {

@@ -74,7 +74,7 @@ public class MessagesActivity extends FragmentActivity {
         setContentView(R.layout.messages);
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         restoreData = getLastCustomNonConfigurationInstance();
-        mf = new MessagesFragment(restoreData);
+        mf = new MessagesFragment(restoreData, this);
         Bundle args = new Bundle();
 
         args.putSerializable("messagesSource", messagesSource);

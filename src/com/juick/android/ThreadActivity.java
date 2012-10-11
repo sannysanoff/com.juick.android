@@ -139,13 +139,14 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         bSend.setEnabled(state);
     }
     
-    public void onThreadLoaded(int uid, String nick) {
-        String title = "@" + nick;
+    public void onThreadLoaded(JuickMessage message) {
+        String title = "@" + message.User.UName;
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean showNumbers = sp.getBoolean("showNumbers", false);
         if (showNumbers)
-            title += " - #" + mid;
+            title += " - #" + message.MID;
         setTitle(title);
+        DatabaseService.rememberVisited(message);
     }
     
     public void onReplySelected(int newrid, String txt) {
