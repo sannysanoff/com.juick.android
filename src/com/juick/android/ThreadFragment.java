@@ -373,10 +373,16 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 reply = findReply(parent, reply.replyTo);
             }
             if (ll.getChildCount() != 0) {
+                int xy[] = new int[2];
+                getListView().getLocationOnScreen(xy);
+                int windowHeight = getActivity().getWindow().getWindowManager().getDefaultDisplay().getHeight();
+                int listBottom = getListView().getHeight() + xy[1];
+                int bottomSize = windowHeight - listBottom;
                 ll.setPressed(true);
                 MainActivity.restyleChildrenOrWidget(ll);
                 Toast result = new Toast(getActivity());
                 result.setView(ll);
+                result.setGravity(Gravity.BOTTOM|Gravity.LEFT, 0, bottomSize);
                 result.setDuration(Toast.LENGTH_LONG);
                 result.show();
             }
