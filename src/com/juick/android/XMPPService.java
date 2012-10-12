@@ -1049,10 +1049,16 @@ public class XMPPService extends Service {
         try {
             if (list != null) {
                 for (String fname : list) {
-                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(savedMessagesDirectory, fname)));
-                    IncomingMessage o = (IncomingMessage) ois.readObject();
-                    ois.close();
-                    incomingMessages.add(o);
+                    File file = new File(savedMessagesDirectory, fname);
+                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+                    try {
+                        IncomingMessage o = (IncomingMessage) ois.readObject();
+                        incomingMessages.add(o);
+                    } catch (Exception ex){
+                        file.delete();
+                    } finally {
+                        ois.close();
+                    }
 
                 }
             }

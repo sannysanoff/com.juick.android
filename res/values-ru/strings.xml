@@ -302,6 +302,7 @@
     <string name="FixJuboJuickKeyword">Фикс JuBo \'juick\' слова</string>
     <string name="ExcludeJuickImageMessages">Если есть подписка на слово juick, исключать посты с картинками, на которые JuBo реагирует, потому что там слово juick есть в их URL.
     </string>
+    <string name="AllMessages">К сообщениям</string>
 
 
 </resources>

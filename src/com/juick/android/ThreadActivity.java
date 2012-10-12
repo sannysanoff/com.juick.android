@@ -70,6 +70,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     private String attachmentMime = null;
     private ProgressDialog progressDialog = null;
     private NewMessageActivity.BooleanReference progressDialogCancel = new NewMessageActivity.BooleanReference(false);
+    Handler handler;
     private Handler progressHandler = new Handler() {
         
         @Override
@@ -88,14 +89,30 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
-        
+        handler = new Handler();
+
         Intent i = getIntent();
         mid = i.getIntExtra("mid", 0);
         if (mid == 0) {
             finish();
         }
-        
+
         setContentView(R.layout.thread);
+        findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(ThreadActivity.this, MainActivity.class));
+            }
+        });
+        if (i.getBooleanExtra("isolated", false)) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
+                    handler.postDelayed(this, 1000);
+                }
+            });
+        }
         tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
         etMessage = (EditText) findViewById(R.id.editMessage);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -328,7 +345,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 ThreadActivity.this.runOnUiThread(new Runnable() {
                     
                     public void run() {
-                        if (progressDialog != null) {
+                        if (progressDialog != null && progressDialog.isShowing()) {
                             progressDialog.dismiss();
                         }
                         setFormEnabled(true);
@@ -442,6 +459,9 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         }
     }
 
-
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
+    }
 }

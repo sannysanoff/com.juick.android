@@ -99,9 +99,11 @@ public class MainActivity extends FragmentActivity implements
         replaceFragment(mf, args);
     }
 
+    public static int nActiveMainActivities = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        nActiveMainActivities++;
         System.out.println(AmbilWarnaPreference.class);
         ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
@@ -650,6 +652,7 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onDestroy() {
+        nActiveMainActivities--;
         super.onDestroy();
         if (sp != null)
             sp.unregisterOnSharedPreferenceChangeListener(this);
@@ -802,6 +805,7 @@ public class MainActivity extends FragmentActivity implements
                 Intent intent = new Intent(this, ThreadActivity.class);
                 intent.setData(null);
                 intent.putExtra("mid", mid);
+                intent.putExtra("isolated", true);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);

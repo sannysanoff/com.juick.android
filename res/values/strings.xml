@@ -596,6 +596,7 @@
     <string name="AddThisSourceToTheList">Add this source to the navigation list</string>
     <string name="FixJuboJuickKeyword">Fix JuBo \'juick\' keyword</string>
     <string name="ExcludeJuickImageMessages">Exclude messages with image attachment and subscribed juick keyword appearing only in image URL</string>
+    <string name="AllMessages">All messages</string>
 
 
 </resources>
