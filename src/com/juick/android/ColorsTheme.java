@@ -88,6 +88,7 @@ public class ColorsTheme {
         DIVIDER,
         COMMON_FOREGROUND,
         USERNAME,
+        USERNAME_ME,
         USERNAME_READ,
         TAGS,
         URLS,

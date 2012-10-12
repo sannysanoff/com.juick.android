@@ -207,6 +207,7 @@
     <string name="CommonForeground">Common foreground</string>
     <string name="ListDivider">List divider</string>
     <string name="Usernames">Usernames</string>
+    <string name="YourUsername">Your username</string>
     <string name="UserNamesRead">Usernames (read msgs)</string>
     <string name="URLs">URLs</string>
     <string name="MessageIDs">Message IDs</string>

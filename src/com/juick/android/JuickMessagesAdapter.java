@@ -28,7 +28,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.text.Layout.Alignment;
-import android.text.style.StrikethroughSpan;
+import android.text.style.*;
 import android.view.MotionEvent;
 import android.webkit.WebView;
 import android.widget.*;
@@ -36,9 +36,6 @@ import com.juick.android.api.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.style.AlignmentSpan;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -557,6 +554,22 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             urls.add(foundURL.getUrl());
         }
 
+        // Highlight nick
+        String accountName = Utils.getAccountName(ctx);
+        int scan = spanOffset;
+        String nickScanArea = ssb.toString().toLowerCase();
+        while(true) {
+            int myNick = nickScanArea.indexOf("@" + accountName.toLowerCase(), scan);
+            if (myNick != -1) {
+                if (nickScanArea.length() == myNick + accountName.length() + 1 || !isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
+                    ssb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick-1, myNick + accountName.length()+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                scan = myNick + 1;
+            } else {
+                break;
+            }
+        }
+
         // Highlight messages #1234
         int pos = 0;
         Matcher m = msgPattern.matcher(txt);
@@ -600,6 +613,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         parsedMessage.messageNumberStart = messageNumberStart;
         parsedMessage.messageNumberEnd = messageNumberEnd;
         return parsedMessage;
+    }
+
+    private static boolean isNickPart(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '-' || c == '@';
     }
 
     private ParsedMessage formatFirstMessageText(JuickMessage jmsg) {

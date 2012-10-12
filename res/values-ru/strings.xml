@@ -185,6 +185,7 @@
     <string name="CommonForeground">Основной текст</string>
     <string name="ListDivider">Разделитель в списке</string>
     <string name="Usernames">Автор</string>
+    <string name="YourUsername">Собственный ник</string>
     <string name="UserNamesRead">Автор (прочитанные)</string>
     <string name="URLs">УРЛы</string>
     <string name="MessageIDs">Номера мессаг</string>
