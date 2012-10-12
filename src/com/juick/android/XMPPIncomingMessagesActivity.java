@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.view.ViewGroup;
@@ -271,6 +272,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             return displayItems.get(position) instanceof Item;
         }
 
+        public ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(XMPPIncomingMessagesActivity.this);
+
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             Object item = displayItems.get(i);
@@ -305,6 +308,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 HashMap<String,Integer> counts = new HashMap<String, Integer>();
                 int totalCount = 0;
                 int topicMessageId = -1;
+                int toYouCount = 0;
                 for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
                     XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
                     String from = commentMessage.getFrom();
@@ -313,6 +317,21 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     oldCount = oldCount + 1;
                     counts.put(from, oldCount);
                     totalCount++;
+                    String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
+                    String accountName = Utils.getAccountName(XMPPIncomingMessagesActivity.this).toLowerCase();
+                    int scan = 0;
+                    while(true) {
+                        int myNick = nickScanArea.indexOf("@" + accountName, scan);
+                        if (myNick != -1) {
+                            if (!JuickMessagesAdapter.isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
+                                toYouCount++;
+                                break;
+                            }
+                            scan = myNick + 1;
+                        } else {
+                            break;
+                        }
+                    }
                     if (topicMessageId == -1) {
                         topicMessageId = commentMessage.getPureThread();
                     }
@@ -341,8 +360,18 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
                 sb.insert(0, insertString);
                 sb.setSpan(new ForegroundColorSpan(0xFF008000), 0, insertString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                sb.insert(insertString.length(), "from: ");
-                int offset = insertString.length() + 6;
+                int offset = insertString.length();
+                if (toYouCount != 0) {
+                    String toYou = " ("+toYouCount + " to you)  ";
+                    sb.insert(offset, toYou);
+                    sb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), offset, offset + toYou.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    offset += toYou.length();
+                }
+                sb.insert(offset, "from: ");
+                offset += 6;
+
+
+                // paint all grouped nicks
                 sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 commentCounts.setText(sb);
                 MainActivity.restyleChildrenOrWidget(view);

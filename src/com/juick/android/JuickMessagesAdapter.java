@@ -555,13 +555,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         // Highlight nick
-        String accountName = Utils.getAccountName(ctx);
+        String accountName = Utils.getAccountName(ctx).toLowerCase();
         int scan = spanOffset;
-        String nickScanArea = ssb.toString().toLowerCase();
+        String nickScanArea = ssb.toString().toLowerCase()+" ";
         while(true) {
-            int myNick = nickScanArea.indexOf("@" + accountName.toLowerCase(), scan);
+            int myNick = nickScanArea.indexOf("@" + accountName, scan);
             if (myNick != -1) {
-                if (nickScanArea.length() == myNick + accountName.length() + 1 || !isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
+                if (!isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
                     ssb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick-1, myNick + accountName.length()+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 scan = myNick + 1;
@@ -615,7 +615,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return parsedMessage;
     }
 
-    private static boolean isNickPart(char c) {
+    public static boolean isNickPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '-' || c == '@';
     }
 
