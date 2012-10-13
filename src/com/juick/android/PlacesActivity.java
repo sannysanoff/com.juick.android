@@ -39,6 +39,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
@@ -151,11 +152,15 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
             startActivityForResult(i, ACTIVITY_PICKLOCATION);
             return true;
         } else if (item.getItemId() == MENUITEM_NEWPLACE) {
-            Intent i = new Intent(Intent.ACTION_PICK);
-            i.setClass(this, PlaceEditActivity.class);
-            i.putExtra("lat", location.getLatitude());
-            i.putExtra("lon", location.getLongitude());
-            startActivityForResult(i, ACTIVITY_NEWPLACE);
+            try {
+                Intent i = new Intent(Intent.ACTION_PICK);
+                i.setClass(this, PlaceEditActivity.class);
+                i.putExtra("lat", location.getLatitude());
+                i.putExtra("lon", location.getLongitude());
+                startActivityForResult(i, ACTIVITY_NEWPLACE);
+            } catch (Throwable ex) {
+                Toast.makeText(this, "Probably Google Maps library is missing", Toast.LENGTH_LONG).show();
+            }
             return true;
         } else {
             return super.onOptionsItemSelected(item);

@@ -124,11 +124,15 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
     public void onClick(View v) {
         if (location != null) {
             if (v == bNewPlace) {
-                Intent i = new Intent(Intent.ACTION_PICK);
-                i.setClass(this, PlaceEditActivity.class);
-                i.putExtra("lat", location.getLatitude());
-                i.putExtra("lon", location.getLongitude());
-                startActivityForResult(i, ACTIVITY_NEWPLACE);
+                try {
+                    Intent i = new Intent(Intent.ACTION_PICK);
+                    i.setClass(this, PlaceEditActivity.class);
+                    i.putExtra("lat", location.getLatitude());
+                    i.putExtra("lon", location.getLongitude());
+                    startActivityForResult(i, ACTIVITY_NEWPLACE);
+                } catch (Throwable ex) {
+                    Toast.makeText(this, "Probably Google Maps library is missing", Toast.LENGTH_LONG).show();
+                }
             } else if (v == bNonamePlace) {
                 Intent i = new Intent();
                 i.putExtra("lat", location.getLatitude());

@@ -22,7 +22,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <application android:icon="@drawable/ic_launcher" android:label="@string/Juick" android:theme="@android:style/Theme.Light">
         <provider android:name="com.juick.android.CachedImageContentProvider"  android:authorities="com.juick.android.imagecache" />
-        <!--<uses-library android:name="com.google.android.maps"/>-->
+        <uses-library android:name="com.google.android.maps" android:required="false"/>
         <activity android:name="com.juick.android.MainActivity" android:theme="@style/Theme.Sherlock.Light" android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
