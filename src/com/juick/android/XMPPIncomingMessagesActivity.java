@@ -2,17 +2,18 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
+import android.view.*;
 import android.widget.*;
+import com.juick.android.api.JuickMessage;
 import com.juickadvanced.R;
  import de.quist.app.errorreporter.ExceptionReporter;
 
@@ -39,6 +40,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         }
     }
 
+    static boolean editMode;
+
     class Header {
         String label;
         Runnable action;
@@ -61,41 +64,141 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
-        ListView lv = (ListView)findViewById(R.id.list);
+        final MyListView lv = (MyListView)findViewById(R.id.list);
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                new JuickMessageMenu(XMPPIncomingMessagesActivity.this, null, null, null) {
+                    @Override
+                    public boolean onItemLongClick(AdapterView parent, final View view, int position, long id) {
+                        Object o = displayItems.get(position);
+                        if (o instanceof Item) {
+                            Item item = (Item) o;
+                            final XMPPService.IncomingMessage incomingMessage = item.messages.get(0);
+                            if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
+                                final XMPPService.JuickIncomingMessage jim = (XMPPService.JuickIncomingMessage)incomingMessage;
+                                final String fromUser = jim.getFrom();
+                                final int thread = jim.getPureThread();
+                                menuActions.clear();
+                                menuActions.add(new RunnableItem(activity.getResources().getString(R.string.OpenThread)) {
+                                    @Override
+                                    public void run() {
+                                        clickedOnMessage(incomingMessage);
+                                    }
+
+                                });
+                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.SubscribeAndOpen) + " #" + thread) {
+                                        @Override
+                                        public void run() {
+                                            confirmAction(R.string.ReallySubscribePost, new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    postMessage("S #" + thread, activity.getResources().getString(R.string.Subscribed));
+                                                    clickedOnMessage(incomingMessage);
+                                                }
+                                            });
+                                        }
+
+                                    });
+                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + thread) {
+                                        @Override
+                                        public void run() {
+                                            confirmAction(R.string.ReallySubscribePost, new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    postMessage("S #" + thread, activity.getResources().getString(R.string.Subscribed));
+                                                }
+                                            });
+                                        }
+
+                                    });
+                                }
+                                menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " " + fromUser) {
+                                    @Override
+                                    public void run() {
+                                        confirmAction(R.string.ReallyFilterOut, new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                String uz = fromUser;
+                                                if (uz.startsWith("@")) uz = uz.substring(1);
+                                                saveFilteredOutUser(uz);
+                                                deleteOneMessage(incomingMessage);
+                                            }
+                                        });
+                                    }
+
+                                });
+                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.ExpandMessage) + " " + fromUser) {
+                                        @Override
+                                        public void run() {
+                                            expandMessage(view);
+                                        }
+
+                                    });
+                                }
+                                runActions();
+                            }
+                        }
+                        return false;
+                    }
+
+                }.onItemLongClick(parent, view, position, id);
+                return true;
+            }
+        });
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Object o = displayItems.get(i);
-                if (o instanceof Item) {
-                    Item item = (Item) o;
-                    final XMPPService.IncomingMessage incomingMessage = item.messages.get(0);
-                    if (incomingMessage instanceof XMPPService.JabberIncomingMessage) {
-                        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                            @Override
-                            public void withService(XMPPService service) {
-                                service.removeMessage(incomingMessage);
-                                refreshList();
-                            }
-                        });
-                        return;
-                    }
-                    if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
-                        Intent intent = new Intent(XMPPIncomingMessagesActivity.this, ThreadActivity.class);
-                        if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
-                            intent.putExtra("scrollToBottom", true);
+                if (lv.getMaxActiveFingers() > 1) {
+                    if (o instanceof Item) {
+                        Item item = (Item) o;
+                        final XMPPService.IncomingMessage incomingMessage = item.messages.get(0);
+                        if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                            expandMessage(view);
                         }
-                        intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getPureThread());
-                        intent.putExtra("isolated", true);
-                        startActivity(intent);
-                        return;
+                    }
+
+                    //
+                } else {
+                    if (o instanceof Item) {
+                        Item item = (Item) o;
+                        final XMPPService.IncomingMessage incomingMessage = item.messages.get(0);
+                        clickedOnMessage(incomingMessage);
                     }
                 }
             }
         });
     }
 
-    private void deleteMessage(XMPPService.IncomingMessage incomingMessage) {
-        //To change body of created methods use File | Settings | File Templates.
+    private void clickedOnMessage(final XMPPService.IncomingMessage incomingMessage) {
+        if (incomingMessage instanceof XMPPService.JabberIncomingMessage) {
+            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                @Override
+                public void withService(XMPPService service) {
+                    service.removeMessage(incomingMessage);
+                    refreshList();
+                }
+            });
+            return;
+        }
+        if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
+            Intent intent = new Intent(XMPPIncomingMessagesActivity.this, ThreadActivity.class);
+            if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
+                intent.putExtra("scrollToBottom", true);
+            }
+            intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getPureThread());
+            intent.putExtra("isolated", true);
+            startActivity(intent);
+            return;
+        }
+    }
+
+    private void expandMessage(View view) {
+        TextView preview = (TextView)view.findViewById(R.id.preview);
+        preview.setMaxLines(9999);
     }
 
     @Override
@@ -297,10 +400,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             if (message instanceof XMPPService.JuickPrivateIncomingMessage) {
                 XMPPService.JuickPrivateIncomingMessage privmsg = (XMPPService.JuickPrivateIncomingMessage)message;
                 view = getLayoutInflater().inflate(R.layout.incoming_messages_private, null);
+                makePressable(view);
                 TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
                 TextView preview = (TextView)view.findViewById(R.id.preview);
                 fromTags.setText(privmsg.getFrom());
                 preview.setText(privmsg.getBody());
+                enableInternalButtons(view, message);
                 MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
@@ -346,6 +451,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     sb.append(" ");
                 }
                 view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
+                makePressable(view);
                 XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
                 TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
                 fromTags.setText(commentMessage.getOriginalFrom());
@@ -374,32 +480,126 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 // paint all grouped nicks
                 sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 commentCounts.setText(sb);
+                enableInternalButtons(view, message);
                 MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             if (message instanceof XMPPService.JabberIncomingMessage) {
                 XMPPService.JabberIncomingMessage jabberIncomingMessage = (XMPPService.JabberIncomingMessage)message;
                 view = getLayoutInflater().inflate(R.layout.incoming_messages_other, null);
+                makePressable(view);
                 TextView from  = (TextView)view.findViewById(R.id.from);
                 TextView preview = (TextView)view.findViewById(R.id.preview);
                 from.setText(jabberIncomingMessage.getFrom());
                 preview.setText(jabberIncomingMessage.getBody());
+                enableInternalButtons(view, message);
                 MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
                 XMPPService.JuickSubscriptionIncomingMessage subscriptionMessage = (XMPPService.JuickSubscriptionIncomingMessage)message;
                 view = getLayoutInflater().inflate(R.layout.incoming_messages_subscription, null);
+                makePressable(view);
+
                 TextView fromTags  = (TextView)view.findViewById(R.id.from_tags);
                 TextView preview = (TextView)view.findViewById(R.id.preview);
                 fromTags.setText(subscriptionMessage.getFrom());
-                preview.setText(subscriptionMessage.getBody());
+                String body = subscriptionMessage.getBody();
+                while(body.endsWith("\n")) {
+                    body = body.substring(0, body.length()-1);
+                }
+                preview.setText(body);
+                enableInternalButtons(view, message);
                 MainActivity.restyleChildrenOrWidget(view);
                 return view;
             }
             return null;
         }
     }
+
+    private void makePressable(View view) {
+        if (view instanceof PressableLinearLayout) {
+            final PressableLinearLayout sll = (PressableLinearLayout)view;
+            sll.setPressedListener(new PressableLinearLayout.PressedListener() {
+                @Override
+                public void onPressStateChanged(boolean selected) {
+                    MainActivity.restyleChildrenOrWidget(sll);
+                }
+            });
+        }
+    }
+
+    private void enableInternalButtons(View view, final XMPPService.IncomingMessage message) {
+        View deleteButton = view.findViewById(R.id.delete);
+        if (deleteButton != null) {
+            deleteButton.setVisibility(editMode ? View.VISIBLE : View.GONE);
+            deleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    deleteOneMessage(message);
+
+                }
+            });
+        }
+    }
+
+    private void deleteOneMessage(final XMPPService.IncomingMessage message) {
+        Utils.ServiceGetter<XMPPService> xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
+        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+            @Override
+            public void withoutService() {
+            }
+
+            @Override
+            public void withService(XMPPService service) {
+                service.removeMessage(message);
+                refreshListWithAllMessages(service, service.incomingMessages);
+                service.maybeCancelNotification();
+            }
+        });
+    }
+
+    private void deleteMessagesFrom(final String user) {
+        Utils.ServiceGetter<XMPPService> xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
+        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+            @Override
+            public void withoutService() {
+            }
+
+            @Override
+            public void withService(XMPPService service) {
+                service.removeMessagesFrom(user);
+                refreshListWithAllMessages(service, service.incomingMessages);
+                service.maybeCancelNotification();
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.xmpp_messages, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menuitem_preferences:
+                startActivity(new Intent(this, JuickPreferencesActivity.class));
+                return true;
+            case R.id.editable_list:
+                editMode = !editMode;
+                final MyListView lv = (MyListView)findViewById(R.id.list);
+                MyListAdapter adapter = (MyListAdapter)lv.getAdapter();
+                adapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
 
     @Override
     protected void onDestroy() {

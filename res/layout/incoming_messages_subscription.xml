@@ -1,21 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.juick.android.PressableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     >
+    <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            >
+        <TextView
+            android:id="@+id/from_tags"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="someone *tag1 *tag2"
+            android:textStyle="bold"
+            />
+        <TextView
+            android:id="@+id/preview"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="5"
+            android:text="Morraz will prevail!"
+            />
+    </LinearLayout>
     <TextView
-        android:id="@+id/from_tags"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="someone *tag1 *tag2"
-        android:textStyle="bold"
-        />
-    <TextView
-        android:id="@+id/preview"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:text="Morraz will prevail!"
-        />
-</LinearLayout>
+            android:id="@+id/delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="23sp"
+            android:paddingRight="10sp"
+            android:paddingLeft="10sp"
+            android:background="#A0A0A0"
+            android:layout_marginRight="2sp"
+            android:layout_gravity="center_vertical"
+            android:text="X"
+            />
+</com.juick.android.PressableLinearLayout>

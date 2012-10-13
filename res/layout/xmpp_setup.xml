@@ -45,6 +45,7 @@
                     android:layout_width="wrap_content"
                     android:textSize="20dp"
                     android:layout_height="32dp"
+                    android:hint="@string/LeftPartOf_"
                     />
         </TableRow>
         <TableRow android:layout_width="fill_parent">
@@ -63,7 +64,6 @@
                     android:paddingLeft="10dp"
                     android:paddingTop="0dp"
                     android:paddingBottom="0dp"
-                    android:hint="@string/LeftPartOf_"
                     android:textSize="20dp"
                     android:layout_height="32dp"
                     />

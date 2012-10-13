@@ -552,6 +552,26 @@ public class XMPPService extends Service {
         }
     };
 
+    public void removeMessagesFrom(String user) {
+        boolean changed = false;
+        synchronized (incomingMessages) {
+            Iterator<IncomingMessage> iterator = incomingMessages.iterator();
+            while (iterator.hasNext()) {
+                IncomingMessage next = iterator.next();
+                if (next instanceof JuickIncomingMessage) {
+                    JuickIncomingMessage jim = (JuickIncomingMessage) next;
+                    if (jim.getFrom().equals(user)) {
+                        removeMessageFile(jim.id);
+                        iterator.remove();
+                        changed = true;
+                    }
+                }
+            }
+        }
+        if (changed)
+            maybeCancelNotification();
+    }
+
     public void removeMessages(int mid, boolean keepReplyNotifications) {
         boolean changed = false;
         synchronized (incomingMessages) {

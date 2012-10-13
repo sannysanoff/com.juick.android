@@ -304,6 +304,11 @@
     <string name="ExcludeJuickImageMessages">Если есть подписка на слово juick, исключать посты с картинками, на которые JuBo реагирует, потому что там слово juick есть в их URL.
     </string>
     <string name="AllMessages">К сообщениям</string>
+    <string name="EditList">Редактировать</string>
+    <string name="SubscribeAndOpen">Подписаться и открыть</string>
+    <string name="ExpandMessage">Распахнуть мессаг</string>
+    <string name="OpenThread">Открыть тред</string>
+
 
 
 </resources>

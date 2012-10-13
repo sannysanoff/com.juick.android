@@ -355,6 +355,11 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
 
         });
 
+        runActions();
+        return true;
+    }
+
+    protected void runActions() {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final CharSequence[] items = new CharSequence[menuActions.size()];
         for (int j = 0; j < items.length; j++) {
@@ -460,7 +465,6 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 return adapter.isEmpty();
             }
         });
-        return true;
     }
 
     public void confirmAction(int resId, final Runnable r) {
@@ -495,7 +499,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
     }
 
 
-    private void postMessage(final String body, final String ok) {
+    protected void postMessage(final String body, final String ok) {
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
@@ -605,4 +609,13 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
     public void encodeURIComponent() {
 
     }
+
+    protected void saveFilteredOutUser(String fromUser) {
+        Set<String> filteredOutUzers = JuickMessagesAdapter.getFilteredOutUsers(activity);
+        filteredOutUzers.add(fromUser);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+        sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
+        JuickMessagesAdapter.filteredOutUsers = null;
+    }
+
 }

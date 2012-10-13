@@ -50,10 +50,13 @@
     <!-- JuickMessageMenu -->
     <string name="Recommend_message">Recommend message</string>
     <string name="Subscribe_to">Subscribe to</string>
+    <string name="SubscribeAndOpen">Subscribe to and open</string>
     <string name="DeleteMessage">Delete</string>
     <string name="Unsubscribe_from">Unsubscribe from</string>
     <string name="Blacklist">Blacklist</string>
     <string name="FilterOutUser">Filter out</string>
+    <string name="ExpandMessage">Expand message from</string>
+    <string name="OpenThread">Open thread</string>
     <string name="Recommended">Recommended</string>
     <string name="Subscribed">Subscribed</string>
     <string name="Deleted">Deleted (probably)</string>
@@ -598,6 +601,7 @@
     <string name="FixJuboJuickKeyword">Fix JuBo \'juick\' keyword</string>
     <string name="ExcludeJuickImageMessages">Exclude messages with image attachment and subscribed juick keyword appearing only in image URL</string>
     <string name="AllMessages">All messages</string>
+    <string name="EditList">Edit list</string>
 
 
 </resources>

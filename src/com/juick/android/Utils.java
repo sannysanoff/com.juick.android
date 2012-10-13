@@ -41,10 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.http.*;
@@ -581,7 +578,13 @@ public class Utils {
     }
 
     public static Set<String> string2set(String str) {
-        return new HashSet<String>(Arrays.asList(str.split("@")));
+        List<String> strings = Arrays.asList(str.split("@"));
+        HashSet<String> strings1 = new HashSet<String>();
+        for (String string : strings) {
+            string = string.replace("[SOBAKA]","@");               // kind of escaped
+            strings1.add(string);
+        }
+        return strings1;
     }
 
     public static String set2string(Set<String> set) {
@@ -589,17 +592,7 @@ public class Utils {
         for (String s : set) {
             if (sb.length() != 0)
                 sb.append("@");
-            sb.append(s);
-        }
-        return sb.toString();
-    }
-
-    public static String joinStrings(String[] results, String s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < results.length; i++) {
-            String result = results[i];
-            sb.append(results);
-            sb.append("\n");
+            sb.append(s.replace("@","[SOBAKA]"));
         }
         return sb.toString();
     }
