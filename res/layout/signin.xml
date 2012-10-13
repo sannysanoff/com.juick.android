@@ -33,6 +33,12 @@
                 android:layout_height="wrap_content"
                 android:singleLine="true"
                 android:password="true"/>
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/LoginPasswordExplanation"
+                android:textStyle="bold"
+                android:textSize="20sp"/>
         </LinearLayout>
     </ScrollView>
     <ImageView

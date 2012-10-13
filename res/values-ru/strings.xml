@@ -308,6 +308,12 @@
     <string name="SubscribeAndOpen">Подписаться и открыть</string>
     <string name="ExpandMessage">Распахнуть мессаг</string>
     <string name="OpenThread">Открыть тред</string>
+    <string name="LoginPasswordExplanation">
+        Используйте логин и пароль с сайта juick.com. НЕ ИСПОЛЬЗУЙТЕ пароль который у вас для jabber/xmpp.
+
+        Если вы не знаете или забыли пароль с сайта: отправьте через jabber жуйко-боту команду LOGIN, перейдите по полученной от бота ссылке,
+        затем откройте http://juick.com/settings?page=password и настройте себе пароль.
+    </string>
 
 
 
