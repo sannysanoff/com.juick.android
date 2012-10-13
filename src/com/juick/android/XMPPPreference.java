@@ -116,6 +116,12 @@ public class XMPPPreference extends Preference {
                                 port.setText("5222");
                                 secure.setChecked(true);
                                 login.requestFocus();
+                            case 3:
+                                login.setText("xxxxxx");
+                                service.setText("ya.ru");
+                                server.setText("xmpp.yandex.ru");
+                                port.setText("5222");
+                                login.requestFocus();
                         }
                     }
                 };

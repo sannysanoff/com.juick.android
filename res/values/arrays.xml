@@ -83,6 +83,7 @@
         <item>No preset</item>
         <item>Usual jabber server</item>
         <item>Google Talk</item>
+        <item>Yandex.ru (ya.ru)</item>
     </string-array>
     <string-array name="xmppTemplateValues">
         <item>nothing</item>
