@@ -88,6 +88,21 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
                                 });
                                 if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " #" + thread) {
+                                        @Override
+                                        public void run() {
+                                            confirmAction(R.string.ReallyUnsubscribePost, new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    postMessage("U #" + thread, activity.getResources().getString(R.string.Unsubscribed));
+                                                }
+                                            });
+                                        }
+
+                                    });
+
+                                }
+                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
                                     menuActions.add(new RunnableItem(activity.getResources().getString(R.string.SubscribeAndOpen) + " #" + thread) {
                                         @Override
                                         public void run() {
