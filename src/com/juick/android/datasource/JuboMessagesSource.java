@@ -3,6 +3,7 @@ package com.juick.android.datasource;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
@@ -57,10 +58,13 @@ public class JuboMessagesSource extends MessagesSource {
         String juboRssURL = sp.getString("juboRssURL", "");
         if (juboRssURL != null) {
             try {
+                Log.w("com.juick.advanced","getFirst: before getJSON");
                 String result = Utils.getJSON(ctx, juboRssURL, notifications).getResult();
+                Log.w("com.juick.advanced","getFirst: after getJSON");
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 DocumentBuilder documentBuilder = dbf.newDocumentBuilder();
                 Document doc = documentBuilder.parse(new ByteArrayInputStream(result.getBytes("UTF-8")));
+                Log.w("com.juick.advanced","getFirst: after parse");
                 NodeList items = doc.getElementsByTagName("item");
                 ArrayList<JuickMessage> resultList = new ArrayList<JuickMessage>();
                 if (items != null) {
@@ -70,6 +74,7 @@ public class JuboMessagesSource extends MessagesSource {
                         resultList.add(jm);
                     }
                 }
+                Log.w("com.juick.advanced","getFirst: after convert to juick message");
                 System.out.println(result);
                 cont.apply(resultList);
             } catch (Exception ex) {

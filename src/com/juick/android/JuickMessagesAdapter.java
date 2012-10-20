@@ -460,9 +460,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 textContent.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_READ, 0xFFc84e4e)), userNameStart, userNameEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
-
-
     }
+
     public void setScale(float scale) {
         textScale *= scale;
         textScale = Math.max(0.5f, Math.min(textScale, 2.0f));
@@ -497,7 +496,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         int userNameEnd = ssb.length();
         StyleSpan userNameBoldSpan;
         ForegroundColorSpan userNameColorSpan;
-        ssb.setSpan(userNameBoldSpan = new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(userNameBoldSpan = new StyleSpan(Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.setSpan(userNameColorSpan = new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.append(' ');
         spanOffset = ssb.length();
@@ -562,6 +561,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             urls.add(foundURL.getUrl());
         }
+        // bold italic underline
+        setStyleSpans(ssb, spanOffset, Typeface.BOLD, "*");
+        setStyleSpans(ssb, spanOffset, Typeface.ITALIC, "/");
+        setStyleSpans(ssb, spanOffset, UnderlineSpan.class, "_");
+
 
         // Highlight nick
         String accountName = Utils.getAccountName(ctx).toLowerCase();
@@ -622,6 +626,55 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         parsedMessage.messageNumberStart = messageNumberStart;
         parsedMessage.messageNumberEnd = messageNumberEnd;
         return parsedMessage;
+    }
+
+    private static void setStyleSpans(SpannableStringBuilder ssb, int ssbOffset, Object what, String styleChar) {
+        // easing bounds checking
+        String txt = ssb.subSequence(ssbOffset, ssb.length()).toString();
+        txt = " "+txt+" ";
+        ssbOffset-=1;
+        //
+        int scan =  0;
+        int cnt = 0;
+        while(cnt++ < 20) {        // don't need bugs in production.
+            int ix = txt.indexOf(styleChar, scan);
+            if (ix < 0) break;
+            if (" \n".indexOf(txt.charAt(ix-1)) != -1) {
+                int ix2 = txt.indexOf(styleChar, ix+1);
+                if (ix2 < 0)
+                    break;
+                if (" \n".indexOf(txt.charAt(ix2+1)) == -1  // not ends with space
+                        || txt.substring(ix, ix2).indexOf("\n") != -1) {    // spans several lines
+                    scan = ix2;         // not ok
+                    continue;
+                } else {
+                    CharacterStyle span = null;
+                    // found needed stuff
+                    if (what instanceof Integer && (((Integer)what)== Typeface.BOLD)) {
+                        span = new StyleSpan(Typeface.BOLD);
+                    }
+                    if (what instanceof Integer && (((Integer)what)== Typeface.ITALIC)) {
+                        span = new StyleSpan(Typeface.ITALIC);
+                    }
+                    if (what == UnderlineSpan.class) {
+                        span = new UnderlineSpan();
+                    }
+                    if (span != null && ix2 - ix > 1) {
+                        ssb.delete(ssbOffset + ix, ssbOffset + ix + 1); // delete styling char
+                        txt = stringDelete(txt, ix, ix + 1);
+                        ix2--;  // moves, too
+                        ssb.delete(ssbOffset + ix2, ssbOffset + ix2 + 1); // second char deleted
+                        txt = stringDelete(txt, ix2, ix2 + 1);
+                        ssb.setSpan(span, ssbOffset + ix, ssbOffset + ix2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                    scan = ix2;
+                }
+            }
+        }
+    }
+
+    private static String stringDelete(String txt, int from, int to) {
+        return txt.substring(0, from) + txt.substring(to);
     }
 
     public static boolean isNickPart(char c) {

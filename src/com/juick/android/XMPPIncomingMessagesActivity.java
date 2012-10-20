@@ -246,7 +246,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
     @Override
     protected void onRestart() {
-        super.onRestart();    //To change body of overridden methods use File | Settings | File Templates.
+        super.onRestart();
     }
 
     @Override

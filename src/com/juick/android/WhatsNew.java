@@ -235,18 +235,22 @@ public class WhatsNew {
 
     public void reportFeature(final FeatureSaver saver) {
         Utils.ServiceGetter<DatabaseService> databaseServiceServiceGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
-        databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-            @Override
-            public void withService(DatabaseService service) {
-                service.runGenericWriteJob(new Utils.Function<Void, DatabaseService>() {
-                    @Override
-                    public Void apply(DatabaseService databaseService) {
-                        saver.saveFeature(databaseService);
-                        return null;
-                    }
-                });
-            }
-        });
+        try {
+            databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                @Override
+                public void withService(DatabaseService service) {
+                    service.runGenericWriteJob(new Utils.Function<Void, DatabaseService>() {
+                        @Override
+                        public Void apply(DatabaseService databaseService) {
+                            saver.saveFeature(databaseService);
+                            return null;
+                        }
+                    });
+                }
+            });
+        } catch (Throwable e) {
+            // during fatal destroy, this happens
+        }
     }
 
     public void reportUsage() {

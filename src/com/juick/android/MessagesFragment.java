@@ -24,6 +24,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
@@ -232,7 +233,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 final Utils.Function<Void, RetainedData> then = new Utils.Function<Void, RetainedData>() {
                     @Override
                     public Void apply(final RetainedData mespos) {
+                        Log.w("com.juick.advanced", "getFirst: before filter");
                         final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
+                        Log.w("com.juick.advanced","getFirst: after filter");
                         final Parcelable listPosition = mespos.viewState;
                         if (isAdded()) {
                             if (messages.size() == 0) {
@@ -251,39 +254,48 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
                                     public void run() {
                                         try {
-                                            if (messages.size() != 0) {
-                                                listAdapter.clear();
-                                                listAdapter.addAllMessages(messages);
-                                                if (getListView().getFooterViewsCount() == 0) {
-                                                    getListView().addFooterView(viewLoading, null, false);
+                                            if (isAdded()) {
+                                                if (messages.size() != 0) {
+                                                    Log.w("com.juick.advanced","getFirst: in ui thread!");
+                                                    listAdapter.clear();
+                                                    listAdapter.addAllMessages(messages);
+                                                    Log.w("com.juick.advanced","getFirst: added all");
+                                                    if (getListView().getFooterViewsCount() == 0) {
+                                                        getListView().addFooterView(viewLoading, null, false);
+                                                        Log.w("com.juick.advanced","getFirst: added footer");
+                                                    }
+                                                    topMessageId = messages.get(0).MID;
+                                                } else {
+                                                    topMessageId = -1;
                                                 }
-                                                topMessageId = messages.get(0).MID;
-                                            } else {
-                                                topMessageId = -1;
-                                            }
 
-                                            if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
-                                                getListView().addHeaderView(mRefreshView, null, false);
-                                                mRefreshViewHeight = mRefreshView.getMeasuredHeight();
-                                            }
-
-                                            if (getListAdapter() != listAdapter) {
-                                                setListAdapter(listAdapter);
-                                            }
-
-                                            loading = false;
-                                            resetHeader();
-                                            getListView().invalidateViews();
-                                            getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
-                                                @Override
-                                                public void onMovedToScrapHeap(View view) {
-                                                    listAdapter.recycleView(view);
+                                                if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
+                                                    getListView().addHeaderView(mRefreshView, null, false);
+                                                    mRefreshViewHeight = mRefreshView.getMeasuredHeight();
                                                 }
-                                            });
-                                            if (finalListPosition != null) {
-                                                getListView().onRestoreInstanceState(finalListPosition);
-                                            } else {
-                                                setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+
+                                                if (getListAdapter() != listAdapter) {
+                                                    setListAdapter(listAdapter);
+                                                    Log.w("com.juick.advanced","getFirst: adapter set");
+                                                }
+
+                                                loading = false;
+                                                resetHeader();
+                                                Log.w("com.juick.advanced","getFirst: header reset");
+                                                getListView().invalidateViews();
+                                                Log.w("com.juick.advanced","getFirst: invalidated views");
+                                                getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
+                                                    @Override
+                                                    public void onMovedToScrapHeap(View view) {
+                                                        listAdapter.recycleView(view);
+                                                    }
+                                                });
+                                                if (finalListPosition != null) {
+                                                    getListView().onRestoreInstanceState(finalListPosition);
+                                                } else {
+                                                    setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                }
+                                                Log.w("com.juick.advanced","getFirst: end.");
                                             }
                                         } catch (IllegalStateException e) {
                                             Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
@@ -291,6 +303,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                     }
                                 });
                             }
+                        } else {
+                            Log.w("com.juick.advanced","getFirst: not added!");
                         }
                         return null;
                     }
