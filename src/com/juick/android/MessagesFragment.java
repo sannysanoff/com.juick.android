@@ -311,6 +311,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         thr.start();
     }
 
+    public void test() {
+        JuickMessage item = listAdapter.getItem(2);
+        listAdapter.remove(item);
+
+    }
+
     public static class RetainedData {
         ArrayList<JuickMessage> messages;
         Parcelable viewState;
@@ -398,6 +404,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         @Override
                         public Void apply(ArrayList<JuickMessage> messages) {
                             final ArrayList<JuickMessage> messagesFiltered = filterMessages(messages);
+                            for (JuickMessage juickMessage : messagesFiltered) {
+                                juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(activity, juickMessage, false);
+                            }
                             activity.runOnUiThread(new Runnable() {
 
                                 public void run() {

@@ -11,6 +11,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
@@ -27,6 +28,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessageReceiver.MessageReceiverListener{
+
+    private boolean resumed;
 
     class Item {
         ArrayList<XMPPService.IncomingMessage> messages;
@@ -63,6 +66,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         super.onCreate(savedInstanceState);
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
+        findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(XMPPIncomingMessagesActivity.this, MainActivity.class));
+            }
+        });
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final MyListView lv = (MyListView)findViewById(R.id.list);
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -221,19 +230,30 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         XMPPMessageReceiver.listeners.add(this);
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
         refreshList();
+        launchMainMessagesEnabler();
+        resumed = true;
     }
 
+    private void launchMainMessagesEnabler() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
+                if (resumed)
+                    handler.postDelayed(this, 1000);
+            }
+        });
+    }
     @Override
     protected void onRestart() {
         super.onRestart();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-
-
     @Override
     protected void onPause() {
         XMPPMessageReceiver.listeners.remove(this);
         super.onPause();    //To change body of overridden methods use File | Settings | File Templates.
+        resumed = false;
     }
 
     @Override
@@ -438,7 +458,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     counts.put(from, oldCount);
                     totalCount++;
                     String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
-                    String accountName = Utils.getAccountName(XMPPIncomingMessagesActivity.this).toLowerCase();
+                    String accountName = Utils.getAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
                     int scan = 0;
                     while(true) {
                         int myNick = nickScanArea.indexOf("@" + accountName, scan);

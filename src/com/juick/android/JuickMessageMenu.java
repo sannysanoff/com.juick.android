@@ -202,7 +202,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 });
             }
         });
-        if (UName.equalsIgnoreCase(Utils.getAccountName(activity))) {
+        if (UName.equalsIgnoreCase(Utils.getAccountName(activity.getApplicationContext()))) {
             String midrid = ""+listSelectedItem.MID;
             if (listSelectedItem.RID > 0)
                 midrid += "/"+listSelectedItem.RID;

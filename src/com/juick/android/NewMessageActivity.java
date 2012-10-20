@@ -379,7 +379,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Connection", "Keep-Alive");
             conn.setRequestProperty("Charset", "UTF-8");
-            conn.setRequestProperty("Authorization", Utils.getBasicAuthString(context));
+            conn.setRequestProperty("Authorization", Utils.getBasicAuthString(context.getApplicationContext()));
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
             String outStr = twoHyphens + boundary + end;

@@ -123,7 +123,7 @@ public class MainActivity extends FragmentActivity implements
             }
         }
 
-        if (!Utils.hasAuth(this)) {
+        if (!Utils.hasAuth(getApplicationContext())) {
             startActivityForResult(new Intent(this, SignInActivity.class), ACTIVITY_SIGNIN);
             return;
         }
@@ -235,7 +235,7 @@ public class MainActivity extends FragmentActivity implements
                 void action() {
                     String myUserId = sp.getString("myUserId", "");
                     if (myUserId.equals("")) {
-                        final String value = Utils.getAccountName(MainActivity.this);
+                        final String value = Utils.getAccountName(MainActivity.this.getApplicationContext());
                         final ProgressDialog pd = new ProgressDialog(MainActivity.this);
                         pd.setTitle(getString(R.string.GettingYourId));
                         pd.setMessage(getString(R.string.ConnectingToWwwJuick));
@@ -769,6 +769,9 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.test:
+                mf.test();
+                return true;
             case R.id.menuitem_preferences:
                 startActivityForResult(new Intent(this, JuickPreferencesActivity.class), ACTIVITY_PREFERENCES);
                 return true;

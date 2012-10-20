@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import android.text.SpannableStringBuilder;
+import com.juick.android.JuickMessagesAdapter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,6 +49,7 @@ public class JuickMessage {
     public String source;
     transient public String continuationInformation;
     transient public long messageSaveDate;
+    transient public JuickMessagesAdapter.ParsedMessage parsedText;
 
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();

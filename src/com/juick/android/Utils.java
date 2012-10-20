@@ -74,7 +74,7 @@ public class Utils {
 
     public static void verboseDebug(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
-        if (!Utils.hasAuth(context))
+        if (!Utils.hasAuth(context.getApplicationContext()))
             verboseDebug = true;
         if (verboseDebug) {
             context.runOnUiThread(new Runnable() {
@@ -328,7 +328,7 @@ public class Utils {
                 httpGet.getParams().setParameter("http.socket.timeout", new Integer(timeout));
                 httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
             }
-            String basicAuth = getBasicAuthString(context);
+            String basicAuth = getBasicAuthString(context.getApplicationContext());
             if (basicAuth.length() > 0 && url.startsWith("http://api.juick.com")) {
                 httpGet.addHeader(new BasicHeader("Authorization", basicAuth));
                 //conn.setRequestProperty("Authorization", basicAuth);
@@ -461,7 +461,7 @@ public class Utils {
             URL jsonURL = new URL(url);
             HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
 
-            String basicAuth = getBasicAuthString(context);
+            String basicAuth = getBasicAuthString(context.getApplicationContext());
             if (basicAuth.length() > 0) {
                 conn.setRequestProperty("Authorization", basicAuth);
             }

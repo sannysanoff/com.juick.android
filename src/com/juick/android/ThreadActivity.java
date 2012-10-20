@@ -104,15 +104,6 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 startActivity(new Intent(ThreadActivity.this, MainActivity.class));
             }
         });
-        if (i.getBooleanExtra("isolated", false)) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
-                    handler.postDelayed(this, 1000);
-                }
-            });
-        }
         tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
         etMessage = (EditText) findViewById(R.id.editMessage);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -134,7 +125,18 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         ft.add(R.id.threadfragment, tf);
         ft.commit();
     }
-    
+
+    private void launchMainMessagesEnabler() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
+                if (resumed)
+                    handler.postDelayed(this, 1000);
+            }
+        });
+    }
+
     private void resetForm() {
         rid = 0;
         tvReplyTo.setVisibility(View.GONE);
@@ -145,10 +147,22 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         setFormEnabled(true);
     }
 
+    boolean resumed = false;
+
     @Override
     protected void onResume() {
+        resumed = true;
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+        if (getIntent().getBooleanExtra("isolated", false)) {
+            launchMainMessagesEnabler();
+        }
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        resumed = false;
     }
 
     private void setFormEnabled(boolean state) {

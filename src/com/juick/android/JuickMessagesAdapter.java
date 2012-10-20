@@ -89,6 +89,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private final boolean indirectImages;
     Handler handler;
 
+    public static int instanceCount;
+
+    {
+        instanceCount++;
+    }
+
 
     public static Set<String> getFilteredOutUsers(Context ctx) {
         if (filteredOutUsers == null) {
@@ -101,7 +107,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     static long lastCachedShowNumbers;
     static boolean _showNumbers;
     public static boolean showNumbers(Context ctx) {
-        if (System.currentTimeMillis() - lastCachedShowNumbers > 1000) {
+        if (System.currentTimeMillis() - lastCachedShowNumbers > 3000) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
             _showNumbers = sp.getBoolean("showNumbers", false);
             lastCachedShowNumbers = System.currentTimeMillis();
@@ -431,7 +437,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
     }
 
-    static class ParsedMessage {
+    public static class ParsedMessage {
         SpannableStringBuilder textContent;
         ArrayList<String> urls;
         public int messageNumberStart, messageNumberEnd;
@@ -471,6 +477,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public static ParsedMessage formatMessageText(Context ctx, JuickMessage jmsg, boolean condensed) {
+        if (jmsg.parsedText != null) {
+            return jmsg.parsedText;    // was parsed before
+        }
         getColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
@@ -1010,4 +1019,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        instanceCount--;
+    }
 }

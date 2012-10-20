@@ -73,7 +73,7 @@ public class SignInActivity extends Activity implements OnClickListener {
         bSave.setOnClickListener(this);
         bCancel.setOnClickListener(this);
 
-        if (Utils.hasAuth(this)) {
+        if (Utils.hasAuth(getApplicationContext())) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setNeutralButton(R.string.OK, new android.content.DialogInterface.OnClickListener() {
 

@@ -3,8 +3,11 @@ package com.juick.android;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Gallery;
+
+import java.util.ArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,6 +40,21 @@ public class WebViewGallery extends Gallery {
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
         return false;
+    }
+
+    public void recycled() {
+    }
+
+    protected void detachAllViewsFromParent() {
+        int childCount = getChildCount();
+        ArrayList<View> children = new ArrayList<View>();
+        for(int i=0; i<childCount; i++) {
+            children.add(getChildAt(i));
+        }
+        super.detachAllViewsFromParent();
+        for (View child : children) {
+            removeDetachedView(child, false);
+        }
     }
 
     @Override

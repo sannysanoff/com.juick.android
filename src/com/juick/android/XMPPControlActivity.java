@@ -36,6 +36,11 @@ public class XMPPControlActivity extends Activity {
         final TextView juickBlacklist = (TextView) findViewById(R.id.xmpp_juickblacklist);
         final TextView juboBlacklist = (TextView) findViewById(R.id.xmpp_juboblacklist);
         final TextView lastConnect = (TextView) findViewById(R.id.xmpp_last_connect);
+        final TextView memoryTotal = (TextView) findViewById(R.id.memory_total);
+        final TextView memoryUsed = (TextView) findViewById(R.id.memory_used);
+        final TextView webviewCount = (TextView) findViewById(R.id.webview_count);
+        final TextView jmaCount = (TextView) findViewById(R.id.jma_count);
+        final TextView infoDate = (TextView) findViewById(R.id.info_date);
         final Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final Button retry = (Button) findViewById(R.id.retry);
         retry.setOnClickListener(new View.OnClickListener() {
@@ -46,6 +51,18 @@ public class XMPPControlActivity extends Activity {
                     public void withService(XMPPService service) {
                         service.cleanup("Manual reconnect");
                         service.startup();
+                    }
+                });
+            }
+        });
+        final Button gc = (Button) findViewById(R.id.gc);
+        gc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                    @Override
+                    public void withService(XMPPService service) {
+                        Runtime.getRuntime().gc();
                     }
                 });
             }
@@ -93,6 +110,11 @@ public class XMPPControlActivity extends Activity {
                             juboBlacklist.setText("Cached; "+XMPPService.juboMessageFilter_tmp.info());
                         }
                         lastConnect.setText(XMPPService.lastSuccessfulConnect == 0 ? "never" : new Date(XMPPService.lastSuccessfulConnect).toString());
+                        memoryTotal.setText(""+(Runtime.getRuntime().totalMemory()/1024)+" KB");
+                        memoryUsed.setText(""+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()) /1024)+" KB");
+                        webviewCount.setText("" + MyWebView.instanceCount + " instances");
+                        jmaCount.setText("" + JuickMessagesAdapter.instanceCount + " instances");
+                        infoDate.setText("" + new Date().toString());
                         handler.postDelayed(thiz, 2000);
                     }
                 });

@@ -10,7 +10,7 @@
             android:layout_width="180sp"
             android:orientation="vertical"
             android:layout_height="100sp">
-        <WebView
+        <com.juick.android.MyWebView
                 android:id="@+id/webview"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"

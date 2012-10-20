@@ -9,6 +9,23 @@
         <TextView
                 android:layout_height="wrap_content"
                 android:layout_gravity="right"
+                android:text="Info date:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/info_date"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
                 android:text="Connection status:"
                 android:textStyle="bold"
                 >
@@ -141,10 +158,83 @@
         </TextView>
     </TableRow>
     <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="WebViews:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/webview_count"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="JMA count:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/jma_count"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Memory total:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/memory_total"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Memory used:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/memory_used"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
         <Button
                 android:layout_height="wrap_content"
                 android:id="@+id/retry"
                 android:text="Пнуть"
+                />
+        <Button
+                android:layout_height="wrap_content"
+                android:id="@+id/gc"
+                android:text="GC"
                 />
     </TableRow>
 </TableLayout>
