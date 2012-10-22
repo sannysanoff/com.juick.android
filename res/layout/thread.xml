@@ -39,24 +39,43 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/textReplyTo"
-            android:orientation="horizontal">
-            <ImageButton
-                android:id="@+id/buttonAttachment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:src="@drawable/ic_button_attachment_small"/>
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical">
             <EditText
                 android:id="@+id/editMessage"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:hint="@string/ClickToReply"
                 android:layout_weight="1"/>
-            <Button
-                android:id="@+id/buttonSend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:text="Send"/>
+            <LinearLayout
+                    android:id="@+id/buttons"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:visibility="gone"
+                    android:orientation="horizontal"
+                    >
+                <Button
+                    android:id="@+id/buttonCancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="@android:string/cancel"/>
+                <ImageButton
+                    android:id="@+id/buttonAttachment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:src="@drawable/ic_button_attachment_small"/>
+                <Button
+                    android:id="@+id/buttonSend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="Send"/>
+
+            </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
 </LinearLayout>

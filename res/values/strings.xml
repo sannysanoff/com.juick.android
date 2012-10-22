@@ -199,7 +199,9 @@
     <string name="PrefetchMoreMessages">Prefetch more messages</string>
     <string name="AndNeverSeeLoading">...and never see `loading..`</string>
     <string name="PreviewRepliesBeforeSend">Preview composed replies</string>
+    <string name="PreviewRepliesBeforeSend2">...before sending</string>
     <string name="WarnRepliesWithoutReplyTo">Warn replies to /0</string>
+    <string name="WarnRepliesWithoutReplyTo2">Сheck respondent before sending comment</string>
     <string name="CapitalizeReplyText">Auto-capitalize text</string>
     <string name="AccuracyOfLocation">Accuracy of location</string>
     <string name="WhenReplying">..when replying</string>
@@ -240,8 +242,8 @@
             <br>
             <b>Connection help</b><br>
 
-            You have JID username@server.com. Put username in <b>login</b> field. Put \'server.com\' in <b>service</b> field, or try to leave it empty.
-            Put \'server.com\' in <b>server</b> field.
+            You have JID username@server.com. Put JID in <b>JID</b> field.
+            If server differs from the one in JID, fill <b>server</b> field.
             Try to check <b>secure</b>, or leave it unchecked.
             Make sure you use correct <b>port</b>, default is 5222, but in rare cases it may be different.
             <b>Priority</b> and <b>resource</b> do not affect success of connection.<br>
@@ -628,6 +630,7 @@
         By the way, there\'s an option \'download blacklists and disconnect\' for those who does not like to use XMPP
         in Juick Advanced on regular basis.
     </string>
+    <string name="ClickToReply">Click to reply</string>
 
 
 </resources>

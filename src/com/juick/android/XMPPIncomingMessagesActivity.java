@@ -96,7 +96,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                                     }
 
                                 });
-                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage || incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
                                     menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " #" + thread) {
                                         @Override
                                         public void run() {
@@ -621,7 +621,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menuitem_preferences:
-                startActivity(new Intent(this, JuickPreferencesActivity.class));
+                Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
+                prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
+                startActivity(prefsIntent);
                 return true;
             case R.id.editable_list:
                 editMode = !editMode;

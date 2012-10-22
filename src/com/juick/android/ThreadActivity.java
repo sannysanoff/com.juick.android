@@ -19,6 +19,7 @@ package com.juick.android;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -38,6 +39,7 @@ import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -104,18 +106,43 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 startActivity(new Intent(ThreadActivity.this, MainActivity.class));
             }
         });
-        tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
+        final View buttons = findViewById(R.id.buttons);
+        bSend = (Button) findViewById(R.id.buttonSend);
+        bSend.setOnClickListener(this);
+        bAttach = (ImageButton) findViewById(R.id.buttonAttachment);
+        bAttach.setOnClickListener(this);
         etMessage = (EditText) findViewById(R.id.editMessage);
+        Button cancel = (Button) findViewById(R.id.buttonCancel);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                etMessage.clearFocus();
+                InputMethodManager imm = (InputMethodManager)getSystemService(
+                      Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(etMessage.getWindowToken(), 0);
+            }
+        });
+
+        tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
+        etMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    etMessage.setHint("");
+                    buttons.setVisibility(View.VISIBLE);
+                } else {
+                    etMessage.setHint(R.string.ClickToReply);
+                    buttons.setVisibility(View.GONE);
+                }
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         if (sp.getBoolean("capitalizeReplies", false)) {
             etMessage.setInputType(etMessage.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
         }
 
-        bSend = (Button) findViewById(R.id.buttonSend);
-        bSend.setOnClickListener(this);
-        bAttach = (ImageButton) findViewById(R.id.buttonAttachment);
-        bAttach.setOnClickListener(this);
-        
+
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         tf = new ThreadFragment(getLastCustomNonConfigurationInstance());
         Bundle args = new Bundle();
@@ -463,7 +490,9 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menuitem_preferences:
-                startActivity(new Intent(this, JuickPreferencesActivity.class));
+                Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
+                prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
+                startActivity(prefsIntent);
                 return true;
             case R.id.reload:
                 tf.reload();

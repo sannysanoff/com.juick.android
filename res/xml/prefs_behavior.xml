@@ -31,11 +31,13 @@
     <CheckBoxPreference
             android:key="previewReplies"
             android:title="@string/PreviewRepliesBeforeSend"
+            android:summary="@string/PreviewRepliesBeforeSend2"
             android:defaultValue="false"
             android:persistent="true"/>
     <CheckBoxPreference
             android:key="warnRepliesToBody"
             android:title="@string/WarnRepliesWithoutReplyTo"
+            android:summary="@string/WarnRepliesWithoutReplyTo2"
             android:defaultValue="false"
             android:persistent="true"/>
     <CheckBoxPreference

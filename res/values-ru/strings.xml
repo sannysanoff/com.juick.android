@@ -167,14 +167,16 @@
     <string name="EnableLocalStorage">Сохранять мессаги локально</string>
     <string name="ForBetterLife">..для лучшей жизни</string>
     <string name="DaysToKeepStoredMessages">Сколько дней их хранить</string>
-    <string name="EnableFontScaleByGesture">Менять размер шрифта жестом</string>
+    <string name="EnableFontScaleByGesture">Жестом размер шрифта менять</string>
     <string name="UserIdForMyBlog">ID юзера для \'Мой блог\'</string>
     <string name="LeaveItEmptyIfUnknown">Оставьте пустым если не знаете</string>
     <string name="PrefetchMoreMessages">Включить предзагрузку ленты</string>
     <string name="AndNeverSeeLoading">...и больше не увидеть `Loading..`</string>
-    <string name="PreviewRepliesBeforeSend">Предпросмотр комментов перед отправкой</string>
+    <string name="PreviewRepliesBeforeSend">Предпросмотр комментов</string>
+    <string name="PreviewRepliesBeforeSend2">...перед отправкой</string>
     <string name="WarnRepliesWithoutReplyTo">Подтверждать ответы без \'In-reply-to\'?</string>
-    <string name="CapitalizeReplyText">Ответы с большой буквы</string>
+    <string name="WarnRepliesWithoutReplyTo2">Проверять, что был выбран респондент перед отправкой комментария</string>
+    <string name="CapitalizeReplyText">С большой буквы</string>
     <string name="AccuracyOfLocation">Точность определения положения</string>
     <string name="WhenReplying">..во время ответа</string>
     <string name="CameraCapture">Камера</string>
@@ -334,6 +336,7 @@
         сюда автоматически, и они даже будут работать. Между прочим, для тех кто не любит держать Jabber-подключение
         постоянно, существует опция \'скачать блеклисты и отключиться\'
     </string>
+    <string name="ClickToReply">Ответить</string>
 
 
 </resources>
