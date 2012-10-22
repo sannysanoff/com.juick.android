@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference android:title="@string/XMPPLoginInfo">
+        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPPreferenceActivity"/>
+    </Preference>
+    <CheckBoxPreference
+            android:key="useXMPP"
+            android:title="@string/XMPP_enabled"
+            android:summary="@string/Activate_when_finished"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="useXMPPOnlyForBL"
+            android:title="@string/OnlyUseToDownloadBL"
+            android:summary="@string/DisconnectAsSoonAsBLDownloaded"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <ListPreference
+            android:key="juickBotOn"
+            android:title="@string/Send_on_command"
+            android:defaultValue="skip"
+            android:entries="@array/juickBotOnLabels"
+            android:entryValues="@array/juickBotOnValues"
+            android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="xmpp_verbose"
+            android:title="@string/VerboseEventNotifications"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <Preference android:title="@string/XMPPControl">
+        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
+    </Preference>
+</PreferenceScreen>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <com.juick.android.PressableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
+    android:id="@+id/juick_message_row"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="5dip">
@@ -21,12 +22,12 @@
         android:layout_weight="1"
         android:gravity="top"/>
 
-    <com.juick.android.WebViewGallery
-            android:id="@+id/gallery"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:spacing="20sp"
-            >
+    <!--<com.juick.android.WebViewGallery-->
+            <!--android:id="@+id/gallery"-->
+            <!--android:layout_width="fill_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:spacing="20sp"-->
+            <!-->-->
 
-    </com.juick.android.WebViewGallery>
+    <!--</com.juick.android.WebViewGallery>-->
 </com.juick.android.PressableLinearLayout>

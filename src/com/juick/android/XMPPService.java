@@ -53,18 +53,27 @@ public class XMPPService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        handler.removeCallbacksAndMessages(null);
-        if (intent != null && intent.getBooleanExtra("terminate", false)) {
-            String message = intent.getStringExtra("terminateMessage");
-            if (message == null) message = "user terminated";
-            cleanup(message);
-            stopSelf();
-        } else {
-            if (startId != 2) {     // i don't know what is this, really
-                startup();
+        log("onStartCommand");
+        try {
+            handler.removeCallbacksAndMessages(null);
+            if (intent != null && intent.getBooleanExtra("terminate", false)) {
+                String message = intent.getStringExtra("terminateMessage");
+                if (message == null) message = "user terminated";
+                cleanup(message);
+                stopSelf();
+            } else {
+                if (startId != 2) {     // i don't know what is this, really
+                    startup();
+                }
             }
+            return super.onStartCommand(intent, flags, startId);
+        } finally {
+            log("onStartCommand ended.");
         }
-        return super.onStartCommand(intent, flags, startId);
+    }
+
+    void log(String str) {
+            Log.w("com.juickadvanced", "XMPPService: "+str);
     }
 
 
@@ -77,6 +86,7 @@ public class XMPPService extends Service {
     Exception lastException;
 
     public void startup() {
+        log("startup()");
         lastException = null;
         botOnline = false;
         juboOnline = false;
@@ -89,8 +99,9 @@ public class XMPPService extends Service {
             useXMPP = false;
         }
         Gson gson = new Gson();
-        final XMPPPreference.Value connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPPreference.Value.class);
+        final XMPPPreferenceActivity.Value connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPPreferenceActivity.Value.class);
         synchronized (connections) {
+            log("enter sync");
             if (useXMPP && connectionArgs != null && connections.size() == 0) {
                 (currentThread = new Thread("XMPP worker") {
 
@@ -99,7 +110,7 @@ public class XMPPService extends Service {
                     @Override
                     public void run() {
                         try {
-                            ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.server, connectionArgs.port, Utils.nvl(connectionArgs.service, connectionArgs.server).trim());
+                            ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.getServer(), connectionArgs.port, connectionArgs.getService().trim());
                             configuration.setSecurityMode(connectionArgs.secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
                             configuration.setReconnectionAllowed(true);
                             SASLAuthentication.supportSASLMechanism("PLAIN", 0);
@@ -157,7 +168,7 @@ public class XMPPService extends Service {
                                     scheduleReconnect();
                                 }
                             });
-                            connection.login(connectionArgs.login, connectionArgs.password, connectionArgs.resource);
+                            connection.login(connectionArgs.getLogin(), connectionArgs.password, connectionArgs.resource);
                         } catch (final IllegalStateException e) {
                             cleanup(null);
                             scheduleReconnect();
@@ -306,6 +317,7 @@ public class XMPPService extends Service {
                 }).start();
             }
         }
+        log("leave startup()");
     }
 
     public static JuboMessageFilter getAnyJuboMessageFilter() {
@@ -989,6 +1001,7 @@ public class XMPPService extends Service {
     }
 
     public void cleanup(final String reason) {
+        ArrayList<XMPPConnection> xmppConnections = null;
         synchronized (connections) {
             if (juickBlacklist != null) {
                 juickBlacklist_tmp = juickBlacklist;
@@ -998,32 +1011,32 @@ public class XMPPService extends Service {
                 juboMessageFilter_tmp = juboMessageFilter;
                 juboMessageFilter = null;
             }
-            for (XMPPConnection connection : connections) {
-                if (connection != null) {
-                    try {
-                        connection.disconnect();
-                    } catch (Exception e) {
-                        //
-                    }
-                    if (currentThread != null) {
-                        currentThread.interrupt();
-                        currentThread = null;
-                    }
-                    botOnline = false;
-                    juboOnline = false;
-                    if (reason != null) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (verboseXMPP() || reason.startsWith("!"))
-                                    Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
+            xmppConnections = new ArrayList<XMPPConnection>(connections);
+            connections.clear();
+        }
+        for (XMPPConnection connection : xmppConnections) {
+            if (connection != null) {
+                try {
+                    connection.disconnect();
+                } catch (Exception e) {
+                    //
+                }
+                if (currentThread != null) {
+                    currentThread.interrupt();
+                    currentThread = null;
+                }
+                botOnline = false;
+                juboOnline = false;
+                if (reason != null) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (verboseXMPP() || reason.startsWith("!"))
+                                Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
             }
-            connections.clear();
-
         }
     }
 

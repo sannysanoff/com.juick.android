@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+            android:key="useBackupServer"
+            android:title="@string/UseBackupServer"
+            android:entries="@array/useJABackupTitles"
+            android:entryValues="@array/useJABackup"
+            android:defaultValue="-1"
+            android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="http_compression"
+            android:title="@string/EnableHttpCompression"
+            android:summary="@string/CompressionSlowsDown"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="enableMessageDB"
+            android:title="@string/EnableLocalStorage"
+            android:summary="@string/ForBetterLife"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <EditTextPreference
+            android:key="messageDBperiod"
+            android:title="@string/DaysToKeepStoredMessages"
+            android:defaultValue="30"
+            android:persistent="false"/>
+    <ListPreference
+            android:key="locationAccuracy"
+            android:title="@string/AccuracyOfLocation"
+            android:entries="@array/prefsAccuracyTitles"
+            android:entryValues="@array/prefsAccuracyValues"
+            android:defaultValue="ACCURACY_FINE"
+            android:persistent="true"/>
+    <ListPreference
+            android:key="usage_statistics"
+            android:title="Send anon usage reports"
+            android:entryValues="@array/usageStatistics"
+            android:entries="@array/usageStatisticsLabels"
+            android:defaultValue="no"
+            android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="verboseDebug"
+            android:title="@string/EnableDiagnosticMessages"
+            android:defaultValue="false"
+            android:persistent="true"/>
+
+</PreferenceScreen>

@@ -83,6 +83,11 @@ public class WhatsNew {
         if (currentSetting.length() == 0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             final View stat = context.getLayoutInflater().inflate(R.layout.enable_statistics, null);
+            final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
+                    .setMessage(context.getString(R.string.EnableUsageStatistics))
+                    .setCancelable(false)
+                    .setView(stat)
+                    .create();
 
             stat.findViewById(R.id.read_privacy_policy).setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -90,27 +95,10 @@ public class WhatsNew {
                     showPrivacyPolicy();
                 }
             });
-            final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
-                    .setMessage(context.getString(R.string.EnableUsageStatistics))
-                    .setCancelable(false)
-                    .setView(stat)
-                    .create();
             stat.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    RadioButton us_send = (RadioButton)stat.findViewById(R.id.us_send);
-                    RadioButton us_send_wifi = (RadioButton)stat.findViewById(R.id.us_send_wifi);
-                    RadioButton us_no_hello = (RadioButton)stat.findViewById(R.id.us_no_hello);
-                    RadioButton us_no = (RadioButton)stat.findViewById(R.id.us_no);
-                    String option = "";
-                    if (us_send.isChecked())
-                        option  = "send";
-                    if (us_send_wifi.isChecked())
-                        option  = "send_wifi";
-                    if (us_no_hello.isChecked())
-                        option  = "no_hello";
-                    if (us_no.isChecked())
-                        option  = "no";
+                    String option = getSendStatValueFromUI(stat);
                     if (option.length() != 0) {
                         sp.edit().putString("usage_statistics", option).commit();
                         alert.dismiss();
@@ -124,6 +112,23 @@ public class WhatsNew {
         } else {
             after.run();
         }
+    }
+
+    public static String getSendStatValueFromUI(View stat) {
+        RadioButton us_send = (RadioButton)stat.findViewById(R.id.us_send);
+        RadioButton us_send_wifi = (RadioButton)stat.findViewById(R.id.us_send_wifi);
+        RadioButton us_no_hello = (RadioButton)stat.findViewById(R.id.us_no_hello);
+        RadioButton us_no = (RadioButton)stat.findViewById(R.id.us_no);
+        String option = "";
+        if (us_send.isChecked())
+            option  = "send";
+        if (us_send_wifi.isChecked())
+            option  = "send_wifi";
+        if (us_no_hello.isChecked())
+            option  = "no_hello";
+        if (us_no.isChecked())
+            option  = "no";
+        return option;
     }
 
     public void showPrivacyPolicy() {

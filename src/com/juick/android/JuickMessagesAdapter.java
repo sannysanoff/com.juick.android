@@ -29,6 +29,7 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.text.Layout.Alignment;
 import android.text.style.*;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.webkit.WebView;
 import android.widget.*;
@@ -218,57 +219,60 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 t.setText(parsedMessage.textContent);
             }
             final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
-            final Gallery gallery = (Gallery)ll.findViewById(R.id.gallery);
-            gallery.setVisibility(View.VISIBLE);
-            gallery.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-                long lastClick = 0;
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                    Object tag = gallery.getTag();
-                    if (tag instanceof HashMap) {
-                        HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
-                        final ImageLoaderConfiguration imageLoader = loaders.get(i);
-                        if (imageLoader != null && imageLoader.loader != null) {
-                            Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
-                            if (System.currentTimeMillis() - lastClick < 500) {
-                                if (!imageLoader.useOriginal) {
-                                    new AlertDialog.Builder(getContext())
-                                            .setTitle(R.string.DownloadOriginal)
-                                            .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    imageLoader.useOriginal = true;
-                                                    imageLoader.loader.getDestFile().delete();
-                                                    ImageLoader oldLoader = imageLoader.loader;
-                                                    imageLoader.loader = null;
-                                                    oldLoader.resetAdapter();
-                                                }
-                                            })
-                                            .setNeutralButton(R.string.JustSame, new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    imageLoader.loader.getDestFile().delete();
-                                                    ImageLoader oldLoader = imageLoader.loader;
-                                                    imageLoader.loader = null;
-                                                    oldLoader.resetAdapter();
-                                                }
-                                            })
-                                            .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    dialog.dismiss();
-                                                }
-                                            }).show();
-                                }
-                            }
-                            lastClick = System.currentTimeMillis();
-                        }
-                    }
-                    //To change body of implemented methods use File | Settings | File Templates.
-                }
-            });
             if (images.size() > 0 && !imageLoadMode.equals("off")) {
+                final WebViewGallery gallery = new WebViewGallery(getContext());
+                gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                gallery.setSpacing(20);
+                gallery.setVisibility(View.VISIBLE);
+                ((LinearLayout) v).addView(gallery);
+                gallery.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    long lastClick = 0;
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Object tag = gallery.getTag();
+                        if (tag instanceof HashMap) {
+                            HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
+                            final ImageLoaderConfiguration imageLoader = loaders.get(i);
+                            if (imageLoader != null && imageLoader.loader != null) {
+                                Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
+                                if (System.currentTimeMillis() - lastClick < 500) {
+                                    if (!imageLoader.useOriginal) {
+                                        new AlertDialog.Builder(getContext())
+                                                .setTitle(R.string.DownloadOriginal)
+                                                .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        imageLoader.useOriginal = true;
+                                                        imageLoader.loader.getDestFile().delete();
+                                                        ImageLoader oldLoader = imageLoader.loader;
+                                                        imageLoader.loader = null;
+                                                        oldLoader.resetAdapter();
+                                                    }
+                                                })
+                                                .setNeutralButton(R.string.JustSame, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        imageLoader.loader.getDestFile().delete();
+                                                        ImageLoader oldLoader = imageLoader.loader;
+                                                        imageLoader.loader = null;
+                                                        oldLoader.resetAdapter();
+                                                    }
+                                                })
+                                                .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        dialog.dismiss();
+                                                    }
+                                                }).show();
+                                    }
+                                }
+                                lastClick = System.currentTimeMillis();
+                            }
+                        }
+                        //To change body of implemented methods use File | Settings | File Templates.
+                    }
+                });
                 final HashMap<Integer, ImageLoaderConfiguration> imageLoaders = new HashMap<Integer, ImageLoaderConfiguration>();
                 gallery.setTag(imageLoaders);
                 final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
@@ -291,8 +295,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
                     @Override
                     public View getView(int i, View view, ViewGroup viewGroup) {
-                        if (view == null)
+                        if (view == null) {
                             view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
+                            MyWebView wv = (MyWebView) view.findViewById(R.id.webview);
+                            gallery.addInitializedWebView(wv);
+                        }
                         view.setMinimumHeight(HEIGHT);
                         ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
                         if (imageLoader == null) {
@@ -312,29 +319,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         return view;
                     }
                 });
-            } else {
-                gallery.setAdapter(new BaseAdapter() {
-                    @Override
-                    public int getCount() {
-                        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public Object getItem(int i) {
-                        return null;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public long getItemId(int i) {
-                        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public View getView(int i, View view, ViewGroup viewGroup) {
-                        return null;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
-                });
-                gallery.setVisibility(View.GONE);
             }
 
 
@@ -422,9 +406,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public void recycleView(View view) {
         if (view instanceof ViewGroup) {
             ViewGroup vg = (ViewGroup)view;
-            if (vg.getChildCount() > 1 && vg.getChildAt(1) instanceof Gallery) {
+            if (vg.getChildCount() > 1 && vg.getChildAt(1) instanceof WebViewGallery) {
                 // our view
-                Gallery gallery = (Gallery)vg.getChildAt(1);
+                WebViewGallery gallery = (WebViewGallery)vg.getChildAt(1);
                 Object tag = gallery.getTag();
                 if (tag instanceof HashMap) {
                     HashMap<Integer, ImageLoader> loaders = new HashMap<Integer, ImageLoader>();
@@ -432,7 +416,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         imageLoader.terminate();
                     }
                 }
+                gallery.cleanup();
                 gallery.setTag(null);
+                vg.removeViewAt(1);
             }
         }
     }
@@ -929,74 +915,83 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         private void updateWebView(final File destFile) {
             final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
-            if (destFile.getPath().equals(webView.getTag())) return;    // already there
-            webView.setTag(destFile.getPath());
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(destFile.getPath(), opts);
-            imageW = opts.outWidth;
-            imageH = opts.outHeight;
-            int screenWidth = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth();
-            double scaleFactor = (((double)destHeight) / imageH);
-            double screenWidthLimiter = notOnlyImage ? 0.8 : 0.96;   // gallery scrolls poorly if image width = screen width
-            if (scaleFactor * imageW > (screenWidth * screenWidthLimiter)) {
-                // image does not fit by width, gallery will crop it. Preventing this:
-                scaleFactor = (((double)(screenWidth * screenWidthLimiter)) / imageW);
-                final Gallery gallery = (Gallery) listRow.findViewById(R.id.gallery);
-                if (gallery.getAdapter().getCount() == 1) { // no other children
-                    //final LinearLayout content = (LinearLayout)listRow.findViewById(R.id.content);
-                    // happened to be smaller than user requested height
-                    int newHeiht = (int) (imageH * scaleFactor);
-                    imageHolder.setMinimumHeight(newHeiht);
-                }
-            }
-            final int scaledW = (int) (imageW * scaleFactor);
-            final int scaledH = (int) (imageH * scaleFactor);
-            final boolean sameThread = Thread.currentThread() == mUiThread;
-            if (imageHolder != null && imageH > 0) {
-                View content = imageHolder.findViewById(R.id.content);
-                content.getLayoutParams().width = scaledW;
-                content.getLayoutParams().height = scaledH;
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        View progressBar = imageHolder.findViewById(R.id.progressbar);
-                        progressBar.setVisibility(View.GONE);
-                        TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
-                        progressBarText.setVisibility(View.GONE);
-                        webView.setVisibility(View.VISIBLE);
-                        webView.getLayoutParams().height = destHeight;
-                        webView.setInitialScale(100);
-
-                        StringBuilder content = new StringBuilder();
-                        content.append(String.format("<html><head>"));
-                        //content.append(String.format("<meta name=\"viewport\" content=\"initial-scale=%f; maximum-scale=%f; user-scalable=0;\" />", scaleFactor, scaleFactor));
-                        content.append(String.format("</head><body style='padding: 0px; margin: 0px'>"));
-                        content.append(String.format("<img src='%s' width=%d height=%d/>",
-                                CachedImageContentProvider.constructUri(destFile.getName()),
-                                scaledW, scaledH
-                        ));
-                        content.append(String.format("</body></html>"));
-                        webView.loadData(content.toString(), "text/html", "UTF-8");
-                        webView.setOnTouchListener(new View.OnTouchListener() {
-                            @Override
-                            public boolean onTouch(View view, MotionEvent motionEvent) {
-                                return true;
-                            }
-                        });
-                        if (!sameThread) {
-                            resetAdapter();
-//                            imageHolder.invalidate();
-//                            gallery.invalidate();
-//                            imageHolder.requestLayout();
-                        }
+            if (webView != null) {      // concurrent remove
+                if (destFile.getPath().equals(webView.getTag())) return;    // already there
+                webView.setTag(destFile.getPath());
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(destFile.getPath(), opts);
+                imageW = opts.outWidth;
+                imageH = opts.outHeight;
+                int screenWidth = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth();
+                double scaleFactor = (((double)destHeight) / imageH);
+                double screenWidthLimiter = notOnlyImage ? 0.8 : 0.96;   // gallery scrolls poorly if image width = screen width
+                if (scaleFactor * imageW > (screenWidth * screenWidthLimiter)) {
+                    // image does not fit by width, gallery will crop it. Preventing this:
+                    scaleFactor = (((double)(screenWidth * screenWidthLimiter)) / imageW);
+                    final Gallery gallery = (Gallery) listRow.getChildAt(1);        // gallery is here, maybe
+                    if (gallery.getAdapter().getCount() == 1) { // no other children
+                        //final LinearLayout content = (LinearLayout)listRow.findViewById(R.id.content);
+                        // happened to be smaller than user requested height
+                        int newHeiht = (int) (imageH * scaleFactor);
+                        imageHolder.setMinimumHeight(newHeiht);
                     }
-                });
+                }
+                final int scaledW = (int) (imageW * scaleFactor);
+                final int scaledH = (int) (imageH * scaleFactor);
+                final boolean sameThread = Thread.currentThread() == mUiThread;
+                if (imageHolder != null && imageH > 0) {
+                    View content = imageHolder.findViewById(R.id.content);
+                    content.getLayoutParams().width = scaledW;
+                    content.getLayoutParams().height = scaledH;
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (webView.getTag(MyWebView.DESTROYED_TAG) == null) {
+                                View progressBar = imageHolder.findViewById(R.id.progressbar);
+                                progressBar.setVisibility(View.GONE);
+                                TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
+                                progressBarText.setVisibility(View.GONE);
+                                webView.setVisibility(View.VISIBLE);
+                                webView.getLayoutParams().height = destHeight;
+                                webView.setInitialScale(100);
+
+                                StringBuilder content = new StringBuilder();
+                                content.append(String.format("<html><head>"));
+                                //content.append(String.format("<meta name=\"viewport\" content=\"initial-scale=%f; maximum-scale=%f; user-scalable=0;\" />", scaleFactor, scaleFactor));
+                                content.append(String.format("</head><body style='padding: 0px; margin: 0px'>"));
+                                content.append(String.format("<img src='%s' width=%d height=%d/>",
+                                        CachedImageContentProvider.constructUri(destFile.getName()),
+                                        scaledW, scaledH
+                                ));
+                                content.append(String.format("</body></html>"));
+                                try {
+                                    webView.loadData(content.toString(), "text/html", "UTF-8");
+                                    webView.setOnTouchListener(new View.OnTouchListener() {
+                                        @Override
+                                        public boolean onTouch(View view, MotionEvent motionEvent) {
+                                            return true;
+                                        }
+                                    });
+                                    if (!sameThread) {
+                                        resetAdapter();
+            //                            imageHolder.invalidate();
+            //                            gallery.invalidate();
+            //                            imageHolder.requestLayout();
+                                    }
+                                } catch (Exception e) {
+                                    Log.e("JuickAdvanced","Exception in MyWebView.loaddata:  "+e.toString());
+                                    // that webview is probably destroyed some way
+                                }
+                            }
+                        }
+                    });
+                }
             }
         }
 
         private void resetAdapter() {
-            final Gallery gallery = (Gallery) listRow.findViewById(R.id.gallery);
+            final Gallery gallery = (Gallery) listRow.getChildAt(1);
             Parcelable parcelable = gallery.onSaveInstanceState();
             gallery.setAdapter(gallery.getAdapter());
             gallery.onRestoreInstanceState(parcelable);

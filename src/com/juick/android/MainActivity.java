@@ -128,7 +128,6 @@ public class MainActivity extends FragmentActivity implements
             return;
         }
 
-        //startCheckUpdates(this);
         startPreferencesStorage(this);
 
 
@@ -693,26 +692,6 @@ public class MainActivity extends FragmentActivity implements
 //        }.start();
     }
 
-    public static void startCheckUpdates(Context context) {
-        Intent intent = new Intent(context, CheckUpdatesReceiver.class);
-        PendingIntent sender = PendingIntent.getBroadcast(context, PENDINGINTENT_CONSTANT, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        int interval = 5;
-        try {
-            interval = Integer.parseInt(sp.getString("refresh", "5"));
-        } catch (Exception ex) {
-        }
-        if (interval > 0) {
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.SECOND, 5);
-            am.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), interval * 60000, sender);
-        } else {
-            am.cancel(sender);
-        }
-    }
-
     public boolean onNavigationItemSelected(final int itemPosition, long _) {
         restyle();
         NavigationItem thisItem = navigationItems.get(itemPosition);
@@ -769,11 +748,10 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.test:
-                mf.test();
-                return true;
             case R.id.menuitem_preferences:
-                startActivityForResult(new Intent(this, JuickPreferencesActivity.class), ACTIVITY_PREFERENCES);
+                Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
+                prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
+                startActivityForResult(prefsIntent, ACTIVITY_PREFERENCES);
                 return true;
             case R.id.menuitem_newmessage:
                 startActivity(new Intent(this, NewMessageActivity.class));

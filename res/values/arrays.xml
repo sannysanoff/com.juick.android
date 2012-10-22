@@ -50,18 +50,18 @@
     <string-array name="imageLoadMode">
         <item>Do not load</item>
         <item>Original size</item>
-        <item>fastun.com (auth needed!) = JPG compression</item>
-        <item>images.weserv.nl = resizing</item>
-        <item>2 above combined (auth needed!)</item>
-        <item>JuickAdv proxy = best</item>
+        <item>Juick Adv. proxy = best</item>
+        <item>fastun = JPG compression</item>
+        <item>weserv = re-scaling</item>
+        <item>fastun + weserv = often down</item>
     </string-array>
     <string-array name="imageLoadModeValues">
         <item>off</item>
         <item>fullSize</item>
+        <item>japroxy</item>
         <item>fastun</item>
         <item>weserv</item>
         <item>fastunweserv</item>
-        <item>japroxy</item>
     </string-array>
     <string-array name="imageHeight">
         <item>20 percent</item>

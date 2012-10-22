@@ -53,7 +53,7 @@
     <string name="Unsubscribe_from">Отписаться от</string>
     <string name="Blacklist">Добавить в черный список</string>
     <string name="FilterOutUser">Не показывать</string>
-    <string name="Filters">Фильтры юзеров</string>
+    <string name="Filters">Фильтры юзеров...</string>
     <string name="Recommended">Рекомендовано</string>
     <string name="Subscribed">Подписано</string>
     <string name="Deleted">Удалено (наверное)</string>
@@ -156,14 +156,14 @@
     <string name="VibrationEnabled">Вибрировать вибрацией</string>
     <string name="LEDEnabled">Светить светодиодом</string>
     <string name="VibrationInCurrentThread">Вибрация в текущем треде</string>
-    <string name="LoadImages">Загрузка картинок</string>
+    <string name="LoadImages">Загрузка приложенных картинок </string>
     <string name="OnOffProxy">выкл / полная / прокси ?</string>
     <string name="LoadImageMode">Режим загрузки картинок</string>
-    <string name="ImageProxyLogin">Логин для прокси</string>
-    <string name="ImageProxyPassword">Пароль для прокси</string>
+    <string name="ImageProxyLogin">Логин для fastun.com</string>
+    <string name="ImageProxyPassword">Пароль для fastun.com</string>
     <string name="DaysToKeepCachedImages">Сколько дней хранить картинки</string>
     <string name="ImageHeight">Высота картинок (% от экрана)</string>
-    <string name="MarkAlreadyReadImages">Помечать прочитанные сообщ.</string>
+    <string name="MarkAlreadyReadMessages">Помечать прочитанные сообщ.</string>
     <string name="EnableLocalStorage">Сохранять мессаги локально</string>
     <string name="ForBetterLife">..для лучшей жизни</string>
     <string name="DaysToKeepStoredMessages">Сколько дней их хранить</string>
@@ -202,8 +202,7 @@
     <string name="SetupXMPP">Настроить jabber...</string>
     <string name="Presets_">Шаблоны:</string>
     <string name="Test__">Попробовать..</string>
-    <string name="RightPartOf_">что справа от @</string>
-    <string name="LeftPartOf_">что слева от @</string>
+    <string name="LeftPartOf_">username@jabber.ru</string>
     <string name="Priority_">Приоритет:</string>
     <string name="ReadThis">Внезапно..</string>
 
@@ -241,8 +240,8 @@
     ]]>
     </string>
     <string name="NewFeatures">Новые фичи</string>
-    <string name="WhatsNew">Что нового</string>
-    <string name="Privacy_Policy">Приватность</string>
+    <string name="WhatsNew">Что нового...</string>
+    <string name="Privacy_Policy">Приватность...</string>
     <string name="EnableUsageStatistics">Отправлять анонимную статистику?</string>
     <string name="UsageStatistics">Анонимная статистика</string>
 
@@ -314,7 +313,27 @@
         Если вы не знаете или забыли пароль с сайта: отправьте через jabber жуйко-боту команду LOGIN, перейдите по полученной от бота ссылке,
         затем откройте http://juick.com/settings?page=password и настройте себе пароль.
     </string>
+    <string name="OnlyNeededIfUsing">Нужен только если вы ее используете</string>
 
+    <string name="UI_Settings">Интерфейс</string>
+    <string name="UsabilityEnhancements">Внешний вид, нотификации</string>
+    <string name="Behavior">Поведение</string>
+    <string name="Behavior2">Подтверждения, маркеры и прочее полезное</string>
+    <string name="ContentSettings">Содержание</string>
+    <string name="ContentSettings2">Картинки, номера постов, фильтры итд.</string>
+    <string name="Sources">Источники</string>
+    <string name="Sources2">JuBo, jugregator.org итд.</string>
+    <string name="NetworkingAndStorage">Сеть и сохранение данных</string>
+    <string name="NetworkingAndStorage2">Прокси, сжатие, кеш, БД, GPS</string>
+    <string name="WhatsNew">Что нового...</string>
+    <string name="WhatsNew2">Изменения в вериях</string>
+    <string name="Privacy_Policy2">Куда уходят какие персональные данные</string>
+    <string name="XMPPLoginInfo">XMPP аккаунт...</string>
+    <string name="JuBoFilters">JuBo/Juick стоп-листы...</string>
+    <string name="StopListsEmpty">Стоп-листы пусты. Если вы настроите XMPP/Jabber, то клиент скачает ваши стоп-листы
+        сюда автоматически, и они даже будут работать. Между прочим, для тех кто не любит держать Jabber-подключение
+        постоянно, существует опция \'скачать блеклисты и отключиться\'
+    </string>
 
 
 </resources>

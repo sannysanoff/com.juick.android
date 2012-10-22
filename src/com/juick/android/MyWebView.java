@@ -3,6 +3,7 @@ package com.juick.android;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.webkit.WebView;
+import com.juickadvanced.R;
 
 /**
  * Created with IntelliJ IDEA.
@@ -14,6 +15,7 @@ import android.webkit.WebView;
 public class MyWebView extends WebView {
 
     public static int instanceCount = 0;
+    public static final int DESTROYED_TAG = R.id.juick_message_row;
 
     {
         instanceCount++;
@@ -40,4 +42,5 @@ public class MyWebView extends WebView {
         super.finalize();
         instanceCount--;
     }
+
 }

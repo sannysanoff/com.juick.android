@@ -233,9 +233,18 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 final Utils.Function<Void, RetainedData> then = new Utils.Function<Void, RetainedData>() {
                     @Override
                     public Void apply(final RetainedData mespos) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                notification.statusText.setText("Filter and format..");
+                            }
+                        });
                         Log.w("com.juick.advanced", "getFirst: before filter");
                         final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
                         Log.w("com.juick.advanced","getFirst: after filter");
+                        for (JuickMessage juickMessage : messages) {
+                            juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
+                        }
                         final Parcelable listPosition = mespos.viewState;
                         if (isAdded()) {
                             if (messages.size() == 0) {
@@ -437,8 +446,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         thr.start();
     }
 
+    void log(String str) {
+        Log.w("com.juickadvanced","MessagesFragment: "+str);
+    }
+
     private ArrayList<JuickMessage> filterMessages(ArrayList<JuickMessage> messages) {
+        log("filterMessages start");
         Set<String> filteredOutUsers1 = JuickMessagesAdapter.getFilteredOutUsers(parent);
+        log("filterMessages got filtered out users");
         for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
             JuickMessage message = iterator.next();
             if (filteredOutUsers1.contains(message.User.UName)) {
@@ -461,6 +476,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             }
         }
+        log("filterMessages end");
         return messages;
     }
 

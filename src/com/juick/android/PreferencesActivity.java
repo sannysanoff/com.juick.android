@@ -38,8 +38,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
         ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
-
-        addPreferencesFromResource(R.xml.preferences);
+        int prefs = getIntent().getIntExtra("prefs", 0);
+        addPreferencesFromResource(prefs);
     }
 
     @Override
@@ -59,9 +59,6 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         updateSummaries(getPreferenceScreen());
-        if (key.equals("refresh")) {
-            MainActivity.startCheckUpdates(this);
-        }
         setResult(RESULT_OK);
     }
 

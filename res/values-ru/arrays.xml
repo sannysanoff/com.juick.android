@@ -21,10 +21,10 @@
     <string-array name="imageLoadMode">
         <item>Не грузить картинки</item>
         <item>Грузить как есть</item>
-        <item>fastun.com (нужна авторизация!) = JPG компрессия</item>
-        <item>images.weserv.nl = уменьшение</item>
-        <item>Два прокси подряд (нужна авторизация!)</item>
-        <item>JuickAdv - лучший</item>
+        <item>JA прокси = лучший</item>
+        <item>fastun = только сжатие </item>
+        <item>weserv = только уменьшение</item>
+        <item>fastun+weserv = часто лежит</item>
     </string-array>
 
     <string-array name="prefsThemesTitles">

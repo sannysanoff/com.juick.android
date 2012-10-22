@@ -61,7 +61,14 @@
         <activity android:name="com.juick.android.PreferencesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.JuickPreferencesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.EditFiltersActivity" android:label="@string/EditFilters" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.NewJuickPreferenceActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.XMPPPreferenceActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.EditFiltersActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.ViewJuboFiltersActivity" android:configChanges="keyboard|keyboardHidden|orientation">
+            <intent-filter>
+                <action android:name="com.juick.android.EditFiltersActivity"/>
+            </intent-filter>
+        </activity>
         <activity android:name="com.juick.android.PickLocationActivity" android:label="@string/Pick_a_location" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events" android:launchMode="singleTask" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.XMPPControlActivity" android:label="@string/XMPPControl" android:configChanges="keyboard|keyboardHidden|orientation"/>
@@ -77,12 +84,6 @@
               <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
            </intent-filter>
         </receiver>
-        <receiver android:name="com.juick.android.OnBootReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
-        <receiver android:name="com.juick.android.CheckUpdatesReceiver"></receiver>
         <service android:name="com.juick.android.AuthenticationService" android:exported="true" android:process=":auth">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator"/>

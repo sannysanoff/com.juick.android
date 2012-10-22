@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+            android:key="showNumbers"
+            android:title="@string/Show_Numbers"
+            android:summary="@string/Message_numbers_will_be_shown"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <PreferenceCategory android:title="@string/LoadImages">
+        <ListPreference
+                android:key="image.loadMode"
+                android:summary="@string/OnOffProxy"
+                android:title="@string/LoadImageMode"
+                android:entries="@array/imageLoadMode"
+                android:entryValues="@array/imageLoadModeValues"
+                android:defaultValue="off"
+                android:persistent="true"/>
+        <EditTextPreference
+                android:key="imageproxy.login"
+                android:title="@string/ImageProxyLogin"
+                android:summary="@string/OnlyNeededIfUsing"
+                android:defaultValue=""
+                android:persistent="true"/>
+        <EditTextPreference
+                android:key="imageproxy.password"
+                android:title="@string/ImageProxyPassword"
+                android:summary="@string/OnlyNeededIfUsing"
+                android:defaultValue=""
+                android:persistent="true"/>
+        <EditTextPreference
+                android:key="image.daystokeep"
+                android:title="@string/DaysToKeepCachedImages"
+                android:defaultValue="10"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="image.indirect"
+                android:title="@string/IndirectImages"
+                android:summary="@string/Gelbooru"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <ListPreference
+                android:key="image.height_percent"
+                android:title="@string/ImageHeight"
+                android:entries="@array/imageHeight"
+                android:entryValues="@array/imageHeightValues"
+                android:defaultValue="0.3"
+                android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Other">
+        <Preference android:title="@string/Filters">
+            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.EditFiltersActivity"/>
+        </Preference>
+        <Preference android:title="@string/JuBoFilters">
+            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.ViewJuboFiltersActivity"/>
+        </Preference>
+    </PreferenceCategory>
+
+</PreferenceScreen>

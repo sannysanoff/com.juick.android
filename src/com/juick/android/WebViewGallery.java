@@ -6,6 +6,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Gallery;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 
@@ -97,5 +98,24 @@ public class WebViewGallery extends Gallery {
     @Override
     public boolean hasFocusable() {
         return false;
+    }
+
+    public void cleanup() {
+        for (MyWebView view : views) {
+            view.setOnTouchListener(null);
+            LinearLayout ll = (LinearLayout)view.getParent();
+            if (ll != null) {
+                ll.removeView(view);
+            }
+            view.destroy();
+            view.setTag(MyWebView.DESTROYED_TAG, Boolean.FALSE);
+        }
+        views.clear();
+        removeAllViewsInLayout();
+    }
+
+    ArrayList<MyWebView> views = new ArrayList<MyWebView>();
+    public void addInitializedWebView(MyWebView wv) {
+        views.add(wv);
     }
 }
