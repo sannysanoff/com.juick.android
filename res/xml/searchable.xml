@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<searchable
+      xmlns:android="http://schemas.android.com/apk/res/android"
+   android:label="@string/com_juick"
+   android:includeInGlobalSearch="true"
+   android:searchSettingsDescription="Posts with words"
+   android:voiceSearchMode="showVoiceSearchButton|launchRecognizer"
+   android:voiceMaxResults="5"
+   android:hint="@string/SearchJuickCom">
+</searchable>

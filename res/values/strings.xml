@@ -635,6 +635,7 @@
     <string name="OtherImages2">..that are not located on juick.com</string>
     <string name="EditingJuboFilters">Editing JuBo/Juick filters</string>
     <string name="YouCannotChangeJuboHere">You can not change it here. Change it the way you used before (via jabber).</string>
+    <string name="SearchJuickCom">Search juick.com</string>
 
 
 </resources>

@@ -342,6 +342,7 @@
     <string name="Message_numbers_will_be_shown">..будут показаны, а также номера комментариев</string>
     <string name="EditingJuboFilters">Изменение фильтров JuBo/Juick</string>
     <string name="YouCannotChangeJuboHere">Изменяйте через жаббер клиент стандартным способом.</string>
+    <string name="SearchJuickCom">Искать на juick.com</string>
 
 
 </resources>

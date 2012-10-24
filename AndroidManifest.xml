@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced" android:versionCode="2012092005" android:versionName="18.14.4">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced"
+          android:versionCode="2012092005" android:versionName="18.14.4">
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="15"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -13,17 +14,23 @@
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <uses-feature android:name="android.hardware.location" android:required="false"/>
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
     <uses-feature android:name="android.hardware.location.network" android:required="false"/>
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
-    <application android:icon="@drawable/ic_launcher" android:label="@string/Juick" android:theme="@android:style/Theme.Light">
-        <provider android:name="com.juick.android.CachedImageContentProvider"  android:authorities="com.juick.android.imagecache" />
+    <application android:icon="@drawable/ic_launcher" android:label="@string/Juick"
+                 android:theme="@android:style/Theme.Light">
+        <provider android:name="com.juick.android.CachedImageContentProvider"
+                  android:authorities="com.juick.android.imagecache"/>
         <uses-library android:name="com.google.android.maps" android:required="false"/>
-        <activity android:name="com.juick.android.MainActivity" android:theme="@style/Theme.Sherlock.Light" android:configChanges="keyboard|keyboardHidden|orientation">
+        <meta-data
+                android:name="android.app.default_searchable"
+                android:value="com.juick.android.SearchActivity"/>
+        <activity android:name="com.juick.android.MainActivity" android:theme="@style/Theme.Sherlock.Light"
+                  android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -34,14 +41,16 @@
                 <data android:scheme="http" android:host="juick.com"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.MessagesActivity" android:configChanges="keyboard|keyboardHidden|orientation">
+        <activity android:name="com.juick.android.MessagesActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="vnd.android.cursor.item/vnd.com.juick.profile"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/Juick__New_message" android:configChanges="keyboard|keyboardHidden|orientation">
+        <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/Juick__New_message"
+                  android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -51,28 +60,62 @@
                 <data android:mimeType="video/mp4"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.ExploreActivity" android:label="@string/Juick__Explore" android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
-        <activity android:name="com.juick.android.ThreadActivity" android:label="" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.PlacesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.PickPlaceActivity" android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
-        <activity android:name="com.juick.android.PlaceEditActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.SignInActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.SignUpActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.PreferencesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.JuickPreferencesActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.NewJuickPreferenceActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.XMPPPreferenceActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.EditFiltersActivity" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.ViewJuboFiltersActivity" android:configChanges="keyboard|keyboardHidden|orientation">
+        <activity android:name="com.juick.android.ExploreActivity" android:label="@string/Juick__Explore"
+                  android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
+        <activity android:name="com.juick.android.ThreadActivity" android:label=""
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.PlacesActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.PickPlaceActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
+        <activity android:name="com.juick.android.PlaceEditActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.SignInActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.SignUpActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.PreferencesActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.JuickPreferencesActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.NewJuickPreferenceActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.XMPPPreferenceActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.EditFiltersActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.ViewJuboFiltersActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="com.juick.android.EditFiltersActivity"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.PickLocationActivity" android:label="@string/Pick_a_location" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events" android:launchMode="singleTask" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.XMPPControlActivity" android:label="@string/XMPPControl" android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <receiver android:name="com.juick.android.XMPPMessageReceiver" >
+        <activity android:name="com.juick.android.PickLocationActivity" android:label="@string/Pick_a_location"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events"
+                  android:launchMode="singleTask" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.XMPPControlActivity" android:label="@string/XMPPControl"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+
+
+        <activity
+                android:label="@string/com_juick"
+                android:launchMode="singleTop"
+                android:name="com.juick.android.SearchActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+            </intent-filter>
+            <meta-data
+                    android:name="android.app.searchable"
+                    android:resource="@xml/searchable"/>
+        </activity>
+
+        <receiver android:name="com.juick.android.XMPPMessageReceiver">
             <intent-filter>
                 <action android:name="com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED"/>
                 <action android:name="com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST"/>
@@ -80,9 +123,9 @@
         </receiver>
 
         <receiver android:name="com.juick.android.ConnectivityChangeReceiver">
-           <intent-filter>
-              <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-           </intent-filter>
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
         </receiver>
         <service android:name="com.juick.android.AuthenticationService" android:exported="true" android:process=":auth">
             <intent-filter>
@@ -94,7 +137,8 @@
         </service>
         <service android:name="com.juick.android.XMPPService" android:exported="false">
         </service>
-        <service android:name="com.juick.android.ContactsSyncService" android:exported="true" android:process=":contacts">
+        <service android:name="com.juick.android.ContactsSyncService" android:exported="true"
+                 android:process=":contacts">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter"/>
             </intent-filter>
@@ -105,16 +149,16 @@
 
         <!-- error reporting -->
         <service
-            android:name="de.quist.app.errorreporter.ExceptionReportService"
-            android:process=":exceptionReporter"/>
+                android:name="de.quist.app.errorreporter.ExceptionReportService"
+                android:process=":exceptionReporter"/>
         <meta-data
-            android:name="de.quist.app.errorreporter.targetUrl"
-            android:value="http://mw.itl.ua:8080/ajaxcall/collect" />
+                android:name="de.quist.app.errorreporter.targetUrl"
+                android:value="http://mw.itl.ua:8080/ajaxcall/collect"/>
         <activity
-            android:name="de.quist.app.errorreporter.ExceptionReportActivity"
-            android:process=":exceptionReporter"
-            android:configChanges="keyboard|keyboardHidden|orientation"
-            android:theme="@android:style/Theme.NoDisplay"/>
+                android:name="de.quist.app.errorreporter.ExceptionReportActivity"
+                android:process=":exceptionReporter"
+                android:configChanges="keyboard|keyboardHidden|orientation"
+                android:theme="@android:style/Theme.NoDisplay"/>
 
     </application>
 </manifest>
