@@ -631,6 +631,10 @@
         in Juick Advanced on regular basis.
     </string>
     <string name="ClickToReply">Click to reply</string>
+    <string name="OtherImages">Images From URLs</string>
+    <string name="OtherImages2">..that are not located on juick.com</string>
+    <string name="EditingJuboFilters">Editing JuBo/Juick filters</string>
+    <string name="YouCannotChangeJuboHere">You can not change it here. Change it the way you used before (via jabber).</string>
 
 
 </resources>

@@ -33,6 +33,12 @@
                 android:defaultValue="10"
                 android:persistent="true"/>
         <CheckBoxPreference
+                android:key="image.other"
+                android:title="@string/OtherImages"
+                android:summary="@string/OtherImages2"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
                 android:key="image.indirect"
                 android:title="@string/IndirectImages"
                 android:summary="@string/Gelbooru"

@@ -106,8 +106,8 @@ public class ViewJuboFiltersActivity extends Activity {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(ViewJuboFiltersActivity.this);
-                builder.setTitle("Editing JuBo/Juick filters");
-                builder.setMessage("You can not change it here. Change it like you did it before.");
+                builder.setTitle(getString(R.string.EditingJuboFilters));
+                builder.setMessage(getString(R.string.YouCannotChangeJuboHere));
                 builder.create().show();
                 return false;  //To change body of implemented methods use File | Settings | File Templates.
             }

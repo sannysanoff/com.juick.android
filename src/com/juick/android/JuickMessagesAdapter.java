@@ -88,6 +88,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private boolean trackLastRead;
     private int subtype;
     private final boolean indirectImages;
+    private final boolean otherImages;
     Handler handler;
 
     public static int instanceCount;
@@ -134,6 +135,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         indirectImages = sp.getBoolean("image.indirect", true);
+        otherImages = sp.getBoolean("image.other", true);
         defaultTextSize = new TextView(context).getTextSize();
         textScale = 1;
         try {
@@ -370,6 +372,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public boolean isValidImageURl(String urlLower) {
+        if (!otherImages) {
+            if (urlLower.contains("juick.com/")) {
+                // ok
+            } else {
+                return false;
+            }
+        }
         if (isHTMLSource(urlLower)) return true;
         if (imageLoadMode.contains("japroxy") && HTMLImageSourceDetector.isHTMLImageSource0(urlLower)) {
             return true;
@@ -551,6 +560,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         setStyleSpans(ssb, spanOffset, Typeface.BOLD, "*");
         setStyleSpans(ssb, spanOffset, Typeface.ITALIC, "/");
         setStyleSpans(ssb, spanOffset, UnderlineSpan.class, "_");
+        txt = ssb.subSequence(spanOffset, ssb.length()).toString(); // ssb was modified in between
 
 
         // Highlight nick
