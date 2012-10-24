@@ -25,10 +25,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.*;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -609,6 +610,57 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 opts.inJustDecodeBounds = false;
                                 opts.inSampleSize = Math.max(skipSize, skipSize);
                                 Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), opts);
+                                int orientation = ExifInterface.ORIENTATION_NORMAL;
+                                try {
+                                    orientation = new ExifInterface(file.getPath()).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                                } catch (Exception ex) {
+                                    // sorry
+                                }
+                                int sourceWidth = bitmap.getWidth();
+                                int sourceHeight = bitmap.getHeight();
+                                int destWidth, destHeight;
+                                switch(orientation) {
+                                    case ExifInterface.ORIENTATION_ROTATE_90: {
+                                        destHeight = sourceWidth;
+                                        destWidth = sourceHeight;
+                                        Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
+                                        Canvas canvas = new Canvas(targetBitmap);
+                                        Matrix matrix = new Matrix();
+                                        matrix.setRotate(90,sourceWidth/2,sourceHeight/2);
+                                        canvas.drawBitmap(bitmap, matrix, new Paint());
+                                        bitmap.recycle();
+                                        bitmap = targetBitmap;
+                                        break;
+                                    }
+                                    case ExifInterface.ORIENTATION_ROTATE_270: {
+                                        destHeight = sourceWidth;
+                                        destWidth = sourceHeight;
+                                        Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
+                                        Canvas canvas = new Canvas(targetBitmap);
+                                        Matrix matrix = new Matrix();
+                                        matrix.setRotate(270,sourceWidth/2,sourceHeight/2);
+                                        canvas.drawBitmap(bitmap, matrix, new Paint());
+                                        bitmap.recycle();
+                                        bitmap = targetBitmap;
+                                        break;
+                                    }
+                                    case ExifInterface.ORIENTATION_ROTATE_180: {
+                                        destHeight = sourceHeight;
+                                        destWidth = sourceWidth;
+                                        Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
+                                        Canvas canvas = new Canvas(targetBitmap);
+                                        Matrix matrix = new Matrix();
+                                        matrix.setRotate(180,sourceWidth/2,sourceHeight/2);
+                                        canvas.drawBitmap(bitmap, matrix, new Paint());
+                                        bitmap.recycle();
+                                        bitmap = targetBitmap;
+                                        break;
+                                    }
+
+                                }
+
+
+
                                 try {
                                     final File outFile = new File(parent.getCacheDir(), "juick_capture_resized.jpg");
                                     outFile.delete();
@@ -619,6 +671,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                     new AlertDialog.Builder(parent)
                                     .setTitle(parent.getString(R.string.ScaleResult))
                                     .setMessage(parent.getString(R.string.NewSize__) + " " + bitmap.getWidth() + " x " + bitmap.getHeight() + " "  + parent.getString(R.string.FileSize_) + " "+outFile.length() / 1024 + " KB")
+                                    .setIcon(new BitmapDrawable(bitmap))
                                     .setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
