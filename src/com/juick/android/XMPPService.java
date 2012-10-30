@@ -473,13 +473,7 @@ public class XMPPService extends Service {
         }
         this.juboMessageFilter = filter;
         this.juboMessageFilter_tmp = null;
-        try {
-            FileOutputStream fos = new FileOutputStream(getCachedJuboFile());
-            fos.write(new Gson().toJson(this.juboMessageFilter).getBytes());
-            fos.close();
-        } catch (IOException e) {
-            //
-        }
+        writeStringToFile(getCachedJuboFile(), new Gson().toJson(this.juboMessageFilter));
         maybeTerminateXMPP();
     }
 
@@ -508,15 +502,19 @@ public class XMPPService extends Service {
         }
         this.juickBlacklist = filter;
         this.juickBlacklist_tmp = null;
-        try {
-            FileOutputStream fos = new FileOutputStream(getCachedJuickFile());
-            fos.write(new Gson().toJson(this.juickBlacklist).getBytes());
-            fos.close();
-        } catch (IOException e) {
-            //
-        }
+        writeStringToFile(getCachedJuickFile(), new Gson().toJson(this.juickBlacklist));
         maybeTerminateXMPP();
 
+    }
+
+    public static void writeStringToFile(File destFile, String stringToWrite)  {
+        try {
+            FileOutputStream fos = new FileOutputStream(destFile);
+            fos.write(stringToWrite.getBytes());
+            fos.close();
+        } catch (Exception ex) {
+            Log.e("JuickAdvanced", ex.toString());
+        }
     }
 
     private void maybeTerminateXMPP() {

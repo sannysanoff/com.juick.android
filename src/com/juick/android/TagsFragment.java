@@ -31,6 +31,8 @@ import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juick.android.datasource.MessagesSource;
 import org.json.JSONArray;
 
+import java.io.File;
+
 /**
  *
  * @author Ugnich Anton
@@ -51,7 +53,7 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         Bundle args = getArguments();
@@ -81,10 +83,18 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
 
             public void run() {
                 String url = "http://api.juick.com/tags";
+                File globalTagsCache = new File(view.getContext().getCacheDir(), "global_tags-"+uid+".json");
+                String cachedString = null;
                 if (uid != 0) {
                     url += "?user_id=" + uid;
                 }
-                final String jsonStr = Utils.getJSON(getActivity(), url, null).getResult();
+                if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {
+                    cachedString = XMPPService.readFile(globalTagsCache);
+                }
+                final String jsonStr = cachedString != null ? cachedString : Utils.getJSON(getActivity(), url, null).getResult();
+                if (jsonStr != null && cachedString == null) {
+                    XMPPService.writeStringToFile(globalTagsCache, jsonStr);
+                }
                 if (isAdded()) {
                     getActivity().runOnUiThread(new Runnable() {
 
