@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +38,8 @@ public class NewJuickPreferenceActivity extends Activity {
     }
 
     public enum Menu {
-        TOP_LEVEL
+        TOP_LEVEL,
+        REPORTS_CHARTS
     } ;
 
     HashMap<String,ArrayList<MenuItem>> allMenus = new HashMap<String, ArrayList<MenuItem>>();
@@ -126,7 +128,44 @@ public class NewJuickPreferenceActivity extends Activity {
                 new WhatsNew(NewJuickPreferenceActivity.this).showPrivacyPolicy();
             }
         }));
+        menu.add(new MenuItem(R.string.VariousInfo, R.string.VariousInfo2, new Runnable() {
+            @Override
+            public void run() {
+                Intent prefsIntent = new Intent(NewJuickPreferenceActivity.this, NewJuickPreferenceActivity.class);
+                prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.REPORTS_CHARTS.name());
+                startActivity(prefsIntent);
+            }
+        }));
         allMenus.put(Menu.TOP_LEVEL.name(), menu);
+        menu = new ArrayList<MenuItem>();
+        allMenus.put(Menu.REPORTS_CHARTS.name(), menu);
+        menu.add(new MenuItem(R.string.UsageReportsPerWeek, R.string.UsageReportsPerWeek2, new Runnable() {
+            @Override
+            public void run() {
+                showChart("USAGE_RPW2");
+            }
+        }));
+        menu.add(new MenuItem(R.string.JuickUsersPerMonth, R.string.JuickUsersPerMonth2, new Runnable() {
+            @Override
+            public void run() {
+                showChart("JUICK_UPM2");
+            }
+        }));
+
+        /**
+         * reports:
+         *
+         * user activity
+         *
+         *
+         */
+    }
+
+    private void showChart(String chart) {
+        Intent intent = new Intent(this, DisplayChartActivity2.class);
+        intent.setData(Uri.parse("http://192.168.1.77:8080/charts/JuickCharts2/"+chart+".jsp"));
+        //intent.setData(Uri.parse("http://ja.ip.rt.ru:8080/charts/JuickCharts2/"+chart+".jsp"));
+        startActivity(intent);
     }
 
     private void runPrefs(int prefsid) {

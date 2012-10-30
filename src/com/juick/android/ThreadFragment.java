@@ -28,7 +28,6 @@ import com.juick.android.api.JuickMessage;
 import android.support.v4.app.ListFragment;
 import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
-import com.juick.android.api.JuickUser;
 
 import java.util.ArrayList;
 
@@ -418,7 +417,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     public boolean onMessageReceived(XMPPService.IncomingMessage message) {
         if (message instanceof XMPPService.JuickThreadIncomingMessage) {
             XMPPService.JuickThreadIncomingMessage jtim = (XMPPService.JuickThreadIncomingMessage)message;
-            if (jtim.getPureThread() == mid) {
+            if (jtim.getMID() == mid) {
                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
                     public void withService(XMPPService service) {

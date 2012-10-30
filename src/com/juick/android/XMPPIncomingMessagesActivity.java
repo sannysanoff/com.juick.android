@@ -1,20 +1,19 @@
 package com.juick.android;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.JuickUser;
 import com.juickadvanced.R;
  import de.quist.app.errorreporter.ExceptionReporter;
 
@@ -78,83 +77,40 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 new JuickMessageMenu(XMPPIncomingMessagesActivity.this, null, null, null) {
+
+                    XMPPService.IncomingMessage incomingMessage;
+                    View view;
                     @Override
                     public boolean onItemLongClick(AdapterView parent, final View view, int position, long id) {
                         Object o = displayItems.get(position);
                         if (o instanceof Item) {
                             Item item = (Item) o;
-                            final XMPPService.IncomingMessage incomingMessage = item.messages.get(0);
+                            this.view = view;
+                            incomingMessage = item.messages.get(0);
                             if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
                                 final XMPPService.JuickIncomingMessage jim = (XMPPService.JuickIncomingMessage)incomingMessage;
                                 final String fromUser = jim.getFrom();
-                                final int thread = jim.getPureThread();
-                                menuActions.clear();
-                                menuActions.add(new RunnableItem(activity.getResources().getString(R.string.OpenThread)) {
+                                final int thread = jim.getMID();
+                                JuickMessage msg = new JuickMessage();
+                                msg.MID = thread;
+                                msg.Text = jim.getBody();
+                                msg.RID = jim.getRID();
+                                msg.User = new JuickUser();
+                                msg.User.UID = 0;
+                                msg.User.UName = fromUser;
+                                if (msg.User.UName.startsWith("@"))
+                                    msg.User.UName = msg.User.UName.substring(1);
+                                listSelectedItem = msg;
+
+                                menuActions.add(0, new RunnableItem(activity.getResources().getString(R.string.OpenThread)) {
                                     @Override
                                     public void run() {
                                         clickedOnMessage(incomingMessage);
                                     }
 
                                 });
-                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage || incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
-                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " #" + thread) {
-                                        @Override
-                                        public void run() {
-                                            confirmAction(R.string.ReallyUnsubscribePost, new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    postMessage("U #" + thread, activity.getResources().getString(R.string.Unsubscribed));
-                                                }
-                                            });
-                                        }
-
-                                    });
-
-                                }
                                 if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
-                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.SubscribeAndOpen) + " #" + thread) {
-                                        @Override
-                                        public void run() {
-                                            confirmAction(R.string.ReallySubscribePost, new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    postMessage("S #" + thread, activity.getResources().getString(R.string.Subscribed));
-                                                    clickedOnMessage(incomingMessage);
-                                                }
-                                            });
-                                        }
-
-                                    });
-                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + thread) {
-                                        @Override
-                                        public void run() {
-                                            confirmAction(R.string.ReallySubscribePost, new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    postMessage("S #" + thread, activity.getResources().getString(R.string.Subscribed));
-                                                }
-                                            });
-                                        }
-
-                                    });
-                                }
-                                menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " " + fromUser) {
-                                    @Override
-                                    public void run() {
-                                        confirmAction(R.string.ReallyFilterOut, new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                String uz = fromUser;
-                                                if (uz.startsWith("@")) uz = uz.substring(1);
-                                                saveFilteredOutUser(uz);
-                                                deleteOneMessage(incomingMessage);
-                                            }
-                                        });
-                                    }
-
-                                });
-                                if (incomingMessage instanceof XMPPService.JuickSubscriptionIncomingMessage) {
-                                    menuActions.add(new RunnableItem(activity.getResources().getString(R.string.ExpandMessage) + " " + fromUser) {
+                                    menuActions.add(1, new RunnableItem(activity.getResources().getString(R.string.ExpandMessage) + " " + fromUser) {
                                         @Override
                                         public void run() {
                                             expandMessage(view);
@@ -168,6 +124,27 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         return false;
                     }
 
+                    @Override
+                    protected void completeInitDialogMode(final AlertDialog alertDialog, final View dialogView) {
+                        View openMessage = dialogView.findViewById(R.id.open_message);
+                        final View expandMessage = dialogView.findViewById(R.id.expand_message);
+                        openMessage.setVisibility(View.VISIBLE);
+                        expandMessage.setVisibility(View.VISIBLE);
+                        openMessage.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                alertDialog.dismiss();
+                                clickedOnMessage(incomingMessage);
+                            }
+                        });
+                        expandMessage.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                alertDialog.dismiss();
+                                expandMessage(view);
+                            }
+                        });
+                    }
                 }.onItemLongClick(parent, view, position, id);
                 return true;
             }
@@ -213,7 +190,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
                 intent.putExtra("scrollToBottom", true);
             }
-            intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getPureThread());
+            intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getMID());
             intent.putExtra("isolated", true);
             startActivity(intent);
             return;
@@ -298,10 +275,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
             if (message instanceof XMPPService.JuickThreadIncomingMessage) {
                 XMPPService.JuickThreadIncomingMessage tim = (XMPPService.JuickThreadIncomingMessage)message;
-                Item item = threadMessages.get(""+tim.getPureThread());
+                Item item = threadMessages.get(""+tim.getMID());
                 if (item == null) {
                     item = new Item();
-                    threadMessages.put(""+tim.getPureThread(), item);
+                    threadMessages.put(""+tim.getMID(), item);
                 }
                 item.messages.add(tim);
                 nCommentsTotal++;
@@ -329,7 +306,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 public int compare(Item item, Item item1) {
                     XMPPService.JuickThreadIncomingMessage im = (XMPPService.JuickThreadIncomingMessage)item.messages.get(0);
                     XMPPService.JuickThreadIncomingMessage im1 = (XMPPService.JuickThreadIncomingMessage)item1.messages.get(0);
-                    return im.getPureThread()- im1.getPureThread(); // sort by threads
+                    return im.getMID()- im1.getMID(); // sort by threads
                 }
             });
             displayItems.addAll(sortee);
@@ -473,7 +450,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         }
                     }
                     if (topicMessageId == -1) {
-                        topicMessageId = commentMessage.getPureThread();
+                        topicMessageId = commentMessage.getMID();
                     }
                 }
                 SpannableStringBuilder sb = new SpannableStringBuilder();

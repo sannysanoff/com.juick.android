@@ -592,7 +592,7 @@ public class XMPPService extends Service {
                 IncomingMessage next = iterator.next();
                 if (next instanceof JuickIncomingMessage) {
                     JuickIncomingMessage jim = (JuickIncomingMessage) next;
-                    if (jim.getPureThread() == mid) {
+                    if (jim.getMID() == mid) {
                         if (keepReplyNotifications && jim instanceof JuickThreadIncomingMessage) {
                             continue;
                         }
@@ -737,12 +737,22 @@ public class XMPPService extends Service {
             return "@" + from;
         }
 
-        public int getPureThread() {
+        public int getMID() {
             try {
                 int ix = messageNo.indexOf("/");
                 if (ix == -1) return Integer.parseInt(messageNo.substring(1));
                 int ix2 = messageNo.indexOf("#");   // -1 not found
                 return Integer.parseInt(messageNo.substring(ix2 + 1, ix));
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+
+        public int getRID() {
+            try {
+                int ix = messageNo.indexOf("/");
+                if (ix == -1) return 0;
+                return Integer.parseInt(messageNo.substring(ix + 1));
             } catch (NumberFormatException e) {
                 return -1;
             }
@@ -823,11 +833,11 @@ public class XMPPService extends Service {
                             sb.append("\n");
                         }
                         JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno);
-                        XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getPureThread());
+                        XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getMID());
                         if (topicStarter == null) {
-                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getPureThread());    // put placeholder for details
-                            cachedTopicStarters.put(threadIncomingMessage.getPureThread(), topicStarter);
-                            requestMessageBody(threadIncomingMessage.getPureThread());
+                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID());    // put placeholder for details
+                            cachedTopicStarters.put(threadIncomingMessage.getMID(), topicStarter);
+                            requestMessageBody(threadIncomingMessage.getMID());
                         } else {
                             threadIncomingMessage.setOriginalBody(topicStarter.getBody());
                             threadIncomingMessage.setOriginalFrom(topicStarter.getFrom());
@@ -881,11 +891,11 @@ public class XMPPService extends Service {
                                 }
                                 String[] tags = head.substring(colon+1).split(" ");
                                 JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, tags);
-                                JuickIncomingMessage topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getPureThread());
+                                JuickIncomingMessage topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getMID());
                                 if (topicStarter != null && topicStarter.getBody().length() == 0) {
-                                    cachedTopicStarters.put(subscriptionIncomingMessage.getPureThread(), subscriptionIncomingMessage);
+                                    cachedTopicStarters.put(subscriptionIncomingMessage.getMID(), subscriptionIncomingMessage);
                                     for (IncomingMessage incomingMessage : incomingMessages) {
-                                        if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getPureThread() == topicStarter.getPureThread()) {
+                                        if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getMID() == topicStarter.getMID()) {
                                             // details came!
                                             JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;
                                             imsg.setOriginalBody(subscriptionIncomingMessage.getBody());

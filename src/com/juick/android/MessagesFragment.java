@@ -251,7 +251,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        notification.statusText.setText("Download error: " + notification.lastError);
+                                        notification.statusText.setText("Error obtaining messages: " + notification.lastError);
                                         notification.progressBar.setVisibility(View.GONE);
                                     }
                                 });

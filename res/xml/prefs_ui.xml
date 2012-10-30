@@ -36,7 +36,15 @@
             android:defaultValue="true"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Menu">
+    <PreferenceCategory android:title="Message Menu Mode">
+        <CheckBoxPreference
+                android:key="dialogMessageMenu"
+                android:title="New message menu "
+                android:summary="..instead of legacy menu"
+                android:defaultValue="false"
+                android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Legacy Menu">
         <ListPreference
                 android:key="menuFontScale"
                 android:title="@string/Menu_font_scale_factor"

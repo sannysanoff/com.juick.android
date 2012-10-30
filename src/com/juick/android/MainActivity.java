@@ -825,6 +825,7 @@ public class MainActivity extends FragmentActivity implements
             RadioButton btn = (RadioButton) view;
             btn.setTextColor(colorTheme.getForeground(pressed));
             btn.setBackgroundColor(colorTheme.getBackground());
+        } else if (view instanceof Spinner) {
         } else if (view instanceof Button) {
 //            Button btn = (Button) view;
 //            btn.setTextColor(colorTheme.getForeground(pressed));

@@ -126,6 +126,7 @@
     <string name="ReallyFilterOut">Really filter out user?</string>
     <string name="ReallyRecommend">Really recommend message?</string>
     <string name="ReallySubscribe">Really subscribe to user?</string>
+    <string name="ReallyUnsubscribe">Really unsubscribe from user?</string>
     <string name="ReallyDelete">Really delete this message?</string>
     <string name="ReallyUnsubscribePost">Really unsubscribe from post?</string>
     <string name="ReallySubscribePost">Really subscribe to post?</string>
@@ -636,6 +637,13 @@
     <string name="EditingJuboFilters">Editing JuBo/Juick filters</string>
     <string name="YouCannotChangeJuboHere">You can not change it here. Change it the way you used before (via jabber).</string>
     <string name="SearchJuickCom">Search juick.com</string>
+    <string name="VariousInfo">Various Info...</string>
+    <string name="VariousInfo2">Charts and other statistics</string>
+    <string name="UsageReportsPerWeek">Usage reports volume...</string>
+    <string name="UsageReportsPerWeek2">Number of usage reports posted per week</string>
+    <string name="JuickUsersPerMonth">Number of Juick users</string>
+    <string name="JuickUsersPerMonth2">Posting, commenting, new</string>
+    <string name="ClickToSelectURL">Click to select URL</string>
 
 
 </resources>

@@ -343,6 +343,11 @@
     <string name="EditingJuboFilters">Изменение фильтров JuBo/Juick</string>
     <string name="YouCannotChangeJuboHere">Изменяйте через жаббер клиент стандартным способом.</string>
     <string name="SearchJuickCom">Искать на juick.com</string>
+    <string name="UsageReportsPerWeek">Статистика Juick Advanced...</string>
+    <string name="UsageReportsPerWeek2">Количество анонимной статистики по неделям</string>
+    <string name="JuickUsersPerMonth">Количество жуйко-юзеров</string>
+    <string name="JuickUsersPerMonth2">Пишущих, комментящих, регистрирующихся</string>
+    <string name="ClickToSelectURL">Нажмите для выбора URL</string>
 
 
 </resources>

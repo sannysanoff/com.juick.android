@@ -40,9 +40,21 @@ public class SavedMessagesSource extends MessagesSource {
     }
 
     @Override
-    public void getFirst(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public void getFirst(final Utils.Notification notifications, final Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         lastMessage = System.currentTimeMillis() + 100000000L;
-        getNext(notifications, cont);
+        getNext(notifications, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+            @Override
+            public Void apply(ArrayList<JuickMessage> juickMessages) {
+                if (juickMessages.size() == 0) {
+                    if (notifications instanceof Utils.DownloadErrorNotification) {
+                        Utils.DownloadErrorNotification notifications1 = (Utils.DownloadErrorNotification)notifications;
+                        notifications1.notifyDownloadError("Database is empty");
+                    }
+                }
+                cont.apply(juickMessages);
+                return null;
+            }
+        });
     }
 
     @Override

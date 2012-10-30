@@ -69,7 +69,7 @@ public class WhatsNew {
                             new Thread() {
                                 @Override
                                 public void run() {
-                                    Utils.postJSONHome(service, "/usage_report_handler", jo.toString());
+                                    Utils.postJSONHome(service, "/E_RPusage_report_handler", jo.toString());
                                 }
 
                             }.start();

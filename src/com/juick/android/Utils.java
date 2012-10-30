@@ -39,6 +39,7 @@ import com.juickadvanced.R;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -53,6 +54,7 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.BasicManagedEntity;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.EofSensorInputStream;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -369,6 +371,22 @@ public class Utils {
         return ret[0];
     }
 
+    public static BINResponse getBinary(Context context, final String url, final Notification progressNotification, int timeout) {
+        try {
+            URLConnection urlConnection = new URL(url).openConnection();
+            InputStream inputStream = urlConnection.getInputStream();
+            BINResponse binResponse = streamToByteArray(inputStream, progressNotification);
+            inputStream.close();
+            return binResponse;
+        } catch (Exception e) {
+            if (progressNotification instanceof DownloadErrorNotification) {
+                ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
+            }
+            Log.e("getBinary", e.toString());
+            return new BINResponse(e.toString(), true, null);
+        }
+    }
+
     public static class GzipDecompressingEntity extends HttpEntityWrapper {
 
         public GzipDecompressingEntity(final HttpEntity entity) {
@@ -455,6 +473,30 @@ public class Utils {
         }
     }
 
+    public static class BINResponse {
+        byte[] result;
+        String errorText;
+        boolean mayRetry;
+
+        public BINResponse(String errorText, boolean mayRetry, byte[] result) {
+            this.errorText = errorText;
+            this.mayRetry = mayRetry;
+            this.result = result;
+        }
+
+        public byte[] getResult() {
+            return result;
+        }
+
+        public boolean isMayRetry() {
+            return mayRetry;
+        }
+
+        public String getErrorText() {
+            return errorText;
+        }
+    }
+
     public static RESTResponse postJSON(Context context, String url, String data) {
         RESTResponse ret = null;
         try {
@@ -529,10 +571,11 @@ public class Utils {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             long l = System.currentTimeMillis();
+            byte[] buf = new byte[1024];
             while (true) {
-                int c = is.read();
-                if (c <= 0) break;
-                baos.write(c);
+                int len = is.read(buf);
+                if (len <= 0) break;
+                baos.write(buf, 0, len);
                 if (System.currentTimeMillis() - l > 100) {
                     l = System.currentTimeMillis();
                     if (progressNotification instanceof DownloadProgressNotification)
@@ -545,6 +588,30 @@ public class Utils {
                 ((DownloadErrorNotification) progressNotification).notifyDownloadError(e.toString());
             Log.e("streamReader", e.toString());
             return new RESTResponse(e.toString(), true, null);
+        }
+    }
+
+    public static BINResponse streamToByteArray(InputStream is, Notification progressNotification) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            long l = System.currentTimeMillis();
+            byte[] buf = new byte[1024];
+            while (true) {
+                int len = is.read(buf);
+                if (len <= 0) break;
+                baos.write(buf, 0, len);
+                if (System.currentTimeMillis() - l > 100) {
+                    l = System.currentTimeMillis();
+                    if (progressNotification instanceof DownloadProgressNotification)
+                        ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(baos.size());
+                }
+            }
+            return new BINResponse(null, false, baos.toByteArray());
+        } catch (Exception e) {
+            if (progressNotification instanceof DownloadErrorNotification)
+                ((DownloadErrorNotification) progressNotification).notifyDownloadError(e.toString());
+            Log.e("streamReader", e.toString());
+            return new BINResponse(e.toString(), true, null);
         }
     }
 

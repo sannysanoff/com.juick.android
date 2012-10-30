@@ -96,6 +96,10 @@
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events"
                   android:launchMode="singleTask" android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.DisplayChartActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.DisplayChartActivity2"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.XMPPControlActivity" android:label="@string/XMPPControl"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
 
