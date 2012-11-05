@@ -48,7 +48,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/ClickToReply"
                 android:layout_weight="1"/>
-            <LinearLayout
+            <RelativeLayout
                     android:id="@+id/buttons"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
@@ -60,22 +60,24 @@
                     android:id="@+id/buttonCancel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0"
+                    android:layout_alignParentLeft="true"
                     android:text="@android:string/cancel"/>
-                <ImageButton
-                    android:id="@+id/buttonAttachment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0"
-                    android:src="@drawable/ic_button_attachment_small"/>
                 <Button
                     android:id="@+id/buttonSend"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0"
+                    android:paddingLeft="30sp"
+                    android:paddingRight="30sp"
+                    android:layout_alignParentRight="true"
                     android:text="@string/Send"/>
+                <ImageButton
+                        android:id="@+id/buttonAttachment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toLeftOf="@id/buttonSend"
+                        android:src="@drawable/ic_button_attachment_small"/>
 
-            </LinearLayout>
+            </RelativeLayout>
         </LinearLayout>
     </RelativeLayout>
 </LinearLayout>
