@@ -463,7 +463,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 } else if (NewMessageActivity.getPhotoCaptureFile().exists()) {
                     attachmentUri = Uri.fromFile(NewMessageActivity.getPhotoCaptureFile()).toString();
                     if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
-                        NewMessageActivity.maybeResizeCapturedImage(this, attachmentUri, new Utils.Function<Void, String>() {
+                        NewMessageActivity.maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
                             @Override
                             public Void apply(String s) {
                                 attachmentUri = s;

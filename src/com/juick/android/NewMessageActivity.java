@@ -486,7 +486,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 break;
             case 1:
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
                 SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
                 boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", true);
                 if (useTempFileForCapture) {
@@ -537,16 +536,16 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     attachmentUri = data.getDataString();
                 } else if (getPhotoCaptureFile().exists()) {
                     attachmentUri = Uri.fromFile(getPhotoCaptureFile()).toString();
-                    if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
-                        maybeResizeCapturedImage(this, attachmentUri, new Utils.Function<Void, String>() {
-                            @Override
-                            public Void apply(String s) {
-                                attachmentUri = s;
-                                bAttachment.setSelected(attachmentUri != null);
-                                return null;
-                            }
-                        });
-                    }
+                }
+                if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
+                    maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
+                        @Override
+                        public Void apply(String s) {
+                            attachmentUri = s;
+                            bAttachment.setSelected(attachmentUri != null);
+                            return null;
+                        }
+                    });
                 }
                 attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
                 bAttachment.setSelected(attachmentUri != null);
@@ -554,170 +553,209 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
     }
 
-    public static void maybeResizeCapturedImage(final Activity parent, final String attachmentUri, final Utils.Function<Void, String> function) {
+    public static void maybeResizePicture(final Activity parent, final String attachmentUri, final Utils.Function<Void, String> function) {
         boolean askForResize = PreferenceManager.getDefaultSharedPreferences(parent).getBoolean("askForResize", false);
         if (askForResize) {
-            Uri parse = Uri.parse(attachmentUri);
-            final File file = new File(parse.getPath());
-            final BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(file.getPath(), opts);
-            int outHeight = opts.outHeight;
-            int outWidth = opts.outWidth;
-            LinearLayout ll = new LinearLayout(parent);
-            ll.setOrientation(LinearLayout.VERTICAL);
-            if (outHeight > 400 || outWidth > 400) {
-                AlertDialog.Builder builder =
-                        new AlertDialog.Builder(parent)
-                        .setView(ll)
-                        .setTitle(parent.getString(R.string.ResizeImage));
-
-                TextView tv = new TextView(parent);
-                tv.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
-                tv.setText(parent.getString(R.string.Current__) + outWidth + " x " + outHeight + " " + parent.getString(R.string.FileSize_) + " " + file.length() / 1024 + " KB");
-                ll.addView(tv);
-                RadioGroup rg = new RadioGroup(parent);
-                rg.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
-                final ArrayList<RadioButton> rbs = new ArrayList<RadioButton>();
-                for(int i=2; i<6; i++) {
-                    RadioButton rb = new RadioButton(parent);
-                    rb.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
-                    int nh = outHeight / i;
-                    int nw = outWidth / i;
-                    rb.setText(parent.getString(R.string.Resize__)+" " + nw + " x " + nh);
-                    rbs.add(rb);
-                    rg.addView(rb);
-                    rb.setTag(new Integer(i));
-                    if (i == 2) {
-                        rb.setChecked(true);
-                    }
+            File deleteFile = null;
+            try {
+                File tmpfile = new File(Uri.parse(attachmentUri).getPath());
+                if (!tmpfile.exists()) {
+                    deleteFile = tmpfile = getQuickTempFile(parent);
+                    FileInputStream inputStream = parent.getContentResolver().openAssetFileDescriptor(Uri.parse(attachmentUri), "r").createInputStream();
+                    copyStreamToFile(inputStream, tmpfile);
                 }
-                ll.addView(rg);
-                builder.setCancelable(true);
-                builder.setNeutralButton(parent.getString(R.string.DontAttach), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        function.apply(null);
-                        dialog.cancel();
+                final BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(tmpfile.getPath(), opts);
+                int outHeight = opts.outHeight;
+                int outWidth = opts.outWidth;
+                LinearLayout ll = new LinearLayout(parent);
+                ll.setOrientation(LinearLayout.VERTICAL);
+                if (outHeight > 400 || outWidth > 400) {
+                    AlertDialog.Builder builder =
+                            new AlertDialog.Builder(parent)
+                            .setView(ll)
+                            .setTitle(parent.getString(R.string.ResizeImage));
+
+                    TextView tv = new TextView(parent);
+                    tv.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                    tv.setText(parent.getString(R.string.Current__) + outWidth + " x " + outHeight + " " + parent.getString(R.string.FileSize_) + " " + tmpfile.length() / 1024 + " KB");
+                    ll.addView(tv);
+                    RadioGroup rg = new RadioGroup(parent);
+                    rg.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                    final ArrayList<RadioButton> rbs = new ArrayList<RadioButton>();
+                    for(int i=2; i<6; i++) {
+                        RadioButton rb = new RadioButton(parent);
+                        rb.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
+                        int nh = outHeight / i;
+                        int nw = outWidth / i;
+                        rb.setText(parent.getString(R.string.Resize__)+" " + nw + " x " + nh);
+                        rbs.add(rb);
+                        rg.addView(rb);
+                        rb.setTag(new Integer(i));
+                        if (i == 2) {
+                            rb.setChecked(true);
+                        }
                     }
-                });
-                builder.setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                builder.setPositiveButton(parent.getString(R.string.Preview), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                        for (RadioButton rb : rbs) {
-                            if (rb.isChecked()) {
-                                Integer skipSize = (Integer)rb.getTag();
-                                BitmapFactory.Options opts = new BitmapFactory.Options();
-                                opts.inJustDecodeBounds = false;
-                                opts.inSampleSize = Math.max(skipSize, skipSize);
-                                Bitmap bitmap = BitmapFactory.decodeFile(file.getPath(), opts);
-                                int orientation = ExifInterface.ORIENTATION_NORMAL;
-                                try {
-                                    orientation = new ExifInterface(file.getPath()).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                                } catch (Exception ex) {
-                                    // sorry
-                                }
-                                int sourceWidth = bitmap.getWidth();
-                                int sourceHeight = bitmap.getHeight();
-                                int destWidth, destHeight;
-                                switch(orientation) {
-                                    case ExifInterface.ORIENTATION_ROTATE_90: {
-                                        destHeight = sourceWidth;
-                                        destWidth = sourceHeight;
-                                        Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
-                                        Canvas canvas = new Canvas(targetBitmap);
-                                        Matrix matrix = new Matrix();
-                                        matrix.setRotate(90,sourceWidth/2,sourceHeight/2);
-                                        canvas.drawBitmap(bitmap, matrix, new Paint());
-                                        bitmap.recycle();
-                                        bitmap = targetBitmap;
-                                        break;
-                                    }
-                                    case ExifInterface.ORIENTATION_ROTATE_270: {
-                                        destHeight = sourceWidth;
-                                        destWidth = sourceHeight;
-                                        Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
-                                        Canvas canvas = new Canvas(targetBitmap);
-                                        Matrix matrix = new Matrix();
-                                        matrix.setRotate(270,sourceWidth/2,sourceHeight/2);
-                                        canvas.drawBitmap(bitmap, matrix, new Paint());
-                                        bitmap.recycle();
-                                        bitmap = targetBitmap;
-                                        break;
-                                    }
-                                    case ExifInterface.ORIENTATION_ROTATE_180: {
-                                        destHeight = sourceHeight;
-                                        destWidth = sourceWidth;
-                                        Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
-                                        Canvas canvas = new Canvas(targetBitmap);
-                                        Matrix matrix = new Matrix();
-                                        matrix.setRotate(180,sourceWidth/2,sourceHeight/2);
-                                        canvas.drawBitmap(bitmap, matrix, new Paint());
-                                        bitmap.recycle();
-                                        bitmap = targetBitmap;
-                                        break;
-                                    }
-
-                                }
-
-
-
-                                try {
-                                    final File outFile = new File(parent.getCacheDir(), "juick_capture_resized.jpg");
-                                    outFile.delete();
-                                    FileOutputStream fos = new FileOutputStream(outFile);
-                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
-                                    fos.close();
-
-                                    new AlertDialog.Builder(parent)
-                                    .setTitle(parent.getString(R.string.ScaleResult))
-                                    .setMessage(parent.getString(R.string.NewSize__) + " " + bitmap.getWidth() + " x " + bitmap.getHeight() + " "  + parent.getString(R.string.FileSize_) + " "+outFile.length() / 1024 + " KB")
-                                    .setIcon(new BitmapDrawable(bitmap))
-                                    .setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            dialog.cancel();
+                    ll.addView(rg);
+                    builder.setCancelable(true);
+                    builder.setNeutralButton(parent.getString(R.string.DontAttach), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            function.apply(null);
+                            dialog.cancel();
+                        }
+                    });
+                    builder.setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+                    builder.setPositiveButton(parent.getString(R.string.Preview), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                            for (RadioButton rb : rbs) {
+                                if (rb.isChecked()) {
+                                    File deleteFile = null;
+                                    try {
+                                        Integer skipSize = (Integer)rb.getTag();
+                                        BitmapFactory.Options opts = new BitmapFactory.Options();
+                                        opts.inJustDecodeBounds = false;
+                                        opts.inSampleSize = Math.max(skipSize, skipSize);
+                                        File tmpfile = new File(Uri.parse(attachmentUri).getPath());
+                                        if (!tmpfile.exists()) {
+                                            deleteFile = tmpfile = getQuickTempFile(parent);
+                                            FileInputStream inputStream = parent.getContentResolver().openAssetFileDescriptor(Uri.parse(attachmentUri), "r").createInputStream();
+                                            copyStreamToFile(inputStream, tmpfile);
                                         }
-                                    })
-                                    .setPositiveButton(parent.getString(R.string.Finish), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            function.apply(Uri.fromFile(outFile).toString());
+                                        Bitmap bitmap = BitmapFactory.decodeFile(tmpfile.getPath(), opts);
+                                        int orientation = ExifInterface.ORIENTATION_NORMAL;
+                                        try {
+                                            orientation = new ExifInterface(tmpfile.getPath()).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                                        } catch (Exception ex) {
+                                            // sorry
                                         }
-                                    })
-                                    .setNeutralButton(parent.getString(R.string.TryOther), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            maybeResizeCapturedImage(parent, attachmentUri, function);
+                                        tmpfile.delete();
+                                        int sourceWidth = bitmap.getWidth();
+                                        int sourceHeight = bitmap.getHeight();
+                                        int destWidth, destHeight;
+                                        switch(orientation) {
+                                            case ExifInterface.ORIENTATION_ROTATE_90: {
+                                                destHeight = sourceWidth;
+                                                destWidth = sourceHeight;
+                                                Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
+                                                Canvas canvas = new Canvas(targetBitmap);
+                                                Matrix matrix = new Matrix();
+                                                matrix.setRotate(90,sourceWidth/2,sourceHeight/2);
+                                                canvas.drawBitmap(bitmap, matrix, new Paint());
+                                                bitmap.recycle();
+                                                bitmap = targetBitmap;
+                                                break;
+                                            }
+                                            case ExifInterface.ORIENTATION_ROTATE_270: {
+                                                destHeight = sourceWidth;
+                                                destWidth = sourceHeight;
+                                                Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
+                                                Canvas canvas = new Canvas(targetBitmap);
+                                                Matrix matrix = new Matrix();
+                                                matrix.setRotate(270,sourceWidth/2,sourceHeight/2);
+                                                canvas.drawBitmap(bitmap, matrix, new Paint());
+                                                bitmap.recycle();
+                                                bitmap = targetBitmap;
+                                                break;
+                                            }
+                                            case ExifInterface.ORIENTATION_ROTATE_180: {
+                                                destHeight = sourceHeight;
+                                                destWidth = sourceWidth;
+                                                Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
+                                                Canvas canvas = new Canvas(targetBitmap);
+                                                Matrix matrix = new Matrix();
+                                                matrix.setRotate(180,sourceWidth/2,sourceHeight/2);
+                                                canvas.drawBitmap(bitmap, matrix, new Paint());
+                                                bitmap.recycle();
+                                                bitmap = targetBitmap;
+                                                break;
+                                            }
+
                                         }
-                                    })
-                                    .show();
-                                } catch (IOException e) {
-                                    Toast.makeText(parent, "Error: "+e.toString(), Toast.LENGTH_LONG).show();
-                                    return;
+
+
+
+                                        final File outFile = new File(parent.getCacheDir(), "juick_capture_resized.jpg");
+                                        outFile.delete();
+                                        FileOutputStream fos = new FileOutputStream(outFile);
+                                        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
+                                        fos.close();
+
+                                        new AlertDialog.Builder(parent)
+                                        .setTitle(parent.getString(R.string.ScaleResult))
+                                        .setMessage(parent.getString(R.string.NewSize__) + " " + bitmap.getWidth() + " x " + bitmap.getHeight() + " "  + parent.getString(R.string.FileSize_) + " "+outFile.length() / 1024 + " KB")
+                                        .setIcon(new BitmapDrawable(bitmap))
+                                        .setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                dialog.cancel();
+                                            }
+                                        })
+                                        .setPositiveButton(parent.getString(R.string.Finish), new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                function.apply(Uri.fromFile(outFile).toString());
+                                            }
+                                        })
+                                        .setNeutralButton(parent.getString(R.string.TryOther), new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                maybeResizePicture(parent, attachmentUri, function);
+                                            }
+                                        })
+                                        .show();
+                                    } catch (IOException e) {
+                                        Toast.makeText(parent, "Error: "+e.toString(), Toast.LENGTH_LONG).show();
+                                        return;
+                                    } finally {
+                                        if (deleteFile != null)
+                                            deleteFile.delete();
+                                    }
                                 }
                             }
                         }
-                    }
-                });
-                MainActivity.restyleChildrenOrWidget(ll);
-                final AlertDialog alertDialog = builder.create();
-                alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-                    @Override
-                    public void onShow(DialogInterface dialog) {
-                        MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
-                    }
-                });
-                alertDialog.show();
+                    });
+                    MainActivity.restyleChildrenOrWidget(ll);
+                    final AlertDialog alertDialog = builder.create();
+                    alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+                        @Override
+                        public void onShow(DialogInterface dialog) {
+                            MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
+                        }
+                    });
+                    alertDialog.show();
+                }
+            } catch (IOException ex) {
+                Toast.makeText(parent, ex.toString(), Toast.LENGTH_LONG).show();
+            } finally {
+                if (deleteFile != null)
+                    deleteFile.delete();
             }
         }
+    }
+
+    private static File getQuickTempFile(Activity parent) {
+        return new File(parent.getCacheDir(), "tmp.jpg");
+    }
+
+    private static void copyStreamToFile(InputStream inputStream, File tmpfile) throws IOException {
+        FileOutputStream fos = new FileOutputStream(tmpfile);
+        byte[] arr = new byte[4096];
+        while(true) {
+            int len = inputStream.read(arr);
+            if (len < 1) break;
+            fos.write(arr);
+        }
+        fos.close();
+        inputStream.close();
     }
 
     public static class BooleanReference {
