@@ -1,8 +1,6 @@
 package com.juick.android.datasource;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import com.juick.android.DatabaseService;
 import com.juick.android.URLParser;
@@ -55,7 +53,6 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
         super(ctx);
         this.title = title;
         urlParser = new URLParser(baseURL);
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         String useBackupServerS = sp.getString("useBackupServer", "-1");
         useBackupServer = (int)(Double.parseDouble(useBackupServerS) * 1000);
         if (useBackupServer < 0) useBackupServer = -1;      // instead of -1000;
@@ -68,24 +65,6 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
 
     public String getArg(String name) {
         return urlParser.getArgsMap().get(name);
-    }
-
-    public void processPureMessages(Utils.ServiceGetter<DatabaseService> databaseGetter, ArrayList<JuickMessage> messages, int beforeMID) {
-        for(int i=0; i<messages.size(); i++) {
-            final JuickMessage juickMessage = messages.get(i);
-            if (databaseGetter != null) {
-                final String source = juickMessage.source;
-                juickMessage.previousMID = beforeMID;
-                beforeMID = juickMessage.MID;
-                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                    @Override
-                    public void withService(DatabaseService service) {
-                        service.storeMessage(juickMessage, source);
-                    }
-                });
-            }
-            juickMessage.source = null;
-        }
     }
 
     @Override
@@ -108,12 +87,10 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     }
 
     private ArrayList<JuickMessage> parseAndProcess(String jsonStr) {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-        Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
-        boolean enableMessageDB = sp.getBoolean("enableMessageDB", true);
-        String fromS = getArg("before_mid");
+        //boolean enableMessageDB = sp.getBoolean("enableMessageDB", true);
+        //String fromS = getArg("before_mid");
         ArrayList<JuickMessage> messages = parseJSONpure(jsonStr);
-        processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && areMessagesInRow() ? Integer.parseInt(fromS) : -1);
+        //processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && areMessagesInRow() ? Integer.parseInt(fromS) : -1);
         return messages;
     }
 
@@ -134,6 +111,10 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     }
 
     public ArrayList<JuickMessage> parseJSONpure(String jsonStr) {
+        return parseJSONpure(jsonStr, false);
+    }
+
+    public ArrayList<JuickMessage> parseJSONpure(String jsonStr, boolean storeSource) {
         ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
         if (jsonStr != null) {
             try {
@@ -141,7 +122,10 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
-                    messages.add(JuickMessage.initFromJSON(jsonObject));
+                    JuickMessage msg = JuickMessage.initFromJSON(jsonObject);
+                    messages.add(msg);
+                    if (!storeSource)
+                        msg.source = null;
                 }
             } catch (Exception e) {
                 Log.e("initOpinionsAdapter", e.toString());
@@ -151,9 +135,68 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
     }
 
     @Override
-    public void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public void getChildren(final int mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+        final boolean retrieved[] = new boolean[1]; // concurrency indicator
+
+        boolean messageDB = sp.getBoolean("enableMessageDB", false);
+        if (messageDB && notifications instanceof Utils.HasCachedCopyNotification) {
+            // try to concurrently get from DB
+            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
+            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                @Override
+                public void withService(DatabaseService service) {
+                    // list of json entries
+                    final ArrayList<String> raw = service.getStoredThread(mid);
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            if (raw != null) {
+                                try {
+                                    Thread.sleep(500);  // to give fast connections priority
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                }
+                                if (retrieved[0]) return;
+                                    // reconstruct whole thread
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("[");
+                                for (String s : raw) {
+                                    sb.append(s);
+                                    sb.append(",");
+                                }
+                                sb.setLength(sb.length()-1);        // last comma
+                                sb.append("]");
+                                // parse
+                                ArrayList<JuickMessage> alt = parseJSONpure(sb.toString());
+                                if (retrieved[0]) return;
+                                // notify
+                                retrieved[0] = true;        // debug
+                                ((Utils.HasCachedCopyNotification)notifications).onCachedCopyObtained(alt);
+                            }
+                        }
+                    }.start();
+                }
+            });
+        }
+        // get from original location
         final String jsonStr = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + mid, notifications).getResult();
-        cont.apply(parseJSONpure(jsonStr));
+        retrieved[0] = true;
+        final ArrayList<JuickMessage> stuff = parseJSONpure(jsonStr, messageDB);
+        if (messageDB) {
+            // save it for later use
+            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
+            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                @Override
+                public void withService(DatabaseService service) {
+                    final ArrayList<String> raw = new ArrayList<String>();
+                    for (JuickMessage juickMessage : stuff) {
+                        raw.add(juickMessage.source);
+                    }
+                    service.storeThread(mid, raw);
+                }
+            });
+        }
+        cont.apply(stuff);
     }
 
     private Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {

@@ -34,6 +34,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.Toast;
+import com.juick.android.api.JuickMessage;
 import com.juickadvanced.R;
 
 import java.io.*;
@@ -282,6 +283,10 @@ public class Utils {
 
     public static interface BackupServerNotification extends Notification {
         public void notifyBackupInUse(boolean backup);
+    }
+
+    public static interface HasCachedCopyNotification extends Notification {
+        public void onCachedCopyObtained(ArrayList<JuickMessage> messages);
     }
 
     public static interface DownloadProgressNotification extends Notification {

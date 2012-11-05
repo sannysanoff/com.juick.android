@@ -50,6 +50,23 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     MessagesLoadNotification notification;
     SharedPreferences sp;
     private boolean trackLastRead;
+    ProgressBar large, small;
+    View cached_copy_label;
+    View list_container;
+
+    class ThreadMessagesLoadNotification extends MessagesLoadNotification implements Utils.HasCachedCopyNotification {
+
+        ThreadMessagesLoadNotification(Activity activity, Handler handler) {
+            super(activity, handler);
+        }
+
+        @Override
+        public void onCachedCopyObtained(ArrayList<JuickMessage> messages) {
+
+            onObtainAllThread(new MessagesFragment.RetainedData(messages, null), true);
+            System.out.println();
+        }
+    }
 
 
     @Override
@@ -109,6 +126,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         if (mid == 0) {
             return;
         }
+        large = (ProgressBar)view.findViewById(R.id.progress_bar);
+        small = (ProgressBar) view.findViewById(R.id.progress_bar_small);
+        cached_copy_label = view.findViewById(R.id.cached_copy_label);
 
         getListView().setOnTouchListener(this);
 
@@ -137,6 +157,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     public void reload() {
         getView().findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+        large.setVisibility(View.VISIBLE);
+        small.setVisibility(View.GONE);
+        setCachedViewIndicators(false);
         getView().findViewById(android.R.id.list).setVisibility(View.GONE);
         restoreData = null;
         initAdapter();
@@ -164,7 +187,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), new JuickCompatibleURLMessagesSource(getActivity()), getListView(), listAdapter));
 
-        notification = new MessagesLoadNotification(getActivity(), handler);
+        notification = new ThreadMessagesLoadNotification(getActivity(), handler);
         final JuickCompatibleURLMessagesSource juickSource = new JuickCompatibleURLMessagesSource(getActivity());
         Thread thr = new Thread(new Runnable() {
 
@@ -172,75 +195,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 final Utils.Function<Void, MessagesFragment.RetainedData> then = new Utils.Function<Void, MessagesFragment.RetainedData>() {
                     @Override
                     public Void apply(MessagesFragment.RetainedData retainedData) {
-                        final ArrayList<JuickMessage> messages = retainedData.messages;
-                        final Parcelable listPosition = retainedData.viewState;
-                        if (isAdded()) {
-                            if (messages.size() == 0) {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notification.statusText.setText("Download error: "+notification.lastError);
-                                        notification.progressBar.setVisibility(View.GONE);
-                                    }
-                                });
-                            }
-                            getActivity().runOnUiThread(new Runnable() {
-
-                                public void run() {
-                                    Bundle args = getArguments();
-                                    boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
-                                    if (scrollToBottom) {
-                                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-                                        getListView().setStackFromBottom(true);
-                                    }
-                                    listAdapter.addAllMessages(messages);
-                                    setListAdapter(listAdapter);
-                                    getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
-                                    getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
-
-                                    if (listAdapter.getCount() > 0) {   // could be filtered out!
-                                        initAdapterStageTwo();
-                                    }
-                                    if (listPosition != null) {
-                                        try {
-                                            getListView().onRestoreInstanceState(listPosition);
-                                        } catch (Exception e) {
-                                            /* tmp fix for
-                                            java.lang.IllegalStateException: Content view not yet created
-                                                    at+android.support.v4.app.ListFragment.ensureList(ListFragment.java:328)
-                                                    at+android.support.v4.app.ListFragment.getListView(ListFragment.java:222)
-                                             */
-
-                                        }
-                                    }
-                                    if (listAdapter.getCount() != 0 && messages.size() > 0) {   // could be filtered out!
-                                        Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
-                                        Activity activity = getActivity();
-                                        if (activity != null) {
-                                            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
-                                            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                                @Override
-                                                public void withService(XMPPService service) {
-                                                    service.removeMessages(mid, false);
-                                                }
-                                            });
-                                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                                                @Override
-                                                public void withService(DatabaseService service) {
-                                                    service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1, messages.get(0).Timestamp.getDate()));
-                                                }
-
-                                                @Override
-                                                public void withoutService() {
-                                                }
-                                            });
-                                        }
-
-                                    }
-
-                                }
-                            });
-                        }
+                        onObtainAllThread(retainedData, false);
                         return null;
                     }
                 };
@@ -262,13 +217,111 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         thr.start();
     }
 
-    private void initAdapterStageTwo() {
+    private void onObtainAllThread(final MessagesFragment.RetainedData retainedData, final boolean cached) {
+        final ArrayList<JuickMessage> messages = retainedData.messages;
+        if (isAdded()) {
+            if (messages.size() == 0) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        notification.statusText.setText("Download error: "+notification.lastError);
+                        notification.progressBar.setVisibility(View.GONE);
+                    }
+                });
+            }
+            getActivity().runOnUiThread(new Runnable() {
+
+                public void run() {
+                    Bundle args = getArguments();
+                    boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
+                    if (scrollToBottom) {
+                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+                        getListView().setStackFromBottom(true);
+                    }
+                    Parcelable listPosition = retainedData.viewState;
+                    if (listPosition == null && listAdapter.getCount() > 0) {
+                        // probably transition from cached data to live data
+                        listPosition = getListView().onSaveInstanceState();
+                        listAdapter.clear();
+                    }
+                    listAdapter.addAllMessages(messages);
+                    setListAdapter(listAdapter);
+                    getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
+
+                    if (listAdapter.getCount() > 0) {   // could be filtered out!
+                        initAdapterStageTwo(cached);
+                    }
+                    if (listPosition != null) {
+                        try {
+                            getListView().onRestoreInstanceState(listPosition);
+                        } catch (Exception e) {
+                            /* tmp fix for
+                            java.lang.IllegalStateException: Content view not yet created
+                                    at+android.support.v4.app.ListFragment.ensureList(ListFragment.java:328)
+                                    at+android.support.v4.app.ListFragment.getListView(ListFragment.java:222)
+                             */
+
+                        }
+                    }
+                    if (listAdapter.getCount() != 0 && messages.size() > 0) {   // could be filtered out!
+                        Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
+                        Activity activity = getActivity();
+                        if (activity != null) {
+                            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+                            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                @Override
+                                public void withService(XMPPService service) {
+                                    service.removeMessages(mid, false);
+                                }
+                            });
+                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                @Override
+                                public void withService(DatabaseService service) {
+                                    service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1, messages.get(0).Timestamp.getDate()));
+                                }
+
+                                @Override
+                                public void withoutService() {
+                                }
+                            });
+                        }
+
+                    }
+                    if (cached) {
+                        large.setVisibility(View.GONE);
+                        small.setVisibility(View.VISIBLE);
+                        setCachedViewIndicators(true);
+                        getView().findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+                    } else {
+                        setCachedViewIndicators(false);
+                        getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
+                    }
+
+                }
+            });
+        }
+    }
+
+    private void setCachedViewIndicators(boolean cached) {
+        cached_copy_label.setVisibility(cached ? View.VISIBLE : View.GONE);
+        View container = getView().findViewById(R.id.list_container);
+        if (cached) {
+            container.setPadding(2, 2, 2, 2);
+            container.setBackgroundColor(0xFFA0A000);
+        } else {
+            container.setPadding(0, 0, 0, 0);
+            container.setBackgroundColor(0);
+        }
+    }
+
+    private void initAdapterStageTwo(boolean cached) {
         if (!isAdded()) {
             return;
         }
         String replies = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 1) + ")";
         listAdapter.addDisabledItem(replies, 1);
-        parentActivity.onThreadLoaded(listAdapter.getItem(0));
+        if (!cached)
+            parentActivity.onThreadLoaded(listAdapter.getItem(0));
 
         getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
             @Override

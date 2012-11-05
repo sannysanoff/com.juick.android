@@ -40,6 +40,7 @@ import java.util.zip.GZIPOutputStream;
 public class DatabaseService extends Service {
 
     Handler handler;
+    SharedPreferences sp;
 
     public void saveMessage(final JuickMessage messag) {
         synchronized (writeJobs) {
@@ -66,13 +67,12 @@ public class DatabaseService extends Service {
         }
     }
 
-    public void runGenericWriteJob(final Utils.Function<Void, DatabaseService> job) {
+    public void runGenericWriteJob(final Utils.Function<Boolean, DatabaseService> job) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
                 public Boolean apply(Void aVoid) {
-                    job.apply(DatabaseService.this);
-                    return true;
+                    return job.apply(DatabaseService.this);
                 }
             });
         }
@@ -139,9 +139,102 @@ public class DatabaseService extends Service {
         //To change body of created methods use File | Settings | File Templates.
     }
 
+    public void storeThread(final int mid, final ArrayList<String> raw) {
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    if (raw.size() == 0) return true;        // broken?
+                    Cursor cursor = db.rawQuery("select * from msg where mid=?", new String[]{"" + mid});
+                    boolean exists = cursor.moveToFirst();
+                    int nreplies = exists ? cursor.getInt(cursor.getColumnIndex("nreplies")) : 0;
+                    cursor.close();
+                    try {
+                        insertOrUpdateThread(exists, raw, mid);
+                        db.setTransactionSuccessful();
+                        return true;
+                    } catch (IOException e) {
+                        Log.e("com.juickadvanced", "while storeThread", e);
+                        // failure
+                    }
+                    return false;
+                }
+            });
+            writeJobs.notify();
+        }
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
+    private void insertOrUpdateThread(boolean exists, ArrayList<String> raw, int mid) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(raw);
+        oos.flush();
+        byte[] blob = compressGZIPArr(baos.toByteArray());
+        ContentValues cv = new ContentValues();
+        cv.put("body", blob);
+        cv.put("nreplies", raw.size());
+        cv.put("save_date", System.currentTimeMillis());
+        if (exists) {
+            db.update("msg", cv, "mid=?", new String[]{""+mid});
+        } else {
+            cv.put("mid", mid);
+            db.insert("msg", "", cv);
+        }
+    }
+
+    public void appendToThread(final int mid, final ArrayList<String> raw) {
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    ArrayList<String> storedThread = getStoredThread(mid);
+                    if (storedThread == null) return true;
+                    storedThread.addAll(raw);
+                    try {
+                        insertOrUpdateThread(true, storedThread, mid);
+                    } catch (IOException e) {
+                        // bad luck
+                        return true;
+                    }
+                    db.setTransactionSuccessful();
+                    return true;
+                }
+            });
+            writeJobs.notify();
+        }
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
+
+    public ArrayList<String> getStoredThread(int mid) {
+        Cursor cursor = db.rawQuery("select * from msg where mid=?", new String[]{"" + mid});
+        try {
+            cursor.moveToFirst();
+            int blobIndex = cursor.getColumnIndex("body");
+            if(!cursor.isAfterLast()) {
+                byte[] blob = cursor.getBlob(blobIndex);
+                blob = decompressGZIPArr(blob);
+                try {
+                    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(blob));
+                    try {
+                        return (ArrayList<String>)ois.readObject();
+                    } finally {
+                        ois.close();
+                    }
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+            return null;
+        } finally {
+            cursor.close();
+        }
+    }
+
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 6;
+        public final static int CURRENT_VERSION = 7;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -180,6 +273,20 @@ public class DatabaseService extends Service {
             }
             if (from == 5) {
                 sqLiteDatabase.execSQL("create table last_visited_threads(msgid integer not null primary key, visit_date integer not null)");
+                from++;
+            }
+            if (from == 6) {
+                try {
+                    sqLiteDatabase.execSQL("drop table message");
+                    sqLiteDatabase.execSQL("drop table message_reply");
+                } catch (SQLException e) {
+                    //  no luck
+                }
+                // msg.blob contains serialized ArrayList<String> with messages in Strings
+                // to speed up append
+                sqLiteDatabase.execSQL("create table msg(mid integer, save_date integer not null, nreplies integer, body blob not null)");
+                sqLiteDatabase.execSQL("create index ixmsg_mid  on msg(mid)");
+                sqLiteDatabase.execSQL("create index ixmsg_savedate on msg(save_date)");
                 from++;
             }
         }
@@ -221,12 +328,31 @@ public class DatabaseService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();
         database = new DB(this);
         if (db == null)
             db = database.getWritableDatabase();
         writerThread = new WriterThread();
         writerThread.start();
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    int messageDBperiod = 30;
+                    try {
+                        messageDBperiod = Integer.parseInt(sp.getString("messageDBperiod","30"));
+                    } catch (Exception e) {
+                        //
+                    }
+                    String oldDate = ""+(System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
+                    db.delete("msg","save_date < ?",new String[] {oldDate});
+                    db.setTransactionSuccessful();
+                    return Boolean.TRUE;
+                }
+            });
+            writeJobs.notify();
+        }
     }
 
     @Override
@@ -288,6 +414,20 @@ public class DatabaseService extends Service {
         }
     }
 
+    private byte[] compressGZIPArr(byte[] bytes) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            GZIPOutputStream gzos = new GZIPOutputStream(baos);
+            gzos.write(bytes);
+            gzos.finish();
+            gzos.flush();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static String decompressGZIP(byte[] gzipped) {
         try {
             GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(gzipped));
@@ -299,6 +439,23 @@ public class DatabaseService extends Service {
                 baos.write(arr, 0, rd);
             }
             return baos.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static byte[] decompressGZIPArr(byte[] gzipped) {
+        try {
+            GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(gzipped));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] arr = new byte[1024];
+            while(true) {
+                int rd = gzis.read(arr);
+                if (rd < 1) break;
+                baos.write(arr, 0, rd);
+            }
+            return baos.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -532,7 +689,6 @@ public class DatabaseService extends Service {
 
     public JsonObject prepareUsageReportValue() {
         JsonObject jo = new JsonObject();
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         copyBoolean(jo, sp, "useXMPP", false);
         copyBoolean(jo, sp, "persistLastMessagesPosition", false);
         copyBoolean(jo, sp, "lastReadMessages", false);

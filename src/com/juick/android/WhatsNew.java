@@ -242,11 +242,11 @@ public class WhatsNew {
             databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                 @Override
                 public void withService(DatabaseService service) {
-                    service.runGenericWriteJob(new Utils.Function<Void, DatabaseService>() {
+                    service.runGenericWriteJob(new Utils.Function<Boolean, DatabaseService>() {
                         @Override
-                        public Void apply(DatabaseService databaseService) {
+                        public Boolean apply(DatabaseService databaseService) {
                             saver.saveFeature(databaseService);
-                            return null;
+                            return true;
                         }
                     });
                 }

@@ -1,6 +1,8 @@
 package com.juick.android.datasource;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
 
@@ -17,13 +19,15 @@ import java.util.ArrayList;
 public abstract  class MessagesSource implements Serializable {
 
     transient Context ctx;
+    transient SharedPreferences sp;
 
     public MessagesSource(Context ctx) {
-        this.ctx = ctx;
+        setContext(ctx);
     }
 
     public void setContext(Context ctx) {
         this.ctx = ctx;
+        sp = PreferenceManager.getDefaultSharedPreferences(ctx);
     }
 
     public abstract boolean supportsBackwardRefresh();
