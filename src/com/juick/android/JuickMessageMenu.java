@@ -772,7 +772,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
     }
 
     private void actionOpenMessageInBrowser() {
-        //To change body of created methods use File | Settings | File Templates.
+        launchURL("http://www.juick.com/"+listSelectedItem.MID);
     }
 
     private void actionUserStats() {
