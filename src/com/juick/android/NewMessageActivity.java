@@ -264,12 +264,17 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     public void onClick(View v) {
         if (v == bTags) {
-            Intent i = new Intent(this, TagsActivity.class);
-            i.setAction(Intent.ACTION_PICK);
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            int uid = Integer.parseInt(sp.getString("myUserId", "-1"));
-            i.putExtra("uid", uid);
-            startActivityForResult(i, ACTIVITY_TAGS);
+            MainActivity.withUserId(this, new Utils.Function<Void, Integer>() {
+                @Override
+                public Void apply(Integer uid) {
+                    Intent i = new Intent(NewMessageActivity.this, TagsActivity.class);
+                    i.setAction(Intent.ACTION_PICK);
+                    i.putExtra("uid", uid.intValue());
+                    i.putExtra("multi", true);
+                    startActivityForResult(i, ACTIVITY_TAGS);
+                    return null;
+                }
+            });
         } else if (v == bLocationHint) {
             bLocationHint.setVisibility(View.GONE);
             pid = pidHint;
@@ -514,7 +519,10 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             if (requestCode == ACTIVITY_TAGS) {
-                etMessage.setText("*" + data.getStringExtra("tag") + " " + etMessage.getText());
+                String tag = data.getStringExtra("tag");
+                if (tag.trim().length() == 0) return;
+                if (!tag.startsWith("*")) tag = "*"+tag; // compatible
+                etMessage.setText(tag + " " + etMessage.getText());
             } else if (requestCode == ACTIVITY_LOCATION) {
                 pid = data.getIntExtra("pid", 0);
                 lat = data.getDoubleExtra("lat", 0);

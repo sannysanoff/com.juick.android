@@ -232,73 +232,18 @@ public class MainActivity extends FragmentActivity implements
             navigationItems.add(new NavigationItem(R.string.navigationMy) {
                 @Override
                 void action() {
-                    String myUserId = sp.getString("myUserId", "");
-                    if (myUserId.equals("")) {
-                        final String value = Utils.getAccountName(MainActivity.this.getApplicationContext());
-                        final ProgressDialog pd = new ProgressDialog(MainActivity.this);
-                        pd.setTitle(getString(R.string.GettingYourId));
-                        pd.setMessage(getString(R.string.ConnectingToWwwJuick));
-                        pd.setIndeterminate(true);
-                        pd.show();
-                        final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(getString(R.string.com_juick));
-                        new Thread("UserID obtainer") {
-                            @Override
-                            public void run() {
-                                String fullName = value;
-                                if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                                try {
-                                    URL u = new URL("http://juick.com/" + fullName.trim() + "/");
-                                    HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
-                                    urlConnection.setInstanceFollowRedirects(true);
-                                    Utils.RESTResponse response = Utils.streamToString((InputStream) urlConnection.getContent(), null);
-                                    if (response.getErrorText() != null) {
-                                        throw new IOException(response.getErrorText());
-                                    } else {
-                                        String retval = response.getResult();
-                                        String SEARCH_MARKER = "http://i.juick.com/a/";
-                                        int ix = retval.indexOf(SEARCH_MARKER);
-                                        if (ix < 0) {
-                                            throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
-                                        }
-                                        int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
-                                        if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                                            throw new RuntimeException(getString(R.string.WebSiteReturnedBad));
-                                        }
-                                        final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                sp.edit().putString("myUserId", uidS).commit();
-                                                action();
-                                            }
-                                        });
-                                    }
-
-                                } catch (final Exception e) {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(MainActivity.this, getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
-                                        }
-                                    });
-                                } finally {
-                                    httpClient.close();
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            pd.hide();
-                                        }
-                                    });
-                                }
-                            }
-                        }.start();
-                    } else {
-                        final Bundle args = new Bundle();
-                        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", sp.getString("myUserId", "12234567788"));
-                        ms.setKind("my_home");
-                        args.putSerializable("messagesSource", ms);
-                        runDefaultFragmentWithBundle(args, this);
-                    }
+                    final NavigationItem thiz = this;
+                    withUserId(MainActivity.this, new Utils.Function<Void, Integer>() {
+                        @Override
+                        public Void apply(Integer uid) {
+                            final Bundle args = new Bundle();
+                            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this).putArg("user_id", ""+uid);
+                            ms.setKind("my_home");
+                            args.putSerializable("messagesSource", ms);
+                            runDefaultFragmentWithBundle(args, thiz);
+                            return null;
+                        }
+                    });
                 }
             });
             if (sp.getBoolean("msrcSrachiki", false)) {
@@ -508,6 +453,73 @@ public class MainActivity extends FragmentActivity implements
             ActionBar bar = getSupportActionBar();
             bar.setListNavigationCallbacks(navigationAdapter, this);
 
+        }
+    }
+
+    public static void withUserId(final Activity activity, final Utils.Function<Void,Integer> action) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+        final String myUserId = sp.getString("myUserId", "");
+        if (myUserId.equals("")) {
+            final String value = Utils.getAccountName(activity.getApplicationContext());
+            final ProgressDialog pd = new ProgressDialog(activity);
+            pd.setTitle(activity.getString(R.string.GettingYourId));
+            pd.setMessage(activity.getString(R.string.ConnectingToWwwJuick));
+            pd.setIndeterminate(true);
+            pd.show();
+            final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(activity.getString(R.string.com_juick));
+            new Thread("UserID obtainer") {
+                @Override
+                public void run() {
+                    String fullName = value;
+                    if (fullName.startsWith("@")) fullName = fullName.substring(1);
+                    try {
+                        URL u = new URL("http://juick.com/" + fullName.trim() + "/");
+                        HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
+                        urlConnection.setInstanceFollowRedirects(true);
+                        Utils.RESTResponse response = Utils.streamToString((InputStream) urlConnection.getContent(), null);
+                        if (response.getErrorText() != null) {
+                            throw new IOException(response.getErrorText());
+                        } else {
+                            String retval = response.getResult();
+                            String SEARCH_MARKER = "http://i.juick.com/a/";
+                            int ix = retval.indexOf(SEARCH_MARKER);
+                            if (ix < 0) {
+                                throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
+                            }
+                            int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
+                            if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
+                                throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
+                            }
+                            final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    sp.edit().putString("myUserId", uidS).commit();
+                                    action.apply(Integer.parseInt(uidS));
+                                }
+                            });
+                        }
+
+                    } catch (final Exception e) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(activity, activity.getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    } finally {
+                        httpClient.close();
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                pd.hide();
+                            }
+                        });
+                    }
+                }
+            }.start();
+        } else {
+            action.apply(Integer.parseInt(myUserId));
         }
     }
 

@@ -41,6 +41,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         super.onCreate(savedInstanceState);
 
         uid = getIntent().getIntExtra("uid", 0);
+        boolean multi = getIntent().getBooleanExtra("multi", false);
 
         if (uid == 0) {
             setTitle(R.string.Popular_tags);
@@ -52,6 +53,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         TagsFragment tf = new TagsFragment();
         Bundle args = new Bundle();
         args.putInt("uid", uid);
+        args.putBoolean("multi", multi);
         tf.setArguments(args);
         ft.add(R.id.tagsfragment, tf);
         ft.commit();

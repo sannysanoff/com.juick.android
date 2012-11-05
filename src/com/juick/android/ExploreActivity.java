@@ -37,6 +37,7 @@ import de.quist.app.errorreporter.ExceptionReporter;
 public class ExploreActivity extends FragmentActivity implements View.OnClickListener, TagsFragment.TagsFragmentListener {
 
     private EditText etSearch;
+    private int uid = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,25 +61,33 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
     }
 
     public void onClick(View v) {
-        String search = etSearch.getText().toString();
+        String search = etSearch.getText().toString().trim();
         if (search.length() == 0) {
             Toast.makeText(this, R.string.Enter_a_message, Toast.LENGTH_SHORT).show();
             return;
         }
-        Intent i = new Intent(this, MessagesActivity.class);
-        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Search)+": "+search, this).putArg("search", Uri.encode(search)));
-        startActivity(i);
+
+        if (search.startsWith("*")) {
+            Intent i = new Intent(this, MessagesActivity.class);
+            String tagg = Uri.encode(search.substring(1));
+            JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + search.substring(1), this);
+            jms.putArg("tag", tagg);
+            if (uid > 0) {
+                jms.putArg("user_id", "" + uid);
+            }
+            i.putExtra("messagesSource", jms);
+            startActivity(i);
+
+        } else {
+            Intent i = new Intent(this, MessagesActivity.class);
+            i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Search)+": "+search, this).putArg("search", Uri.encode(search)));
+            startActivity(i);
+        }
     }
 
     public void onTagClick(String tag, int uid) {
-        Intent i = new Intent(this, MessagesActivity.class);
-        JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + tag, this);
-        jms.putArg("tag", Uri.encode(tag));
-        if (uid > 0) {
-            jms.putArg("user_id", "" + uid);
-        }
-        i.putExtra("messagesSource", jms);
-        startActivity(i);
+        this.uid = uid;
+        etSearch.setText("*" + tag);
     }
 
     public void onTagLongClick(String tag, int uid) {

@@ -644,6 +644,7 @@
     <string name="JuickUsersPerMonth">Number of Juick users</string>
     <string name="JuickUsersPerMonth2">Posting, commenting, new</string>
     <string name="ClickToSelectURL">Click to select URL</string>
+    <string name="TagsFormatError">Tags format error (must start with \'*\')</string>
 
 
 </resources>

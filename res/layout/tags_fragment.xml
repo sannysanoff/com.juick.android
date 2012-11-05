@@ -24,6 +24,34 @@
                 />
 
     </LinearLayout>
+    <RelativeLayout
+            android:id="@+id/selected_container"
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            >
+        <Button
+                android:id="@+id/okbutton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:text="OK"
+                />
+        <EditText
+                android:padding="5sp"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/okbutton"
+                android:layout_alignBaseline="@id/okbutton"
+                android:editable="true"
+                android:hint="@string/Tags"
+                android:singleLine="false"
+                android:visibility="gone"
+                android:id="@+id/selected"
+                />
+
+    </RelativeLayout>
     <ScrollView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
@@ -32,7 +60,7 @@
                 android:padding="5sp"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:autoLink="all"
+                android:autoLink="none"
                 android:linksClickable="true"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
