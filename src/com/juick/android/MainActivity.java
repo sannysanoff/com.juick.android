@@ -838,6 +838,21 @@ public class MainActivity extends FragmentActivity implements
             btn.setTextColor(colorTheme.getForeground(pressed));
             btn.setBackgroundColor(colorTheme.getBackground());
         } else if (view instanceof Spinner) {
+            View scan = view;
+            boolean shouldRecolor = false;
+            while (scan != null) {
+                if (scan.getClass().getName().toLowerCase().contains("action")) {
+                    shouldRecolor = true;
+                    break;
+                }
+                try {
+                    scan = (View)scan.getParent();
+                } catch (Exception e) {
+                    scan = null;
+                }
+            }
+            if (shouldRecolor)
+                restyleViewGroup((Spinner) view, colorTheme, pressed);
         } else if (view instanceof Button) {
 //            Button btn = (Button) view;
 //            btn.setTextColor(colorTheme.getForeground(pressed));
@@ -846,14 +861,18 @@ public class MainActivity extends FragmentActivity implements
             TextView text = (TextView) view;
             text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
-            ViewGroup parent = (ViewGroup) view;
-            int childCount = parent.getChildCount();
-            parent.setBackgroundColor(colorTheme.getBackground(pressed));
-            for (int i = 0; i < childCount; i++) {
-                View child = parent.getChildAt(i);
-                System.out.println(child);
-                restyleChildrenOrWidget(child);
-            }
+            restyleViewGroup((ViewGroup) view, colorTheme, pressed);
+        }
+    }
+
+    private static void restyleViewGroup(ViewGroup view, ColorsTheme.ColorTheme colorTheme, boolean pressed) {
+        ViewGroup parent = (ViewGroup) view;
+        int childCount = parent.getChildCount();
+        parent.setBackgroundColor(colorTheme.getBackground(pressed));
+        for (int i = 0; i < childCount; i++) {
+            View child = parent.getChildAt(i);
+            System.out.println(child);
+            restyleChildrenOrWidget(child);
         }
     }
 

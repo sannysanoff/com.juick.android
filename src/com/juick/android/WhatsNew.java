@@ -190,8 +190,6 @@ public class WhatsNew {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
-                        if (notCycle != null)
-                            notCycle.run();
                     }
                 })
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {
