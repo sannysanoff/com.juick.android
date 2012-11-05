@@ -18,26 +18,34 @@
 package com.juick.android;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.style.URLSpan;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
 import com.juick.android.datasource.MessagesSource;
+import com.juickadvanced.R;
 import org.json.JSONArray;
 
 import java.io.File;
 
 /**
- *
  * @author Ugnich Anton
  */
-public class TagsFragment extends ListFragment implements OnItemClickListener, OnItemLongClickListener {
+public class TagsFragment extends Fragment  {
 
     private TagsFragmentListener parentActivity;
     private int uid = 0;
@@ -52,38 +60,50 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
         }
     }
 
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.tags_fragment, null);
+    }
+
+    View myView;
+
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        myView = view;
         Bundle args = getArguments();
         if (args != null) {
             uid = args.getInt("uid", 0);
             if (uid == 0) {
-                MessagesSource messagesSource = (MessagesSource)args.get("messagesSource");
+                MessagesSource messagesSource = (MessagesSource) args.get("messagesSource");
                 if (messagesSource instanceof JuickCompatibleURLMessagesSource) {
-                    JuickCompatibleURLMessagesSource jcums = (JuickCompatibleURLMessagesSource)messagesSource;
+                    JuickCompatibleURLMessagesSource jcums = (JuickCompatibleURLMessagesSource) messagesSource;
                     String user_idS = jcums.getArg("user_id");
                     if (user_idS != null) {
                         try {
                             uid = Integer.parseInt(user_idS);
-                        } catch (Throwable _) {}
+                        } catch (Throwable _) {
+                        }
                     }
                 }
             }
         }
 
-        getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(this);
+//        getListView().setOnItemClickListener(this);
+//        getListView().setOnItemLongClickListener(this);
 
-        MessagesFragment.installDividerColor(getListView());
+//        MessagesFragment.installDividerColor(getListView());
         MainActivity.restyleChildrenOrWidget(view);
+        final TextView progress = (TextView)myView.findViewById(R.id.progress);
+        final View progressAll = myView.findViewById(R.id.progress_all);
+        progress.setText(R.string.Loading___);
 
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
                 String url = "http://api.juick.com/tags";
-                File globalTagsCache = new File(view.getContext().getCacheDir(), "global_tags-"+uid+".json");
+                File globalTagsCache = new File(view.getContext().getCacheDir(), "global_tags-" + uid + ".json");
                 String cachedString = null;
                 if (uid != 0) {
                     url += "?user_id=" + uid;
@@ -96,47 +116,42 @@ public class TagsFragment extends ListFragment implements OnItemClickListener, O
                     XMPPService.writeStringToFile(globalTagsCache, jsonStr);
                 }
                 if (isAdded()) {
+                    final SpannableStringBuilder ssb = new SpannableStringBuilder();
+                    if (jsonStr != null) {
+                        try {
+                            JSONArray json = new JSONArray(jsonStr);
+                            int cnt = json.length();
+                            for (int i = 0; i < cnt; i++) {
+                                int index = ssb.length();
+                                final String tagg = json.getJSONObject(i).getString("tag");
+                                ssb.append("*" + tagg);
+                                ssb.setSpan(new URLSpan(tagg) {
+                                    @Override
+                                    public void onClick(View widget) {
+                                        parentActivity.onTagClick(tagg, uid);
+                                    }
+                                }, index, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                ssb.append(" ");
+
+                            }
+                        } catch (Exception ex) {
+                            ssb.append("Error: "+ex.toString());
+                        }
+                    }
                     getActivity().runOnUiThread(new Runnable() {
 
                         public void run() {
-                            if (jsonStr != null) {
-                                try {
-                                    ArrayAdapter<String> listAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1) {
-                                        @Override
-                                        public View getView(int position, View convertView, ViewGroup parent) {
-                                            View retval = super.getView(position, convertView, parent);
-                                            MainActivity.restyleChildrenOrWidget(retval);
-                                            return retval;    //To change body of overridden methods use File | Settings | File Templates.
-                                        }
-                                    };
-
-                                    JSONArray json = new JSONArray(jsonStr);
-                                    int cnt = json.length();
-                                    for (int i = 0; i < cnt; i++) {
-                                        listAdapter.add(json.getJSONObject(i).getString("tag"));
-                                    }
-                                    setListAdapter(listAdapter);
-                                } catch (Exception e) {
-                                    Log.e("initTagsAdapter", e.toString());
-                                }
-                            }
+                            TextView tv = (TextView)myView.findViewById(R.id.tags);
+                            progressAll.setVisibility(View.GONE);
+                            tv.setText(ssb);
+                            //tv.setMovementMethod(LinkMovementMethod.getInstance());
                         }
                     });
                 }
             }
         });
         thr.start();
-        MainActivity.restyleChildrenOrWidget(getListView());
 
-    }
-
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        parentActivity.onTagClick((String) getListAdapter().getItem(position), uid);
-    }
-
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        parentActivity.onTagLongClick((String) getListAdapter().getItem(position), uid);
-        return true;
     }
 
     public interface TagsFragmentListener {
