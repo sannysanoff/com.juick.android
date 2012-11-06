@@ -15,7 +15,7 @@
                 android:padding="5sp"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="Progress"
+                android:text="Loading..."
                 android:id="@+id/progress"></TextView>
 
     </LinearLayout>

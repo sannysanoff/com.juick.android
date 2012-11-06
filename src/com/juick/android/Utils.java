@@ -379,6 +379,7 @@ public class Utils {
                                                 public void run() {
                                                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
                                                     sp.edit().remove("web_cookie").commit();
+                                                    reloginTried = 0;
                                                 }
                                             });
                                         }

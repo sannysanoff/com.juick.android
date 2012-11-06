@@ -119,6 +119,7 @@ public class MessagesActivity extends FragmentActivity {
             case R.id.menuitem_search:
                 Intent intent = new Intent(this, ExploreActivity.class);
                 intent.putExtra("messagesSource", messagesSource);
+                intent.putExtra("uid", getUserId());
                 startActivity(intent);
                 break;
         }

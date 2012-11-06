@@ -163,8 +163,9 @@ public class NewJuickPreferenceActivity extends Activity {
 
     private void showChart(String chart) {
         Intent intent = new Intent(this, DisplayChartActivity2.class);
-        intent.setData(Uri.parse("http://192.168.1.77:8080/charts/JuickCharts2/"+chart+".jsp"));
-        //intent.setData(Uri.parse("http://ja.ip.rt.ru:8080/charts/JuickCharts2/"+chart+".jsp"));
+        //String host = "192.168.1.77:8080";
+        String host = "ja.ip.rt.ru:8080";
+        intent.setData(Uri.parse("http://"+host+"/charts/JuickCharts2/"+chart+".jsp"));
         startActivity(intent);
     }
 

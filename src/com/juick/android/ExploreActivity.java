@@ -54,6 +54,8 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         TagsFragment tf = new TagsFragment();
         Bundle args = new Bundle();
         args.putSerializable("messagesSource", getIntent().getSerializableExtra("messagesSource"));
+        uid = getIntent().getIntExtra("uid", -1);
+        args.putSerializable("uid", uid);
         tf.setArguments(args);
         ft.add(R.id.tagsfragment, tf);
         ft.commit();
@@ -80,7 +82,12 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
 
         } else {
             Intent i = new Intent(this, MessagesActivity.class);
-            i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(getString(R.string.Search)+": "+search, this).putArg("search", Uri.encode(search)));
+            JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Search) + ": " + search, this);
+            if (uid > 0) {
+                jms.putArg("user_id", "" + uid);
+            }
+            jms.putArg("search", Uri.encode(search));
+            i.putExtra("messagesSource", jms);
             startActivity(i);
         }
     }
