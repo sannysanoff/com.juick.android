@@ -141,7 +141,8 @@
     <string name="navigationPhoto">С фото</string>
     <string name="navigationMy">Мой блог</string>
     <string name="navigationSrachiki">Срачики (jugregator)</string>
-    <string name="navigationPrivate">Приват (веб)</string>
+    <string name="navigationPrivate">Приват(веб)</string>
+    <string name="navigationDiscuss">Дискусс.(веб)</string>
     <string name="navigationUnread">Все нечитанные</string>
     <string name="navigationSaved">Сохраненные</string>
     <string name="XMPP_client">XMPP/Jabber клиент</string>

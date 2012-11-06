@@ -166,7 +166,8 @@
     <string name="navigationPhoto">With photos</string>
     <string name="navigationMy">My blog</string>
     <string name="navigationSrachiki">Srachiki (jugregator)</string>
-    <string name="navigationPrivate">Pvt (web)</string>
+    <string name="navigationPrivate">Private(web)</string>
+    <string name="navigationDiscuss">Discuss.(web)</string>
     <string name="navigationUnread">All-unread</string>
     <string name="navigationSaved">Saved messages</string>
     <string name="SingleLine_Menu">Single line menu items</string>

@@ -275,6 +275,17 @@ public class MainActivity extends FragmentActivity implements
                     }
                 });
             }
+            if (sp.getBoolean("msrcDiscuss", false)) {
+                navigationItems.add(new NavigationItem(R.string.navigationDiscuss) {
+                    @Override
+                    void action() {
+                        final Bundle args = new Bundle();
+                        JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://dev.juick.com/?show=discuss");
+                        args.putSerializable("messagesSource", ms);
+                        runDefaultFragmentWithBundle(args, this);
+                    }
+                });
+            }
             if (sp.getBoolean("msrcUnread", false)) {
                 navigationItems.add(new NavigationItem(R.string.navigationUnread) {
                     @Override

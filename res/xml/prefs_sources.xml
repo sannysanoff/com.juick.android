@@ -53,6 +53,11 @@
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
+            android:key="msrcDiscuss"
+            android:title="@string/navigationDiscuss"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
             android:key="msrcUnread"
             android:title="@string/navigationUnread"
             android:defaultValue="false"
