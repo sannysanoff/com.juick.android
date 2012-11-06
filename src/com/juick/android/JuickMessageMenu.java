@@ -563,7 +563,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             messageNo.setText("#"+listSelectedItem.MID);
             Spinner openUrl = (Spinner)dialogView.findViewById(R.id.open_url);
             Button singleURL = (Button)dialogView.findViewById(R.id.single_url);
-            if (urls.size() == 1) {
+            if (urls != null && urls.size() == 1) {
                 openUrl.setVisibility(View.GONE);
                 SpannableStringBuilder sb = new SpannableStringBuilder();
                 sb.append(urls.get(0));
@@ -576,7 +576,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                         launchURL(urls.get(0));
                     }
                 });
-            } else if (urls.size() > 0) {
+            } else if (urls != null && urls.size() > 0) {
                 singleURL.setVisibility(View.GONE);
                 openUrl.setOnItemSelectedListener(
                         new AdapterView.OnItemSelectedListener() {

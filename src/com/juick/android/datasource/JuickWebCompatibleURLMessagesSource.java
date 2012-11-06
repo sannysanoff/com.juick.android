@@ -93,8 +93,8 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     static Pattern underline = Pattern.compile("<u>(.*?)</u>");
     static String messageBodyEnd = "</div>";
     static Pattern tags = Pattern.compile("<.*?>");
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    ArrayList<JuickMessage> badRetval = new ArrayList<JuickMessage>();
+    static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    static ArrayList<JuickMessage> badRetval = new ArrayList<JuickMessage>();
 
     public ArrayList<JuickMessage> parseWebPure(String jsonStr) {
         ArrayList<JuickMessage> retval = new ArrayList<JuickMessage>();

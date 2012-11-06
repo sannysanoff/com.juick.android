@@ -144,6 +144,15 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                                 expandMessage(view);
                             }
                         });
+                        View saveMessage = dialogView.findViewById(R.id.save_message);
+                        View translateMessage = dialogView.findViewById(R.id.translate_message);
+                        View shareMessage = dialogView.findViewById(R.id.share_message);
+                        View userBlog = dialogView.findViewById(R.id.user_blog);
+                        saveMessage.setEnabled(false);      // because in this mode doing smth with message body is not implemented properly
+                        translateMessage.setEnabled(false);
+                        shareMessage.setEnabled(false);
+                        userBlog.setEnabled(false);
+
                     }
                 }.onItemLongClick(parent, view, position, id);
                 return true;

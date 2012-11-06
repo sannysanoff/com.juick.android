@@ -330,6 +330,7 @@ public class Utils {
     static boolean reportTimes = false;
 
     public static String myCookie;
+    public static int reloginTried;
 
     public static RESTResponse getJSON(final Context context, final String url, final Notification progressNotification, final int timeout) {
         final RESTResponse[] ret = new RESTResponse[]{null};
@@ -359,6 +360,7 @@ public class Utils {
                         @Override
                         public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
                             if (o.getStatusLine().getStatusCode() == 200) {
+                                reloginTried = 0;
                                 HttpEntity e = o.getEntity();
                                 if (progressNotification instanceof DownloadProgressNotification) {
                                     ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(0);
@@ -367,6 +369,22 @@ public class Utils {
                                 ret[0] = streamToString(content, progressNotification);
                                 content.close();
                             } else {
+                                if (o.getStatusLine().getStatusCode() / 100 == 4) {
+                                    if (context instanceof Activity) {
+                                        final Activity activity = (Activity)context;
+                                        reloginTried++;
+                                        if (reloginTried == 3) {
+                                            activity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                                                    sp.edit().remove("web_cookie").commit();
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+
                                 if (progressNotification instanceof DownloadErrorNotification) {
                                     ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP response code: " + o.getStatusLine().getStatusCode());
                                 }
@@ -413,9 +431,9 @@ public class Utils {
     }
 
     private static void getMyCookie(final Context ctx, final Function<Void,String> cont) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         if (myCookie == null) {
-            SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(ctx);
-            myCookie = defaultSharedPreferences.getString("web_cookie", null);
+            myCookie = sp.getString("web_cookie", null);
         }
         if (myCookie == null) {
             if (ctx instanceof Activity) {
@@ -423,7 +441,18 @@ public class Utils {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        String webLogin = sp.getString("web_login",null);
+                        String webPassword = sp.getString("web_password",null);
                         final Runnable thiz = this;
+                        if (webLogin != null && webPassword != null) {
+                            tryLoginWithPassword(webLogin, webPassword, new Runnable() {
+                                @Override
+                                public void run() {
+                                    sp.edit().remove("web_login").remove("web_password").commit();
+                                    thiz.run();
+                                }
+                            });
+                        }
                         final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
                         final EditText login = (EditText)content.findViewById(R.id.login);
                         final String accountName = getAccountName(activity);
@@ -438,34 +467,9 @@ public class Utils {
                                         new Thread() {
                                             @Override
                                             public void run() {
-                                                obtainCookieByLoginPassword(activity, login.getText().toString().trim(), password.getText().toString().trim(),
-                                                        new Function<Void, RESTResponse>() {
-                                                            @Override
-                                                            public Void apply(final RESTResponse s) {
-                                                                if (s.result != null) {
-                                                                    myCookie = s.result;
-                                                                    cont.apply(s.result);
-                                                                    activity.runOnUiThread(new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-                                                                            sp.edit().putString("web_cookie", myCookie).commit();
-
-                                                                        }
-                                                                    });
-                                                                }
-                                                                else {
-                                                                    activity.runOnUiThread(new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                            Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
-                                                                            thiz.run();
-                                                                        }
-                                                                    });
-                                                                }
-                                                                return null;
-                                                            }
-                                                        });
+                                                final String loginS = login.getText().toString().trim();
+                                                final String passwordS = password.getText().toString().trim();
+                                                tryLoginWithPassword(loginS, passwordS, thiz);
                                             }
                                         }.start();
                                     }
@@ -489,6 +493,41 @@ public class Utils {
                             }
                         });
                         dlg.show();
+                    }
+
+                    private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {
+                        obtainCookieByLoginPassword(activity, loginS, passwordS,
+                                new Function<Void, RESTResponse>() {
+                                    @Override
+                                    public Void apply(final RESTResponse s) {
+                                        if (s.result != null) {
+                                            myCookie = s.result;
+                                            cont.apply(s.result);
+                                            activity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                                                    sp.edit()
+                                                            .putString("web_cookie", myCookie)
+                                                            .putString("web_login", loginS)
+                                                            .putString("web_password", passwordS)
+                                                            .commit();
+
+                                                }
+                                            });
+                                        }
+                                        else {
+                                            activity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
+                                                    thiz.run();
+                                                }
+                                            });
+                                        }
+                                        return null;
+                                    }
+                                });
                     }
                 });
             } else {
