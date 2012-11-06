@@ -48,7 +48,7 @@
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
-            android:key="msrcSrachiki"
+            android:key="msrcPrivate"
             android:title="@string/navigationPrivate"
             android:defaultValue="false"
             android:persistent="true"/>
