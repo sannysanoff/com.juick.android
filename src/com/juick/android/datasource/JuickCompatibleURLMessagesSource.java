@@ -20,14 +20,13 @@ import java.util.Map;
  * Time: 10:45 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JuickCompatibleURLMessagesSource extends MessagesSource {
+public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
 
     URLParser urlParser;
     int lastRetrievedMID;
     int page = 0;
     int useBackupServer = -1;
     String title;
-    String kind;
     public boolean canNext = true;
 
 
@@ -199,7 +198,7 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
         cont.apply(stuff);
     }
 
-    private Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
+    public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
         boolean backupServerApplies = false;
         if (url.contains("api.juick.com/messages") || url.contains("api.juick.com/thread")) {
             URLParser urlParser = new URLParser(url);
@@ -264,15 +263,6 @@ public class JuickCompatibleURLMessagesSource extends MessagesSource {
         return false;
     }
 
-    public void setKind(String kind) {
-        this.kind = kind;
-    }
-
-    @Override
-    public String getKind() {
-        if (kind != null) return kind;
-        return super.getKind();
-    }
 
     @Override
     public boolean canNext() {

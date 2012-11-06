@@ -20,6 +20,7 @@ package com.juick.android;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Service;
 import android.content.*;
 import android.graphics.Bitmap;
@@ -33,6 +34,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.api.JuickMessage;
 import com.juickadvanced.R;
@@ -44,24 +46,30 @@ import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.BasicManagedEntity;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.EofSensorInputStream;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -321,60 +329,228 @@ public class Utils {
 
     static boolean reportTimes = false;
 
-    public static RESTResponse getJSON(Context context, final String url, final Notification progressNotification, int timeout) {
-        boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
+    public static String myCookie;
+
+    public static RESTResponse getJSON(final Context context, final String url, final Notification progressNotification, final int timeout) {
         final RESTResponse[] ret = new RESTResponse[]{null};
-        DefaultHttpClient client = new DefaultHttpClient();
-        long l = System.currentTimeMillis();
-        if (compression)
-            initCompressionSupport(client);
-        try {
-            HttpGet httpGet = new HttpGet(url);
-            if (timeout > 0) {
-                client.getParams().setParameter("http.connection.timeout", new Integer(timeout));
-                httpGet.getParams().setParameter("http.socket.timeout", new Integer(timeout));
-                httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
-            }
-            String basicAuth = getBasicAuthString(context.getApplicationContext());
-            if (basicAuth.length() > 0 && url.startsWith("http://api.juick.com")) {
-                httpGet.addHeader(new BasicHeader("Authorization", basicAuth));
-                //conn.setRequestProperty("Authorization", basicAuth);
-            }
-            client.execute(httpGet, new ResponseHandler<Object>() {
-                @Override
-                public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
-                    if (o.getStatusLine().getStatusCode() == 200) {
-                        HttpEntity e = o.getEntity();
-                        if (progressNotification instanceof DownloadProgressNotification) {
-                            ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(0);
-                        }
-                        InputStream content = e.getContent();
-                        ret[0] = streamToString(content, progressNotification);
-                        content.close();
-                    } else {
-                        if (progressNotification instanceof DownloadErrorNotification) {
-                            ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP response code: " + o.getStatusLine().getStatusCode());
-                        }
-                        ret[0] = new RESTResponse("HTTP: "+o.getStatusLine().getStatusCode()+" " + o.getStatusLine().getReasonPhrase(), false, null);
+        final Function<RESTResponse, String> runWithMyCookie = new Function<RESTResponse, String>() {
+            @Override
+            public RESTResponse apply(String myCookie) {
+                final DefaultHttpClient client = new DefaultHttpClient();
+                try {
+                    boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
+                    long l = System.currentTimeMillis();
+                    if (compression)
+                        initCompressionSupport(client);
+                    HttpGet httpGet = new HttpGet(url);
+                    if (timeout > 0) {
+                        client.getParams().setParameter("http.connection.timeout", new Integer(timeout));
+                        httpGet.getParams().setParameter("http.socket.timeout", new Integer(timeout));
+                        httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
                     }
-                    return o;
+                    String basicAuth = getBasicAuthString(context.getApplicationContext());
+                    if (basicAuth.length() > 0 && url.startsWith("http://api.juick.com")) {
+                        httpGet.addHeader(new BasicHeader("Authorization", basicAuth));
+                    }
+                    if (basicAuth.length() > 0 && url.startsWith("http://dev.juick.com")) {
+                        httpGet.addHeader("Cookie", "hash="+myCookie);
+                    }
+                    client.execute(httpGet, new ResponseHandler<Object>() {
+                        @Override
+                        public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
+                            if (o.getStatusLine().getStatusCode() == 200) {
+                                HttpEntity e = o.getEntity();
+                                if (progressNotification instanceof DownloadProgressNotification) {
+                                    ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(0);
+                                }
+                                InputStream content = e.getContent();
+                                ret[0] = streamToString(content, progressNotification);
+                                content.close();
+                            } else {
+                                if (progressNotification instanceof DownloadErrorNotification) {
+                                    ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP response code: " + o.getStatusLine().getStatusCode());
+                                }
+                                ret[0] = new RESTResponse("HTTP: "+o.getStatusLine().getStatusCode()+" " + o.getStatusLine().getReasonPhrase(), false, null);
+                            }
+                            return o;
+                        }
+                    });
+                    l  = System.currentTimeMillis() - l;
+                    if (reportTimes) {
+                        Toast.makeText(context, "Load time="+l+" msec", Toast.LENGTH_LONG).show();
+                    }
+                } catch (Exception e) {
+                    if (progressNotification instanceof DownloadErrorNotification) {
+                        ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
+                    }
+                    Log.e("getJSON", e.toString());
+                    return new RESTResponse(e.toString(), true, null);
+                } finally {
+                    client.getConnectionManager().shutdown();
+                }
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+        };
+        if (url.startsWith("http://dev.juick.com")) {
+            getMyCookie(context, new Function<Void, String>() {
+                @Override
+                public Void apply(String s) {
+                    runWithMyCookie.apply(s);
+                    return null;
                 }
             });
-            l  = System.currentTimeMillis() - l;
-            if (reportTimes) {
-                Toast.makeText(context, "Load time="+l+" msec", Toast.LENGTH_LONG).show();
+        } else {
+            runWithMyCookie.apply(null);
+        }
+        while(ret[0] == null) { // bad, but true
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
-        } catch (Exception e) {
-            if (progressNotification instanceof DownloadErrorNotification) {
-                ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
-            }
-            Log.e("getJSON", e.toString());
-            return new RESTResponse(e.toString(), true, null);
-        } finally {
-            client.getConnectionManager().shutdown();
         }
         return ret[0];
     }
+
+    private static void getMyCookie(final Context ctx, final Function<Void,String> cont) {
+        if (myCookie == null) {
+            SharedPreferences defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(ctx);
+            myCookie = defaultSharedPreferences.getString("web_cookie", null);
+        }
+        if (myCookie == null) {
+            if (ctx instanceof Activity) {
+                final Activity activity = (Activity)ctx;
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        final Runnable thiz = this;
+                        final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
+                        final EditText login = (EditText)content.findViewById(R.id.login);
+                        final String accountName = getAccountName(activity);
+                        final EditText password = (EditText)content.findViewById(R.id.password);
+                        login.setText(accountName);
+                        AlertDialog dlg = new AlertDialog.Builder(activity)
+                                .setTitle("Web login")
+                                .setView(content)
+                                .setPositiveButton("Login", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        new Thread() {
+                                            @Override
+                                            public void run() {
+                                                obtainCookieByLoginPassword(activity, login.getText().toString().trim(), password.getText().toString().trim(),
+                                                        new Function<Void, RESTResponse>() {
+                                                            @Override
+                                                            public Void apply(final RESTResponse s) {
+                                                                if (s.result != null) {
+                                                                    myCookie = s.result;
+                                                                    cont.apply(s.result);
+                                                                    activity.runOnUiThread(new Runnable() {
+                                                                        @Override
+                                                                        public void run() {
+                                                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                                                                            sp.edit().putString("web_cookie", myCookie).commit();
+
+                                                                        }
+                                                                    });
+                                                                }
+                                                                else {
+                                                                    activity.runOnUiThread(new Runnable() {
+                                                                        @Override
+                                                                        public void run() {
+                                                                            Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
+                                                                            thiz.run();
+                                                                        }
+                                                                    });
+                                                                }
+                                                                return null;
+                                                            }
+                                                        });
+                                            }
+                                        }.start();
+                                    }
+                                })
+                                .setCancelable(false)
+                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        new Thread() {
+                                            @Override
+                                            public void run() {
+                                                cont.apply(null);
+                                            }
+                                        }.start();
+                                    }
+                                }).create();
+                        dlg.setOnShowListener(new DialogInterface.OnShowListener() {
+                            @Override
+                            public void onShow(DialogInterface dialog) {
+                                password.requestFocus();
+                            }
+                        });
+                        dlg.show();
+                    }
+                });
+            } else {
+                cont.apply(null);
+            }
+
+        } else {
+            cont.apply(myCookie);
+        }
+    }
+
+    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Function<Void, RESTResponse> result) {
+        final DefaultHttpClient client = new DefaultHttpClient();
+        try {
+            HttpPost httpPost = new HttpPost("http://dev.juick.com/login");
+            ArrayList<NameValuePair> formData = new ArrayList<NameValuePair>();
+            formData.add(new BasicNameValuePair("username", login));
+            formData.add(new BasicNameValuePair("password", password));
+            httpPost.setEntity(new UrlEncodedFormEntity(formData));
+            httpPost.setHeader("Referer", "http://dev.juick.com/login");
+            httpPost.setHeader("Accept-Charset", "UTF-8,*;q=0.5");
+            httpPost.setHeader("Connection", "keep-alive");
+            //httpPost.setHeader("Accept-Encoding", "gzip,deflate,sdch");
+            httpPost.setHeader("Accept-Language", "en-US,en;q=0.8");
+            httpPost.setHeader("Origin", "http://dev.juick.com");
+            httpPost.setHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Ubuntu/12.04 Chromium/20.0.1132.47 Chrome/20.0.1132.47 Safari/536.11");
+            httpPost.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            client.execute(httpPost, new ResponseHandler<Object>() {
+                @Override
+                public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
+                    HttpEntity entity = o.getEntity();
+                    InputStream content = entity.getContent();
+                    RESTResponse responseBody = streamToString(content, null);
+                    if (o.getStatusLine().getStatusCode() == 200) {
+                        CookieStore cookieStore = client.getCookieStore();
+                        List<Cookie> cookies = cookieStore.getCookies();
+                        for (Cookie cookie : cookies) {
+                            if (cookie.getName().equals("hash")) {
+                                result.apply(new RESTResponse(null, false, cookie.getValue()));
+                                return "";
+                            }
+                        }
+                        result.apply(new RESTResponse("Result OK, but no cookies", false, null));
+                        return "";
+                    } else {
+                        if (responseBody.result != null && responseBody.result.indexOf("forbidden") != -1) {
+                            result.apply(new RESTResponse(activity.getString(R.string.InvalidLoginPassword), false, null));
+                        } else {
+                            result.apply(new RESTResponse("Unknown response from server.", false, null));
+                        }
+                        return "";
+                    }
+                }
+            });
+        } catch (IOException e) {
+            result.apply(new RESTResponse("Other error: "+e.toString(), false, null));
+            //
+        } finally {
+            client.getConnectionManager().shutdown();
+        }
+    }
+
 
     public static BINResponse getBinary(Context context, final String url, final Notification progressNotification, int timeout) {
         try {

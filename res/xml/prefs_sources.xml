@@ -48,6 +48,11 @@
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
+            android:key="msrcSrachiki"
+            android:title="@string/navigationPrivate"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
             android:key="msrcUnread"
             android:title="@string/navigationUnread"
             android:defaultValue="false"
@@ -57,6 +62,19 @@
             android:title="@string/navigationSaved"
             android:defaultValue="false"
             android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Use web instead of json http-api">
+        <CheckBoxPreference
+                android:key="web_for_subscriptions"
+                android:title="Subscriptions"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="web_for_myblog"
+                android:title="My blog"
+                android:defaultValue="false"
+                android:persistent="true"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

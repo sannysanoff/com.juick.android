@@ -17,8 +17,13 @@
  */
 package com.juick.android;
 
-import android.app.*;
-import android.content.*;
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -27,10 +32,11 @@ import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v4.app.*;
 import android.support.v4.app.ActionBar;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.*;
+import android.support.v4.view.Menu;
+import android.support.v4.view.MenuItem;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,16 +45,15 @@ import android.widget.*;
 import com.juick.android.datasource.*;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.impl.client.BasicResponseHandler;
 import yuku.ambilwarna.widget.AmbilWarnaPreference;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Ugnich Anton
@@ -185,7 +190,7 @@ public class MainActivity extends FragmentActivity implements
             @Override
             void action() {
                 final Bundle args = new Bundle();
-                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home");
+                JuickMessagesSource ms = getSubscriptionsMessageSource(labelId);
                 ms.setKind("home");
                 args.putSerializable("messagesSource", ms);
                 runDefaultFragmentWithBundle(args, this);
@@ -453,6 +458,14 @@ public class MainActivity extends FragmentActivity implements
             ActionBar bar = getSupportActionBar();
             bar.setListNavigationCallbacks(navigationAdapter, this);
 
+        }
+    }
+
+    private JuickMessagesSource getSubscriptionsMessageSource(int labelId) {
+        if (sp.getBoolean("web_for_subscriptions", false)) {
+            return new JuickWebCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://dev.juick.com/?show=my");
+        } else {
+            return new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home");
         }
     }
 

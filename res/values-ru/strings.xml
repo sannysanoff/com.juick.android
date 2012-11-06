@@ -349,6 +349,7 @@
     <string name="JuickUsersPerMonth2">Пишущих, комментящих, регистрирующихся</string>
     <string name="ClickToSelectURL">Нажмите для выбора URL</string>
     <string name="TagsFormatError">Теги должны начинаться со звездочки</string>
+    <string name="InvalidLoginPassword">Неверный логин/пароль</string>
 
 
 </resources>
