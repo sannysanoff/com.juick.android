@@ -40,17 +40,21 @@ public class ViewJuboFiltersActivity extends Activity {
         ListAdapter() {
             XMPPService.JuboMessageFilter anyJuboMessageFilter = XMPPService.getAnyJuboMessageFilter();
             XMPPService.JuickBlacklist anyJuickBlacklist = XMPPService.getAnyJuickBlacklist();
-            for (String stopTag : anyJuboMessageFilter.stopTags) {
-                listContent.add("*"+stopTag + " -- JuBo stop tag");
+            if (anyJuboMessageFilter != null) {
+                for (String stopTag : anyJuboMessageFilter.stopTags) {
+                    listContent.add("*"+stopTag + " -- JuBo stop tag");
+                }
+                for (String stopTag : anyJuboMessageFilter.stopWords) {
+                    listContent.add(stopTag + " -- JuBo stop word");
+                }
             }
-            for (String stopTag : anyJuboMessageFilter.stopWords) {
-                listContent.add(stopTag + " -- JuBo stop word");
-            }
-            for (String stopTag : anyJuickBlacklist.stopTags) {
-                listContent.add("*" + stopTag + " -- Juick stop tag");
-            }
-            for (String stopTag : anyJuickBlacklist.stopUsers) {
-                listContent.add("@" + stopTag + " -- Juick user blacklist");
+            if (anyJuickBlacklist != null) {
+                for (String stopTag : anyJuickBlacklist.stopTags) {
+                    listContent.add("*" + stopTag + " -- Juick stop tag");
+                }
+                for (String stopTag : anyJuickBlacklist.stopUsers) {
+                    listContent.add("@" + stopTag + " -- Juick user blacklist");
+                }
             }
             if (listContent.size() == 0) {
                 listContent.add(getString(R.string.StopListsEmpty));

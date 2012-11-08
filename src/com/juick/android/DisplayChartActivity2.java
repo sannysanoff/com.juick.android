@@ -61,6 +61,8 @@ public class DisplayChartActivity2 extends Activity implements Utils.Notificatio
                         try {
                             String url = data.toString() + "?w=" + width + "&h=" + height;
                             Utils.BINResponse json = Utils.getBinary(DisplayChartActivity2.this, url, DisplayChartActivity2.this, 0);
+                            if (json.errorText != null)
+                                throw new IOException(json.errorText);
                             final File file = new File(getCacheDir(), "chart.png");
                             file.delete();
                             FileOutputStream fos = new FileOutputStream(file);
@@ -79,7 +81,7 @@ public class DisplayChartActivity2 extends Activity implements Utils.Notificatio
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(DisplayChartActivity2.this, e.toString(), Toast.LENGTH_LONG).show();
+                                    Toast.makeText(DisplayChartActivity2.this, e.getMessage(), Toast.LENGTH_LONG).show();
                                     ;
                                 }
                             });

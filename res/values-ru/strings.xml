@@ -354,6 +354,8 @@
     <string name="TagsFormatError">Теги должны начинаться со звездочки</string>
     <string name="InvalidLoginPassword">Неверный логин/пароль</string>
     <string name="ApplySettings">Apply settings</string>
+    <string name="JuickBadMimetype">Файл такого типа не попадет на Juick, пользуем только jpg/3gpp/mp4</string>
+    <string formatted="false" name="SkippingResize">Пропускаем уменьшалку, файл %d КБ, картинка %d x %d точек</string>
 
 
 </resources>

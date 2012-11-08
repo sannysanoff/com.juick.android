@@ -462,16 +462,16 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                     attachmentUri = data.getDataString();
                 } else if (NewMessageActivity.getPhotoCaptureFile().exists()) {
                     attachmentUri = Uri.fromFile(NewMessageActivity.getPhotoCaptureFile()).toString();
-                    if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
-                        NewMessageActivity.maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
-                            @Override
-                            public Void apply(String s) {
-                                attachmentUri = s;
-                                bAttach.setSelected(attachmentUri != null);
-                                return null;
-                            }
-                        });
-                    }
+                }
+                if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
+                    NewMessageActivity.maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
+                        @Override
+                        public Void apply(String s) {
+                            attachmentUri = s;
+                            bAttach.setSelected(attachmentUri != null);
+                            return null;
+                        }
+                    });
                 }
                 attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
                 bAttach.setSelected(attachmentUri != null);

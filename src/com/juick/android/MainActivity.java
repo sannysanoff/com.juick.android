@@ -485,9 +485,6 @@ public class MainActivity extends FragmentActivity implements
                             tv.setMinHeight(minHeight);
                             tv.setMinimumHeight(minHeight);
                         }
-                        tv.measure(1000, 1000);
-                        tv.getMeasuredWidth();
-                        tv.getMeasuredHeight();
                     }
                     return retval;
                 }
@@ -775,10 +772,14 @@ public class MainActivity extends FragmentActivity implements
     }
 
     private void replaceFragment(MessagesFragment mf, Bundle args) {
-        final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        mf.setArguments(args);
-        ft.replace(R.id.messagesfragment, mf);
-        ft.commit();
+        try {
+            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            mf.setArguments(args);
+            ft.replace(R.id.messagesfragment, mf);
+            ft.commit();
+        } catch (Exception e) {
+            // tanunax
+        }
     }
 
     @Override

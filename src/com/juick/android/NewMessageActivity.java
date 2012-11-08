@@ -258,6 +258,18 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
                 attachmentMime = mime;
                 bAttachment.setSelected(true);
+                if (mime.equals("image/jpeg")) {
+                    maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
+                        @Override
+                        public Void apply(String s) {
+                            attachmentUri = s;
+                            bAttachment.setSelected(attachmentUri != null);
+                            return null;
+                        }
+                    });
+                }
+            } else {
+                Toast.makeText(this, getString(R.string.JuickBadMimetype), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -732,6 +744,8 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                         }
                     });
                     alertDialog.show();
+                } else {
+                    Toast.makeText(parent, String.format(parent.getString(R.string.SkippingResize), tmpfile.length()/1024, outWidth, outHeight),Toast.LENGTH_LONG).show();
                 }
             } catch (IOException ex) {
                 Toast.makeText(parent, ex.toString(), Toast.LENGTH_LONG).show();

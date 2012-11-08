@@ -369,31 +369,33 @@ public class DatabaseService extends Service {
 
     @Override
     public void onCreate() {
-        super.onCreate();
-        sp = PreferenceManager.getDefaultSharedPreferences(this);
-        handler = new Handler();
-        database = new DB(this);
-        if (db == null)
-            db = database.getWritableDatabase();
-        writerThread = new WriterThread();
-        writerThread.start();
-        synchronized (writeJobs) {
-            writeJobs.add(new Utils.Function<Boolean, Void>() {
-                @Override
-                public Boolean apply(Void aVoid) {
-                    int messageDBperiod = 30;
-                    try {
-                        messageDBperiod = Integer.parseInt(sp.getString("messageDBperiod","30"));
-                    } catch (Exception e) {
-                        //
+        synchronized (DatabaseService.class) {
+            super.onCreate();
+            sp = PreferenceManager.getDefaultSharedPreferences(this);
+            handler = new Handler();
+            database = new DB(this);
+            if (db == null)
+                db = database.getWritableDatabase();
+            writerThread = new WriterThread();
+            writerThread.start();
+            synchronized (writeJobs) {
+                writeJobs.add(new Utils.Function<Boolean, Void>() {
+                    @Override
+                    public Boolean apply(Void aVoid) {
+                        int messageDBperiod = 30;
+                        try {
+                            messageDBperiod = Integer.parseInt(sp.getString("messageDBperiod","30"));
+                        } catch (Exception e) {
+                            //
+                        }
+                        String oldDate = ""+(System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
+                        db.delete("msg","save_date < ?",new String[] {oldDate});
+                        db.setTransactionSuccessful();
+                        return Boolean.TRUE;
                     }
-                    String oldDate = ""+(System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
-                    db.delete("msg","save_date < ?",new String[] {oldDate});
-                    db.setTransactionSuccessful();
-                    return Boolean.TRUE;
-                }
-            });
-            writeJobs.notify();
+                });
+                writeJobs.notify();
+            }
         }
     }
 

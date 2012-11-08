@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.webkit.WebView;
 import com.juickadvanced.R;
@@ -41,6 +42,16 @@ public class MyWebView extends WebView {
     protected void finalize() throws Throwable {
         super.finalize();
         instanceCount--;
+    }
+
+    @Override
+    public boolean requestFocus(int direction, Rect previouslyFocusedRect) {
+        try {
+            return super.requestFocus(direction, previouslyFocusedRect);    //To change body of overridden methods use File | Settings | File Templates.
+        } catch (Exception e) {
+            //
+        }
+        return true;
     }
 
 }

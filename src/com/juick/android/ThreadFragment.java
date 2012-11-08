@@ -239,8 +239,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         // probably transition from cached data to live data
                         listPosition = getListView().onSaveInstanceState();
                         int addMarkOnComment = listAdapter.getCount()-2+1; // totalRecs-body-separator, 0-based (0=first comment)
-                        if (messages.size()-1 > addMarkOnComment)
-                            messages.get(addMarkOnComment+1).continuationInformation = getString(R.string.UnreadPeriodStart);
+                        if (messages.size() > addMarkOnComment)
+                            messages.get(addMarkOnComment).continuationInformation = getString(R.string.UnreadPeriodStart);
                         disableScrollToEnd = true;
                         listAdapter.clear();
                     }
