@@ -6,6 +6,7 @@
 
 
     <string name="Loading___">Загрузка...</string>
+    <string name="Loading___report">Загрузка... Сложный график может считаться долго...</string>
     <string name="LoadingBackup___">Загрузка (резервный)...</string>
     <string name="Please_wait___">Пожалуйста, ждите...</string>
     <string name="OK">ОК</string>

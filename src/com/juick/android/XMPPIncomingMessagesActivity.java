@@ -62,7 +62,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ExceptionReporter.register(this);
+
         super.onCreate(savedInstanceState);
+        overridePendingTransition(R.anim.enter_slide_to_bottom, android.R.anim.fade_out);
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
         findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
@@ -98,6 +100,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                                 msg.User = new JuickUser();
                                 msg.User.UID = 0;
                                 msg.User.UName = fromUser;
+//                                if (msg.Timestamp == null)
+//                                    msg.Timestamp = new Date();
+//                                msg.parsedText = JuickMessagesAdapter.formatMessageText(XMPPIncomingMessagesActivity.this, msg, false);
                                 if (msg.User.UName.startsWith("@"))
                                     msg.User.UName = msg.User.UName.substring(1);
                                 listSelectedItem = msg;
@@ -118,6 +123,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
                                     });
                                 }
+                                collectURLs(msg.Text);
                                 runActions();
                             }
                         }
@@ -151,7 +157,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         saveMessage.setEnabled(false);      // because in this mode doing smth with message body is not implemented properly
                         translateMessage.setEnabled(false);
                         shareMessage.setEnabled(false);
-                        userBlog.setEnabled(false);
+                        if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
+                            userBlog.setEnabled(false);
+                        }
 
                     }
                 }.onItemLongClick(parent, view, position, id);
@@ -622,7 +630,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         }
     }
 
-
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, R.anim.leave_slide_to_top);
+    }
 
     @Override
     protected void onDestroy() {

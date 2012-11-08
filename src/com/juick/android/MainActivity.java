@@ -37,6 +37,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
+import android.text.TextUtils;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -472,6 +473,12 @@ public class MainActivity extends FragmentActivity implements
                     }
                     if (retval instanceof TextView) {
                         TextView tv = (TextView) retval;
+                        if (parent instanceof Spinner) {
+                            tv.setTextSize(18 * finalMenuFontScale);
+                            tv.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+                        } else {
+                            tv.setTextSize(22 * finalMenuFontScale);
+                        }
                         tv.setText(getString(navigationItems.get(position).labelId));
                         if (compressedMenu) {
                             int minHeight = (int) ((screenHeight * 0.7) / getCount());
@@ -479,7 +486,8 @@ public class MainActivity extends FragmentActivity implements
                             tv.setMinimumHeight(minHeight);
                         }
                         tv.measure(1000, 1000);
-                        tv.setTextSize(22 * finalMenuFontScale);
+                        tv.getMeasuredWidth();
+                        tv.getMeasuredHeight();
                     }
                     return retval;
                 }

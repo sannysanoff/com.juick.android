@@ -225,7 +225,9 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         }
     }
 
-    private void collectURLs(String source) {
+    protected void collectURLs(String source) {
+        if (urls == null)
+            urls = new ArrayList<String>();
         ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(source);
         for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
             urls.add(foundURL.getUrl());

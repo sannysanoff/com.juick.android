@@ -113,6 +113,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
                         message = new JuickMessage();
                         message.User = new JuickUser();
                         message.MID = Integer.parseInt(matcher.group(1));
+                        message.messagesSource = this;
                         state = State.WAIT_MSG_TEXT;
                     }
                     Matcher nrepliesMatcher = nreplies.matcher(line);

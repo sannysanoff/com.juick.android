@@ -209,10 +209,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
             final ImageView userPic = (ImageView) v.findViewById(R.id.userpic);
             if (parsedMessage.userpicSpan != null) {
-                lrr.pictureSize = (int)(2 * neededTextSize * 0.9);
+                lrr.pictureSize = (int)(parsedMessage.userpicSpan.getLeadingMargin(true) * 0.9);
                 userPic.getLayoutParams().width = lrr.pictureSize;
                 userPic.getLayoutParams().height = lrr.pictureSize;
-                int padding = ((int)(2 * neededTextSize) - lrr.pictureSize)/2;
+                int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
                 userPic.setPadding(padding, padding, padding, padding);
                 lrr.userpicListener = new UserpicStorage.Listener() {
                     @Override
@@ -407,9 +407,23 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public static float getDefaultTextSize(Context context) {
-        if (defaultTextSize == 0)
-            defaultTextSize = new TextView(context).getTextSize();
+        if (defaultTextSize == 0) {
+            TextView textView = new TextView(context);
+            defaultTextSize = textView.getTextSize();
+        }
         return defaultTextSize;
+    }
+
+    static HashMap<Double, Integer> lineHeights = new HashMap<Double, Integer>();
+    public static float getLineHeight(Context context, double scale) {
+        Integer integer = lineHeights.get(scale);
+        if (integer == null) {
+            TextView textView = new TextView(context);
+            textView.setTextSize((int)(getDefaultTextSize(context)*scale));
+            integer = textView.getLineHeight();
+            lineHeights.put(scale, integer);
+        }
+        return integer;
     }
 
     private ArrayList<String> filterImagesUrls(ArrayList<String> urls) {
@@ -486,9 +500,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 WebViewGallery gallery = (WebViewGallery)vg.getChildAt(1);
                 Object tag = gallery.getTag();
                 if (tag instanceof HashMap) {
-                    HashMap<Integer, ImageLoader> loaders = (HashMap<Integer, ImageLoader>)tag;
-                    for (ImageLoader imageLoader : loaders.values()) {
-                        imageLoader.terminate();
+                    HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
+                    for (ImageLoaderConfiguration imageLoader : loaders.values()) {
+                        imageLoader.loader.terminate();
                     }
                 }
                 gallery.cleanup();
@@ -504,7 +518,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         public int messageNumberStart, messageNumberEnd;
         public int userNameStart, userNameEnd;
         public StyleSpan userNameBoldSpan;
-        public Object userpicSpan;
+        public LeadingMarginSpan.LeadingMarginSpan2 userpicSpan;
         public ForegroundColorSpan userNameColorSpan;
         boolean read;
 
@@ -693,7 +707,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     @Override
                     public int getLeadingMargin(boolean first) {
                         if (first) {
-                            return (int) (2 * getDefaultTextSize(ctx) * textScale);
+                            return (int) (2 * getLineHeight(ctx, (double)textScale));
                         } else {
                             return 0;
                         }
@@ -701,12 +715,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
                     @Override
                     public void drawLeadingMargin(Canvas c, Paint p, int x, int dir, int top, int baseline, int bottom, CharSequence text, int start, int end, boolean first, Layout layout) {
-                        if (top == 0) {
-                            Bitmap userpic = jmsg.messagesSource.getUserpic(jmsg.User.UID, getLeadingMargin(true));
-                            if (userpic != null) {
-                                c.drawBitmap(userpic, x, top, null);
-                            }
-                        }
                     }
                 };
                 ssb.setSpan(userpicSpan, 0, ssb.length(), 0);
