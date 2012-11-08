@@ -63,7 +63,6 @@
         <ListView android:id="@id/android:list"
                   android:layout_width="fill_parent"
                   android:layout_height="fill_parent"
-                  android:background="#FF00FF00"
                   android:visibility="gone"
                   android:fadingEdge="none"
                   android:drawSelectorOnTop="false"/>

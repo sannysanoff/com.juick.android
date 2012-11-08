@@ -6,6 +6,12 @@
             android:summary="@string/Message_numbers_will_be_shown"
             android:defaultValue="false"
             android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="showUserpics"
+            android:title="Show Userpics"
+            android:summary="User icons will be shown"
+            android:defaultValue="true"
+            android:persistent="true"/>
     <PreferenceCategory android:title="@string/LoadImages">
         <ListPreference
                 android:key="image.loadMode"

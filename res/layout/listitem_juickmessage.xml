@@ -5,29 +5,23 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="5dip">
-<!--
-    <ImageView
-        android:id="@+id/icon"
-        android:layout_width="32px"
-        android:layout_height="32px"
-        android:layout_weight="0"
-        android:layout_marginRight="5dip"
-        android:gravity="top"
-        android:src="@drawable/ic_user_32"/>
--->
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="top"/>
 
-    <!--<com.juick.android.WebViewGallery-->
-            <!--android:id="@+id/gallery"-->
-            <!--android:layout_width="fill_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:spacing="20sp"-->
-            <!-->-->
+    <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            >
+        <ImageView
+            android:id="@+id/userpic"
+            android:layout_width="32px"
+            android:layout_height="32px"
+            android:gravity="top"/>
+        <TextView
+            android:id="@+id/text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="xxxxxx"
+            android:gravity="top"/>
+    </RelativeLayout>
 
-    <!--</com.juick.android.WebViewGallery>-->
 </com.juick.android.PressableLinearLayout>

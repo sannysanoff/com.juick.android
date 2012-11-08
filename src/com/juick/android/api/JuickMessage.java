@@ -24,6 +24,7 @@ import java.util.*;
 
 import android.text.SpannableStringBuilder;
 import com.juick.android.JuickMessagesAdapter;
+import com.juick.android.datasource.MessagesSource;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +51,7 @@ public class JuickMessage {
     transient public String continuationInformation;
     transient public long messageSaveDate;
     transient public JuickMessagesAdapter.ParsedMessage parsedText;
+    transient public MessagesSource messagesSource;
 
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();

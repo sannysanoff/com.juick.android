@@ -67,6 +67,42 @@ public class DatabaseService extends Service {
         }
     }
 
+    public byte[] getStoredUserpic(int uid) {
+        try {
+            Cursor cursor = db.rawQuery("select * from userpic where uid=?", new String[]{"" + uid});
+            try {
+                boolean exists = cursor.moveToFirst();
+                if (!exists) return null;
+                return cursor.getBlob(cursor.getColumnIndex("body"));
+            } finally {
+                cursor.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            return null;
+        }
+    }
+
+    public void storeUserpic(final int uid, final byte[] body) {
+        writeJobs.add(new Utils.Function<Boolean, Void>() {
+            @Override
+            public Boolean apply(Void aVoid) {
+                try {
+                    ContentValues cv = new ContentValues();
+                    cv.put("uid", uid);
+                    cv.put("body", body);
+                    cv.put("save_date", System.currentTimeMillis());
+                    db.insert("userpic", null, cv);
+                } catch (Exception e) {
+                    System.out.println("oh");
+                    // duplicate key
+                }
+                db.setTransactionSuccessful();
+                return true;
+            }
+        });
+    }
+
     public void runGenericWriteJob(final Utils.Function<Boolean, DatabaseService> job) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
@@ -234,7 +270,7 @@ public class DatabaseService extends Service {
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 7;
+        public final static int CURRENT_VERSION = 8;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -287,6 +323,12 @@ public class DatabaseService extends Service {
                 sqLiteDatabase.execSQL("create table msg(mid integer, save_date integer not null, nreplies integer, body blob not null)");
                 sqLiteDatabase.execSQL("create index ixmsg_mid  on msg(mid)");
                 sqLiteDatabase.execSQL("create index ixmsg_savedate on msg(save_date)");
+                from++;
+            }
+            if (from == 7) {
+                sqLiteDatabase.execSQL("create table userpic(uid integer, save_date integer not null, body blob not null)");
+                sqLiteDatabase.execSQL("create unique index userpic_uid  on userpic(uid)");
+                sqLiteDatabase.execSQL("create index userpic_savedate on userpic(save_date)");
                 from++;
             }
         }

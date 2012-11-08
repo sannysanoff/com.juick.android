@@ -2,6 +2,7 @@ package com.juick.android.datasource;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
@@ -55,5 +56,9 @@ public abstract  class MessagesSource implements Serializable {
 
     public String getKind() {
         return "other";
+    }
+
+    public Bitmap getUserpic(int id, int size) {
+        return null;
     }
 }
