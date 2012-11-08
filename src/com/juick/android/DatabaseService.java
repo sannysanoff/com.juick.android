@@ -732,15 +732,20 @@ public class DatabaseService extends Service {
     public JsonObject prepareUsageReportValue() {
         JsonObject jo = new JsonObject();
         copyBoolean(jo, sp, "useXMPP", false);
+        copyBoolean(jo, sp, "useXMPPOnlyForBL", false);
         copyBoolean(jo, sp, "persistLastMessagesPosition", false);
         copyBoolean(jo, sp, "lastReadMessages", false);
         copyBoolean(jo, sp, "showNumbers", false);
+        copyBoolean(jo, sp, "showUserpics", true);
         copyBoolean(jo, sp, "enableMessageDB", false);
         copyBoolean(jo, sp, "confirmActions", true);
         copyBoolean(jo, sp, "enableScaleByGesture", true);
         copyBoolean(jo, sp, "compressedMenu", false);
         copyBoolean(jo, sp, "singleLineMenu", false);
         copyBoolean(jo, sp, "prefetchMessages", false);
+        copyBoolean(jo, sp, "dialogMessageMenu", false);
+        copyBoolean(jo, sp, "web_for_subscriptions", false);
+        copyBoolean(jo, sp, "web_for_myblog", false);
         copyString(jo, sp, "messagesFontScale", "1.0");
         copyInteger(jo, sp, "Colors.COMMON_BACKGROUND", -1);
         copyString(jo, sp, "locationAccuracy", "ACCURACY_FINE");
@@ -757,10 +762,12 @@ public class DatabaseService extends Service {
 
         copyBoolean(jo, sp, "msrcTopMessages", true);
         copyBoolean(jo, sp, "msrcWithPhotos", true);
-        copyBoolean(jo, sp, "msrcMyBlog", true);
-        copyBoolean(jo, sp, "msrcSrachiki", true);
-        copyBoolean(jo, sp, "msrcUnread", true);
-        copyBoolean(jo, sp, "msrcSaved", true);
+        copyBoolean(jo, sp, "msrcMyBlog", false);
+        copyBoolean(jo, sp, "msrcSrachiki", false);
+        copyBoolean(jo, sp, "msrcUnread", false);
+        copyBoolean(jo, sp, "msrcSaved", false);
+        copyBoolean(jo, sp, "msrcPrivate", false);
+        copyBoolean(jo, sp, "msrcDiscuss", false);
 
         jo.addProperty("manufacturer", Build.MANUFACTURER);
         jo.addProperty("model", Build.MODEL);
@@ -770,7 +777,11 @@ public class DatabaseService extends Service {
         jo.addProperty("display_height", MainActivity.displayHeight);
         String uniqueId = getUniqueInstallationId();
         jo.addProperty("device_install_id", uniqueId);
-
+        try {
+            jo.addProperty("ja_version", ""+getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode);
+        } catch (PackageManager.NameNotFoundException e) {
+            jo.addProperty("ja_version", "unknown");
+        }
 
         Cursor cursor = db.rawQuery("select feature_name, sum(feature_value) from feature_usage group by feature_name", new String[]{});
         while(cursor.moveToNext()) {

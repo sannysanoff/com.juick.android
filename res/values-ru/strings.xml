@@ -352,6 +352,7 @@
     <string name="ClickToSelectURL">Нажмите для выбора URL</string>
     <string name="TagsFormatError">Теги должны начинаться со звездочки</string>
     <string name="InvalidLoginPassword">Неверный логин/пароль</string>
+    <string name="ApplySettings">Apply settings</string>
 
 
 </resources>

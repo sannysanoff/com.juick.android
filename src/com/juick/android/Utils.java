@@ -97,13 +97,35 @@ public class Utils {
         }
     }
 
-    public static void setupWebView(WebView wv, String content) {
+    public static void setupWebView(final WebView wv, String content) {
         try {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(wv.getContext());
             File file = new File(wv.getContext().getCacheDir(), "temp.html");
+            String PREFIX = "#prefs.checked.";
+            while(true) {
+                int ix = content.indexOf(PREFIX);
+                if (ix == -1) break;
+                int ix2 = content.indexOf("#", ix+1);
+                if (ix2 == -1) break;
+                String key = content.substring(ix + PREFIX.length(), ix2);
+                boolean def = false;
+                if (key.endsWith("!")) {
+                    def = true;
+                    key = key.substring(0, key.length()-1);
+                }
+                boolean checked = sp.getBoolean(key, def);
+                content = content.substring(0, ix) + (checked ? "checked": "") + content.substring(ix2+1);
+            }
             FileWriter fileWriter = new FileWriter(file);
             fileWriter.write(content);
             fileWriter.close();
+            wv.getSettings().setJavaScriptEnabled(true);
             Uri uri = Uri.fromFile(file);
+            wv.addJavascriptInterface(new Object() {
+                public void onFormData(String str) {
+                    wv.setTag(str);
+                }
+            }, "EXT");
             wv.loadUrl(uri.toString());
         } catch (IOException e) {
             //

@@ -58,7 +58,7 @@ import java.util.List;
 /**
  * @author Ugnich Anton
  *         todo: http://juick.com/Umnik/1612234
- *         todo: subscribe to thread
+ *
  */
 public class MainActivity extends FragmentActivity implements
         ActionBar.OnNavigationListener,
@@ -77,6 +77,8 @@ public class MainActivity extends FragmentActivity implements
     private SharedPreferences sp;
     Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
     Handler handler;
+    private boolean resumed;
+    private boolean reloadOnResume;
 
 
     class NavigationItem {
@@ -184,18 +186,25 @@ public class MainActivity extends FragmentActivity implements
         }
     }
 
+    private void gotoSubscriptions() {
+        final Bundle args = new Bundle();
+        JuickMessagesSource ms = getSubscriptionsMessageSource(R.string.navigationSubscriptions);
+        ms.setKind("home");
+        args.putSerializable("messagesSource", ms);
+        runDefaultFragmentWithBundle(args, subscriptionsItem);
+    }
+
+    NavigationItem subscriptionsItem;
     public void updateNavigation() {
         navigationItems = new ArrayList<NavigationItem>();
-        navigationItems.add(new NavigationItem(R.string.navigationSubscriptions) {
+        subscriptionsItem = new NavigationItem(R.string.navigationSubscriptions) {
             @Override
             void action() {
-                final Bundle args = new Bundle();
-                JuickMessagesSource ms = getSubscriptionsMessageSource(labelId);
-                ms.setKind("home");
-                args.putSerializable("messagesSource", ms);
-                runDefaultFragmentWithBundle(args, this);
+                gotoSubscriptions();
             }
-        });
+
+        };
+        navigationItems.add(subscriptionsItem);
         navigationItems.add(new NavigationItem(R.string.navigationAll) {
             @Override
             void action() {
@@ -811,15 +820,26 @@ public class MainActivity extends FragmentActivity implements
                 }
                 return true;
             case R.id.reload:
-                if (lastNavigationItem != null) {
-                    NavigationItem oldItem = lastNavigationItem;
-                    lastNavigationItem.restoreReadMarker();
-                    lastNavigationItem = null;
-                    oldItem.action();
-                }
+                doReload();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    long lastReload = System.currentTimeMillis();
+    private void doReload() {
+        if (System.currentTimeMillis() - lastReload < 1000) return;
+        if (resumed) {
+            if (lastNavigationItem != null) {
+                NavigationItem oldItem = lastNavigationItem;
+                lastNavigationItem.restoreReadMarker();
+                lastNavigationItem = null;
+                oldItem.action();
+                lastReload = System.currentTimeMillis();
+            }
+        } else {
+            reloadOnResume = true;
         }
     }
 
@@ -848,7 +868,17 @@ public class MainActivity extends FragmentActivity implements
     @Override
     protected void onResume() {
         restyle();
-        super.onResume();    //To change body of overridden methods use File | Settings | File Templates.}
+        resumed = true;
+        super.onResume();
+        if (reloadOnResume) {
+            doReload();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        resumed = false;
+        super.onPause();
     }
 
     private void restyle() {
@@ -915,6 +945,23 @@ public class MainActivity extends FragmentActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (s.equals("useXMPP")) {
             toggleXMPP();
+        }
+        if (s.startsWith("msrc")) {
+            updateNavigation();
+        }
+        if (s.startsWith("Colors.")) {
+            doReload();
+        }
+        String[] refreshCauses = new String[] {
+                "messagesFontScale",
+                "showNumbers",
+                "showUserpics",
+        };
+        for (String refreshCause : refreshCauses) {
+            if (refreshCause.equals(s)) {
+                doReload();
+                break;
+            }
         }
     }
 

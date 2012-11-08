@@ -233,16 +233,24 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
                 public void run() {
                     Bundle args = getArguments();
-                    boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
-                    if (scrollToBottom) {
-                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-                        getListView().setStackFromBottom(true);
-                    }
                     Parcelable listPosition = retainedData.viewState;
+                    boolean disableScrollToEnd = false;
                     if (listPosition == null && listAdapter.getCount() > 0) {
                         // probably transition from cached data to live data
                         listPosition = getListView().onSaveInstanceState();
+                        int addMarkOnComment = listAdapter.getCount()-2+1; // totalRecs-body-separator, 0-based (0=first comment)
+                        if (messages.size()-1 > addMarkOnComment)
+                            messages.get(addMarkOnComment+1).continuationInformation = getString(R.string.UnreadPeriodStart);
+                        disableScrollToEnd = true;
                         listAdapter.clear();
+                    }
+                    boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
+                    if (scrollToBottom && !disableScrollToEnd) {
+                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+                        getListView().setStackFromBottom(true);
+                    } else {
+                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+                        getListView().setStackFromBottom(false);
                     }
                     listAdapter.addAllMessages(messages);
                     setListAdapter(listAdapter);

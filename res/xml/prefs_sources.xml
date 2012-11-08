@@ -74,11 +74,13 @@
                 android:title="Subscriptions"
                 android:defaultValue="false"
                 android:persistent="true"/>
+<!--
         <CheckBoxPreference
                 android:key="web_for_myblog"
                 android:title="My blog"
                 android:defaultValue="false"
                 android:persistent="true"/>
+-->
 
     </PreferenceCategory>
 

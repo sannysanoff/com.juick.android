@@ -180,9 +180,11 @@ public class WhatsNew {
     }
 
     public void reportFeatures(final int sequence, final boolean cycle, final Runnable notCycle) {
-        WebView wv = new WebView(context);
+        final WebView wv = new WebView(context);
         ReleaseFeatures feature = features[sequence];
-        Utils.setupWebView(wv, context.getString(feature.textId));
+        String content = context.getString(feature.textId);
+        content = content.replace("#script#", wv.getContext().getString(R.string.NewFeatures_js));
+        Utils.setupWebView(wv, content);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context)
                 .setTitle(R.string.NewFeatures)
@@ -201,6 +203,16 @@ public class WhatsNew {
                     }
                 })
                 .setCancelable(true);
+        if (content.indexOf("#prefs.") != -1) {
+            builder.setPositiveButton(context.getString(R.string.ApplySettings), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    applySettings(wv);
+                    dialog.cancel();
+                }
+            });
+
+        }
         if (sequence < features.length - 1 && cycle) {
             builder.setPositiveButton(context.getString(R.string.OlderFeatures), new DialogInterface.OnClickListener() {
                 @Override
@@ -212,16 +224,37 @@ public class WhatsNew {
         builder.show();
     }
 
-    public void report(Context context) {
-        final TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        final String deviceId = telephonyManager.getDeviceId();
-
+    private void applySettings(WebView wv) {
+        String tag = (String)wv.getTag();
+        if (tag == null) {
+            Toast.makeText(context, "Error getting checkbox values from embedded browser, sorry. Try using Settings screen", Toast.LENGTH_LONG).show();
+        } else {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+            SharedPreferences.Editor edit = sp.edit();
+            String[] split = tag.split(";");
+            for (String s : split) {
+                if (s.startsWith("prefs.")) {
+                    s = s.substring(6);
+                    String[] av = s.split("=");
+                    if (av.length == 2) {
+                        boolean def = false;
+                        if (av[0].endsWith("!")) {
+                            def = true;
+                            av[0] = av[0].substring(0, av[0].length()-1);
+                        }
+                        boolean newValue = "true".equals(av[1]);
+                        if (sp.getBoolean(av[0], def) != newValue) {
+                            edit.putBoolean(av[0], newValue);
+                        }
+                    }
+                }
+            }
+            edit.commit();
+        }
     }
 
     public static class FeatureSaver {
-        public void saveFeature(DatabaseService db) {
-
-        }
+        public void saveFeature(DatabaseService db) {}
     }
 
     public void reportFeature(final String feature_name, final String feature_value) {
