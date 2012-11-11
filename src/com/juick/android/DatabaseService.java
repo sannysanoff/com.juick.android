@@ -20,8 +20,12 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.TypeAdapter;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.JuickMessageID;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -47,15 +51,15 @@ public class DatabaseService extends Service {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
                 public Boolean apply(Void aVoid) {
-                    Gson gson = new Gson();
+                    Gson gson = getGson();
                     final String value = gson.toJson(messag);
                     try {
                         ContentValues cv = new ContentValues();
-                        cv.put("msgid", messag.MID);
+                        cv.put("msgid", messag.getMID().toString());
                         cv.put("tm", messag.Timestamp.getTime());
                         cv.put("save_date", System.currentTimeMillis());
                         cv.put("body", compressGZIP(value));
-                        db.insert("saved_message", null, cv);   // failed uniq constraint is handled here.
+                        db.insert("saved_message2", null, cv);   // failed uniq constraint is handled here.
                         db.setTransactionSuccessful();
                     } catch (Exception e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -67,9 +71,18 @@ public class DatabaseService extends Service {
         }
     }
 
-    public byte[] getStoredUserpic(int uid) {
+    GsonBuilder gsonBuilder = new GsonBuilder();
+    {
+        gsonBuilder.registerTypeAdapter(MessageID.class, new MessageID.MessageIDAdapter());
+    }
+
+    private Gson getGson() {
+        return gsonBuilder.create();
+    }
+
+    public byte[] getStoredUserpic(String uid) {
         try {
-            Cursor cursor = db.rawQuery("select * from userpic where uid=?", new String[]{"" + uid});
+            Cursor cursor = db.rawQuery("select * from userpic where uid=?", new String[]{uid});
             try {
                 boolean exists = cursor.moveToFirst();
                 if (!exists) return null;
@@ -83,7 +96,7 @@ public class DatabaseService extends Service {
         }
     }
 
-    public void storeUserpic(final int uid, final byte[] body) {
+    public void storeUserpic(final String uid, final byte[] body) {
         writeJobs.add(new Utils.Function<Boolean, Void>() {
             @Override
             public Boolean apply(Void aVoid) {
@@ -120,7 +133,7 @@ public class DatabaseService extends Service {
                 @Override
                 public Boolean apply(Void aVoid) {
                     try {
-                        db.execSQL("delete from saved_message where msgid=?", new Object[]{message.MID});
+                        db.execSQL("delete from saved_message2 where msgid=?", new Object[]{message.getMID().toString()});
                         db.setTransactionSuccessful();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -135,7 +148,7 @@ public class DatabaseService extends Service {
 
 
     public ArrayList<JuickMessage> getSavedMessages(long afterSavedDate) {
-        Cursor cursor = db.rawQuery("select * from saved_message where save_date < ? order by save_date desc limit 20", new String[]{"" + afterSavedDate});
+        Cursor cursor = db.rawQuery("select * from saved_message2 where save_date < ? order by save_date desc limit 20", new String[]{"" + afterSavedDate});
         ArrayList<JuickMessage> retval = new ArrayList<JuickMessage>();
         cursor.moveToFirst();
         int blobIndex = cursor.getColumnIndex("body");
@@ -143,7 +156,7 @@ public class DatabaseService extends Service {
         while(!cursor.isAfterLast()) {
             byte[] blob = cursor.getBlob(blobIndex);
             String str = decompressGZIP(blob);
-            JuickMessage mesg = new Gson().fromJson(str, JuickMessage.class);
+            JuickMessage mesg = getGson().fromJson(str, JuickMessage.class);
             if (mesg != null) {
                 mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
                 mesg.messageSaveDate = cursor.getLong(saveDateIndex);
@@ -175,13 +188,13 @@ public class DatabaseService extends Service {
         //To change body of created methods use File | Settings | File Templates.
     }
 
-    public void storeThread(final int mid, final ArrayList<String> raw) {
+    public void storeThread(final MessageID mid, final ArrayList<String> raw) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
                 public Boolean apply(Void aVoid) {
                     if (raw.size() == 0) return true;        // broken?
-                    Cursor cursor = db.rawQuery("select * from msg where mid=?", new String[]{"" + mid});
+                    Cursor cursor = db.rawQuery("select * from msg2 where mid=?", new String[]{mid.toString()});
                     boolean exists = cursor.moveToFirst();
                     int nreplies = exists ? cursor.getInt(cursor.getColumnIndex("nreplies")) : 0;
                     cursor.close();
@@ -201,7 +214,7 @@ public class DatabaseService extends Service {
         //To change body of created methods use File | Settings | File Templates.
     }
 
-    private void insertOrUpdateThread(boolean exists, ArrayList<String> raw, int mid) throws IOException {
+    private void insertOrUpdateThread(boolean exists, ArrayList<String> raw, MessageID mid) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(raw);
@@ -212,14 +225,14 @@ public class DatabaseService extends Service {
         cv.put("nreplies", raw.size());
         cv.put("save_date", System.currentTimeMillis());
         if (exists) {
-            db.update("msg", cv, "mid=?", new String[]{""+mid});
+            db.update("msg2", cv, "mid=?", new String[]{mid.toString()});
         } else {
-            cv.put("mid", mid);
-            db.insert("msg", "", cv);
+            cv.put("mid", mid.toString());
+            db.insert("msg2", "", cv);
         }
     }
 
-    public void appendToThread(final int mid, final ArrayList<String> raw) {
+    public void appendToThread(final MessageID mid, final ArrayList<String> raw) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
@@ -243,8 +256,8 @@ public class DatabaseService extends Service {
     }
 
 
-    public ArrayList<String> getStoredThread(int mid) {
-        Cursor cursor = db.rawQuery("select * from msg where mid=?", new String[]{"" + mid});
+    public ArrayList<String> getStoredThread(MessageID mid) {
+        Cursor cursor = db.rawQuery("select * from msg2 where mid=?", new String[]{mid.toString()});
         try {
             cursor.moveToFirst();
             int blobIndex = cursor.getColumnIndex("body");
@@ -270,7 +283,7 @@ public class DatabaseService extends Service {
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 8;
+        public final static int CURRENT_VERSION = 11;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -294,6 +307,7 @@ public class DatabaseService extends Service {
                 //
             }
             if (from == 2) {
+                // NEVER DROP!
                 sqLiteDatabase.execSQL("create table saved_message(msgid integer not null primary key, tm integer not null, body blob not null, save_date integer not null)");
                 sqLiteDatabase.execSQL("create index if not exists ix_savedmessage_savedate on saved_message (save_date)");
                 from++;
@@ -326,9 +340,33 @@ public class DatabaseService extends Service {
                 from++;
             }
             if (from == 7) {
-                sqLiteDatabase.execSQL("create table userpic(uid integer, save_date integer not null, body blob not null)");
+                sqLiteDatabase.execSQL("create table userpic(uid text, save_date integer not null, body blob not null)");
                 sqLiteDatabase.execSQL("create unique index userpic_uid  on userpic(uid)");
                 sqLiteDatabase.execSQL("create index userpic_savedate on userpic(save_date)");
+                from++;
+            }
+            if (from == 8) {
+                sqLiteDatabase.execSQL("drop table userpic");
+                sqLiteDatabase.execSQL("create table userpic(uid text, save_date integer not null, body blob not null)");
+                sqLiteDatabase.execSQL("create unique index userpic_uid  on userpic(uid)");
+                sqLiteDatabase.execSQL("create index userpic_savedate on userpic(save_date)");
+                from++;
+            }
+            if (from == 9) {
+                sqLiteDatabase.execSQL("drop table message_read");
+                sqLiteDatabase.execSQL("create table message_read(msgid text not null primary key, tm integer not null, nreplies integer not null, message_date integer)");
+                from++;
+            }
+            if (from == 10) {
+                sqLiteDatabase.execSQL("create table msg2(mid text, save_date integer not null, nreplies integer, body blob not null)");
+                sqLiteDatabase.execSQL("insert into msg2 select * from msg");
+                sqLiteDatabase.execSQL("drop table msg");
+                sqLiteDatabase.execSQL("create index ixmsg2_mid  on msg2(mid)");
+                sqLiteDatabase.execSQL("create index ixmsg2_savedate on msg2(save_date)");
+                sqLiteDatabase.execSQL("create table saved_message2(msgid textnot null primary key, tm integer not null, body blob not null, save_date integer not null)");
+                sqLiteDatabase.execSQL("create index if not exists ix_savedmessage_savedate on saved_message2(save_date)");
+                sqLiteDatabase.execSQL("insert into saved_message2 select * from saved_message");
+                sqLiteDatabase.execSQL("drop table saved_message");
                 from++;
             }
         }
@@ -346,11 +384,11 @@ public class DatabaseService extends Service {
     }
 
     public static class ReadMarker {
-        int mid;
+        MessageID mid;
         long messageDate;
         int nreplies;
 
-        ReadMarker(int mid, int nreplies, long messageDate) {
+        ReadMarker(MessageID mid, int nreplies, long messageDate) {
             this.mid = mid;
             this.nreplies = nreplies;
             this.messageDate = messageDate;
@@ -362,7 +400,7 @@ public class DatabaseService extends Service {
     static SQLiteDatabase db;
 
     public static class MessageReadStatus {
-        public int messageId;
+        public MessageID messageId;
         public boolean read;
         public int nreplies;
     }
@@ -389,7 +427,7 @@ public class DatabaseService extends Service {
                             //
                         }
                         String oldDate = ""+(System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
-                        db.delete("msg","save_date < ?",new String[] {oldDate});
+                        db.delete("msg2","save_date < ?",new String[] {oldDate});
                         db.setTransactionSuccessful();
                         return Boolean.TRUE;
                     }
@@ -413,19 +451,19 @@ public class DatabaseService extends Service {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
                 public Boolean apply(Void aVoid) {
-                    if (parsed.RID > 0) {
-                        Cursor cursor = db.rawQuery("select * from message_reply where msgid=? and rid=?", new String[]{"" + parsed.MID, ""+parsed.RID});
+                    if (parsed.getRID() > 0) {
+                        Cursor cursor = db.rawQuery("select * from message_reply where msgid=? and rid=?", new String[]{"" + parsed.getMID(), ""+ parsed.getRID()});
                         if (cursor.getCount() == 0) {
-                            db.execSQL("insert into message_reply (msgid, rid, body) values(?,?,?)", new Object[] {parsed.MID, parsed.RID, compressGZIP(json)});
+                            db.execSQL("insert into message_reply (msgid, rid, body) values(?,?,?)", new Object[] {parsed.getMID(), parsed.getRID(), compressGZIP(json)});
                         }
                         cursor.close();
                     } else {
-                        Cursor cursor = db.rawQuery("select * from message where msgid=?", new String[]{"" + parsed.MID});
+                        Cursor cursor = db.rawQuery("select * from message where msgid=?", new String[]{"" + parsed.getMID()});
                         int msgCount = cursor.getCount();
                         cursor.close();
                         if (msgCount == 0) {
                             ContentValues cv = new ContentValues();
-                            cv.put("msgid", parsed.MID);
+                            cv.put("msgid", parsed.getMID().toString());
                             cv.put("tm", parsed.Timestamp.getTime());
                             cv.put("prevmsgid", -1);
                             cv.put("nextmsgid", -1);
@@ -508,10 +546,10 @@ public class DatabaseService extends Service {
 
     ArrayList<MessageReadStatus> cachedMRS = new ArrayList<MessageReadStatus>();
 
-    public void getMessageReadStatus(final int messageId, final Utils.Function<Void,MessageReadStatus> callback) {
+    public void getMessageReadStatus(final MessageID messageId, final Utils.Function<Void,MessageReadStatus> callback) {
         synchronized (cachedMRS) {
             for (MessageReadStatus messageReadStatus : cachedMRS) {
-                if (messageReadStatus.messageId == messageId) {
+                if (messageReadStatus.messageId.equals(messageId)) {
                     callback.apply(messageReadStatus);
                     return;
                 }
@@ -533,8 +571,8 @@ public class DatabaseService extends Service {
         }.start();
     }
 
-    private MessageReadStatus getMessageReadStatus0(int messageId) {
-        Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{"" + messageId});
+    private MessageReadStatus getMessageReadStatus0(MessageID messageId) {
+        Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{messageId.toString()});
         MessageReadStatus mrs = new MessageReadStatus();
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
@@ -547,8 +585,8 @@ public class DatabaseService extends Service {
         return mrs;
     }
 
-    private long getMessageDate(int messageId) {
-        Cursor cursor = db.rawQuery("select message_date from message_read where msgid=?", new String[]{"" + messageId});
+    private long getMessageDate(MessageID messageId) {
+        Cursor cursor = db.rawQuery("select message_date from message_read where msgid=?", new String[]{messageId.toString()});
         if (cursor.moveToFirst()) {
             long tm = cursor.getLong(cursor.getColumnIndex("message_date"));
             cursor.close();
@@ -567,17 +605,17 @@ public class DatabaseService extends Service {
                 public Boolean apply(Void aVoid) {
                     synchronized (cachedMRS) {
                         for (MessageReadStatus messageReadStatus : cachedMRS) {
-                            if (messageReadStatus.messageId == marker.mid) {
+                            if (messageReadStatus.messageId.equals(marker.mid)) {
                                 messageReadStatus.read = true;
                                 break;
                             }
                         }
                     }
                     ReadMarker readMarker = marker;
-                    Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{"" + readMarker.mid});
+                    Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{readMarker.mid.toString()});
                     if (cursor.getCount() == 0) {
                         ContentValues contentValues = new ContentValues();
-                        contentValues.put("msgid", readMarker.mid);
+                        contentValues.put("msgid", readMarker.mid.toString());
                         contentValues.put("tm", System.currentTimeMillis());
                         contentValues.put("nreplies", readMarker.nreplies);
                         contentValues.put("message_date", readMarker.messageDate);
@@ -589,7 +627,7 @@ public class DatabaseService extends Service {
                         int oldNreplies = cursor.getInt(cursor.getColumnIndex("nreplies"));
                         if (oldNreplies != readMarker.nreplies) {
                             db.execSQL("update message_read set nreplies=? where msgid=?",
-                                    new Object[]{readMarker.nreplies, readMarker.mid});
+                                    new Object[]{readMarker.nreplies, readMarker.mid.toString()});
                         }
                     }
                     db.setTransactionSuccessful();
@@ -668,33 +706,33 @@ public class DatabaseService extends Service {
         }
     }
 
-    public ArrayList<Period> getPeriods(int days) {
+    public ArrayList<Period> getJuickPeriods(int days) {
         ArrayList<Period> retval = new ArrayList<Period>();
-        Cursor cursor = db.rawQuery("select min(msgid), max(msgid) from message_read where tm > ?", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
+        Cursor cursor = db.rawQuery("select min(msgid), max(msgid) from message_read where tm > ? and msgid like 'jui-%'", new String[]{"" + (System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L)});
         cursor.moveToFirst();
         if (cursor.isNull(1)) {
             cursor.close();
             return retval;
         }
-        int bottomMsgid = cursor.getInt(0);
-        int newestMsgid = cursor.getInt(1);
+        JuickMessageID bottomMsgid = JuickMessageID.fromString(cursor.getString(0));
+        JuickMessageID newestMsgid = JuickMessageID.fromString(cursor.getString(1));
         cursor.close();
-        cursor = db.rawQuery("select * from message_read where msgid > ? order by msgid desc", new String[]{"" + bottomMsgid});
+        cursor = db.rawQuery("select * from message_read where msgid > ? and msgid like 'jui-%' order by msgid desc", new String[]{"" + bottomMsgid});
         cursor.moveToFirst();
         int msgidIndex = cursor.getColumnIndex("msgid");
         int messageDateIndex = cursor.getColumnIndex("message_date");
-        int savedMsgid = newestMsgid;
+        JuickMessageID savedMsgid = newestMsgid;
         long savedMsgDate = getMessageDate(savedMsgid);
         while(!cursor.isAfterLast()) {
-            int thisMid = cursor.getInt(msgidIndex);
+            JuickMessageID thisMid = JuickMessageID.fromString(cursor.getString(msgidIndex));
             long thisMessageDate = cursor.getLong(messageDateIndex);
             if (thisMessageDate > 200) {    // bug hider :-E
-                if (savedMsgid != -1 && Math.abs(thisMid - savedMsgid) > 50) {   // UNREAD HOLE
+                if (savedMsgid != null && Math.abs(thisMid.getMid() - savedMsgid.getMid()) > 50) {   // UNREAD HOLE
                     Period period = new Period();
-                    period.startMid = savedMsgid-1;
-                    period.beforeMid = savedMsgid-1;
+                    period.startMid = savedMsgid.getMid()-1;
+                    period.beforeMid = savedMsgid.getMid()-1;
                     period.startDate = new Date(savedMsgDate);
-                    period.endMid =thisMid+1;
+                    period.endMid =thisMid.getMid()+1;
                     period.endDate = new Date(thisMessageDate);
                     period.read = false;
                     retval.add(period);

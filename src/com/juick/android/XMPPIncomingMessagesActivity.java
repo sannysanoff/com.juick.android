@@ -14,6 +14,9 @@ import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.JuickComAuthorizer;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
  import de.quist.app.errorreporter.ExceptionReporter;
 
@@ -78,7 +81,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                new JuickMessageMenu(XMPPIncomingMessagesActivity.this, null, null, null) {
+                new MessageMenu(XMPPIncomingMessagesActivity.this, null, null, null) {
 
                     XMPPService.IncomingMessage incomingMessage;
                     View view;
@@ -92,11 +95,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                             if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
                                 final XMPPService.JuickIncomingMessage jim = (XMPPService.JuickIncomingMessage)incomingMessage;
                                 final String fromUser = jim.getFrom();
-                                final int thread = jim.getMID();
+                                final MessageID thread = jim.getMID();
                                 JuickMessage msg = new JuickMessage();
-                                msg.MID = thread;
+                                msg.setMID(thread);
                                 msg.Text = jim.getBody();
-                                msg.RID = jim.getRID();
+                                msg.setRID(jim.getRID());
                                 msg.User = new JuickUser();
                                 msg.User.UID = 0;
                                 msg.User.UName = fromUser;
@@ -209,6 +212,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
             intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getMID());
             intent.putExtra("isolated", true);
+            intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
             startActivity(intent);
             return;
         }
@@ -323,7 +327,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 public int compare(Item item, Item item1) {
                     XMPPService.JuickThreadIncomingMessage im = (XMPPService.JuickThreadIncomingMessage)item.messages.get(0);
                     XMPPService.JuickThreadIncomingMessage im1 = (XMPPService.JuickThreadIncomingMessage)item1.messages.get(0);
-                    return im.getMID()- im1.getMID(); // sort by threads
+                    return compareJuickMessages(im, im1); // sort by threads
                 }
             });
             displayItems.addAll(sortee);
@@ -366,6 +370,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         lv.setAdapter(new MyListAdapter());
         lv.onRestoreInstanceState(parcelable);
 
+    }
+
+    private int compareJuickMessages(XMPPService.JuickIncomingMessage im, XMPPService.JuickIncomingMessage im1) {
+        return im.getMID().toString().compareTo(im1.getMID().toString());
     }
 
     private void deleteMessages(final Class incomingMessageClass) {
@@ -441,7 +449,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             if (message instanceof XMPPService.JuickThreadIncomingMessage) {
                 HashMap<String,Integer> counts = new HashMap<String, Integer>();
                 int totalCount = 0;
-                int topicMessageId = -1;
+                MessageID topicMessageId = null;
                 int toYouCount = 0;
                 for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
                     XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
@@ -452,7 +460,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     counts.put(from, oldCount);
                     totalCount++;
                     String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
-                    String accountName = Utils.getAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
+                    String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
                     int scan = 0;
                     while(true) {
                         int myNick = nickScanArea.indexOf("@" + accountName, scan);
@@ -466,7 +474,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                             break;
                         }
                     }
-                    if (topicMessageId == -1) {
+                    if (topicMessageId == null) {
                         topicMessageId = commentMessage.getMID();
                     }
                 }

@@ -1,26 +1,22 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import com.juick.android.MainActivity;
+import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
+import com.juick.android.api.MessageID;
 import com.juickadvanced.R;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,7 +39,7 @@ public class JuboMessagesSource extends MessagesSource {
     }
 
     @Override
-    public void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
     }
 
@@ -97,9 +93,9 @@ public class JuboMessagesSource extends MessagesSource {
         NodeList guid = item.getElementsByTagName("guid");
         String textContent = guid.item(0).getTextContent();
         int lastSlash = textContent.lastIndexOf("/");
-        int msgNo = Integer.parseInt(textContent.substring(lastSlash + 1));
+        JuickMessageID msgNo = new JuickMessageID(Integer.parseInt(textContent.substring(lastSlash + 1)));
         JuickMessage jm = new JuickMessage();
-        jm.MID = msgNo;
+        jm.setMID(msgNo);
         NodeList descrs = item.getElementsByTagName("description");
         String txt = descrs.item(0).getTextContent();
         txt = txt.replace("<br />","");
@@ -136,6 +132,11 @@ public class JuboMessagesSource extends MessagesSource {
     @Override
     public CharSequence getTitle() {
         return ctx.getString(R.string.navigationJuboRSS);
+    }
+
+    @Override
+    public MicroBlog getMicroBlog() {
+        return MainActivity.getMicroBlog(JuickMicroBlog.CODE);
     }
 
     @Override

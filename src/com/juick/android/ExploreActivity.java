@@ -23,10 +23,9 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 

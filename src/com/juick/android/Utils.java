@@ -20,21 +20,16 @@ package com.juick.android;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Service;
 import android.content.*;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.api.JuickMessage;
 import com.juickadvanced.R;
@@ -46,47 +41,68 @@ import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.http.*;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.BasicManagedEntity;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.EofSensorInputStream;
-import org.apache.http.cookie.Cookie;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.HttpEntityWrapper;
-import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.SingleClientConnManager;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * @author Ugnich Anton
  */
 public class Utils {
 
+    public static ArrayList<URLAuth> authorizers = new ArrayList<URLAuth>();
+
+    public static abstract class URLAuth {
+        public abstract boolean acceptsURL(String url);
+        public abstract void authorize(Activity act, String url, Function<Void, String> withCookie);
+        public abstract void authorizeRequest(HttpRequestBase request, String cookie);
+        public abstract void authorizeRequest(HttpURLConnection conn, String cookie);
+        public abstract String authorizeURL(String url, String cookie);
+
+
+    }
+
+    static class DummyAuthorizer extends URLAuth {
+        @Override
+        public boolean acceptsURL(String url) {
+            return true;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public void authorize(Activity act, String url, Function<Void, String> withCookie) {
+            withCookie.apply(null);
+        }
+
+        @Override
+        public void authorizeRequest(HttpRequestBase request, String cookie) {
+
+        }
+
+        @Override
+        public void authorizeRequest(HttpURLConnection conn, String cookie) {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public String authorizeURL(String url, String cookie) {
+            return url;
+        }
+    }
+
     //public static final String JA_IP = "192.168.1.77";
     public static final String JA_IP = "79.133.74.9";
     public static final String JA_PORT = "8080";
 
-    public static void verboseDebug(final Activity context, final String s) {
+    public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
-        if (!Utils.hasAuth(context.getApplicationContext()))
-            verboseDebug = true;
         if (verboseDebug) {
             context.runOnUiThread(new Runnable() {
                 @Override
@@ -206,22 +222,10 @@ public class Utils {
 
 
     public static void updateTheme(Activity activity) {
-        /*
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-        if (sp.getString("theme", "0").equals("0")) {
-        activity.setTheme(android.R.style.Theme_Light);
-        }
-         */
     }
 
 
     public static void updateThemeHolo(Activity activity) {
-        /*
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-        if (sp.getString("theme", "0").equals("0")) {
-        activity.setTheme(R.style.Theme_Sherlock_Light);
-        }
-         */
     }
 
     public static int doHttpGetRequest(String url) {
@@ -244,64 +248,6 @@ public class Utils {
         return accs.length > 0;
     }
 
-    public static String getAuthHash(Context context) {
-        RESTResponse jsonStr = getJSON(context, "http://api.juick.com/auth", null);
-        if (jsonStr.result != null && !jsonStr.result.equals("")) {
-            try {
-                JSONObject json = new JSONObject(jsonStr.result);
-                if (json.has("hash")) {
-                    return json.getString("hash");
-                }
-            } catch (JSONException e) {
-            }
-        }
-        return null;
-    }
-
-    static String accountName;
-    public static String getAccountName(Context context) {
-        if (accountName == null) {
-            AccountManager am = AccountManager.get(context);
-            Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
-            if (accs.length > 0) {
-                accountName = accs[0].name;
-            }
-        }
-        return accountName;
-    }
-
-    public static String getBasicAuthString(Context context) {
-        AccountManager am = AccountManager.get(context);
-        Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
-        if (accs.length > 0) {
-            Bundle b = null;
-            try {
-                b = am.getAuthToken(accs[0], "", false, null, null).getResult();
-            } catch (Exception e) {
-                Log.e("getBasicAuthString", Log.getStackTraceString(e));
-            }
-            if (b != null) {
-                String authStr = b.getString(AccountManager.KEY_ACCOUNT_NAME) + ":" + b.getString(AccountManager.KEY_AUTHTOKEN);
-                final String auth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
-                if (context instanceof Activity) {
-                    final Activity act = (Activity)context;
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                    boolean verboseDebug = sp.getBoolean("verboseDebug", false);
-                    if (verboseDebug) {
-                        act.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(act, "Auth: "+auth, Toast.LENGTH_LONG).show();
-                            }
-                        });
-
-                    }
-                }
-                return auth;
-            }
-        }
-        return "";
-    }
 
     public static interface Notification {
 
@@ -351,33 +297,30 @@ public class Utils {
 
     static boolean reportTimes = false;
 
-    public static String myCookie;
     public static int reloginTried;
 
     public static RESTResponse getJSON(final Context context, final String url, final Notification progressNotification, final int timeout) {
+        final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
-        final Function<RESTResponse, String> runWithMyCookie = new Function<RESTResponse, String>() {
+        final URLAuth finalAuthorizer = authorizer;
+        authorizer.authorize((Activity)context, url, new Function<Void, String>() {
             @Override
-            public RESTResponse apply(String myCookie) {
+            public Void apply(String myCookie) {
                 final DefaultHttpClient client = new DefaultHttpClient();
                 try {
                     boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
                     long l = System.currentTimeMillis();
                     if (compression)
                         initCompressionSupport(client);
-                    HttpGet httpGet = new HttpGet(url);
+                    HttpGet httpGet = new HttpGet(authorizer.authorizeURL(url, myCookie));
                     if (timeout > 0) {
                         client.getParams().setParameter("http.connection.timeout", new Integer(timeout));
                         httpGet.getParams().setParameter("http.socket.timeout", new Integer(timeout));
                         httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
                     }
-                    String basicAuth = getBasicAuthString(context.getApplicationContext());
-                    if (basicAuth.length() > 0 && url.startsWith("http://api.juick.com")) {
-                        httpGet.addHeader(new BasicHeader("Authorization", basicAuth));
-                    }
-                    if (basicAuth.length() > 0 && url.startsWith("http://dev.juick.com")) {
-                        httpGet.addHeader("Cookie", "hash="+myCookie);
-                    }
+
+                    finalAuthorizer.authorizeRequest(httpGet, myCookie);
+
                     client.execute(httpGet, new ResponseHandler<Object>() {
                         @Override
                         public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
@@ -425,24 +368,13 @@ public class Utils {
                         ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP connect: " + e.toString());
                     }
                     Log.e("getJSON", e.toString());
-                    return new RESTResponse(e.toString(), true, null);
+                    ret[0] = new RESTResponse(e.toString(), true, null);
                 } finally {
                     client.getConnectionManager().shutdown();
                 }
                 return null;  //To change body of implemented methods use File | Settings | File Templates.
             }
-        };
-        if (url.startsWith("http://dev.juick.com")) {
-            getMyCookie(context, new Function<Void, String>() {
-                @Override
-                public Void apply(String s) {
-                    runWithMyCookie.apply(s);
-                    return null;
-                }
-            });
-        } else {
-            runWithMyCookie.apply(null);
-        }
+        });
         while(ret[0] == null) { // bad, but true
             try {
                 Thread.sleep(100);
@@ -453,165 +385,18 @@ public class Utils {
         return ret[0];
     }
 
-    private static void getMyCookie(final Context ctx, final Function<Void,String> cont) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-        if (myCookie == null) {
-            myCookie = sp.getString("web_cookie", null);
-        }
-        if (myCookie == null) {
-            if (ctx instanceof Activity) {
-                final Activity activity = (Activity)ctx;
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String webLogin = sp.getString("web_login",null);
-                        String webPassword = sp.getString("web_password",null);
-                        final Runnable thiz = this;
-                        if (webLogin != null && webPassword != null) {
-                            tryLoginWithPassword(webLogin, webPassword, new Runnable() {
-                                @Override
-                                public void run() {
-                                    sp.edit().remove("web_login").remove("web_password").commit();
-                                    thiz.run();
-                                }
-                            });
-                        }
-                        final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
-                        final EditText login = (EditText)content.findViewById(R.id.login);
-                        final String accountName = getAccountName(activity);
-                        final EditText password = (EditText)content.findViewById(R.id.password);
-                        login.setText(accountName);
-                        AlertDialog dlg = new AlertDialog.Builder(activity)
-                                .setTitle("Web login")
-                                .setView(content)
-                                .setPositiveButton("Login", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        new Thread() {
-                                            @Override
-                                            public void run() {
-                                                final String loginS = login.getText().toString().trim();
-                                                final String passwordS = password.getText().toString().trim();
-                                                tryLoginWithPassword(loginS, passwordS, thiz);
-                                            }
-                                        }.start();
-                                    }
-                                })
-                                .setCancelable(false)
-                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        new Thread() {
-                                            @Override
-                                            public void run() {
-                                                cont.apply(null);
-                                            }
-                                        }.start();
-                                    }
-                                }).create();
-                        dlg.setOnShowListener(new DialogInterface.OnShowListener() {
-                            @Override
-                            public void onShow(DialogInterface dialog) {
-                                password.requestFocus();
-                            }
-                        });
-                        dlg.show();
-                    }
-
-                    private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {
-                        obtainCookieByLoginPassword(activity, loginS, passwordS,
-                                new Function<Void, RESTResponse>() {
-                                    @Override
-                                    public Void apply(final RESTResponse s) {
-                                        if (s.result != null) {
-                                            myCookie = s.result;
-                                            cont.apply(s.result);
-                                            activity.runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-                                                    sp.edit()
-                                                            .putString("web_cookie", myCookie)
-                                                            .putString("web_login", loginS)
-                                                            .putString("web_password", passwordS)
-                                                            .commit();
-
-                                                }
-                                            });
-                                        }
-                                        else {
-                                            activity.runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
-                                                    thiz.run();
-                                                }
-                                            });
-                                        }
-                                        return null;
-                                    }
-                                });
-                    }
-                });
-            } else {
-                cont.apply(null);
+    private static URLAuth getAuthorizer(String url) {
+        URLAuth authorizer = new DummyAuthorizer();
+        for (URLAuth a : authorizers) {
+            if (a.acceptsURL(url)) {
+                authorizer = a;
+                break;
             }
-
-        } else {
-            cont.apply(myCookie);
         }
+        return authorizer;
     }
 
-    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Function<Void, RESTResponse> result) {
-        final DefaultHttpClient client = new DefaultHttpClient();
-        try {
-            HttpPost httpPost = new HttpPost("http://dev.juick.com/login");
-            ArrayList<NameValuePair> formData = new ArrayList<NameValuePair>();
-            formData.add(new BasicNameValuePair("username", login));
-            formData.add(new BasicNameValuePair("password", password));
-            httpPost.setEntity(new UrlEncodedFormEntity(formData));
-            httpPost.setHeader("Referer", "http://dev.juick.com/login");
-            httpPost.setHeader("Accept-Charset", "UTF-8,*;q=0.5");
-            httpPost.setHeader("Connection", "keep-alive");
-            //httpPost.setHeader("Accept-Encoding", "gzip,deflate,sdch");
-            httpPost.setHeader("Accept-Language", "en-US,en;q=0.8");
-            httpPost.setHeader("Origin", "http://dev.juick.com");
-            httpPost.setHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Ubuntu/12.04 Chromium/20.0.1132.47 Chrome/20.0.1132.47 Safari/536.11");
-            httpPost.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-            client.execute(httpPost, new ResponseHandler<Object>() {
-                @Override
-                public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
-                    HttpEntity entity = o.getEntity();
-                    InputStream content = entity.getContent();
-                    RESTResponse responseBody = streamToString(content, null);
-                    if (o.getStatusLine().getStatusCode() == 200) {
-                        CookieStore cookieStore = client.getCookieStore();
-                        List<Cookie> cookies = cookieStore.getCookies();
-                        for (Cookie cookie : cookies) {
-                            if (cookie.getName().equals("hash")) {
-                                result.apply(new RESTResponse(null, false, cookie.getValue()));
-                                return "";
-                            }
-                        }
-                        result.apply(new RESTResponse("Result OK, but no cookies", false, null));
-                        return "";
-                    } else {
-                        if (responseBody.result != null && responseBody.result.indexOf("forbidden") != -1) {
-                            result.apply(new RESTResponse(activity.getString(R.string.InvalidLoginPassword), false, null));
-                        } else {
-                            result.apply(new RESTResponse("Unknown response from server.", false, null));
-                        }
-                        return "";
-                    }
-                }
-            });
-        } catch (IOException e) {
-            result.apply(new RESTResponse("Other error: "+e.toString(), false, null));
-            //
-        } finally {
-            client.getConnectionManager().shutdown();
-        }
-    }
+
 
 
     public static BINResponse getBinary(Context context, final String url, final Notification progressNotification, int timeout) {
@@ -693,9 +478,9 @@ public class Utils {
     }
 
     public static class RESTResponse {
-        String result;
-        String errorText;
-        boolean mayRetry;
+        public String result;
+        public String errorText;
+        public boolean mayRetry;
 
         public RESTResponse(String errorText, boolean mayRetry, String result) {
             this.errorText = errorText;
@@ -740,73 +525,57 @@ public class Utils {
         }
     }
 
-    public static RESTResponse postJSON(Context context, String url, String data) {
-        RESTResponse ret = null;
-        try {
-            URL jsonURL = new URL(url);
-            HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
+    public static RESTResponse postJSON(final Context context, final String url, final String data) {
+        final URLAuth authorizer = getAuthorizer(url);
+        final RESTResponse[] ret = new RESTResponse[]{null};
+        authorizer.authorize((Activity)context, url, new Function<Void, String>() {
+            @Override
+            public Void apply(String myCookie) {
+                HttpURLConnection conn = null;
+                try {
 
-            String basicAuth = getBasicAuthString(context.getApplicationContext());
-            if (basicAuth.length() > 0) {
-                conn.setRequestProperty("Authorization", basicAuth);
+                    URL jsonURL = new URL(authorizer.authorizeURL(url, myCookie));
+                    conn = (HttpURLConnection) jsonURL.openConnection();
+
+                    authorizer.authorizeRequest(conn, myCookie);
+
+                    conn.setUseCaches(false);
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+                    conn.setRequestMethod("POST");
+                    conn.connect();
+
+                    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+                    wr.write(data);
+                    wr.close();
+
+                    if (conn.getResponseCode() == 200) {
+                        InputStream inputStream = conn.getInputStream();
+                        ret[0] = streamToString(inputStream, null);
+                        inputStream.close();
+                    } else {
+                        ret[0] = new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
+                    }
+                    conn.disconnect();
+                } catch (Exception e) {
+                    Log.e("getJSON", e.toString());
+                    ret[0] = new RESTResponse(e.toString(), true, null);
+                } finally {
+                    if (conn != null) {
+                        conn.disconnect();
+                    }
+                }
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
             }
-
-            conn.setUseCaches(false);
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-            conn.setRequestMethod("POST");
-            conn.connect();
-
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(data);
-            wr.close();
-
-            if (conn.getResponseCode() == 200) {
-                InputStream inputStream = conn.getInputStream();
-                ret = streamToString(inputStream, null);
-                inputStream.close();
-            } else {
-                return new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
+        });
+        while(ret[0] == null) { // bad, but true
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
-
-            conn.disconnect();
-            return ret;
-        } catch (Exception e) {
-            Log.e("getJSON", e.toString());
-            return new RESTResponse(e.toString(), false, null);
         }
-    }
-
-    public static RESTResponse postJSONHome(Context context, String path, String data) {
-        RESTResponse ret = null;
-        try {
-            URL jsonURL = new URL("http://" + JA_IP + ":" + JA_PORT + path);
-            HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
-
-            conn.setUseCaches(false);
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-            conn.setRequestMethod("POST");
-            conn.connect();
-
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(data);
-            wr.close();
-
-            if (conn.getResponseCode() == 200) {
-                InputStream inputStream = conn.getInputStream();
-                ret = streamToString(inputStream, null);
-                inputStream.close();
-            } else {
-                return new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
-            }
-
-            conn.disconnect();
-            return ret;
-        } catch (Exception e) {
-            Log.e("getJSONHome", e.toString());
-            return new RESTResponse(e.toString(), false, null);
-        }
+        return ret[0];
     }
 
 
@@ -873,7 +642,6 @@ public class Utils {
         return sb.toString();
     }
 
-
     public static Bitmap downloadImage(String url) {
         try {
             URL imgURL = new URL(url);
@@ -905,11 +673,6 @@ public class Utils {
             sb.append(s.replace("@","[SOBAKA]"));
         }
         return sb.toString();
-    }
-
-    public static String nvl(String value, String def) {
-        if (value == null || value.length() == 0) return def;
-        return value;
     }
 
 

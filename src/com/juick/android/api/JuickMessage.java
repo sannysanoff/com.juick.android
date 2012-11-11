@@ -22,9 +22,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import android.text.SpannableStringBuilder;
 import com.juick.android.JuickMessagesAdapter;
-import com.juick.android.datasource.MessagesSource;
+import com.juick.android.MainActivity;
+import com.juick.android.MicroBlog;
+import com.juick.android.UserpicStorage;
+import com.juick.android.juick.JuickMessageID;
+import com.juick.android.juick.MessagesSource;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,10 +38,9 @@ import org.json.JSONObject;
  */
 public class JuickMessage {
 
-    public int MID = 0;
-    public int previousMID = 0;
-    public int RID = 0;
-    public int replyTo = 0;
+    private MessageID MID = null;
+    private int RID = 0;
+    private int replyTo = 0;
     public String Text = null;
     public JuickUser User = null;
     public Vector<String> tags = new Vector<String>();
@@ -48,50 +50,14 @@ public class JuickMessage {
     public String Video = null;
     public boolean translated;
     public String source;
+    public String microBlogCode;
+
     transient public String continuationInformation;
     transient public long messageSaveDate;
     transient public JuickMessagesAdapter.ParsedMessage parsedText;
     transient public MessagesSource messagesSource;
 
-    public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
-        JuickMessage jmsg = new JuickMessage();
-        jmsg.source = json.toString();
-        jmsg.MID = json.getInt("mid");
-        if (json.has("rid")) {
-            jmsg.RID = json.getInt("rid");
-        }
-        if (json.has("replyto")) {
-            jmsg.replyTo = json.getInt("replyto");
-        }
-        jmsg.Text = json.getString("body").replace("&quot;", "\"");
-        jmsg.User = JuickUser.parseJSON(json.getJSONObject("user"));
-
-        try {
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            jmsg.Timestamp = df.parse(json.getString("timestamp"));
-        } catch (ParseException e) {
-        }
-
-        if (json.has("tags")) {
-            JSONArray tags = json.getJSONArray("tags");
-            for (int n = 0; n < tags.length(); n++) {
-                jmsg.tags.add(tags.getString(n).replace("&quot;", "\""));
-            }
-        }
-
-        if (json.has("replies")) {
-            jmsg.replies = json.getInt("replies");
-        }
-
-        if (json.has("photo")) {
-            jmsg.Photo = json.getJSONObject("photo").getString("small");
-        }
-        if (json.has("video")) {
-            jmsg.Video = json.getJSONObject("video").getString("mp4");
-        }
-
-        return jmsg;
+    public JuickMessage() {
     }
 
     public String getTags() {
@@ -106,39 +72,6 @@ public class JuickMessage {
         return t;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof JuickMessage)) {
-            return false;
-        }
-        JuickMessage jmsg = (JuickMessage) obj;
-        return (this.MID == jmsg.MID && this.RID == jmsg.RID);
-    }
-
-    public int compareTo(Object obj) throws ClassCastException {
-        if (!(obj instanceof JuickMessage)) {
-            throw new ClassCastException();
-        }
-        JuickMessage jmsg = (JuickMessage) obj;
-
-        if (this.MID != jmsg.MID) {
-            if (this.MID > jmsg.MID) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-
-        if (this.RID != jmsg.RID) {
-            if (this.RID < jmsg.RID) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-
-        return 0;
-    }
 
     @Override
     public String toString() {
@@ -158,7 +91,7 @@ public class JuickMessage {
         if (Text != null) {
             msg += Text + "\n";
         }
-        msg += "#" + MID;
+        msg += MID.toString();
         if (RID > 0) {
             msg += "/" + RID;
         }
@@ -172,5 +105,53 @@ public class JuickMessage {
     public Object getTimestampFormatted() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(Timestamp);
+    }
+
+    public MessageID getMID() {
+        return MID;
+    }
+
+    public int getRID() {
+        return RID;
+    }
+
+    public void setRID(int RID) {
+        this.RID = RID;
+    }
+
+    public int getReplyTo() {
+        return replyTo;
+    }
+
+    public void setReplyTo(int replyTo) {
+        this.replyTo = replyTo;
+    }
+
+    public void setRIDDirect(int rid) {
+        this.RID = rid;
+    }
+
+    public void setReplytoDirect(int replyTo) {
+        this.replyTo = replyTo;
+    }
+
+    public UserpicStorage.AvatarID getAvatarId() {
+        return getMicroBlog().getAvatarID(this);
+    }
+
+    public MicroBlog getMicroBlog() {
+        return MainActivity.getMicroBlog(microBlogCode);
+    }
+
+    public void setMID(MessageID MID) {
+        this.MID = MID;
+    }
+
+    public String getDisplayMessageNo() {
+        String s = getMID().toDisplayString();
+        if (RID > 0) {
+            s += "/"+RID;
+        }
+        return s;
     }
 }

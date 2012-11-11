@@ -35,7 +35,6 @@ import android.support.v4.view.MenuItem;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -47,11 +46,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.io.File;
-import java.net.URLEncoder;
 import java.util.Vector;
 
 /**
@@ -66,12 +66,11 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     private EditText etMessage;
     private Button bSend;
     private ImageButton bAttach;
-    private int mid = 0;
+    private MessageID mid = null;
     private int rid = 0;
     private String attachmentUri = null;
     private String attachmentMime = null;
     private ProgressDialog progressDialog = null;
-    private NewMessageActivity.BooleanReference progressDialogCancel = new NewMessageActivity.BooleanReference(false);
     Handler handler;
     private Handler progressHandler = new Handler() {
         
@@ -85,7 +84,9 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         }
     };
     ThreadFragment tf;
-    
+    private MessagesSource messagesSource;
+    private JuickMessage selectedReply;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ExceptionReporter.register(this);
@@ -94,11 +95,12 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         handler = new Handler();
 
         Intent i = getIntent();
-        mid = i.getIntExtra("mid", 0);
-        if (mid == 0) {
+        mid = (MessageID)i.getSerializableExtra("mid");
+        if (mid == null) {
             finish();
         }
 
+        messagesSource = (MessagesSource) i.getSerializableExtra("messageSource");
         setContentView(R.layout.thread);
         findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -146,7 +148,8 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         tf = new ThreadFragment(getLastCustomNonConfigurationInstance());
         Bundle args = new Bundle();
-        args.putInt("mid", mid);
+        args.putSerializable("mid", mid);
+        args.putSerializable("messageSource", messagesSource);
         args.putBoolean("scrollToBottom", i.getBooleanExtra("scrollToBottom", false));
         tf.setArguments(args);
         ft.add(R.id.threadfragment, tf);
@@ -202,17 +205,18 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean showNumbers = sp.getBoolean("showNumbers", false);
         if (showNumbers)
-            title += " - #" + message.MID;
+            title += " - "+message.getDisplayMessageNo();
         setTitle(title);
         DatabaseService.rememberVisited(message);
     }
     
-    public void onReplySelected(int newrid, String txt) {
-        rid = newrid;
+    public void onReplySelected(JuickMessage msg) {
+        selectedReply = msg;
+        rid = msg.getRID();
         if (rid > 0) {
             SpannableStringBuilder ssb = new SpannableStringBuilder();
             String inreplyto = getResources().getString(R.string.In_reply_to_) + " ";
-            ssb.append(inreplyto + txt);
+            ssb.append(inreplyto + msg.Text);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, inreplyto.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             tvReplyTo.setText(ssb);
             tvReplyTo.setVisibility(View.VISIBLE);
@@ -325,100 +329,45 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     }
 
     private void sendReplyMain(String msg) {
-        String msgnum = "#" + mid;
-        if (rid > 0) {
-            msgnum += "/" + rid;
-        }
-        final String body = msgnum + " " + msg;
-
         setFormEnabled(false);
-
-        if (attachmentUri == null) {
-            postText(body);
-        } else {
-            postMedia(body);
-        }
-    }
-
-    public void postText(final String body) {
-        Thread thr = new Thread(new Runnable() {
-            
-            public void run() {
-                try {
-                    final Utils.RESTResponse restResponse = Utils.postJSON(ThreadActivity.this, "http://api.juick.com/post", "body=" + URLEncoder.encode(body, "utf-8"));
-                    final String ret = restResponse.getResult();
-                    ThreadActivity.this.runOnUiThread(new Runnable() {
-                        
-                        public void run() {
-                            if (ret != null) {
-                                Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_SHORT).show();
-                                resetForm();
-                            } else {
-                                Toast.makeText(ThreadActivity.this, restResponse.getErrorText(), Toast.LENGTH_SHORT).show();
-                                setFormEnabled(true);
-                            }
+        mid.getMicroBlog().postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
+            @Override
+            public Void apply(String error) {
+                if (error == null) {
+                    resetForm();
+                    if (attachmentUri == null) {
+                        Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
+                    } else {
+                        NewMessageActivity.getPhotoCaptureFile().delete(); // if any
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
+                        builder.setNeutralButton(R.string.OK, null);
+                        builder.setIcon(android.R.drawable.ic_dialog_info);
+                        builder.setMessage(R.string.Message_posted);
+                        builder.show();
+                    }
+                } else {
+                    setFormEnabled(true);
+                    if (attachmentUri != null) {
+                        try {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
+                            builder.setNeutralButton(R.string.OK, null);
+                            builder.setIcon(android.R.drawable.ic_dialog_alert);
+                            builder.setMessage(error);
+                            builder.show();
+                        } catch (Exception e) {
+                            // activity must be dead already
                         }
-                    });
-                } catch (Exception e) {
-                    Log.e("postComment", e.toString());
+                    } else {
+
+                    }
                 }
-            }
-        },"Post comment");
-        thr.start();
-    }
-    
-    public void postMedia(final String body) {
-        progressDialog = new ProgressDialog(this);
-        progressDialogCancel.bool = false;
-        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            
-            public void onCancel(DialogInterface arg0) {
-                ThreadActivity.this.progressDialogCancel.bool = true;
+                return null;
             }
         });
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDialog.setMax(0);
-        progressDialog.show();
-        Thread thr = new Thread(new Runnable() {
-            
-            public void run() {
-                final Utils.RESTResponse res = NewMessageActivity.sendMessage(ThreadActivity.this, body, 0, 0, 0, 0, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
-                ThreadActivity.this.runOnUiThread(new Runnable() {
-                    
-                    public void run() {
-                        if (progressDialog != null && progressDialog.isShowing()) {
-                            progressDialog.dismiss();
-                        }
-                        setFormEnabled(true);
-                        if (res.getResult() != null) {
-                            resetForm();
-                        }
-                        if (res.getResult() != null && attachmentUri == null) {
-                            Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
-                        } else {
-                            NewMessageActivity.getPhotoCaptureFile().delete(); // if any
-                            try {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
-                                builder.setNeutralButton(R.string.OK, null);
-                                if (res.getResult() != null) {
-                                    builder.setIcon(android.R.drawable.ic_dialog_info);
-                                    builder.setMessage(R.string.Message_posted);
-                                } else {
-                                    builder.setIcon(android.R.drawable.ic_dialog_alert);
-                                    builder.setMessage(res.getErrorText());
-                                }
-                                builder.show();
-                            } catch (Exception e) {
-                                // activity must be dead already
-                            }
-                        }
-                    }
-                });
-            }
-        },"Post media");
-        thr.start();
     }
-    
+
+
+
     public void onClick(DialogInterface dialog, int which) {
         Intent intent;
         switch (which) {

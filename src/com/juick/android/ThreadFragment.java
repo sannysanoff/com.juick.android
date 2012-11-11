@@ -26,7 +26,8 @@ import android.view.*;
 import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import android.support.v4.app.ListFragment;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
@@ -35,13 +36,25 @@ import java.util.ArrayList;
  *
  * @author Ugnich Anton
  */
-public class ThreadFragment extends ListFragment implements AdapterView.OnItemClickListener, View.OnTouchListener, WsClientListener, XMPPMessageReceiver.MessageReceiverListener {
+public class ThreadFragment extends ListFragment implements AdapterView.OnItemClickListener, View.OnTouchListener, XMPPMessageReceiver.MessageReceiverListener {
+
+    public interface ThreadExternalUpdater {
+
+        void terminate();
+
+        interface Listener {
+            public void onNewMessages(ArrayList<JuickMessage> messages);
+        }
+
+        public void setListener(Listener listener);
+
+    }
 
     private ThreadFragmentListener parentActivity;
     private JuickMessagesAdapter listAdapter;
     private ScaleGestureDetector mScaleDetector = null;
-    private WsClient ws = null;
-    private int mid = 0;
+    private ThreadExternalUpdater ws = null;
+    private MessageID mid = null;
 
     Handler handler;
     private Object restoreData;
@@ -68,12 +81,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
     }
 
+    MessagesSource parentMessageSource;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
+        parentMessageSource = (MessagesSource) getArguments().getSerializable("messageSource");
+        parentMessageSource.setContext(getActivity());
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
         if (Build.VERSION.SDK_INT >= 8) {
@@ -121,9 +137,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         MainActivity.restyleChildrenOrWidget(view);
         Bundle args = getArguments();
         if (args != null) {
-            mid = args.getInt("mid", 0);
+            mid = (MessageID)args.getSerializable("mid");
         }
-        if (mid == 0) {
+        if (mid == null) {
             return;
         }
         large = (ProgressBar)view.findViewById(R.id.progress_bar);
@@ -136,23 +152,27 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         MessagesFragment.installDividerColor(getListView());
     }
 
-    private void initWebSocket() {
-        if (ws == null) {
-            ws = new WsClient();
-            ws.setListener(this);
-        }
-        final WsClient thisWs = ws;
-        Thread wsthr = new Thread(new Runnable() {
 
-            public void run() {
-                if (thisWs == ws) {
-                    if (ws.connect("api.juick.com", 8080, "/replies/" + mid, null) && ws != null) {
-                        ws.readLoop();
+    private void initWebSocket() {
+        if (ws != null) {
+            ws.terminate();
+            ws = null;
+
+        }
+        if (ws == null) {
+            ws = mid.getMicroBlog().getThreadExternalUpdater(getActivity(), mid);
+            if (ws != null) {
+                ws.setListener(new ThreadExternalUpdater.Listener() {
+                    @Override
+                    public void onNewMessages(ArrayList<JuickMessage> messages) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        onWebSocketMessages(messages);
                     }
-                }
+                });
             }
-        },"Websocket thread: mid="+mid);
-        wsthr.start();
+        }
     }
 
     public void reload() {
@@ -185,10 +205,20 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             return;
         }
         getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(new JuickMessageMenu(getActivity(), new JuickCompatibleURLMessagesSource(getActivity()), getListView(), listAdapter));
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Object itemAtPosition = parent.getItemAtPosition(position);
+                if (itemAtPosition instanceof JuickMessage) {
+                    JuickMessage msg = (JuickMessage)itemAtPosition;
+                    MessageMenu messageMenu = msg.getMicroBlog().getMessageMenu(getActivity(), parentMessageSource, getListView(), listAdapter);
+                    messageMenu.onItemLongClick(parent, view, position, id);
 
+                }
+                return true;
+            }
+        });
         notification = new ThreadMessagesLoadNotification(getActivity(), handler);
-        final JuickCompatibleURLMessagesSource juickSource = new JuickCompatibleURLMessagesSource(getActivity());
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
@@ -200,7 +230,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     }
                 };
                 if (restoreData == null) {
-                    juickSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                    parentMessageSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                         @Override
                         public Void apply(ArrayList<JuickMessage> messages) {
                             then.apply(new MessagesFragment.RetainedData(messages, null));
@@ -238,7 +268,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     if (listPosition == null && listAdapter.getCount() > 0) {
                         // probably transition from cached data to live data
                         listPosition = getListView().onSaveInstanceState();
-                        int addMarkOnComment = listAdapter.getCount()-2+1; // totalRecs-body-separator, 0-based (0=first comment)
+                        int addMarkOnComment = listAdapter.getCount() - 2 + 1; // totalRecs-body-separator, 0-based (0=first comment)
                         if (messages.size() > addMarkOnComment)
                             messages.get(addMarkOnComment).continuationInformation = getString(R.string.UnreadPeriodStart);
                         disableScrollToEnd = true;
@@ -285,7 +315,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                 @Override
                                 public void withService(DatabaseService service) {
-                                    service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size()-1, messages.get(0).Timestamp.getDate()));
+                                    service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size() - 1, messages.get(0).Timestamp.getDate()));
                                 }
 
                                 @Override
@@ -372,41 +402,34 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     private void doneWebSocket() {
         if (ws != null) {
-            ws.disconnect();
+            ws.terminate();
             ws = null;
         }
     }
 
-    public void onWebSocketTextFrame(final String jsonStr) {
-        if (!isAdded()) {
-            return;
-        }
-        if (jsonStr != null) {
-            JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(getActivity());
-            final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + jsonStr + "]");
-            getActivity().runOnUiThread(new Runnable() {
-                public void run() {
-                    if (sp.getBoolean("current_vibration_enabled", true))
-                        ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
-                    if (listAdapter.getCount() > 0) {
-                        listAdapter.addAllMessages(messages);
-                    }
-                    xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                        @Override
-                        public void withService(XMPPService service) {
-                            for (JuickMessage message : messages) {
-                                service.removeMessages(message.MID, false);
-                            }
-                        }
-                    });
-                    try {
-                        listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
-                    } catch (Throwable ex) {
-                        // web socket came earlier than body itself!
-                    }
+    private void onWebSocketMessages(final ArrayList<JuickMessage> messages) {
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                if (sp.getBoolean("current_vibration_enabled", true))
+                    ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
+                if (listAdapter.getCount() > 0) {
+                    listAdapter.addAllMessages(messages);
                 }
-            });
-        }
+                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                    @Override
+                    public void withService(XMPPService service) {
+                        for (JuickMessage message : messages) {
+                            service.removeMessages(message.getMID(), false);
+                        }
+                    }
+                });
+                try {
+                    listAdapter.getItem(1).Text = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 2) + ")";
+                } catch (Throwable ex) {
+                    // web socket came earlier than body itself!
+                }
+            }
+        });
     }
 
     public JuickMessage findReply(AdapterView<?> parent, int replyNo) {
@@ -414,7 +437,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             Object itemAtPosition = parent.getItemAtPosition(q);
             if (itemAtPosition instanceof JuickMessage) {
                 JuickMessage maybeReplied = (JuickMessage) itemAtPosition;
-                if (maybeReplied.RID == replyNo) {
+                if (maybeReplied.getRID() == replyNo) {
                     return  maybeReplied;
                 }
             }
@@ -424,7 +447,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
-        if (jmsg.replyTo != 0) {
+        if (jmsg.getReplyTo() != 0) {
             JuickMessage reply = jmsg;
             LinearLayout ll = new LinearLayout(getActivity());
             ll.setOrientation(LinearLayout.VERTICAL);
@@ -436,8 +459,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 TextView child = new TextView(getActivity());
                 ll.addView(child, 0);
                 child.setText(parsedMessage.textContent);
-                if (reply.replyTo < 1) break;
-                reply = findReply(parent, reply.replyTo);
+                if (reply.getReplyTo() < 1) break;
+                reply = findReply(parent, reply.getReplyTo());
             }
             if (ll.getChildCount() != 0) {
                 int xy[] = new int[2];
@@ -454,7 +477,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 result.show();
             }
         }
-        parentActivity.onReplySelected(jmsg.RID, jmsg.Text);
+        parentActivity.onReplySelected(jmsg);
     }
 
     public boolean onTouch(View view, MotionEvent event) {
@@ -468,7 +491,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
         public void onThreadLoaded(JuickMessage message);
 
-        public void onReplySelected(int rid, String txt);
+        public void onReplySelected(JuickMessage reply);
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {

@@ -40,9 +40,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
-import com.juick.android.datasource.MessagesSource;
-import com.juick.android.datasource.SavedMessagesSource;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.*;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickMessage;
 import com.juickadvanced.imaging.ExtractURLFromMessage;
@@ -62,7 +61,7 @@ import java.util.regex.Matcher;
 /**
  * @author Ugnich Anton
  */
-public class JuickMessageMenu implements OnItemLongClickListener, OnClickListener {
+public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
     Activity activity;
     JuickMessage listSelectedItem;
@@ -71,7 +70,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
     JuickMessagesAdapter listAdapter;
     private MessagesSource messagesSource;
 
-    public JuickMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
+    public MessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
         this.activity = activity;
         this.listView = listView;
         this.listAdapter = listAdapter;
@@ -147,36 +146,30 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 actionSubscribeUser();
             }
         });
-        if (UName.equalsIgnoreCase(Utils.getAccountName(activity.getApplicationContext()))) {
-            String midrid = ""+listSelectedItem.MID;
-            if (listSelectedItem.RID > 0)
-                midrid += "/"+listSelectedItem.RID;
-            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.DeleteMessage) + " #" + midrid) {
+        if (UName.equalsIgnoreCase(JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
+            maybeAddDeleteItem();
+        }
+        if (listSelectedItem.getRID() == 0) {
+            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " "+listSelectedItem.getDisplayMessageNo()) {
                 @Override
                 public void run() {
-                    actionDeleteMessage();
+                    actionSubscribeMessage();
+                }
+            });
+            menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " "+listSelectedItem.getDisplayMessageNo()) {
+                @Override
+                public void run() {
+                    actionUnsubscribeMessage();
                 }
             });
         }
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " #" + listSelectedItem.MID) {
-            @Override
-            public void run() {
-                actionSubscribeMessage();
-            }
-        });
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Unsubscribe_from) + " #" + listSelectedItem.MID) {
-            @Override
-            public void run() {
-                actionUnsubscribeMessage();
-            }
-        });
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Blacklist) + " @" + UName) {
             @Override
             public void run() {
                 actionBlacklistUser();
             }
         });
-        if (listSelectedItem.RID == 0) {
+        if (listSelectedItem.getRID() == 0) {
             menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Recommend_message)) {
                 @Override
                 public void run() {
@@ -211,12 +204,25 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         return true;
     }
 
+    protected void maybeAddDeleteItem() {
+        String midrid = ""+ getCurrentMID();
+        if (listSelectedItem.getRID() > 0)
+            midrid += "/"+ listSelectedItem.getRID();
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.DeleteMessage) + " #" + midrid) {
+            @Override
+            public void run() {
+                actionDeleteMessage();
+            }
+        });
+    }
+
     private void launchURL(String url) {
         if (url.startsWith("#")) {
             int mid = Integer.parseInt(url.substring(1));
             if (mid > 0) {
                 Intent intent = new Intent(activity, ThreadActivity.class);
                 intent.putExtra("mid", mid);
+                intent.putExtra("messageSource", messagesSource);
                 activity.startActivity(intent);
             }
             //} else if (url.startsWith("@")) {
@@ -309,14 +315,17 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 }
                 if (successes > 0) {
                     listSelectedItem.Text = sb.toString();
+                    listSelectedItem.parsedText = null;
                     listSelectedItem.translated = true;
-                    Parcelable parcelable = listView.onSaveInstanceState();
-                    listView.setAdapter(listAdapter);
-                    try {
-                        listView.onRestoreInstanceState(parcelable);
-                    } catch (Throwable e) {
-                        // bad luck
-                    }
+                    //Parcelable parcelable = listView.onSaveInstanceState();
+                    ListAdapter wrappedAdapter = ((WrapperListAdapter) listView.getAdapter()).getWrappedAdapter();
+                    ((BaseAdapter)wrappedAdapter).notifyDataSetChanged();
+//                    listView.setAdapter(listAdapter);
+//                    try {
+//                        listView.onRestoreInstanceState(parcelable);
+//                    } catch (Throwable e) {
+//                        // bad luck
+//                    }
                 } else {
                     Toast.makeText(activity, "Error translating..", Toast.LENGTH_LONG).show();
                 }
@@ -329,7 +338,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         confirmAction(R.string.ReallyRecommend, new Runnable() {
             @Override
             public void run() {
-                postMessage("! #" + listSelectedItem.MID, activity.getResources().getString(R.string.Recommended));
+                postMessage("! #" + getCurrentMID(), activity.getResources().getString(R.string.Recommended));
             }
         });
     }
@@ -347,7 +356,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         confirmAction(R.string.ReallyUnsubscribePost, new Runnable() {
             @Override
             public void run() {
-                postMessage("U #" + listSelectedItem.MID, activity.getResources().getString(R.string.Unsubscribed));
+                postMessage("U #" + getCurrentMID(), activity.getResources().getString(R.string.Unsubscribed));
             }
         });
     }
@@ -356,15 +365,15 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         confirmAction(R.string.ReallySubscribePost, new Runnable() {
             @Override
             public void run() {
-                postMessage("S #" + listSelectedItem.MID, activity.getResources().getString(R.string.Subscribed));
+                postMessage("S #" + getCurrentMID(), activity.getResources().getString(R.string.Subscribed));
             }
         });
     }
 
     private void actionDeleteMessage() {
-        String midrid = ""+listSelectedItem.MID;
-        if (listSelectedItem.RID > 0)
-            midrid += "/"+listSelectedItem.RID;
+        String midrid = ""+ getCurrentMID();
+        if (listSelectedItem.getRID() > 0)
+            midrid += "/"+ listSelectedItem.getRID();
         final String finalMidrid = midrid;
         confirmAction(R.string.ReallyDelete, new Runnable() {
             @Override
@@ -417,12 +426,14 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                     @Override
                     public void withService(DatabaseService service) {
                         service.unsaveMessage(listSelectedItem);
-                        for (int i = 0; i < listAdapter.getCount(); i++) {
-                            JuickMessage jm = listAdapter.getItem(i);
-                            if (jm.MID == listSelectedItem.MID) {
-                                listAdapter.remove(jm);
-                                listAdapter.notifyDataSetInvalidated();
-                                break;
+                        if (activity instanceof MainActivity) {
+                            for (int i = 0; i < listAdapter.getCount(); i++) {
+                                JuickMessage jm = listAdapter.getItem(i);
+                                if (jm.getMID().equals(listSelectedItem.getMID())) {
+                                    listAdapter.remove(jm);
+                                    listAdapter.notifyDataSetInvalidated();
+                                    break;
+                                }
                             }
                         }
                         Toast.makeText(activity, activity.getString(R.string.Message_unsaved), Toast.LENGTH_SHORT).show();
@@ -562,7 +573,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             TextView userNo = (TextView)dialogView.findViewById(R.id.user_no);
             TextView messageNo = (TextView)dialogView.findViewById(R.id.message_no);
             userNo.setText("@"+listSelectedItem.User.UName);
-            messageNo.setText("#"+listSelectedItem.MID);
+            messageNo.setText(listSelectedItem.getDisplayMessageNo());
             Spinner openUrl = (Spinner)dialogView.findViewById(R.id.open_url);
             Button singleURL = (Button)dialogView.findViewById(R.id.single_url);
             if (urls != null && urls.size() == 1) {
@@ -649,7 +660,13 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
             View userBlog = dialogView.findViewById(R.id.user_blog);
             View userStats = dialogView.findViewById(R.id.user_stats);
             View openMessageInBrowser = dialogView.findViewById(R.id.open_message_in_browser);
-            if (UName.equalsIgnoreCase(Utils.getAccountName(activity.getApplicationContext()))) {
+
+            unsubscribeMessage.setEnabled (listSelectedItem.getRID() == 0);
+            subscribeMessage.setEnabled (listSelectedItem.getRID() == 0);
+            unsaveMessage.setEnabled(listSelectedItem.getRID() == 0);
+            recommendMessage.setEnabled(listSelectedItem.getRID() == 0);
+
+            if (UName.equalsIgnoreCase(JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
                 recommendMessage.setVisibility(View.GONE);
             } else {
                 deleteMessage.setVisibility(View.GONE);
@@ -712,7 +729,7 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
                 @Override
                 public void onClick(View v) {
                     alertDialog.dismiss();
-                    actionUnsaveMessage();
+                    actionUnsubscribeMessage();
                 }
             });
             translateMessage.setOnClickListener(new View.OnClickListener() {
@@ -769,12 +786,35 @@ public class JuickMessageMenu implements OnItemLongClickListener, OnClickListene
         }
     }
 
+    private int getCurrentMID() {
+        return ((JuickMessageID)listSelectedItem.getMID()).getMid();
+    }
+
     protected void completeInitDialogMode(AlertDialog alertDialog, View dialogView) {
 
     }
 
-    private void actionOpenMessageInBrowser() {
-        launchURL("http://www.juick.com/"+listSelectedItem.MID);
+    protected void actionOpenMessageInBrowser() {
+        JuickMessageID mid = (JuickMessageID)listSelectedItem.getMID();
+        int rid = listSelectedItem.getRID();
+        String author = null;
+        if (rid == 0) {
+            author = listSelectedItem.User.UName;
+        } else {
+            if (activity instanceof ThreadActivity) {
+                JuickMessage item = listAdapter.getItem(0);
+                author = item.User.UName;
+            }
+        }
+        String url = "http://www.juick.com/";
+        if (author != null) {
+            url += author+"/";
+        }
+        url += mid.getMid();
+        if (rid != 0) {
+            url += "#"+rid;
+        }
+        launchURL(url);
     }
 
     private void actionUserStats() {

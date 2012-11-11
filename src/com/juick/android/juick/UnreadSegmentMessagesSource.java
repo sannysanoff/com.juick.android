@@ -1,4 +1,4 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
 import android.content.SharedPreferences;

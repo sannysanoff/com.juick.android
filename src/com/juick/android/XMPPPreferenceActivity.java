@@ -104,7 +104,11 @@ public class XMPPPreferenceActivity extends Activity {
         setContentView(R.layout.xmpp_setup);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         String oldConfig = sp.getString("xmpp_config", "");
-        value = gson.fromJson(oldConfig, Value.class);
+        if (oldConfig.length() != 0) {
+            value = gson.fromJson(oldConfig, Value.class);
+        } else {
+            value = new Value("someone@jabber.org","",5222, 50, "JuickAdvanced","",true);
+        }
         View view = getWindow().getDecorView();
         final Spinner templates = (Spinner) view.findViewById(R.id.template_selection);
         final TextView jid = (TextView) view.findViewById(R.id.jid);

@@ -22,7 +22,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 

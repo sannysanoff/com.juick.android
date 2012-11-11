@@ -37,18 +37,17 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.*;
+import com.juick.android.juick.JuickMicroBlog;
+import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 import de.quist.app.errorreporter.ExceptionReporter;
@@ -94,6 +93,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             }
         }
     };
+    MessagesSource messagesSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +104,8 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         setContentView(R.layout.newmessage);
+
+        messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
 
         etTo = (EditText) findViewById(R.id.editTo);
         etMessage = (EditText) findViewById(R.id.editMessage);
@@ -121,52 +123,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         bSend.setOnClickListener(this);
 
         resetForm();
-        /*
-        if (savedInstanceState!=null) {
-        if (savedInstanceState.containsKey("msg")) {
-        etMessage.setText(savedInstanceState.getString("msg"));
-        }
-        pid = savedInstanceState.getInt("pid", 0);
-        pname = savedInstanceState.getString("pname");
-        lat = savedInstanceState.getDouble("lat", 0);
-        lon = savedInstanceState.getDouble("lon", 0);
-        attachmentUri = savedInstanceState.getString("auri");
-        attachmentMime = savedInstanceState.getString("amime");
-        if (pid > 0 && pname != null) {
-        tvLocation.setText(getResources().getString(R.string.label_location) + " " + pname);
-        tvLocation.setVisibility(View.VISIBLE);
-        }
-        if (attachmentUri != null && attachmentMime != null) {
-        tvAttachment.setText(attachmentMime.equals("image/jpeg") ? R.string.attachment_photo : R.string.attachment_video);
-        tvAttachment.setVisibility(View.VISIBLE);
-        }
-        }
-         */
         handleIntent(getIntent());
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
-    /*
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    if (etMessage.getText().toString().length() > 0) {
-    outState.putString("msg", etMessage.getText().toString());
-    }
-    if (pid > 0 && pname != null) {
-    outState.putInt("pid", pid);
-    outState.putString("pname", tvLocation.getText().toString());
-    }
-    if (lat != 0 && lon != 0 && pname != null) {
-    outState.putDouble("lat", lat);
-    outState.putDouble("lon", lon);
-    outState.putString("pname", tvLocation.getText().toString());
-    }
-    if (attachmentUri != null && attachmentMime != null) {
-    outState.putString("auri", attachmentUri);
-    outState.putString("amime", attachmentMime);
-    }
-    }
-     */
 
     private void resetForm() {
         setProgressBarIndeterminateVisibility(true);
@@ -251,7 +210,15 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         String action = i.getAction();
         if (action != null && action.equals(Intent.ACTION_SEND)) {
             String mime = i.getType();
-            Bundle extras = i.getExtras();
+            final Bundle extras = i.getExtras();
+            if (mime.equals("image/*")) {
+                Object extraStream = extras.get(Intent.EXTRA_STREAM);
+                if (extraStream != null && (extraStream.toString().toLowerCase().endsWith(".jpg") || extraStream.toString().toLowerCase().endsWith(".jpeg"))) {
+                    mime = "image/jpeg";
+                } else {
+                    Toast.makeText(this, "Cannot prove file is jpeg: "+extraStream, Toast.LENGTH_LONG).show();
+                }
+            }
             if (mime.equals("text/plain")) {
                 etMessage.append(extras.getString(Intent.EXTRA_TEXT));
             } else if (mime.equals("image/jpeg") || mime.equals("video/3gpp") || mime.equals("video/mp4")) {
@@ -269,14 +236,46 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     });
                 }
             } else {
-                Toast.makeText(this, getString(R.string.JuickBadMimetype), Toast.LENGTH_LONG).show();
+                new AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.ForcedAttachment))
+                        .setMessage(String.format(getString(R.string.JuickBadMimetype)+" - "+extras.get(Intent.EXTRA_STREAM), mime))
+                        .setPositiveButton(getString(R.string.AsJPEG), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
+                                attachmentMime = "image/jpeg";
+                                bAttachment.setSelected(true);
+                                maybeResizePicture(NewMessageActivity.this, attachmentUri, new Utils.Function<Void, String>() {
+                                    @Override
+                                    public Void apply(String s) {
+                                        attachmentUri = s;
+                                        bAttachment.setSelected(attachmentUri != null);
+                                        return null;
+                                    }
+                                });
+                            }
+                        })
+                        .setNeutralButton(getString(R.string.AsMP4Video), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
+                                attachmentMime = "video/mp4";
+                                bAttachment.setSelected(true);
+                            }
+                        })
+                        .setCancelable(true)
+                        .setNegativeButton(R.string.DontAttach, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        }).show();
             }
         }
     }
 
     public void onClick(View v) {
         if (v == bTags) {
-            MainActivity.withUserId(this, new Utils.Function<Void, Integer>() {
+            JuickMicroBlog.withUserId(this, new Utils.Function<Void, Integer>() {
                 @Override
                 public Void apply(Integer uid) {
                     Intent i = new Intent(NewMessageActivity.this, TagsActivity.class);
@@ -341,10 +340,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    final Utils.RESTResponse res = sendMessage(NewMessageActivity.this, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
-                    NewMessageActivity.this.runOnUiThread(new Runnable() {
-
-                        public void run() {
+                    messagesSource.getMicroBlog().postNewMessage(NewMessageActivity.this, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel, new Utils.Function<Void, String>() {
+                        @Override
+                        public Void apply(String errorText) {
                             if (progressDialog != null) {
                                 try {
                                     progressDialog.dismiss();
@@ -353,138 +351,34 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 }
                             }
                             setFormEnabled(true);
-                            if (res.getResult() != null) {
+                            if (errorText == null) {
                                 resetForm();
-                            }
-                            if (res.getResult() != null && attachmentUri == null) {
-                                Toast.makeText(NewMessageActivity.this, res.getResult() != null ? getString(R.string.Message_posted) : res.getErrorText(), Toast.LENGTH_LONG).show();
                                 getPhotoCaptureFile().delete(); // if any
+                            }
+                            if (attachmentUri == null) {
+                                Toast.makeText(NewMessageActivity.this, errorText == null ? getString(R.string.Message_posted) : errorText, Toast.LENGTH_LONG).show();
                             } else {
                                 try {
                                     AlertDialog.Builder builder = new AlertDialog.Builder(NewMessageActivity.this);
                                     builder.setNeutralButton(R.string.OK, null);
-                                    if (res.getResult() != null) {
+                                    if (errorText == null) {
                                         builder.setIcon(android.R.drawable.ic_dialog_info);
                                         builder.setMessage(R.string.Message_posted);
                                     } else {
                                         builder.setIcon(android.R.drawable.ic_dialog_alert);
-                                        builder.setMessage(res.getErrorText());
+                                        builder.setMessage(errorText);
                                     }
                                     builder.show();
                                 } catch (WindowManager.BadTokenException e) {
                                     // window is not active
                                 }
                             }
+                            return null;
                         }
                     });
                 }
             },"Post message (large)");
             thr.start();
-        }
-    }
-
-    public static Utils.RESTResponse sendMessage(final Context context, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, final ProgressDialog progressDialog, Handler progressHandler, BooleanReference progressDialogCancel) {
-        try {
-            final String end = "\r\n";
-            final String twoHyphens = "--";
-            final String boundary = "****+++++******+++++++********";
-
-            URL apiUrl = new URL("http://api.juick.com/post");
-            final HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
-            conn.setConnectTimeout(10000);
-            conn.setDoOutput(true);
-            conn.setUseCaches(false);
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Connection", "Keep-Alive");
-            conn.setRequestProperty("Charset", "UTF-8");
-            conn.setRequestProperty("Authorization", Utils.getBasicAuthString(context.getApplicationContext()));
-            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-
-            String outStr = twoHyphens + boundary + end;
-            outStr += "Content-Disposition: form-data; name=\"body\"" + end + end + txt + end;
-
-            if (pid > 0) {
-                outStr += twoHyphens + boundary + end;
-                outStr += "Content-Disposition: form-data; name=\"place_id\"" + end + end + pid + end;
-            }
-            if (lat != 0 && lon != 0) {
-                outStr += twoHyphens + boundary + end;
-                outStr += "Content-Disposition: form-data; name=\"lat\"" + end + end + String.valueOf(lat) + end;
-                outStr += twoHyphens + boundary + end;
-                outStr += "Content-Disposition: form-data; name=\"lon\"" + end + end + String.valueOf(lon) + end;
-                if (acc > 0) {
-                    outStr += twoHyphens + boundary + end;
-                    outStr += "Content-Disposition: form-data; name=\"acc\"" + end + end + String.valueOf(acc) + end;
-                }
-            }
-
-            if (attachmentUri != null && attachmentUri.length() > 0 && attachmentMime != null) {
-                String fname = "file." + (attachmentMime.equals("image/jpeg") ? "jpg" : "3gp");
-                outStr += twoHyphens + boundary + end;
-                outStr += "Content-Disposition: form-data; name=\"attach\"; filename=\"" + fname + "\"" + end + end;
-            }
-            byte outStrB[] = outStr.getBytes("utf-8");
-
-            String outStrEnd = twoHyphens + boundary + twoHyphens + end;
-            byte outStrEndB[] = outStrEnd.getBytes();
-
-            int size = outStrB.length + outStrEndB.length;
-
-            FileInputStream fileInput = null;
-            if (attachmentUri != null && attachmentUri.length() > 0) {
-                fileInput = context.getContentResolver().openAssetFileDescriptor(Uri.parse(attachmentUri), "r").createInputStream();
-                size += fileInput.available();
-                size += 2; // \r\n (end)
-            }
-
-            if (progressDialog != null) {
-                final int fsize = size;
-                progressHandler.sendEmptyMessage(fsize);
-            }
-
-            conn.setFixedLengthStreamingMode(size);
-            conn.connect();
-            OutputStream out = conn.getOutputStream();
-            out.write(outStrB);
-
-            if (attachmentUri != null && attachmentUri.length() > 0 && fileInput != null) {
-                byte[] buffer = new byte[4096];
-                int length = -1;
-                int total = 0;
-                int totallast = 0;
-                while ((length = fileInput.read(buffer, 0, 4096)) != -1 && progressDialogCancel.bool == false) {
-                    out.write(buffer, 0, length);
-                    total += length;
-                    if (((int) (total / 102400)) != totallast) {
-                        totallast = (int) (total / 102400);
-                        progressHandler.sendEmptyMessage(total);
-                    }
-                }
-                if (progressDialogCancel.bool == false) {
-                    out.write(end.getBytes());
-                }
-                fileInput.close();
-                progressHandler.sendEmptyMessage(size);
-            }
-            if (progressDialogCancel.bool == false) {
-                out.write(outStrEndB);
-                out.flush();
-            }
-            out.close();
-
-            if (progressDialogCancel.bool) {
-                return new Utils.RESTResponse("Cancelled", false, null);
-            } else {
-                boolean b = conn.getResponseCode() == 200;
-                if (!b) {
-                    return new Utils.RESTResponse("HTTP "+conn.getResponseCode()+": "+conn.getResponseMessage(), false, null);
-                } else {
-                    return new Utils.RESTResponse(null, false, "OK");
-                }
-            }
-        } catch (final Exception e) {
-            Log.e("sendOpinion", e.toString());
-            return new Utils.RESTResponse(e.toString(), false, null);
         }
     }
 
@@ -701,29 +595,37 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                         bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
                                         fos.close();
 
-                                        new AlertDialog.Builder(parent)
-                                        .setTitle(parent.getString(R.string.ScaleResult))
-                                        .setMessage(parent.getString(R.string.NewSize__) + " " + bitmap.getWidth() + " x " + bitmap.getHeight() + " "  + parent.getString(R.string.FileSize_) + " "+outFile.length() / 1024 + " KB")
-                                        .setIcon(new BitmapDrawable(bitmap))
-                                        .setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                dialog.cancel();
-                                            }
-                                        })
-                                        .setPositiveButton(parent.getString(R.string.Finish), new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                function.apply(Uri.fromFile(outFile).toString());
-                                            }
-                                        })
-                                        .setNeutralButton(parent.getString(R.string.TryOther), new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                maybeResizePicture(parent, attachmentUri, function);
-                                            }
-                                        })
-                                        .show();
+                                        Bitmap displayBitmap = bitmap;
+                                        if (displayBitmap.getWidth() > 256) {
+                                            double scale = 256.0/displayBitmap.getWidth();
+                                            displayBitmap = Bitmap.createScaledBitmap(bitmap, (int)(scale * displayBitmap.getWidth()), (int)(scale * displayBitmap.getHeight()), false);
+                                        }
+
+                                        BitmapDrawable icon = new BitmapDrawable(displayBitmap);
+                                        AlertDialog alertDialog = new AlertDialog.Builder(parent)
+                                                .setTitle(parent.getString(R.string.ScaleResult))
+                                                .setMessage(parent.getString(R.string.NewSize__) + " " + bitmap.getWidth() + " x " + bitmap.getHeight() + " " + parent.getString(R.string.FileSize_) + " " + outFile.length() / 1024 + " KB")
+                                                .setIcon(icon)
+                                                .setNegativeButton(parent.getString(R.string.KeepOrigSize), new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        dialog.cancel();
+                                                    }
+                                                })
+                                                .setPositiveButton(parent.getString(R.string.Finish), new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        function.apply(Uri.fromFile(outFile).toString());
+                                                    }
+                                                })
+                                                .setNeutralButton(parent.getString(R.string.TryOther), new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        maybeResizePicture(parent, attachmentUri, function);
+                                                    }
+                                                })
+                                                .create();
+                                        alertDialog.show();
                                     } catch (IOException e) {
                                         Toast.makeText(parent, "Error: "+e.toString(), Toast.LENGTH_LONG).show();
                                         return;

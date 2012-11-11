@@ -1,11 +1,13 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
+import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.MessageID;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,8 +21,8 @@ import java.util.ArrayList;
  */
 public abstract  class MessagesSource implements Serializable {
 
-    transient Context ctx;
-    transient SharedPreferences sp;
+    protected transient Context ctx;
+    protected transient SharedPreferences sp;
 
     public MessagesSource(Context ctx) {
         setContext(ctx);
@@ -33,7 +35,7 @@ public abstract  class MessagesSource implements Serializable {
 
     public abstract boolean supportsBackwardRefresh();
 
-    public void rememberSavedPosition(int mid) {
+    public void rememberSavedPosition(MessageID mid) {
 
     }
 
@@ -50,7 +52,7 @@ public abstract  class MessagesSource implements Serializable {
     };
 
 
-    public abstract void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
+    public abstract void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
 
     public abstract CharSequence getTitle();
 
@@ -58,7 +60,6 @@ public abstract  class MessagesSource implements Serializable {
         return "other";
     }
 
-    public Bitmap getUserpic(int id, int size) {
-        return null;
-    }
+    public abstract MicroBlog getMicroBlog();
+
 }

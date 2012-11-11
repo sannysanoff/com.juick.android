@@ -35,8 +35,10 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
-import com.juick.android.datasource.MessagesSource;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickMessageID;
+import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
 
@@ -76,7 +78,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     Handler handler;
     private Object restoreData;
     boolean implicitlyCreated;
-    private int topMessageId = -1;
+    private MessageID topMessageId = null;
     boolean allMessages = false;
 
     Utils.ServiceGetter<DatabaseService> databaseGetter;
@@ -193,7 +195,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshOriginalTopPadding = mRefreshView.getPaddingTop();
         mRefreshState = TAP_TO_REFRESH;
 
-        ListView listView = getListView();
+        final ListView listView = getListView();
         installDividerColor(listView);
 
 
@@ -201,7 +203,19 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listView.setOnTouchListener(this);
         listView.setOnScrollListener(this);
         listView.setOnItemClickListener(this);
-        listView.setOnItemLongClickListener(new JuickMessageMenu(getActivity(), messagesSource, listView, listAdapter));
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Object itemAtPosition = parent.getItemAtPosition(position);
+                if (itemAtPosition instanceof JuickMessage) {
+                    JuickMessage msg = (JuickMessage)itemAtPosition;
+                    MessageMenu messageMenu = msg.getMicroBlog().getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
+                    messageMenu.onItemLongClick(parent, view, position, id);
+
+                }
+                return true;
+            }
+        });
         listView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -214,6 +228,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         });
         init();
+    }
+
+    private MessageMenu openMessageMenu(ListView listView) {
+        return messagesSource.getMicroBlog().getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
     }
 
     public static void installDividerColor(ListView listView) {
@@ -242,8 +260,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         Log.w("com.juick.advanced", "getFirst: before filter");
                         final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
                         Log.w("com.juick.advanced","getFirst: after filter");
-                        for (JuickMessage juickMessage : messages) {
-                            juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
+                        if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
+                            for (JuickMessage juickMessage : messages) {
+                                juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
+                            }
                         }
                         final Parcelable listPosition = mespos.viewState;
                         if (isAdded()) {
@@ -273,9 +293,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                                         getListView().addFooterView(viewLoading, null, false);
                                                         Log.w("com.juick.advanced","getFirst: added footer");
                                                     }
-                                                    topMessageId = messages.get(0).MID;
+                                                    topMessageId = messages.get(0).getMID();
                                                 } else {
-                                                    topMessageId = -1;
+                                                    topMessageId = null;
                                                 }
 
                                                 if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
@@ -427,8 +447,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         @Override
                         public Void apply(ArrayList<JuickMessage> messages) {
                             final ArrayList<JuickMessage> messagesFiltered = filterMessages(messages);
-                            for (JuickMessage juickMessage : messagesFiltered) {
-                                juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(activity, juickMessage, false);
+                            if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
+                                for (JuickMessage juickMessage : messagesFiltered) {
+                                    juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(activity, juickMessage, false);
+                                }
                             }
                             activity.runOnUiThread(new Runnable() {
 
@@ -460,7 +482,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 iterator.remove();
                 continue;
             }
-            if (message.RID == 0) {
+            if (message.getRID() == 0) {
                 // don't check comments
                 if (XMPPService.getAnyJuboMessageFilter() != null) {
                     if (!XMPPService.getAnyJuboMessageFilter().allowMessage(message)) {
@@ -483,7 +505,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
         Intent i = new Intent(getActivity(), ThreadActivity.class);
-        i.putExtra("mid", jmsg.MID);
+        i.putExtra("mid", jmsg.getMID());
+        i.putExtra("messageSource", messagesSource);
         startActivity(i);
     }
 
@@ -496,7 +519,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     @Override
     public void onStop() {
-        if (topMessageId != -1) {
+        if (topMessageId != null) {
             messagesSource.rememberSavedPosition(topMessageId);
         }
         super.onStop();
@@ -517,7 +540,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             if (firstVisibleItem != 0) {
                 ListAdapter listAdapter = getListAdapter();
                 jm = (JuickMessage)listAdapter.getItem(firstVisibleItem-1);
-                topMessageId = jm.MID;
+                topMessageId = jm.getMID();
                 if (firstVisibleItem > 1 && trackLastRead) {
                     final int itemToReport = firstVisibleItem - 1;
                     if (lastItemReported < itemToReport) {
@@ -528,7 +551,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                     @Override
                                     public void withService(DatabaseService service) {
-                                        service.markAsRead(new DatabaseService.ReadMarker(item.MID, item.replies, item.Timestamp.getTime()));
+                                        service.markAsRead(new DatabaseService.ReadMarker(item.getMID(), item.replies, item.Timestamp.getTime()));
                                     }
 
                                 });
@@ -539,7 +562,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             } else {
                 jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem);
-                topMessageId = jm.MID+1;    // open/closed interval
+                if (topMessageId instanceof JuickMessageID) {
+                    ((JuickMessageID)topMessageId).getNextMid(); // open/closed interval
+                } else {
+                    topMessageId = jm.getMID(); // dunno here
+                }
             }
         } catch (Exception ex) {}
 
@@ -705,7 +732,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     public void clearSavedPosition(Context context) {
-        topMessageId = -1;
+        topMessageId = null;
         messagesSource.resetSavedPosition();
     }
 

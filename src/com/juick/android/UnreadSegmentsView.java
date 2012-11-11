@@ -1,9 +1,6 @@
 package com.juick.android;
 
-import android.R;
 import android.app.Activity;
-import android.content.Context;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
@@ -41,7 +38,7 @@ public class UnreadSegmentsView extends ListView {
                 new Thread("Calculating periods") {
                     @Override
                     public void run() {
-                        final ArrayList<DatabaseService.Period> periods = service.getPeriods(10);
+                        final ArrayList<DatabaseService.Period> periods = service.getJuickPeriods(10);
                         activity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {

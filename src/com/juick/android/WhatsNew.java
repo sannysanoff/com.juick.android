@@ -2,16 +2,15 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.RadioButton;
 import android.widget.Toast;
 import com.google.gson.JsonObject;
+import com.juick.android.ja.Network;
 import com.juickadvanced.R;
 
 /**
@@ -70,7 +69,7 @@ public class WhatsNew {
                             new Thread() {
                                 @Override
                                 public void run() {
-                                    Utils.postJSONHome(service, "/E_RPusage_report_handler", jo.toString());
+                                    Network.postJSONHome(service, "/E_RPusage_report_handler", jo.toString());
                                 }
 
                             }.start();
@@ -300,7 +299,7 @@ public class WhatsNew {
                     @Override
                     public void run() {
                         String usageReport = jsonObject.toString();
-                        if ("OK".equals(Utils.postJSONHome(service, "/usage_report_handler", usageReport))) {
+                        if ("OK".equals(Network.postJSONHome(service, "/usage_report_handler", usageReport))) {
                             databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                 @Override
                                 public void withService(DatabaseService service) {

@@ -25,8 +25,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.view.MenuInflater;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
-import com.juick.android.datasource.MessagesSource;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
 

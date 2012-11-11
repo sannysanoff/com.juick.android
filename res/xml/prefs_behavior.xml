@@ -60,4 +60,18 @@
             android:persistent="true"/>
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Debug/Tuning">
+        <CheckBoxPreference
+            android:key="dontWatchPreferences"
+            android:title="Ignore prefs change in main"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="dontKeepParsed"
+            android:title="Dont keep parsed messages"
+            android:summary="Saves memory at expense of smoothness"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
+
 </PreferenceScreen>

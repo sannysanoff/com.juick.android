@@ -1,6 +1,5 @@
 package com.juick.android;
 
-import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.net.Uri;
@@ -10,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;

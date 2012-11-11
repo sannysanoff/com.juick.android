@@ -1,4 +1,4 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
 import android.util.Log;
@@ -6,6 +6,7 @@ import com.juick.android.DatabaseService;
 import com.juick.android.URLParser;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.MessageID;
 import com.juickadvanced.R;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -80,7 +81,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
         ArrayList<JuickMessage> messages = parseAndProcess(jsonStr);
         if (messages.size() > 0) {
             JuickMessage juickMessage = messages.get(messages.size() - 1);
-            lastRetrievedMID = juickMessage.MID;
+            lastRetrievedMID = ((JuickMessageID)juickMessage.getMID()).getMid();
         }
         cont.apply(messages);
     }
@@ -121,7 +122,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
-                    JuickMessage msg = JuickMessage.initFromJSON(jsonObject);
+                    JuickMessage msg = initFromJSON(jsonObject);
                     msg.messagesSource = this;
                     messages.add(msg);
                     if (!storeSource)
@@ -135,7 +136,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     }
 
     @Override
-    public void getChildren(final int mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public void getChildren(final MessageID mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         final boolean retrieved[] = new boolean[1]; // concurrency indicator
 
         boolean messageDB = sp.getBoolean("enableMessageDB", false);
@@ -179,7 +180,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
             });
         }
         // get from original location
-        final String jsonStr = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + mid, notifications).getResult();
+        final String jsonStr = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + ((JuickMessageID)mid).getMid(), notifications).getResult();
         retrieved[0] = true;
         final ArrayList<JuickMessage> stuff = parseJSONpure(jsonStr, messageDB);
         if (messageDB) {

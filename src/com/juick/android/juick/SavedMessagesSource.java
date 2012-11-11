@@ -1,16 +1,12 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.util.Log;
 import com.juick.android.DatabaseService;
-import com.juick.android.URLParser;
+import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.MessageID;
 import com.juickadvanced.R;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -35,7 +31,7 @@ public class SavedMessagesSource extends MessagesSource {
     }
 
     @Override
-    public void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
     }
 
@@ -81,6 +77,11 @@ public class SavedMessagesSource extends MessagesSource {
     @Override
     public String getKind() {
         return "saved_messages";
+    }
+
+    @Override
+    public MicroBlog getMicroBlog() {
+        return null;
     }
 
     @Override

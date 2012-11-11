@@ -21,25 +21,52 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+
+import android.content.Context;
+import com.juick.android.api.JuickMessage;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickMessageID;
 import org.apache.http.util.ByteArrayBuffer;
 
 /**
  *
  * @author Ugnich Anton
  */
-public class WsClient {
+public class WsClient implements ThreadFragment.ThreadExternalUpdater {
 
     static final byte keepAlive[] = {(byte) 0x00, (byte) 0x20, (byte) 0xFF};
     Socket sock;
     InputStream is;
     OutputStream os;
-    WsClientListener listener = null;
+    Listener listener;
+    Context ctx;
+    JuickMessageID mid;
+    boolean terminated;
 
-    public WsClient() {
+    @Override
+    public void terminate() {
+        terminated = true;
     }
 
-    public void setListener(WsClientListener listener) {
+    @Override
+    public void setListener(Listener listener) {
         this.listener = listener;
+    }
+
+    public WsClient(Context context, final JuickMessageID mid) {
+        this.ctx = context;
+        Thread wsthr = new Thread(new Runnable() {
+
+            public void run() {
+                while (!terminated) {
+                    if (connect("api.juick.com", 8080, "/replies/" + mid.getMid(), null)) {
+                        readLoop();
+                    }
+                }
+            }
+        },"Websocket thread: mid="+mid);
+        wsthr.start();
     }
 
     public boolean connect(String host, int port, String location, String headers) {
@@ -106,7 +133,10 @@ public class WsClient {
                     flagInside = true;
                 } else if (b == 0xFF && flagInside) {
                     if (listener != null) {
-                        listener.onWebSocketTextFrame(new String(buf.toByteArray(), "utf-8"));
+                        String incomingData = new String(buf.toByteArray(), "utf-8");
+                        JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx);
+                        final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + incomingData + "]");
+                        listener.onNewMessages(messages);
                     }
                     flagInside = false;
                 } else if (flagInside) {

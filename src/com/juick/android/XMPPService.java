@@ -10,6 +10,8 @@ import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.MessageID;
+import com.juick.android.juick.JuickMessageID;
 import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
@@ -37,7 +39,7 @@ public class XMPPService extends Service {
     int messagesReceived = 0;
     public boolean botOnline;
     public boolean juboOnline;
-    static HashMap<Integer, JuickIncomingMessage> cachedTopicStarters = new HashMap<Integer, XMPPService.JuickIncomingMessage>();
+    static HashMap<MessageID, JuickIncomingMessage> cachedTopicStarters = new HashMap<MessageID, XMPPService.JuickIncomingMessage>();
     public String juboRSS;
     public String juboRSSError;
     public static JuboMessageFilter juboMessageFilter;
@@ -582,7 +584,7 @@ public class XMPPService extends Service {
             maybeCancelNotification();
     }
 
-    public void removeMessages(int mid, boolean keepReplyNotifications) {
+    public void removeMessages(MessageID mid, boolean keepReplyNotifications) {
         boolean changed = false;
         synchronized (incomingMessages) {
             Iterator<IncomingMessage> iterator = incomingMessages.iterator();
@@ -590,7 +592,7 @@ public class XMPPService extends Service {
                 IncomingMessage next = iterator.next();
                 if (next instanceof JuickIncomingMessage) {
                     JuickIncomingMessage jim = (JuickIncomingMessage) next;
-                    if (jim.getMID() == mid) {
+                    if (jim.getMID().equals(mid)) {
                         if (keepReplyNotifications && jim instanceof JuickThreadIncomingMessage) {
                             continue;
                         }
@@ -634,9 +636,9 @@ public class XMPPService extends Service {
         maybeCancelNotification();
     }
 
-    public void requestMessageBody(int finalTopicMessageId) {
+    public void requestMessageBody(MessageID finalTopicMessageId) {
         try {
-            if (juickChat != null) juickChat.sendMessage("#" + finalTopicMessageId);
+            if (juickChat != null) juickChat.sendMessage("#" + ((JuickMessageID)finalTopicMessageId).getMid());
         } catch (XMPPException e) {
             Toast.makeText(this, "requestMessageBody: " + e.toString(), Toast.LENGTH_LONG).show();
         }
@@ -680,10 +682,12 @@ public class XMPPService extends Service {
         protected String from;
         String body;
         String id;
+        Date datetime;
 
-        IncomingMessage(String from, String body) {
+        IncomingMessage(String from, String body, Date datetime) {
             this.from = from;
             this.body = body;
+            this.datetime = datetime;
             synchronized (IncomingMessage.class) {
                 this.id = System.currentTimeMillis() + "_" + (message_seq++);
             }
@@ -723,11 +727,11 @@ public class XMPPService extends Service {
     }
 
     public static abstract class JuickIncomingMessage extends IncomingMessage {
-        String messageNo;
+        String messageNoPlain;
 
-        public JuickIncomingMessage(String from, String body, String messageNo) {
-            super(from, body);
-            this.messageNo = messageNo;
+        public JuickIncomingMessage(String from, String body, String messageNoPlain, Date date) {
+            super(from, body, date);
+            this.messageNoPlain = messageNoPlain;
         }
 
         public String getFrom() {
@@ -735,22 +739,22 @@ public class XMPPService extends Service {
             return "@" + from;
         }
 
-        public int getMID() {
+        public JuickMessageID getMID() {
             try {
-                int ix = messageNo.indexOf("/");
-                if (ix == -1) return Integer.parseInt(messageNo.substring(1));
-                int ix2 = messageNo.indexOf("#");   // -1 not found
-                return Integer.parseInt(messageNo.substring(ix2 + 1, ix));
+                int ix = messageNoPlain.indexOf("/");
+                if (ix == -1) return new JuickMessageID(Integer.parseInt(messageNoPlain.substring(1)));
+                int ix2 = messageNoPlain.indexOf("#");   // -1 not found
+                return new JuickMessageID(Integer.parseInt(messageNoPlain.substring(ix2 + 1, ix)));
             } catch (NumberFormatException e) {
-                return -1;
+                return null;
             }
         }
 
         public int getRID() {
             try {
-                int ix = messageNo.indexOf("/");
+                int ix = messageNoPlain.indexOf("/");
                 if (ix == -1) return 0;
-                return Integer.parseInt(messageNo.substring(ix + 1));
+                return Integer.parseInt(messageNoPlain.substring(ix + 1));
             } catch (NumberFormatException e) {
                 return -1;
             }
@@ -758,8 +762,8 @@ public class XMPPService extends Service {
     }
 
     public static class JuickPrivateIncomingMessage extends JuickIncomingMessage {
-        public JuickPrivateIncomingMessage(String from, String body, String messageNo) {
-            super(from, body, messageNo);
+        public JuickPrivateIncomingMessage(String from, String body, String messageNo, Date date) {
+            super(from, body, messageNo, date);
         }
     }
 
@@ -767,8 +771,8 @@ public class XMPPService extends Service {
         private String originalBody;
         private String originalFrom;
 
-        public JuickThreadIncomingMessage(String from, String body, String messageNo) {
-            super(from, body, messageNo);
+        public JuickThreadIncomingMessage(String from, String body, String messageNo, Date date) {
+            super(from, body, messageNo, date);
         }
 
         public CharSequence getOriginalBody() {
@@ -790,15 +794,15 @@ public class XMPPService extends Service {
 
     public static class JuickSubscriptionIncomingMessage extends JuickIncomingMessage {
         String[] tags;
-        public JuickSubscriptionIncomingMessage(String from, String body, String messageNo, String[] tags) {
-            super(from, body, messageNo);
+        public JuickSubscriptionIncomingMessage(String from, String body, String messageNo, String[] tags, Date date) {
+            super(from, body, messageNo, date);
             this.tags = tags;
         }
     }
 
     public static class JabberIncomingMessage extends IncomingMessage {
-        JabberIncomingMessage(String from, String body) {
-            super(from, body);
+        JabberIncomingMessage(String from, String body, Date date) {
+            super(from, body, date);
         }
     }
 
@@ -830,10 +834,10 @@ public class XMPPService extends Service {
                             sb.append(split[i]);
                             sb.append("\n");
                         }
-                        JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno);
+                        JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno, new Date());
                         XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getMID());
                         if (topicStarter == null) {
-                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID());    // put placeholder for details
+                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID(), new Date());    // put placeholder for details
                             cachedTopicStarters.put(threadIncomingMessage.getMID(), topicStarter);
                             requestMessageBody(threadIncomingMessage.getMID());
                         } else {
@@ -866,7 +870,7 @@ public class XMPPService extends Service {
                                         sb.setLength(sb.length() - 1);       // remove last empty line
 
                                     }
-                                    JuickPrivateIncomingMessage object = new JuickPrivateIncomingMessage(username, sb.toString(), msgno);
+                                    JuickPrivateIncomingMessage object = new JuickPrivateIncomingMessage(username, sb.toString(), msgno, new Date());
                                     saveMessage(object);
                                     handled = object;
                                     incomingMessages.add(object);
@@ -888,7 +892,7 @@ public class XMPPService extends Service {
                                     sb.append("\n");
                                 }
                                 String[] tags = head.substring(colon+1).split(" ");
-                                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, tags);
+                                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, tags, new Date());
                                 JuickIncomingMessage topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getMID());
                                 if (topicStarter != null && topicStarter.getBody().length() == 0) {
                                     cachedTopicStarters.put(subscriptionIncomingMessage.getMID(), subscriptionIncomingMessage);
@@ -925,7 +929,7 @@ public class XMPPService extends Service {
                     parseJuickBlacklist(message.getBody());
                     silent = true;
                 } else {
-                    JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), body);
+                    JabberIncomingMessage messag = new JabberIncomingMessage(message.getFrom(), body, new Date());
                     saveMessage(messag);
                     incomingMessages.add(messag);
                     handled = messag;
@@ -993,7 +997,7 @@ public class XMPPService extends Service {
             return;
         }
         synchronized (incomingMessages) {
-            JabberIncomingMessage msg = new JabberIncomingMessage(message.getFrom(), message.getBody());
+            JabberIncomingMessage msg = new JabberIncomingMessage(message.getFrom(), message.getBody(), new Date());
             saveMessage(msg);
             incomingMessages.add(msg);
         }

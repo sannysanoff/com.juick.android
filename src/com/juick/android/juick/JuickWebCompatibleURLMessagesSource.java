@@ -1,14 +1,11 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
-import android.util.Log;
-import com.juick.android.MainActivity;
 import com.juick.android.URLParser;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.juick.android.api.MessageID;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -62,7 +59,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
             ArrayList<JuickMessage> messages = parseWebPure(jsonStr);
             if (messages.size() > 0) {
                 JuickMessage juickMessage = messages.get(messages.size() - 1);
-                lastRetrievedMID = juickMessage.MID;
+                lastRetrievedMID = ((JuickMessageID)juickMessage.getMID()).getMid();
             } else {
                 if (errorNotification != null)
                     errorNotification.notifyDownloadError("Page parse error.");
@@ -85,8 +82,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     static Pattern onereply = Pattern.compile("<div class=\"msg-comments\"><a href=\"(.*?)\">1 reply</a>");
     static Pattern mediaImage = Pattern.compile("<div class=\"msg-media\"><a href=\"(.*?)\">");
     static String messageBodyStart = "<div class=\"msg-txt\">";
-    static Pattern hyperlink = Pattern.compile("<a href=\"(.*?)\" rel=\"nofollow\">(.*?)</a>");
-    static Pattern hyperlink2 = Pattern.compile("<a href=\"(.*?)\">(.*?)</a>");
+    static Pattern hyperlink = Pattern.compile("<a (.*?)href=\"(.*?)\"(.*?)>(.*?)</a>");
     static Pattern blockQuote = Pattern.compile("<blockquote>(.*?)</blockquote>");
     static Pattern italic = Pattern.compile("<i>(.*?)</i>");
     static Pattern bold = Pattern.compile("<b>(.*?)</b>");
@@ -112,8 +108,9 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
                     if (matcher.find()) {
                         message = new JuickMessage();
                         message.User = new JuickUser();
-                        message.MID = Integer.parseInt(matcher.group(1));
+                        message.setMID(new JuickMessageID(Integer.parseInt(matcher.group(1))));
                         message.messagesSource = this;
+                        message.microBlogCode = JuickMicroBlog.CODE;
                         state = State.WAIT_MSG_TEXT;
                     }
                     Matcher nrepliesMatcher = nreplies.matcher(line);
@@ -194,22 +191,13 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
         return retval;
     }
 
-    private String unwebMessageText(String text) {
+    public static String unwebMessageText(String text) {
         text = text.replace("<br/>","\n");
         text = text.replace("</div>","");
         while(true) {
             Matcher matcher = hyperlink.matcher(text);
             if (matcher.find()) {
-                text = matcher.replaceFirst(matcher.group(1));
-                continue;
-            } else {
-                break;
-            }
-        }
-        while(true) {
-            Matcher matcher = hyperlink2.matcher(text);
-            if (matcher.find()) {
-                text = matcher.replaceFirst(matcher.group(1));
+                text = matcher.replaceFirst(matcher.group(2));
                 continue;
             } else {
                 break;
@@ -270,7 +258,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     }
 
     @Override
-    public void getChildren(int mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
     }
 

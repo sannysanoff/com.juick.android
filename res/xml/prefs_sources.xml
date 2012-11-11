@@ -31,6 +31,21 @@
             android:summary="@string/LeaveItEmptyIfUnknown"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="Use web instead of json http-api">
+        <CheckBoxPreference
+                android:key="web_for_subscriptions"
+                android:title="Subscriptions (Web)"
+                android:defaultValue="false"
+                android:persistent="true"/>
+<!--
+        <CheckBoxPreference
+                android:key="web_for_myblog"
+                android:title="My blog"
+                android:defaultValue="false"
+                android:persistent="true"/>
+-->
+
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/MessageSources">
         <CheckBoxPreference
             android:key="msrcTopMessages"
@@ -68,20 +83,34 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Use web instead of json http-api">
+    <PreferenceCategory android:title="BnW sources">
         <CheckBoxPreference
-                android:key="web_for_subscriptions"
-                android:title="Subscriptions"
-                android:defaultValue="false"
-                android:persistent="true"/>
-<!--
+            android:key="msrcBNWFeed"
+            android:title="@string/navigationBNWFeed"
+            android:defaultValue="false"
+            android:persistent="true"/>
         <CheckBoxPreference
-                android:key="web_for_myblog"
-                android:title="My blog"
-                android:defaultValue="false"
-                android:persistent="true"/>
--->
-
+            android:key="msrcBNWAll"
+            android:title="@string/navigationBNWAll"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcBNWHot"
+            android:title="@string/navigationBNWHot"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="PSTO.NET sources">
+        <CheckBoxPreference
+            android:key="msrcPSTORecent"
+            android:title="@string/navigationPSTORecent"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcPSTOPopular"
+            android:title="@string/navigationPSTOPopular"
+            android:defaultValue="false"
+            android:persistent="true"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

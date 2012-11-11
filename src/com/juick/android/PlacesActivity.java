@@ -40,7 +40,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
 import de.quist.app.errorreporter.ExceptionReporter;

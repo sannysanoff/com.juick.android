@@ -40,6 +40,7 @@ import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 
 import java.io.*;
@@ -116,6 +117,18 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
         return _showNumbers;
     }
+
+    static long lastDontKeepParsed;
+    static boolean _dontKeepParsed;
+    public static boolean dontKeepParsed(Context ctx) {
+        if (System.currentTimeMillis() - lastDontKeepParsed > 3000) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+            _dontKeepParsed = sp.getBoolean("dontKeepParsed", false);
+            lastDontKeepParsed = System.currentTimeMillis();
+        }
+        return _dontKeepParsed;
+    }
+
     static long lastCachedShowUserpics;
     static boolean _showUserpics;
     public static boolean showUserpics(Context ctx) {
@@ -201,7 +214,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             t.setTextSize(neededTextSize);
 
             final ParsedMessage parsedMessage;
-            if (type == TYPE_THREAD && jmsg.RID == 0) {
+            if (type == TYPE_THREAD && jmsg.getRID() == 0) {
                 parsedMessage = formatFirstMessageText(jmsg);
             } else {
                 parsedMessage = formatMessageText(getContext(), jmsg, false);
@@ -214,17 +227,19 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 userPic.getLayoutParams().height = lrr.pictureSize;
                 int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
                 userPic.setPadding(padding, padding, padding, padding);
+                final UserpicStorage.AvatarID avatarId = jmsg.getAvatarId();
+
                 lrr.userpicListener = new UserpicStorage.Listener() {
                     @Override
-                    public void onUserpicReady(int id, int size) {
-                        UserpicStorage.instance.removeListener(lrr.jmsg.User.UID, lrr.pictureSize, this);
-                        final Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), jmsg.User.UID, lrr.pictureSize, lrr.userpicListener);
+                    public void onUserpicReady(UserpicStorage.AvatarID id, int size) {
+                        UserpicStorage.instance.removeListener(avatarId, lrr.pictureSize, this);
+                        final Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
                         if (userpic != null) {
                             ((Activity)getContext()).runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     ListRowRuntime tag = (ListRowRuntime)t.getTag();
-                                    if (tag.jmsg.MID == jmsg.MID) {
+                                    if (tag.jmsg.getMID() == jmsg.getMID()) {
                                         userPic.setImageBitmap(userpic);
                                     }
                                     //To change body of implemented methods use File | Settings | File Templates.
@@ -233,7 +248,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         }
                     }
                 };
-                Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), jmsg.User.UID, lrr.pictureSize, lrr.userpicListener);
+                Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
                 userPic.setImageBitmap(userpic);    // can be null
             } else {
                 userPic.setImageBitmap(null);
@@ -242,7 +257,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                     @Override
                     public void withService(DatabaseService service) {
-                        service.getMessageReadStatus(jmsg.MID, new Utils.Function<Void, DatabaseService.MessageReadStatus>() {
+                        service.getMessageReadStatus(jmsg.getMID(), new Utils.Function<Void, DatabaseService.MessageReadStatus>() {
                             @Override
                             public Void apply(DatabaseService.MessageReadStatus messageReadStatus) {
                                 if (messageReadStatus.read) {
@@ -250,7 +265,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                         @Override
                                         public void run() {
                                             ListRowRuntime tag = (ListRowRuntime)t.getTag();
-                                            if (tag.jmsg.MID == jmsg.MID) {
+                                            if (tag.jmsg.getMID() == jmsg.getMID()) {
                                                 // still valid
                                                 parsedMessage.markAsRead();
                                                 t.setText(parsedMessage.textContent);
@@ -266,7 +281,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 xmppServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
                     public void withService(XMPPService service) {
-                        service.removeMessages(jmsg.MID, true);
+                        service.removeMessages(jmsg.getMID(), true);
                     }
                 });
 
@@ -469,7 +484,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     @Override
     public boolean isEnabled(int position) {
         JuickMessage jmsg = getItem(position);
-        boolean retval = jmsg != null && jmsg.User != null && jmsg.MID > 0;
+        boolean retval = jmsg != null && jmsg.User != null && jmsg.getMID() != null;
         return retval;
     }
 
@@ -491,7 +506,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ListRowRuntime lrr = (ListRowRuntime)view.getTag();
             if (lrr != null) {
                 if (lrr.userpicListener != null) {
-                    UserpicStorage.instance.removeListener(lrr.jmsg.User.UID, lrr.pictureSize, lrr.userpicListener);
+                    UserpicStorage.instance.removeListener(lrr.jmsg.getAvatarId(), lrr.pictureSize, lrr.userpicListener);
                 }
             }
             ViewGroup vg = (ViewGroup)view;
@@ -602,18 +617,17 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             //
             // numbers
             //
-            if (jmsg.RID > 0) {
-                ssb.append("/"+jmsg.RID);
-                if (jmsg.replyTo != 0) {
-                    ssb.append("->"+jmsg.replyTo);
-                }
-                ssb.append(" ");
-            } else {
+            if (jmsg.getRID() == 0) {
                 messageNumberStart = ssb.length();
-                ssb.append("#"+jmsg.MID);
+                ssb.append(jmsg.getDisplayMessageNo());
                 messageNumberEnd = ssb.length();
-                ssb.append(" ");
+            } else {
+                ssb.append("/"+jmsg.getRID());
+                if (jmsg.getReplyTo() != 0) {
+                    ssb.append("->"+jmsg.getReplyTo());
+                }
             }
+            ssb.append(" ");
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.MESSAGE_ID, 0xFFa0a5bd)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             spanOffset = ssb.length();
         }
@@ -645,7 +659,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
         // Highlight nick
-        String accountName = Utils.getAccountName(ctx).toLowerCase();
+        String accountName = JuickComAuthorizer.getJuickAccountName(ctx).toLowerCase();
         int scan = spanOffset;
         String nickScanArea = ssb.toString().toLowerCase()+" ";
         while(true) {
@@ -676,7 +690,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
             DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
             df.setTimeZone(TimeZone.getDefault());
-            String date = df.format(jmsg.Timestamp);
+            String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
             ssb.append("\n" + date + " ");
 
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -697,28 +711,26 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         LeadingMarginSpan.LeadingMarginSpan2 userpicSpan = null;
         if (showUserpics(ctx)) {
-            if (jmsg.messagesSource != null && jmsg.User.UID != 0) {
-                userpicSpan = new LeadingMarginSpan.LeadingMarginSpan2() {
-                    @Override
-                    public int getLeadingMarginLineCount() {
-                        return 2;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
+            userpicSpan = new LeadingMarginSpan.LeadingMarginSpan2() {
+                @Override
+                public int getLeadingMarginLineCount() {
+                    return 2;  //To change body of implemented methods use File | Settings | File Templates.
+                }
 
-                    @Override
-                    public int getLeadingMargin(boolean first) {
-                        if (first) {
-                            return (int) (2 * getLineHeight(ctx, (double)textScale));
-                        } else {
-                            return 0;
-                        }
+                @Override
+                public int getLeadingMargin(boolean first) {
+                    if (first) {
+                        return (int) (2 * getLineHeight(ctx, (double)textScale));
+                    } else {
+                        return 0;
                     }
+                }
 
-                    @Override
-                    public void drawLeadingMargin(Canvas c, Paint p, int x, int dir, int top, int baseline, int bottom, CharSequence text, int start, int end, boolean first, Layout layout) {
-                    }
-                };
-                ssb.setSpan(userpicSpan, 0, ssb.length(), 0);
-            }
+                @Override
+                public void drawLeadingMargin(Canvas c, Paint p, int x, int dir, int top, int baseline, int bottom, CharSequence text, int start, int end, boolean first, Layout layout) {
+                }
+            };
+            ssb.setSpan(userpicSpan, 0, ssb.length(), 0);
         }
         ParsedMessage parsedMessage = new ParsedMessage(ssb, urls);
         parsedMessage.userpicSpan = userpicSpan;
@@ -815,13 +827,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public void addAllMessages(ArrayList<JuickMessage> messages) {
         for (JuickMessage message : messages) {
             boolean canAdd = true;
-            if (message.RID > 0) {
+            if (message.getRID() > 0) {
                 // don't add duplicate replies coming from any source (XMPP/websocket)
                 int limit = getCount();
 
                 for(int q=0; q<limit; q++) {
                     JuickMessage item = getItem(q);
-                    if (item.RID == message.RID) {
+                    if (item.getRID() == message.getRID()) {
                         canAdd = false;     // already there
                         break;
                     }

@@ -20,7 +20,6 @@ package com.juick.android;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -29,29 +28,20 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
-import android.text.style.UnderlineSpan;
-import android.text.util.Linkify;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.juick.android.datasource.JuickCompatibleURLMessagesSource;
-import com.juick.android.datasource.MessagesSource;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import org.json.JSONArray;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.regex.Pattern;
 
 /**
  * @author Ugnich Anton

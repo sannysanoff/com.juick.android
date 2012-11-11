@@ -1,10 +1,11 @@
-package com.juick.android.datasource;
+package com.juick.android.juick;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.MessageID;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
@@ -57,10 +58,10 @@ public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
     }
 
     @Override
-    public void rememberSavedPosition(int mid) {
+    public void rememberSavedPosition(MessageID mid) {
         super.rememberSavedPosition(mid);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-        sp.edit().putInt("lastMessagesSavedPosition", mid).commit();
+        sp.edit().putInt("lastMessagesSavedPosition", ((JuickMessageID)mid).getMid()).commit();
     }
 
     protected boolean areMessagesInRow() {

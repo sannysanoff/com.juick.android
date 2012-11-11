@@ -784,8 +784,16 @@
     <string name="TagsFormatError">Tags format error (must start with \'*\')</string>
     <string name="InvalidLoginPassword">Invalid login/password</string>
     <string name="ApplySettings">Apply settings</string>
-    <string name="JuickBadMimetype">Juick does not accept this type of attachment</string>
+    <string name="JuickBadMimetype" formatted="false">Juick does not accept this type of attachment: %s. </string>
     <string name="SkippingResize" formatted="false">Skipping resize dialog, image %d KB, dimension %d x %d</string>
+    <string name="ForcedAttachment">Attachment of unrecognized format</string>
+    <string name="AsJPEG">As JPEG</string>
+    <string name="AsMP4Video">As MP4 video</string>
+    <string name="navigationBNWFeed">BNW Home</string>
+    <string name="navigationBNWAll">BNW All Messages</string>
+    <string name="navigationBNWHot">BNW Hot Today</string>
+    <string name="navigationPSTORecent">PSTO Recent</string>
+    <string name="navigationPSTOPopular">PSTO Popular</string>
 
 
 </resources>

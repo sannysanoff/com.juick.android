@@ -1,12 +1,10 @@
 package com.juick.android;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v4.util.LruCache;
 import com.juickadvanced.R;
-import org.apache.http.client.HttpClient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +21,17 @@ import java.util.Set;
 public class UserpicStorage {
 
     public static UserpicStorage instance = new UserpicStorage();
+    public static final AvatarID NO_AVATAR = new AvatarID() {
+        @Override
+        public String toString() {
+            return "NO_AVATAR";
+        }
+
+        @Override
+        public String getURL() {
+            return null;
+        }
+    };
 
     LruCache<String, Bitmap> cache = new LruCache<String, Bitmap>(50);
     Set<String> loadingImages = new HashSet<String>();
@@ -31,25 +40,30 @@ public class UserpicStorage {
 
     }
 
+    public static abstract class AvatarID {
+        public abstract String toString();
+        public abstract String getURL();
+    }
+
     HashMap<String, ArrayList<Listener>> listeners = new HashMap<String, ArrayList<Listener>>();
 
     public interface Listener {
-        public void onUserpicReady(int id, int size);
+        public void onUserpicReady(AvatarID id, int size);
     }
 
-    public void removeListener(int id, int size, Listener listener) {
+    public void removeListener(AvatarID id, int size, Listener listener) {
         final String key = "" + id + "|" + size;
         synchronized (loadingImages) {
             ArrayList<Listener> listeners1 = listeners.get(key);
             if (listeners1 == null) return;
             listeners1.remove(listener);
-            if (listeners.size() == 0) {
+            if (listeners1.size() == 0) {
                 listeners.remove(key);
             }
         }
     }
 
-    public Bitmap getUserpic(final Context ctx, final int id, final int size, Listener toAdd) {
+    public Bitmap getUserpic(final Context ctx, final AvatarID id, final int size, Listener toAdd) {
         final String key = "" + id + "|" + size;
         Bitmap bitmap = cache.get(key);
         if (bitmap != null) {
@@ -76,7 +90,7 @@ public class UserpicStorage {
                 dbs.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                     @Override
                     public void withService(DatabaseService service) {
-                        final byte[] arr = service.getStoredUserpic(id);
+                        final byte[] arr = service.getStoredUserpic(id.toString());
                         if (arr == null) {
                             synchronized (loadingImages) {
                                 if (!loadingImages.contains(key)) {
@@ -85,7 +99,7 @@ public class UserpicStorage {
                                         @Override
                                         public void run() {
                                             try {
-                                                Utils.BINResponse binary = Utils.getBinary(ctx, "http://i.juick.com/as/" + id + ".png", null, 0);
+                                                Utils.BINResponse binary = Utils.getBinary(ctx, id.getURL(), null, 0);
                                                 boolean persist = true;
                                                 if (binary.errorText != null) {
                                                     binary.result = new byte[0];
@@ -95,15 +109,17 @@ public class UserpicStorage {
                                                         persist = false;    // other error, will retry later
                                                     }
                                                 }
+                                                if (!scaleAndPutToCache(ctx, binary.result, size, id, key)) {
+                                                    persist = false;
+                                                }
                                                 if (persist) {
                                                     dbs.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                                         @Override
                                                         public void withService(DatabaseService service) {
-                                                            service.storeUserpic(id, arr);
+                                                            service.storeUserpic(id.toString(), arr);
                                                         }
                                                     });
                                                 }
-                                                scaleAndPutToCache(ctx, binary.result, size, id, key);
                                             } finally {
                                                 synchronized (loadingImages) {
                                                     loadingImages.remove(key);
@@ -124,16 +140,21 @@ public class UserpicStorage {
         return null;
     }
 
-    private void scaleAndPutToCache(Context ctx, byte[] arr, int size, int id, String key) {
+    private boolean scaleAndPutToCache(Context ctx, byte[] arr, int size, AvatarID id, String key) {
+        Bitmap bmp;
+        boolean goodAvatar = false;
         if (arr.length == 0) {
-            Bitmap bmp = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.default_userpic);
-            bmp = Bitmap.createScaledBitmap(bmp, size, size, true);
-            cache.put(key, bmp);
+            bmp = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.default_userpic);
         } else {
-            Bitmap bmp = BitmapFactory.decodeByteArray(arr, 0, arr.length);
-            bmp = Bitmap.createScaledBitmap(bmp, size, size, true);
-            cache.put(key, bmp);
+            bmp = BitmapFactory.decodeByteArray(arr, 0, arr.length);
+            if (bmp.getWidth() < 3 || bmp.getHeight() < 3) {
+                bmp = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.default_userpic);
+            } else {
+                goodAvatar = true;
+            }
         }
+        bmp = Bitmap.createScaledBitmap(bmp, size, size, true);
+        cache.put(key, bmp);
         ArrayList<Listener> listeners1 = null;
         synchronized (loadingImages) {
             ArrayList<Listener> lr = listeners.get(key);
@@ -143,9 +164,10 @@ public class UserpicStorage {
         }
         if (listeners1 != null) {
             for (Listener listener : listeners1) {
-                listener.onUserpicReady(size, id);
+                listener.onUserpicReady(id, size);
             }
         }
+        return goodAvatar;
 
     }
 

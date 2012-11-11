@@ -1,0 +1,40 @@
+package com.juick.android.bnw;
+
+import com.juick.android.api.JuickMessage;
+
+import java.util.ArrayList;
+import java.util.Vector;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: san
+ * Date: 11/9/12
+ * Time: 1:42 AM
+ * To change this template use File | Settings | File Templates.
+ */
+public class BNWMessage extends JuickMessage {
+
+    private String RIDString;
+    public ArrayList<String> clubs = new ArrayList<String>();
+    private String replyToString;
+
+    public BNWMessage() {
+    }
+
+
+    public void setRIDString(String RIDString) {
+        this.RIDString = RIDString;
+    }
+
+    public String getRIDString() {
+        return RIDString;
+    }
+
+    public void setReplyToString(String replyToString) {
+        this.replyToString = replyToString;
+    }
+
+    public String getReplyToString() {
+        return replyToString;
+    }
+}
