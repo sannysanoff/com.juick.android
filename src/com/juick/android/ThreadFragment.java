@@ -234,6 +234,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         @Override
                         public Void apply(ArrayList<JuickMessage> messages) {
                             then.apply(new MessagesFragment.RetainedData(messages, null));
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (notification.lastError != null)
+                                        notification.statusText.setText(notification.lastError);
+                                }
+                            });
                             return null;
                         }
                     });

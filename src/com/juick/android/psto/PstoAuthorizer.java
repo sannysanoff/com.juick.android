@@ -15,7 +15,11 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONObject;
 
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.net.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,6 +31,7 @@ import java.net.*;
 public class PstoAuthorizer extends Utils.URLAuth {
     @Override
     public boolean acceptsURL(String url) {
+        if (url.indexOf("http://psto.net/login") != -1) return false;
         if (url.indexOf("psto.net/") != -1) return true;
         return false;
     }
@@ -34,23 +39,191 @@ public class PstoAuthorizer extends Utils.URLAuth {
     // 0 = not accepting 1 = accepting, required -1 = accepting not requred
     public boolean allowsOptionalAuthorization(String url) {
         if (url.indexOf("http://psto.net/top") != -1) return true;
-        if (url.indexOf("http://psto.net/recent") != -1) return true;
         if (url.indexOf(".psto.net") != -1) return true;
         return false;
     }
 
     public static String myCookie;
+    public static boolean skipAskPassword;
     @Override
     public void authorize(final Activity activity, String url, final Utils.Function<Void, String> cont) {
-        cont.apply(null);
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+        if (myCookie == null) {
+            myCookie = sp.getString("psto.web_cookie", null);
+        }
+        if (myCookie == null && !allowsOptionalAuthorization(url)) {
+            if (skipAskPassword) {
+                cont.apply(null);
+            } else {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String webLogin = sp.getString("psto.web_login", null);
+                        String webPassword = sp.getString("psto.web_password", null);
+                        final Runnable thiz = this;
+                        if (webLogin != null && webPassword != null) {
+                            tryLoginWithPassword(webLogin, webPassword, new Runnable() {
+                                @Override
+                                public void run() {
+                                    sp.edit().remove("psto.web_login").remove("psto.web_password").commit();
+                                    thiz.run();
+                                }
+                            });
+                        }
+                        final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
+                        final EditText login = (EditText) content.findViewById(R.id.login);
+                        final String accountName = JuickComAuthorizer.getJuickAccountName(activity);
+                        final EditText password = (EditText) content.findViewById(R.id.password);
+                        login.setText(accountName);
+                        AlertDialog dlg = new AlertDialog.Builder(activity)
+                                .setTitle("PSTO Web login")
+                                .setView(content)
+                                .setPositiveButton("Login", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        new Thread() {
+                                            @Override
+                                            public void run() {
+                                                final String loginS = login.getText().toString().trim();
+                                                final String passwordS = password.getText().toString().trim();
+                                                tryLoginWithPassword(loginS, passwordS, thiz);
+                                            }
+                                        }.start();
+                                    }
+                                })
+                                .setCancelable(false)
+                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        new Thread() {
+                                            @Override
+                                            public void run() {
+                                                skipAskPassword = true;
+                                                cont.apply(null);
+                                            }
+                                        }.start();
+                                    }
+                                }).create();
+                        dlg.setOnShowListener(new DialogInterface.OnShowListener() {
+                            @Override
+                            public void onShow(DialogInterface dialog) {
+                                password.requestFocus();
+                            }
+                        });
+                        dlg.show();
+                    }
+
+                    private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {
+                        obtainCookieByLoginPassword(activity, loginS, passwordS,
+                                new Utils.Function<Void, Utils.RESTResponse>() {
+                                    @Override
+                                    public Void apply(final Utils.RESTResponse s) {
+                                        if (s.result != null) {
+                                            myCookie = s.result;
+                                            cont.apply(s.result);
+                                            activity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                                                    sp.edit()
+                                                            .putString("psto.web_cookie", myCookie)
+                                                            .putString("psto.web_login", loginS)
+                                                            .putString("psto.web_password", passwordS)
+                                                            .commit();
+
+                                                }
+                                            });
+                                        } else {
+                                            activity.runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
+                                                    thiz.run();
+                                                }
+                                            });
+                                        }
+                                        return null;
+                                    }
+                                });
+                    }
+                });
+            }
+        } else {
+            cont.apply(myCookie);
+        }
     }
+
+    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
+        final DefaultHttpClient client = new DefaultHttpClient();
+        try {
+            URL u = new URL("http://psto.net/login");
+            String data = "l="+URLEncoder.encode(login.toString(), "UTF-8")
+                    + "&p="+URLEncoder.encode(password.toString(), "UTF-8")
+                    + "&r=http://psto.net/recent";
+            final HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+
+            conn.setUseCaches(false);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            conn.setRequestMethod("POST");
+            conn.setInstanceFollowRedirects(false);
+            conn.connect();
+
+            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+            wr.write(data);
+            wr.close();
+
+            Utils.RESTResponse resp;
+            if (conn.getResponseCode() == 302) {
+                resp = new Utils.RESTResponse(null,false,"OK");
+                Map<String,List<String>> headerFields = conn.getHeaderFields();
+                String loginKey = null;
+                List<String> strings = headerFields.get("Set-Cookie");
+                if (strings.size() == 0) {
+                    resp = new Utils.RESTResponse("Site did not set cookie, login failed", false, null);
+                } else {
+                    String[] sessidAndValue = strings.get(0).split(";")[0].split("=");
+                    if (sessidAndValue[0].equals("sessid")) {
+                        result.apply(new Utils.RESTResponse(null, false, sessidAndValue[1]));
+                    } else {
+                        resp = new Utils.RESTResponse("Site returned cookie, but not what I expect", false, null);
+                    }
+                }
+            } else if (conn.getResponseCode() == 200) {
+                InputStream inputStream = conn.getInputStream();
+                resp = Utils.streamToString(inputStream, null);
+                inputStream.close();
+                resp = new Utils.RESTResponse("PSTO Auth failed, maybe wrong pass",false,null);
+            } else {
+                final int responseCode = conn.getResponseCode();
+                final String responseMessage = conn.getResponseMessage();
+                resp = new Utils.RESTResponse("HTTP error: "+ responseCode +" " + responseMessage,false,null);
+            }
+            conn.disconnect();
+
+
+            if (resp.errorText != null) {
+                result.apply(resp);
+            } else {
+                // handled
+            }
+        } catch (Exception e) {
+            result.apply(new Utils.RESTResponse("Other error: " + e.toString(), false, null));
+            //
+        } finally {
+            client.getConnectionManager().shutdown();
+        }
+    }
+
 
     @Override
     public void authorizeRequest(HttpRequestBase request, String cookie) {
+        request.addHeader("Cookie","sessid="+myCookie);
     }
 
     @Override
     public void authorizeRequest(HttpURLConnection conn, String cookie) {
+        conn.setRequestProperty("Cookie","sessid="+myCookie);
     }
 
     @Override

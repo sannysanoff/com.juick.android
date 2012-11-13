@@ -144,8 +144,6 @@ public class BnwAuthorizer extends Utils.URLAuth {
     }
 
     static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
-
-
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
             final Utils.RESTResponse response = Utils.getJSON(activity,
