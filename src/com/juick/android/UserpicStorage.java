@@ -143,7 +143,7 @@ public class UserpicStorage {
     private boolean scaleAndPutToCache(Context ctx, byte[] arr, int size, AvatarID id, String key) {
         Bitmap bmp;
         boolean goodAvatar = false;
-        if (arr.length == 0) {
+        if (arr == null || arr.length == 0) {
             bmp = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.default_userpic);
         } else {
             bmp = BitmapFactory.decodeByteArray(arr, 0, arr.length);

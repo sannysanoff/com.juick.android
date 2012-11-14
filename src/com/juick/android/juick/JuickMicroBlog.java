@@ -510,7 +510,12 @@ public class JuickMicroBlog implements MicroBlog {
 
     public static void withUserId(final Activity activity, final Utils.Function<Void,Integer> action) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-        final String myUserId = sp.getString("myUserId", "");
+        String myUserId = sp.getString("myUserId", "");
+        try {
+            Integer.parseInt(myUserId);
+        } catch (Exception ex) {
+            myUserId = "";
+        }
         if (myUserId.equals("")) {
             final String value = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
             final ProgressDialog pd = new ProgressDialog(activity);

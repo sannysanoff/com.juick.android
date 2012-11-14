@@ -17,6 +17,7 @@ import com.juick.android.api.JuickUser;
 import com.juick.android.api.MessageID;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.R;
 
 import java.util.*;
@@ -95,6 +96,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                                 final String fromUser = jim.getFrom();
                                 final MessageID thread = jim.getMID();
                                 JuickMessage msg = new JuickMessage();
+                                msg.microBlogCode = JuickMicroBlog.CODE;
                                 msg.setMID(thread);
                                 msg.Text = jim.getBody();
                                 msg.setRID(jim.getRID());
@@ -490,7 +492,14 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
                 fromTags.setText(commentMessage.getOriginalFrom());
                 TextView preview = (TextView)view.findViewById(R.id.preview);
-                preview.setText(commentMessage.getOriginalBody() != null && commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody() : "[ loading ... ]");
+                String originalBody = commentMessage.getOriginalBody() != null && commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody().toString() : "[ loading ... ]";
+                if (originalBody.startsWith("http://i.juick.com")) {
+                    int ix = originalBody.indexOf(".jpg");
+                    if (ix != -1) {
+                        originalBody = "[img] "+ originalBody.substring(ix+5);
+                    }
+                }
+                preview.setText(originalBody);
                 TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
                 String insertString;
                 if (totalCount == 1) {

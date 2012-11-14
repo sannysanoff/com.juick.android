@@ -439,6 +439,8 @@ public class Utils {
 
     public static BINResponse getBinary(Context context, final String url, final Notification progressNotification, int timeout) {
         try {
+            if (url == null)
+                return new BINResponse("NULL url", false, null);
             URLConnection urlConnection = new URL(url).openConnection();
             InputStream inputStream = urlConnection.getInputStream();
             BINResponse binResponse = streamToByteArray(inputStream, progressNotification);

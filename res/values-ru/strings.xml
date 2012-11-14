@@ -365,5 +365,11 @@
     <string name="navigationBNWFeed">BNW Моё</string>
     <string name="JuickAdvancedCrashed">Juick Advanced - внутренняя ошибка</string>
 
+    <string name="navigationPSTORecent">psto.Лента</string>
+    <string name="navigationPSTORecent">psto.Подписки</string>
+    <string name="navigationPSTOMy">psto.Блог</string>
+    <string name="navigationPSTOPopular">psto.Популярные</string>
+
+
 
 </resources>

@@ -602,7 +602,7 @@ public class MainActivity extends FragmentActivity implements
                     if (shouldFinish) finish();
                     Intent intent = new Intent(this, ThreadActivity.class);
                     intent.setData(null);
-                    intent.putExtra("mid", mid);
+                    intent.putExtra("mid", new JuickMessageID(mid));
                     intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

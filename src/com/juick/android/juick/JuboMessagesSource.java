@@ -106,6 +106,7 @@ public class JuboMessagesSource extends MessagesSource {
         jm.Text = txt;
         jm.User = new JuickUser();
         jm.User.UID = -1;
+        jm.microBlogCode = JuickMicroBlog.CODE;
         NodeList titles = item.getElementsByTagName("title");
         String title = titles.item(0).getTextContent();
         int titleColon = title.indexOf(":");

@@ -47,6 +47,7 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
     public void onReceive(final Context context, final Intent intent) {
         if (intent.getAction().equals(XMPPService.ACTION_MESSAGE_RECEIVED)) {
             int nMessages = intent.getIntExtra("messagesCount", 0);
+            boolean sound = intent.getBooleanExtra("sound", true);
             XMPPService.IncomingMessage messag = (XMPPService.IncomingMessage)intent.getSerializableExtra("message");
             if (nMessages == 0) return;
             ArrayList<MessageReceiverListener> allListeners = (ArrayList<MessageReceiverListener>) listeners.clone();
@@ -55,7 +56,7 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 handled |= listener.onMessageReceived(messag);
             }
             if (!handled) {
-                updateInfo(context, nMessages, false);
+                updateInfo(context, nMessages, !sound);
             }
         }
         if (intent.getAction().equals(XMPPService.ACTION_LAUNCH_MESSAGELIST)) {

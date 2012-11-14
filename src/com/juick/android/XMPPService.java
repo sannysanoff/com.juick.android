@@ -26,6 +26,7 @@ import java.util.*;
  */
 public class XMPPService extends Service {
 
+    private static final IncomingMessage DUMMY = new IncomingMessage("","",null){};
     ArrayList<XMPPConnection> connections = new ArrayList<XMPPConnection>();
     Handler handler;
     Chat juickChat;
@@ -836,7 +837,7 @@ public class XMPPService extends Service {
                         JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno, new Date());
                         XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getMID());
                         if (topicStarter == null) {
-                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID(), new Date());    // put placeholder for details
+                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + ((JuickMessageID)threadIncomingMessage.getMID()).getMid(), new Date());    // put placeholder for details
                             cachedTopicStarters.put(threadIncomingMessage.getMID(), topicStarter);
                             requestMessageBody(threadIncomingMessage.getMID());
                         } else {
@@ -896,13 +897,14 @@ public class XMPPService extends Service {
                                 if (topicStarter != null && topicStarter.getBody().length() == 0) {
                                     cachedTopicStarters.put(subscriptionIncomingMessage.getMID(), subscriptionIncomingMessage);
                                     for (IncomingMessage incomingMessage : incomingMessages) {
-                                        if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getMID() == topicStarter.getMID()) {
+                                        if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getMID().equals(topicStarter.getMID())) {
                                             // details came!
                                             JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;
                                             imsg.setOriginalBody(subscriptionIncomingMessage.getBody());
                                             imsg.setOriginalFrom(subscriptionIncomingMessage.getFrom());
-                                            silent = true;
+                                            saveMessage(imsg);
                                         }
+                                        handled = DUMMY;
                                     }
                                 } else {
                                     saveMessage(subscriptionIncomingMessage);
@@ -934,7 +936,7 @@ public class XMPPService extends Service {
                     handled = messag;
                 }
             }
-            if (handled != null) {
+            if (handled != null && handled != DUMMY) {
                 Set<String> filteredOutUsers = JuickMessagesAdapter.getFilteredOutUsers(this);
                 String fromm = handled.getFrom();
                 if (fromm.startsWith("@")) {
@@ -958,13 +960,13 @@ public class XMPPService extends Service {
             }
         }
         if (!silent)
-            sendMyBroadcast();
+            sendMyBroadcast(handled == DUMMY);
     }
 
     private void saveMessage(IncomingMessage message) {
         try {
             File xmpp_messages_v1 = getSavedMessagesDirectory();
-            boolean mkdirs = xmpp_messages_v1.mkdirs();
+            xmpp_messages_v1.mkdirs();
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(xmpp_messages_v1, message.id)));
             oos.writeObject(message);
             oos.close();
@@ -983,10 +985,11 @@ public class XMPPService extends Service {
         return getDir("xmpp_messages_v1", MODE_PRIVATE);
     }
 
-    private void sendMyBroadcast() {
+    private void sendMyBroadcast(boolean sound) {
         Intent intent = new Intent();
         intent.setAction(ACTION_MESSAGE_RECEIVED);
         intent.putExtra("messagesCount", incomingMessages.size());
+        intent.putExtra("sound", sound);
         sendBroadcast(intent);
     }
 
@@ -1000,7 +1003,7 @@ public class XMPPService extends Service {
             saveMessage(msg);
             incomingMessages.add(msg);
         }
-        sendMyBroadcast();
+        sendMyBroadcast(true);
     }
 
     private void sendJuickMessage(String text) {

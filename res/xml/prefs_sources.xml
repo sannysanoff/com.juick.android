@@ -102,18 +102,23 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="PSTO.NET sources">
         <CheckBoxPreference
+            android:key="msrcPSTOSubs"
+            android:title="@string/navigationPSTOSubs"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
             android:key="msrcPSTORecent"
             android:title="@string/navigationPSTORecent"
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
-            android:key="msrcPSTOMy"
-            android:title="@string/navigationPSTOMy"
+            android:key="msrcPSTOPopular"
+            android:title="@string/navigationPSTOPopular"
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
-            android:key="msrcPSTOPopular"
-            android:title="@string/navigationPSTOPopular"
+            android:key="msrcPSTOMy"
+            android:title="@string/navigationPSTOMy"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>

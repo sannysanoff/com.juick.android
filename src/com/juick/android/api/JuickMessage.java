@@ -137,7 +137,10 @@ public class JuickMessage {
     }
 
     public UserpicStorage.AvatarID getAvatarId() {
-        return getMicroBlog().getAvatarID(this);
+        MicroBlog microBlog = getMicroBlog();
+        if (microBlog == null)
+            return UserpicStorage.NO_AVATAR;
+        return microBlog.getAvatarID(this);
     }
 
     public MicroBlog getMicroBlog() {

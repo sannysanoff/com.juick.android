@@ -802,9 +802,10 @@
     <string name="navigationBNWFeed">BNW Home</string>
     <string name="navigationBNWAll">BNW All Messages</string>
     <string name="navigationBNWHot">BNW Hot Today</string>
-    <string name="navigationPSTORecent">PSTO Recent</string>
-    <string name="navigationPSTOMy">PSTO My Blog</string>
-    <string name="navigationPSTOPopular">PSTO Popular</string>
+    <string name="navigationPSTORecent">psto.Recent</string>
+    <string name="navigationPSTOSubs">psto.Subs</string>
+    <string name="navigationPSTOMy">psto.Blog</string>
+    <string name="navigationPSTOPopular">psto.Popular</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
 
 
