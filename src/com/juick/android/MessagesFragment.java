@@ -385,23 +385,24 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         int retry = 0;
         String lastError = null;
         Activity activity;
+        private int progressBytes;
+        public final TextView loadingg;
+        ProgressBar progressBar;
 
         public MoreMessagesLoadNotification() {
             progress = (TextView) viewLoading.findViewById(R.id.progress_loading_more);
+            progressBar = (ProgressBar) viewLoading.findViewById(R.id.progress_bar);
+            loadingg = (TextView) viewLoading.findViewById(R.id.loadingg);
             progress.setText("");
             ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(activity);
             progress.setTextColor(colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000));
             activity = getActivity();
+            loadingg.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
         }
 
         @Override
         public void notifyDownloadError(final String error) {
-            activity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    progress.setText(error);
-                }
-            });
             lastError = error;
         }
 
@@ -412,7 +413,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         @Override
         public void notifyDownloadProgress(int progressBytes) {
-            String text = " " + progressBytes / 1024 + "K";
+            this.progressBytes = progressBytes;
+            updateProgressText();
+        }
+
+        private void updateProgressText() {
+            String text = " " + this.progressBytes / 1024 + "K";
             if (retry > 0) {
                 text += " (retry " + (retry + 1) + ")";
             }
@@ -428,6 +434,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         @Override
         public void notifyRetryIsInProgress(int retry) {
             this.retry = retry;
+            updateProgressText();
         }
     }
 
@@ -445,7 +452,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 if (activity != null && isAdded()) {
                     messagesSource.getNext(progressNotification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                         @Override
-                        public Void apply(ArrayList<JuickMessage> messages) {
+                        public Void apply(final ArrayList<JuickMessage> messages) {
                             final ArrayList<JuickMessage> messagesFiltered = filterMessages(messages);
                             if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
                                 for (JuickMessage juickMessage : messagesFiltered) {
@@ -455,6 +462,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             activity.runOnUiThread(new Runnable() {
 
                                 public void run() {
+                                    progressNotification.loadingg.setVisibility(View.GONE);
+                                    progressNotification.progressBar.setVisibility(View.GONE);
+                                    if (messages.size() == 0) {
+                                        progressNotification.progress.setText(progressNotification.lastError);
+                                    }
                                     listAdapter.addAllMessages(messagesFiltered);
                                     loading = false;
                                 }
