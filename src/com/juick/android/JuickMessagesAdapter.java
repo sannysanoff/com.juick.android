@@ -710,7 +710,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         LeadingMarginSpan.LeadingMarginSpan2 userpicSpan = null;
-        if (showUserpics(ctx)) {
+        if (showUserpics(ctx) && !condensed) {
             userpicSpan = new LeadingMarginSpan.LeadingMarginSpan2() {
                 @Override
                 public int getLeadingMarginLineCount() {

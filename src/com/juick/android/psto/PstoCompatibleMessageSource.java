@@ -54,8 +54,19 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                 if (commentsStart > 0) {
                     result = result.substring(commentsStart + 10);
                     ArrayList<JuickMessage> comments = parseWebMessageListPure(result, ParseMode.PARSE_THREAD_COMMENTS);
+                    HashMap<Integer, JuickMessage> replies = new HashMap<Integer, JuickMessage>();
+                    for (JuickMessage comment : comments) {
+                        replies.put(comment.getRID(), comment);
+                    }
                     for (JuickMessage comment : comments) {
                         comment.setMID(mid);
+                        // filling in "@User" into replies
+                        if (comment.getReplyTo() != 0) {
+                            JuickMessage juickMessage = replies.get(comment.getReplyTo());
+                            if (juickMessage != null) {
+                                comment.Text = "@"+juickMessage.User.UName+" "+comment.Text;
+                            }
+                        }
                     }
                     messages.addAll(comments);
                 }
