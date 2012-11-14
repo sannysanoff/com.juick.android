@@ -234,13 +234,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         @Override
                         public Void apply(ArrayList<JuickMessage> messages) {
                             then.apply(new MessagesFragment.RetainedData(messages, null));
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (notification.lastError != null)
-                                        notification.statusText.setText(notification.lastError);
-                                }
-                            });
                             return null;
                         }
                     });
@@ -254,94 +247,90 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         thr.start();
     }
 
+    /**
+     * unsafe
+     */
     private void onObtainAllThread(final MessagesFragment.RetainedData retainedData, final boolean cached) {
         final ArrayList<JuickMessage> messages = retainedData.messages;
         if (isAdded()) {
-            if (messages.size() == 0) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        notification.statusText.setText("Download error: "+notification.lastError);
-                        notification.progressBar.setVisibility(View.GONE);
-                    }
-                });
-            }
             getActivity().runOnUiThread(new Runnable() {
 
                 public void run() {
-                    Bundle args = getArguments();
-                    Parcelable listPosition = retainedData.viewState;
-                    boolean disableScrollToEnd = false;
-                    if (listPosition == null && listAdapter.getCount() > 0) {
-                        // probably transition from cached data to live data
-                        listPosition = getListView().onSaveInstanceState();
-                        int addMarkOnComment = listAdapter.getCount() - 2 + 1; // totalRecs-body-separator, 0-based (0=first comment)
-                        if (messages.size() > addMarkOnComment)
-                            messages.get(addMarkOnComment).continuationInformation = getString(R.string.UnreadPeriodStart);
-                        disableScrollToEnd = true;
-                        listAdapter.clear();
-                    }
-                    boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
-                    if (scrollToBottom && !disableScrollToEnd) {
-                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-                        getListView().setStackFromBottom(true);
+                    if (notification.lastError != null && !cached) {
+                        notification.statusText.setText(notification.lastError);
+                        notification.progressBar.setVisibility(View.GONE);
                     } else {
-                        getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
-                        getListView().setStackFromBottom(false);
-                    }
-                    listAdapter.addAllMessages(messages);
-                    setListAdapter(listAdapter);
-                    getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
+                        Bundle args = getArguments();
+                        Parcelable listPosition = retainedData.viewState;
+                        boolean disableScrollToEnd = false;
+                        if (listPosition == null && listAdapter.getCount() > 0) {
+                            // probably transition from cached data to live data
+                            listPosition = getListView().onSaveInstanceState();
+                            int addMarkOnComment = listAdapter.getCount() - 2 + 1; // totalRecs-body-separator, 0-based (0=first comment)
+                            if (messages.size() > addMarkOnComment)
+                                messages.get(addMarkOnComment).continuationInformation = getString(R.string.UnreadPeriodStart);
+                            disableScrollToEnd = true;
+                            listAdapter.clear();
+                        }
+                        boolean scrollToBottom = args != null && args.getBoolean("scrollToBottom", false);
+                        if (scrollToBottom && !disableScrollToEnd) {
+                            getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+                            getListView().setStackFromBottom(true);
+                        } else {
+                            getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+                            getListView().setStackFromBottom(false);
+                        }
+                        listAdapter.addAllMessages(messages);
+                        setListAdapter(listAdapter);
+                        getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
 
-                    if (listAdapter.getCount() > 0) {   // could be filtered out!
                         initAdapterStageTwo(cached);
-                    }
-                    if (listPosition != null) {
-                        try {
-                            getListView().onRestoreInstanceState(listPosition);
-                        } catch (Exception e) {
-                            /* tmp fix for
-                            java.lang.IllegalStateException: Content view not yet created
-                                    at+android.support.v4.app.ListFragment.ensureList(ListFragment.java:328)
-                                    at+android.support.v4.app.ListFragment.getListView(ListFragment.java:222)
-                             */
+                        if (listPosition != null) {
+                            try {
+                                getListView().onRestoreInstanceState(listPosition);
+                            } catch (Exception e) {
+                                /* tmp fix for
+                                java.lang.IllegalStateException: Content view not yet created
+                                        at+android.support.v4.app.ListFragment.ensureList(ListFragment.java:328)
+                                        at+android.support.v4.app.ListFragment.getListView(ListFragment.java:222)
+                                 */
+
+                            }
+                        }
+                        if (listAdapter.getCount() != 0) {   // could be filtered out!
+                            Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
+                            Activity activity = getActivity();
+                            if (activity != null) {
+                                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+                                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                    @Override
+                                    public void withService(XMPPService service) {
+                                        service.removeMessages(mid, false);
+                                    }
+                                });
+                                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                    @Override
+                                    public void withService(DatabaseService service) {
+                                        service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size() - 1, messages.get(0).Timestamp.getDate()));
+                                    }
+
+                                    @Override
+                                    public void withoutService() {
+                                    }
+                                });
+                            }
 
                         }
-                    }
-                    if (listAdapter.getCount() != 0 && messages.size() > 0) {   // could be filtered out!
-                        Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
-                        Activity activity = getActivity();
-                        if (activity != null) {
-                            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
-                            xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                @Override
-                                public void withService(XMPPService service) {
-                                    service.removeMessages(mid, false);
-                                }
-                            });
-                            databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                                @Override
-                                public void withService(DatabaseService service) {
-                                    service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size() - 1, messages.get(0).Timestamp.getDate()));
-                                }
-
-                                @Override
-                                public void withoutService() {
-                                }
-                            });
+                        if (cached) {
+                            large.setVisibility(View.GONE);
+                            small.setVisibility(View.VISIBLE);
+                            setCachedViewIndicators(true);
+                            getView().findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
+                        } else {
+                            setCachedViewIndicators(false);
+                            getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
                         }
-
                     }
-                    if (cached) {
-                        large.setVisibility(View.GONE);
-                        small.setVisibility(View.VISIBLE);
-                        setCachedViewIndicators(true);
-                        getView().findViewById(android.R.id.empty).setVisibility(View.VISIBLE);
-                    } else {
-                        setCachedViewIndicators(false);
-                        getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
-                    }
-
                 }
             });
         }

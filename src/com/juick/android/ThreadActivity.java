@@ -152,6 +152,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         tf.setArguments(args);
         ft.add(R.id.threadfragment, tf);
         ft.commit();
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     private void launchMainMessagesEnabler() {

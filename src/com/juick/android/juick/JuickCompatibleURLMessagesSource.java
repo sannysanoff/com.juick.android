@@ -181,7 +181,8 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
             });
         }
         // get from original location
-        final String jsonStr = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + ((JuickMessageID)mid).getMid(), notifications).getResult();
+        Utils.RESTResponse result = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + ((JuickMessageID) mid).getMid(), notifications);
+        final String jsonStr = result.getResult();
         retrieved[0] = true;
         final ArrayList<JuickMessage> stuff = parseJSONpure(jsonStr, messageDB);
         if (messageDB) {

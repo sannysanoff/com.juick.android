@@ -47,7 +47,8 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     }
 
     protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        final String jsonStr = new JuickCompatibleURLMessagesSource(label, ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification).getResult();
+        Utils.RESTResponse result = new JuickCompatibleURLMessagesSource(label, ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
+        final String jsonStr = result.getResult();
         Utils.DownloadErrorNotification errorNotification = null;
         if (notification instanceof Utils.DownloadErrorNotification)
             errorNotification = (Utils.DownloadErrorNotification)notification;

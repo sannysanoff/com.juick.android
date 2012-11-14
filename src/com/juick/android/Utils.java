@@ -341,7 +341,8 @@ public class Utils {
                     client.execute(httpGet, new ResponseHandler<Object>() {
                         @Override
                         public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
-                            if (o.getStatusLine().getStatusCode() == 200) {
+                            boolean simulateError = false;
+                            if (o.getStatusLine().getStatusCode() == 200 && !simulateError) {
                                 reloginTried = 0;
                                 HttpEntity e = o.getEntity();
                                 if (progressNotification instanceof DownloadProgressNotification) {
