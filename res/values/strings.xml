@@ -296,16 +296,21 @@
                 ]]>
     </string>
 
-    <string name="rf_2012111001"><![CDATA[
+    <string name="rf_2012111401"><![CDATA[
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
             </head>
             <body>
 
-            <b>11 ноября 2012</b>
+            <b>14 ноября 2012</b>
             <li>
             Отправление сообщений об ошибках теперь делается с помощью ACRA, без подтверждения. Уходит больше данных об устройстве.
+            </li>
+            <li>
+            Поддержка BnW (Включаем галочки: Feed:<input type="checkbox" name="prefs.msrcBNWFeed" #prefs.checked.msrcBNWFeed#>, All:<input type="checkbox" name="prefs.msrcBNWAll" #prefs.checked.msrcBNWAll#>, Hot:<input type="checkbox" name="prefs.msrcBNWHot" #prefs.checked.msrcBNWHot#> )
+              и psto (Recent:<input type="checkbox" name="prefs.msrcPSTORecent" #prefs.checked.msrcPSTORecent#>, My:<input type="checkbox" name="prefs.msrcPSTOMy" #prefs.checked.msrcPSTOMy#>, Popular:<input type="checkbox" name="prefs.msrcPSTOPopular" #prefs.checked.msrcPSTOPopular#> ),
+              c возможностью постинга и комментирования, и еще несколько функций.
             </li>
             <li>
             Приватные сообщения. Парсятся с нового сайта (dev.juick.com). Спросит логин и пароль для сайта (1 раз). Дискуссии (тоже раздел с сайта). Включить?
@@ -386,9 +391,6 @@
             <li>
             Создана инфраструктура графиков, и добавлено несколько графиков: активность сайта целиком, активность конкретного пользователя.
             Дальше будет больше.
-            </li>
-            <li>
-            Поддержка BnW и psto.
             </li>
             <hr>
             Все фичи Juick Advanced можно посмотреть в настройках, пункт \"Что Нового\".

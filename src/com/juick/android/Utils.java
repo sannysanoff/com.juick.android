@@ -62,6 +62,7 @@ public class Utils {
 
     public static abstract class URLAuth {
 
+
         public enum ReplyCode {
             FORBIDDEN,
             NORMAL,
@@ -73,7 +74,8 @@ public class Utils {
         public abstract void authorizeRequest(HttpRequestBase request, String cookie);
         public abstract void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url);
         public abstract String authorizeURL(String url, String cookie);
-        public abstract ReplyCode validateReply(HttpURLConnection conn, String url) throws IOException;
+        public abstract ReplyCode validateNon200Reply(HttpURLConnection conn, String url) throws IOException;
+        public abstract ReplyCode validateNon200Reply(HttpResponse o, String url);
         public abstract void clearCookie(Activity context, Runnable then);
     }
 
@@ -104,7 +106,12 @@ public class Utils {
         }
 
         @Override
-        public ReplyCode validateReply(HttpURLConnection conn, String url) {
+        public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+            return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public ReplyCode validateNon200Reply(HttpResponse o, String url) {
             return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
         }
 
@@ -320,11 +327,13 @@ public class Utils {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
         final URLAuth finalAuthorizer = authorizer;
+        final boolean[] cookieCleared = {false};
         authorizer.authorize((Activity)context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 final DefaultHttpClient client = new DefaultHttpClient();
                 try {
+                    final Function<Void, String> thiz = this;
                     boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
                     long l = System.currentTimeMillis();
                     if (compression)
@@ -341,6 +350,7 @@ public class Utils {
                     client.execute(httpGet, new ResponseHandler<Object>() {
                         @Override
                         public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
+                            URLAuth.ReplyCode authReplyCode = authorizer.validateNon200Reply(o, url);
                             boolean simulateError = false;
                             if (o.getStatusLine().getStatusCode() == 200 && !simulateError) {
                                 reloginTried = 0;
@@ -352,7 +362,16 @@ public class Utils {
                                 ret[0] = streamToString(content, progressNotification);
                                 content.close();
                             } else {
-                                if (o.getStatusLine().getStatusCode() / 100 == 4) {
+                                if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
+                                    cookieCleared[0] = true;    // don't enter loop
+                                    authorizer.clearCookie((Activity) context, new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            authorizer.authorize((Activity) context, true, url, thiz);
+                                        }
+                                    });
+                                    return null;
+                                } else if (o.getStatusLine().getStatusCode() / 100 == 4) {
                                     if (context instanceof Activity) {
                                         final Activity activity = (Activity)context;
                                         reloginTried++;
@@ -367,6 +386,7 @@ public class Utils {
                                             });
                                         }
                                     }
+                                    // fall through
                                 }
 
                                 if (progressNotification instanceof DownloadErrorNotification) {
@@ -568,7 +588,7 @@ public class Utils {
                     wr.write(data);
                     wr.close();
 
-                    URLAuth.ReplyCode authReplyCode = authorizer.validateReply(conn, url);
+                    URLAuth.ReplyCode authReplyCode = authorizer.validateNon200Reply(conn, url);
                     try {
                         if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
                             cookieCleared[0] = true;    // don't enter loop

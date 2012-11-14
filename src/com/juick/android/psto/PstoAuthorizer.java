@@ -11,6 +11,7 @@ import android.widget.Toast;
 import com.juick.android.Utils;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -127,37 +128,42 @@ public class PstoAuthorizer extends Utils.URLAuth {
                     }
 
                     private void tryLoginWithPassword(final String loginS, final String passwordS, final Utils.Function<Void, Utils.RESTResponse> safeCont) {
-                        obtainCookieByLoginPassword(activity, loginS, passwordS,
-                                new Utils.Function<Void, Utils.RESTResponse>() {
-                                    @Override
-                                    public Void apply(final Utils.RESTResponse s) {
-                                        if (s.result != null) {
-                                            myCookie = s.result;
-                                            activity.runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-                                                    sp.edit()
-                                                            .putString("psto.web_cookie", myCookie)
-                                                            .putString("psto.web_login", loginS)
-                                                            .putString("psto.web_password", passwordS)
-                                                            .commit();
-                                                    safeCont.apply(s);
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                obtainCookieByLoginPassword(activity, loginS, passwordS,
+                                        new Utils.Function<Void, Utils.RESTResponse>() {
+                                            @Override
+                                            public Void apply(final Utils.RESTResponse s) {
+                                                if (s.result != null) {
+                                                    myCookie = s.result;
+                                                    activity.runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                                                            sp.edit()
+                                                                    .putString("psto.web_cookie", myCookie)
+                                                                    .putString("psto.web_login", loginS)
+                                                                    .putString("psto.web_password", passwordS)
+                                                                    .commit();
+                                                            safeCont.apply(s);
 
+                                                        }
+                                                    });
+                                                } else {
+                                                    activity.runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
+                                                            safeCont.apply(s);
+                                                        }
+                                                    });
                                                 }
-                                            });
-                                        } else {
-                                            activity.runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
-                                                    safeCont.apply(s);
-                                                }
-                                            });
-                                        }
-                                        return null;
-                                    }
-                                });
+                                                return null;
+                                            }
+                                        });
+                            }
+                        }.start();
                     }
                 });
             }
@@ -166,6 +172,9 @@ public class PstoAuthorizer extends Utils.URLAuth {
         }
     }
 
+    /**
+     * unsafe
+     */
     static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
@@ -257,10 +266,16 @@ public class PstoAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateReply(HttpURLConnection conn, String url) throws IOException {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) throws IOException {
         if (postingSomething(url) && conn.getResponseCode() == 302) return ReplyCode.NORMAL;
         if (conn.getResponseCode() == 403) return ReplyCode.FORBIDDEN;
         return ReplyCode.FAIL;
+    }
+
+    @Override
+    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
+        if (o.getStatusLine().getStatusCode() == 403) return ReplyCode.FORBIDDEN;
+        return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

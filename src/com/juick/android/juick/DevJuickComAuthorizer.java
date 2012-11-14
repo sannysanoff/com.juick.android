@@ -230,7 +230,12 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateReply(HttpURLConnection conn, String url) {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+        return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

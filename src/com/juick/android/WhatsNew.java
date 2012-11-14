@@ -36,7 +36,7 @@ public class WhatsNew {
     }
 
     ReleaseFeatures[] features = new ReleaseFeatures[] {
-            new ReleaseFeatures("2012111001", R.string.rf_2012111001),
+            new ReleaseFeatures("2012111401", R.string.rf_2012111401),
             new ReleaseFeatures("2012092002", R.string.rf_2012092001),
             new ReleaseFeatures("2012091402", R.string.rf_2012091402),
             new ReleaseFeatures("2012082601", R.string.rf_2012082601),
@@ -213,9 +213,10 @@ public class WhatsNew {
 
         }
         if (sequence < features.length - 1 && cycle) {
-            builder.setPositiveButton(context.getString(R.string.OlderFeatures), new DialogInterface.OnClickListener() {
+            builder.setNeutralButton(context.getString(R.string.OlderFeatures), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
+                    applySettings(wv);
                     reportFeatures(sequence+1, cycle, notCycle);
                 }
             });

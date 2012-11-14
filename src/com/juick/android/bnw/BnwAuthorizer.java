@@ -11,6 +11,7 @@ import android.widget.Toast;
 import com.juick.android.Utils;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONObject;
@@ -194,7 +195,12 @@ public class BnwAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateReply(HttpURLConnection conn, String url) {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+        return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

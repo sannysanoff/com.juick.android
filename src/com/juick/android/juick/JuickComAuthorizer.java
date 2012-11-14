@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.juick.android.Base64;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.message.BasicHeader;
 
@@ -66,8 +67,13 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateReply(HttpURLConnection conn, String url) {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
         return ReplyCode.FAIL;
+    }
+
+    @Override
+    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
+        return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
