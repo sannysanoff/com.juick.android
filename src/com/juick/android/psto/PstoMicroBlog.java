@@ -39,8 +39,7 @@ public class PstoMicroBlog implements MicroBlog {
 
     @Override
     public void addNavigationSources(ArrayList<MainActivity.NavigationItem> navigationItems, final MainActivity mainActivity) {
-        SharedPreferences sp = mainActivity.sp;
-        final String weblogin = sp.getString("psto.web_login", null);
+        final SharedPreferences sp = mainActivity.sp;
         if (sp.getBoolean("msrcPSTORecent", false)) {
             navigationItems.add(new MainActivity.NavigationItem(R.string.navigationPSTORecent) {
                 @Override
@@ -52,14 +51,33 @@ public class PstoMicroBlog implements MicroBlog {
                 }
             });
         }
-        if (sp.getBoolean("msrcPSTOMy", false) && weblogin != null) {
+        if (sp.getBoolean("msrcPSTOMy", false)) {
+            final int myIndex = navigationItems.size();
             navigationItems.add(new MainActivity.NavigationItem(R.string.navigationPSTOMy) {
                 @Override
                 public void action() {
-                    final Bundle args = new Bundle();
-                    PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://"+weblogin+".psto.net/");
-                    args.putSerializable("messagesSource", ms);
-                    mainActivity.runDefaultFragmentWithBundle(args, this);
+                    final MainActivity.NavigationItem thiz = this;
+                    Utils.URLAuth authorizer = Utils.getAuthorizer("http://psto.net/");
+                    authorizer.authorize(mainActivity, true, "http://psto.net/", new Utils.Function<Void, String>() {
+                        @Override
+                        public Void apply(final String s) {
+                            mainActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (s != null) {
+                                        final Bundle args = new Bundle();
+                                        final String weblogin = sp.getString("psto.web_login", null);
+                                        PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/");
+                                        args.putSerializable("messagesSource", ms);
+                                        mainActivity.runDefaultFragmentWithBundle(args, thiz);
+                                    } else {
+                                        mainActivity.restoreLastNavigationPosition();
+                                    }
+                                }
+                            });
+                            return null;
+                        }
+                    });
                 }
             });
         }

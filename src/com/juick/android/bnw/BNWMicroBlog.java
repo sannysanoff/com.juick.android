@@ -225,7 +225,7 @@ public class BNWMicroBlog implements MicroBlog {
                 }
             });
         }
-        if (sp.getBoolean("msrcBNW", false)) {
+        if (sp.getBoolean("msrcBNWHot", false)) {
             navigationItems.add(new MainActivity.NavigationItem(R.string.navigationBNWHot) {
                 @Override
                 public void action() {

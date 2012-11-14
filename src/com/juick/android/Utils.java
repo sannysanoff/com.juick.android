@@ -423,7 +423,7 @@ public class Utils {
         return ret[0];
     }
 
-    private static URLAuth getAuthorizer(String url) {
+    public static URLAuth getAuthorizer(String url) {
         URLAuth authorizer = new DummyAuthorizer();
         for (URLAuth a : authorizers) {
             if (a.acceptsURL(url)) {
