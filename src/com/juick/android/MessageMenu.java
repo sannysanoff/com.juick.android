@@ -213,7 +213,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     }
 
     protected void maybeAddDeleteItem() {
-        String midrid = ""+ getCurrentMID();
+        String midrid = ""+ getCurrentMIDInt();
         if (listSelectedItem.getRID() > 0)
             midrid += "/"+ listSelectedItem.getRID();
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.DeleteMessage) + " #" + midrid) {
@@ -346,7 +346,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         confirmAction(R.string.ReallyRecommend, new Runnable() {
             @Override
             public void run() {
-                postMessage("! #" + getCurrentMID(), activity.getResources().getString(R.string.Recommended));
+                postMessage("! #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Recommended));
             }
         });
     }
@@ -364,7 +364,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         confirmAction(R.string.ReallyUnsubscribePost, new Runnable() {
             @Override
             public void run() {
-                postMessage("U #" + getCurrentMID(), activity.getResources().getString(R.string.Unsubscribed));
+                postMessage("U #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Unsubscribed));
             }
         });
     }
@@ -373,13 +373,13 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         confirmAction(R.string.ReallySubscribePost, new Runnable() {
             @Override
             public void run() {
-                postMessage("S #" + getCurrentMID(), activity.getResources().getString(R.string.Subscribed));
+                postMessage("S #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Subscribed));
             }
         });
     }
 
     private void actionDeleteMessage() {
-        String midrid = ""+ getCurrentMID();
+        String midrid = ""+ getCurrentMIDInt();
         if (listSelectedItem.getRID() > 0)
             midrid += "/"+ listSelectedItem.getRID();
         final String finalMidrid = midrid;
@@ -794,7 +794,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         }
     }
 
-    private int getCurrentMID() {
+    private int getCurrentMIDInt() {
         return ((JuickMessageID)listSelectedItem.getMID()).getMid();
     }
 

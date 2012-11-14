@@ -19,10 +19,7 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.TypeAdapter;
+import com.google.gson.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
 import com.juick.android.juick.JuickMessageID;
@@ -153,10 +150,14 @@ public class DatabaseService extends Service {
         cursor.moveToFirst();
         int blobIndex = cursor.getColumnIndex("body");
         int saveDateIndex = cursor.getColumnIndex("save_date");
+        MessageID.MessageIDAdapter tmp = new MessageID.MessageIDAdapter();
         while(!cursor.isAfterLast()) {
             byte[] blob = cursor.getBlob(blobIndex);
             String str = decompressGZIP(blob);
-            JuickMessage mesg = getGson().fromJson(str, JuickMessage.class);
+            JsonObject jsonObject = (JsonObject) getGson().fromJson(str, JsonElement.class);
+            MessageID mid = tmp.deserialize(jsonObject.get("MID"), null, null);
+            JuickMessage msg = mid.getMicroBlog().createMessage();
+            JuickMessage mesg = getGson().fromJson(jsonObject, msg.getClass());
             if (mesg != null) {
                 mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
                 mesg.messageSaveDate = cursor.getLong(saveDateIndex);

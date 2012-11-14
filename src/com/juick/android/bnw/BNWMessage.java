@@ -37,4 +37,10 @@ public class BNWMessage extends JuickMessage {
     public String getReplyToString() {
         return replyToString;
     }
+
+    @Override
+    protected String webLinkToMessage(String msg) {
+        msg += "http://bnw.im/p/"+((BnwMessageID)getMID()).getId();
+        return msg;
+    }
 }

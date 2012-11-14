@@ -7,6 +7,7 @@ import android.widget.ListView;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.juick.SavedMessagesSource;
 
 import java.util.ArrayList;
 
@@ -38,4 +39,8 @@ public interface MicroBlog {
     void addNavigationSources(ArrayList<MainActivity.NavigationItem> navigationItems, MainActivity mainActivity);
 
     void decorateNewMessageActivity(NewMessageActivity newMessageActivity);
+
+    void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
+
+    JuickMessage createMessage();
 }

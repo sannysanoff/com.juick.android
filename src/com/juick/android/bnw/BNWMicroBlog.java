@@ -12,7 +12,9 @@ import android.widget.Toast;
 import com.juick.android.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.juick.SavedMessagesSource;
 import com.juickadvanced.R;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -247,4 +249,18 @@ public class BNWMicroBlog implements MicroBlog {
         newMessageActivity.setTitle(R.string.BnW__New_message);
         newMessageActivity.setProgressBarIndeterminateVisibility(false);
     }
+
+    @Override
+    public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+        new BnwCompatibleMessageSource(context,"","/").getChildren(mid, notifications, cont);
+
+    }
+
+    @Override
+    public JuickMessage createMessage() {
+        JuickMessage juickMessage = new BNWMessage();
+        juickMessage.microBlogCode = CODE;
+        return juickMessage;
+    }
+
 }

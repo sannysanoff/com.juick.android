@@ -309,7 +309,7 @@
             </li>
             <li>
             Поддержка BnW (Включаем галочки: Feed:<input type="checkbox" name="prefs.msrcBNWFeed" #prefs.checked.msrcBNWFeed#>, All:<input type="checkbox" name="prefs.msrcBNWAll" #prefs.checked.msrcBNWAll#>, Hot:<input type="checkbox" name="prefs.msrcBNWHot" #prefs.checked.msrcBNWHot#> )
-              и psto (Recent:<input type="checkbox" name="prefs.msrcPSTORecent" #prefs.checked.msrcPSTORecent#>, My:<input type="checkbox" name="prefs.msrcPSTOMy" #prefs.checked.msrcPSTOMy#>, Popular:<input type="checkbox" name="prefs.msrcPSTOPopular" #prefs.checked.msrcPSTOPopular#> ),
+              и psto (Subs:<input type="checkbox" name="prefs.msrcPSTOSubs" #prefs.checked.msrcPSTOSubs#>, Recent:<input type="checkbox" name="prefs.msrcPSTORecent" #prefs.checked.msrcPSTORecent#>, My:<input type="checkbox" name="prefs.msrcPSTOMy" #prefs.checked.msrcPSTOMy#>, Popular:<input type="checkbox" name="prefs.msrcPSTOPopular" #prefs.checked.msrcPSTOPopular#> ),
               c возможностью постинга и комментирования, и еще несколько функций.
             </li>
             <li>

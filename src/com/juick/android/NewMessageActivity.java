@@ -40,6 +40,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.*;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
@@ -98,6 +99,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         setContentView(R.layout.newmessage);
 
         messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
+        if (messagesSource == null) {
+            messagesSource = new JuickCompatibleURLMessagesSource("X", this, "http://nonsense.x/");
+        }
 
 
         etTo = (EditText) findViewById(R.id.editTo);

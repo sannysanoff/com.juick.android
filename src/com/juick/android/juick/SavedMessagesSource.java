@@ -1,5 +1,6 @@
 package com.juick.android.juick;
 
+import android.app.Activity;
 import android.content.Context;
 import com.juick.android.DatabaseService;
 import com.juick.android.MicroBlog;
@@ -32,7 +33,7 @@ public class SavedMessagesSource extends MessagesSource {
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
+        mid.getMicroBlog().getChildren((Activity) ctx, mid, notifications, cont);
     }
 
     @Override

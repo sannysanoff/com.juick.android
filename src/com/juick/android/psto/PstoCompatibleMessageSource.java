@@ -266,9 +266,11 @@ public class PstoCompatibleMessageSource extends MessagesSource {
             }
             Matcher nameMatcher = messageUser.matcher(line);
             if (nameMatcher.find()) {
-                message.User.UName = nameMatcher.group(3);
-                if (message.getMID() != null) {
-                    ((PstoMessageID) message.getMID()).user = message.User.UName;
+                if (message.User.UName == null) {
+                    message.User.UName = nameMatcher.group(3);
+                    if (message.getMID() != null) {
+                        ((PstoMessageID) message.getMID()).user = message.User.UName;
+                    }
                 }
                 continue;
             }

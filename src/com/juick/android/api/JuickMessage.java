@@ -92,6 +92,11 @@ public class JuickMessage {
         if (Text != null) {
             msg += Text + "\n";
         }
+        msg = webLinkToMessage(msg);
+        return msg;
+    }
+
+    protected String webLinkToMessage(String msg) {
         msg += MID.toString();
         if (RID > 0) {
             msg += "/" + RID;

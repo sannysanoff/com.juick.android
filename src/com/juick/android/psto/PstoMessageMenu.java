@@ -39,5 +39,8 @@ public class PstoMessageMenu extends MessageMenu {
     }
 
 
-
+    @Override
+    protected void maybeAddDeleteItem() {
+        //
+    }
 }

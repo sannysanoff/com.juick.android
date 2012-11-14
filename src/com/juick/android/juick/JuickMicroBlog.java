@@ -439,6 +439,19 @@ public class JuickMicroBlog implements MicroBlog {
         }
     }
 
+    @Override
+    public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+        new JuickCompatibleURLMessagesSource(context).getChildren(mid, notifications, cont);
+    }
+
+    @Override
+    public JuickMessage createMessage() {
+        JuickMessage juickMessage = new JuickMessage();
+        juickMessage.microBlogCode = CODE;
+        return juickMessage;
+    }
+
+
     private String getString(int id) {
         return activity.getString(id);
     }

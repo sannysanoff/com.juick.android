@@ -142,4 +142,9 @@ public class BNWMessageMenu extends MessageMenu {
     public boolean isDialogMode() {
         return false;
     }
+
+    @Override
+    protected void maybeAddDeleteItem() {
+        //
+    }
 }

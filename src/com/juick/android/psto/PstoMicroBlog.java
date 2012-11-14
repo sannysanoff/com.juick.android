@@ -13,7 +13,9 @@ import com.juick.android.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
 import com.juick.android.api.MessageID;
+import com.juick.android.bnw.BNWMessage;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.juick.SavedMessagesSource;
 import com.juickadvanced.R;
 
 import java.net.URLEncoder;
@@ -128,6 +130,19 @@ public class PstoMicroBlog implements MicroBlog {
         newMessageActivity.setTitle(R.string.Psto__New_message);
         newMessageActivity.setProgressBarIndeterminateVisibility(false);
     }
+
+    @Override
+    public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+        new PstoCompatibleMessageSource(context, "","http://psto.net/").getChildren(mid, notifications, cont);
+    }
+
+    @Override
+    public JuickMessage createMessage() {
+        JuickMessage juickMessage = new PstoMessage();
+        juickMessage.microBlogCode = CODE;
+        return juickMessage;
+    }
+
 
     @Override
     public void initialize() {
