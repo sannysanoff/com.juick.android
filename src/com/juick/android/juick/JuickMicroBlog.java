@@ -6,6 +6,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
@@ -13,6 +15,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -21,6 +24,8 @@ import com.juick.android.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
 import com.juickadvanced.R;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -47,7 +52,7 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public void postNewMessage(NewMessageActivity newMessageActivity, String msg, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, Utils.Function<Void, String> then) {
-        Utils.RESTResponse restResponse = sendMessage(newMessageActivity, attachmentMime, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
+        Utils.RESTResponse restResponse = sendMessage(newMessageActivity, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
         then.apply(restResponse.getErrorText());
     }
 
@@ -377,6 +382,55 @@ public class JuickMicroBlog implements MicroBlog {
                 }
 
             });
+        }
+    }
+
+    @Override
+    public void decorateNewMessageActivity(final NewMessageActivity newMessageActivity) {
+        newMessageActivity.setTitle(R.string.Juick__New_message);
+        if (newMessageActivity.messagesSource instanceof JuickMessagesSource) {
+            Thread thr = new Thread(new Runnable() {
+
+                public void run() {
+                    String jsonUrl = "http://api.juick.com/postform";
+
+                    LocationManager lm = (LocationManager) newMessageActivity.getSystemService(Context.LOCATION_SERVICE);
+                    Location loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (loc != null) {
+                        jsonUrl += "?lat=" + loc.getLatitude() + "&lon=" + loc.getLongitude() + "&acc=" + loc.getAccuracy() + "&fixage=" + Math.round((System.currentTimeMillis() - loc.getTime()) / 1000);
+                    }
+
+                    final String jsonStr = Utils.getJSON(newMessageActivity, jsonUrl, null).getResult();
+
+                    newMessageActivity.runOnUiThread(new Runnable() {
+
+                        public void run() {
+                            if (jsonStr != null) {
+
+                                try {
+                                    JSONObject json = new JSONObject(jsonStr);
+                                    if (json.has("facebook")) {
+                                        newMessageActivity.etTo.setText(newMessageActivity.etTo.getText() + ", Facebook");
+                                    }
+                                    if (json.has("twitter")) {
+                                        newMessageActivity.etTo.setText(newMessageActivity.etTo.getText() + ", Twitter");
+                                    }
+                                    if (json.has("place")) {
+                                        JSONObject jsonPlace = json.getJSONObject("place");
+                                        newMessageActivity.pidHint = jsonPlace.getInt("pid");
+                                        newMessageActivity.bLocationHint.setVisibility(View.VISIBLE);
+                                        newMessageActivity.bLocationHint.setText(jsonPlace.getString("name"));
+                                    }
+                                } catch (JSONException e) {
+                                    System.err.println(e);
+                                }
+                            }
+                            newMessageActivity.setProgressBarIndeterminateVisibility(false);
+                        }
+                    });
+                }
+            },"Post message");
+            thr.start();
         }
     }
 

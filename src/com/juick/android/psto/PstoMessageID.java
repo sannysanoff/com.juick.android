@@ -18,8 +18,9 @@ public class PstoMessageID extends MessageID implements Serializable {
     String id;
     String user;
 
-    public PstoMessageID(String id) {
+    public PstoMessageID(String user, String id) {
         this.id = id;
+        this.user = user;
     }
 
     public String getId() {
@@ -43,7 +44,7 @@ public class PstoMessageID extends MessageID implements Serializable {
 
     public static PstoMessageID fromString(String str) {
         if (str.startsWith("pst-")) {
-            return new PstoMessageID(str.substring(4));
+            return new PstoMessageID("", str.substring(4));
         }
         return null;
     }

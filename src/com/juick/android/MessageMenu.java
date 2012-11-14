@@ -221,7 +221,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             int mid = Integer.parseInt(url.substring(1));
             if (mid > 0) {
                 Intent intent = new Intent(activity, ThreadActivity.class);
-                intent.putExtra("mid", mid);
+                intent.putExtra("mid", new JuickMessageID(mid));
                 intent.putExtra("messageSource", messagesSource);
                 activity.startActivity(intent);
             }

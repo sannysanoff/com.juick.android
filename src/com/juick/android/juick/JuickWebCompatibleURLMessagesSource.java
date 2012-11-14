@@ -83,6 +83,9 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     static Pattern mediaImage = Pattern.compile("<div class=\"msg-media\"><a href=\"(.*?)\">");
     static String messageBodyStart = "<div class=\"msg-txt\">";
     static Pattern hyperlink = Pattern.compile("<a (.*?)href=\"(.*?)\"(.*?)>(.*?)</a>");
+    static Pattern juick = Pattern.compile("http://juick.com/(\\d+)");
+    static Pattern juick2 = Pattern.compile("http://juick.com/(\\w+)/(\\d+)");
+    static Pattern hashNo = Pattern.compile("#(\\d*)");
     static Pattern blockQuote = Pattern.compile("<blockquote>(.*?)</blockquote>");
     static Pattern italic = Pattern.compile("<i>(.*?)</i>");
     static Pattern bold = Pattern.compile("<b>(.*?)</b>");
@@ -203,6 +206,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
                 break;
             }
         }
+        text = unjuick(text);
         while(true) {
             Matcher matcher = blockQuote.matcher(text);
             if (matcher.find()) {
@@ -242,6 +246,40 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
         text = text.replace("&gt;",">");
         text = text.replace("&lt;","<");
         text = text.replace("&mdash;","-");
+        return text;
+    }
+
+    public static String unjuick(String text) {
+        while(true) {
+            Matcher matcher = juick.matcher(text);
+            if (matcher.find()) {
+                int end = matcher.end(1);
+                Matcher hash = hashNo.matcher(text.substring(end));
+                if (hash.find() && hash.start() == 0) {
+                    text = text.substring(0, end) + hash.replaceFirst("/"+hash.group(1));
+                    continue;
+                }
+                text = matcher.replaceFirst("#"+matcher.group(1));
+                continue;
+            } else {
+                break;
+            }
+        }
+        while(true) {
+            Matcher matcher = juick2.matcher(text);
+            if (matcher.find()) {
+                int end = matcher.end(2);
+                Matcher hash = hashNo.matcher(text.substring(end));
+                if (hash.find() && hash.start() == 0) {
+                    text = text.substring(0, end) + hash.replaceFirst("/"+hash.group(1));
+                    continue;
+                }
+                text = matcher.replaceFirst("#"+matcher.group(2));
+                continue;
+            } else {
+                break;
+            }
+        }
         return text;
     }
 

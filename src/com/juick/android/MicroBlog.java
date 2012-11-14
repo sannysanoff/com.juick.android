@@ -37,4 +37,5 @@ public interface MicroBlog {
 
     void addNavigationSources(ArrayList<MainActivity.NavigationItem> navigationItems, MainActivity mainActivity);
 
+    void decorateNewMessageActivity(NewMessageActivity newMessageActivity);
 }

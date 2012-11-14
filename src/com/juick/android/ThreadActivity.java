@@ -183,9 +183,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     protected void onResume() {
         resumed = true;
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-        if (getIntent().getBooleanExtra("isolated", false)) {
-            launchMainMessagesEnabler();
-        }
+        launchMainMessagesEnabler();
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
     }
 

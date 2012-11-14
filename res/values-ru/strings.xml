@@ -73,6 +73,9 @@
 
     <!-- NewMessageActivity -->
     <string name="Juick__New_message">Juick: Новое сообщение</string>
+    <string name="BnW__New_message">BnW: Новое сообщение</string>
+    <string name="Psto__New_message">psto: Новое сообщение</string>
+    <string name="New_message">Новое сообщение</string>
     <string name="To__All">Кому: Всем</string>
     <string name="Attach">Добавить</string>
     <string name="Photo_from_gallery">Фото из галереи</string>

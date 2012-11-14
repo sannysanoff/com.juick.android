@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
@@ -13,6 +14,7 @@ import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -119,7 +121,7 @@ public class BNWMicroBlog implements MicroBlog {
     }
 
     @Override
-    public void postNewMessage(NewMessageActivity newMessageActivity, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, Utils.Function<Void, String> then) {
+    public void postNewMessage(NewMessageActivity newMessageActivity, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, final Utils.Function<Void, String> then) {
         try {
             int start = 0;
             int i = 0;
@@ -160,17 +162,31 @@ public class BNWMicroBlog implements MicroBlog {
                 data.append("&tags="+URLEncoder.encode(tags.toString(),"utf-8"));
             if (hasclubs)
                 data.append("&clubs="+URLEncoder.encode(clubs.toString(),"utf-8"));
-            Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://ipv4.bnw.im/api/post?", data.toString());
-            if (restResponse.getResult() != null) {
-                JSONObject json = new JSONObject(restResponse.getResult());
-                then.apply(json.getBoolean("ok") ? null : "error from server");
-                return;
-            } else {
-                then.apply(restResponse.getErrorText());
-                return;
-            }
-        } catch (Exception e) {
-            then.apply(e.toString());
+            final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://ipv4.bnw.im/api/post?", data.toString());
+            newMessageActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (restResponse.getResult() != null) {
+                            JSONObject json = new JSONObject(restResponse.getResult());
+                            then.apply(json.getBoolean("ok") ? null : "error from server");
+                            return;
+                        } else {
+                            then.apply(restResponse.getErrorText());
+                            return;
+                        }
+                    } catch (JSONException e) {
+                        then.apply(e.toString());
+                    }
+                }
+            });
+        } catch (final Exception e) {
+            newMessageActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    then.apply(e.toString());
+                }
+            });
         }
     }
 
@@ -220,5 +236,15 @@ public class BNWMicroBlog implements MicroBlog {
                 }
             });
         }
+    }
+
+    @Override
+    public void decorateNewMessageActivity(NewMessageActivity newMessageActivity) {
+        newMessageActivity.bTags.setVisibility(View.GONE);
+        newMessageActivity.bLocation.setVisibility(View.GONE);
+        newMessageActivity.bAttachment.setVisibility(View.GONE);
+        newMessageActivity.bLocationHint.setVisibility(View.GONE);
+        newMessageActivity.setTitle(R.string.BnW__New_message);
+        newMessageActivity.setProgressBarIndeterminateVisibility(false);
     }
 }

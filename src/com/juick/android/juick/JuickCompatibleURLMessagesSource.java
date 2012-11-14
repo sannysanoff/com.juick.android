@@ -123,6 +123,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
                     JuickMessage msg = initFromJSON(jsonObject);
+                    msg.Text = JuickWebCompatibleURLMessagesSource.unjuick(msg.Text);
                     msg.messagesSource = this;
                     messages.add(msg);
                     if (!storeSource)

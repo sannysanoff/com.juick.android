@@ -41,7 +41,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         String midString = ((PstoMessageID)mid).getId();
         String user = ((PstoMessageID)mid).user;
-        String url = "http://" + user.toLowerCase() + ".psto.net/" + midString;
+        String url = user != null && user.length() > 0 ? "http://" + user.toLowerCase() + ".psto.net/" + midString : "http://psto.net/" + midString;
         Utils.RESTResponse jsonWithRetries = getJSONWithRetries(ctx, url, notifications);
         if (jsonWithRetries.errorText != null) {
             cont.apply(badRetval);
@@ -290,7 +290,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
             }
             Matcher postidMatcher = messageID.matcher(line);
             if (postidMatcher.find()) {
-                PstoMessageID mid = new PstoMessageID(postidMatcher.group(2));
+                PstoMessageID mid = new PstoMessageID("",postidMatcher.group(2));
                 message.setMID(mid);
                 if (message.User.UName != null) {
                     mid.user = message.User.UName;

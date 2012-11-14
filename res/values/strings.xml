@@ -76,6 +76,9 @@
 
     <!-- NewMessageActivity -->
     <string name="Juick__New_message">Juick: New message</string>
+    <string name="BnW__New_message">BnW: New message</string>
+    <string name="Psto__New_message">psto: New message</string>
+    <string name="New_message">New message</string>
     <string name="To__All">To: All</string>
     <string name="Attach">Attach</string>
     <string name="Photo_from_gallery">Photo from gallery</string>

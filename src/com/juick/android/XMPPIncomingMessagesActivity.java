@@ -211,7 +211,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 intent.putExtra("scrollToBottom", true);
             }
             intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getMID());
-            intent.putExtra("isolated", true);
             intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
             startActivity(intent);
             return;

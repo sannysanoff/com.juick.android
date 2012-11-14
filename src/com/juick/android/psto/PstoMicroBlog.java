@@ -5,10 +5,12 @@ import android.app.ProgressDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.ListView;
 import com.juick.android.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
+import com.juick.android.bnw.BnwMessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
@@ -58,6 +60,16 @@ public class PstoMicroBlog implements MicroBlog {
     }
 
     @Override
+    public void decorateNewMessageActivity(NewMessageActivity newMessageActivity) {
+        newMessageActivity.bTags.setVisibility(View.GONE);
+        newMessageActivity.bLocation.setVisibility(View.GONE);
+        newMessageActivity.bAttachment.setVisibility(View.GONE);
+        newMessageActivity.bLocationHint.setVisibility(View.GONE);
+        newMessageActivity.setTitle(R.string.BnW__New_message);
+        newMessageActivity.setProgressBarIndeterminateVisibility(false);
+    }
+
+    @Override
     public void initialize() {
         Utils.authorizers.add(0, new PstoAuthorizer());
     }
@@ -84,7 +96,7 @@ public class PstoMicroBlog implements MicroBlog {
 
     @Override
     public MessageID createKey(String keyString) {
-        return new PstoMessageID(keyString);
+        return PstoMessageID.fromString(keyString);
     }
 
     @Override

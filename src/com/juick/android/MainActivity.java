@@ -41,7 +41,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.juick.android.bnw.BNWMicroBlog;
+import com.juick.android.bnw.BnwCompatibleMessageSource;
+import com.juick.android.bnw.BnwMessageID;
 import com.juick.android.juick.*;
+import com.juick.android.psto.PstoCompatibleMessageSource;
+import com.juick.android.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
 import de.quist.app.errorreporter.ExceptionReporter;
@@ -122,6 +126,12 @@ public class MainActivity extends FragmentActivity implements
     public static int nActiveMainActivities = 0;
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        maybeLaunchIntent(intent, false);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         nActiveMainActivities++;
         System.out.println(AmbilWarnaPreference.class);
@@ -134,13 +144,7 @@ public class MainActivity extends FragmentActivity implements
         displayWidth = getWindow().getWindowManager().getDefaultDisplay().getWidth();
         displayHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
 
-        Intent intent = getIntent();
-        if (intent != null) {
-            Uri uri = intent.getData();
-            if (uri != null && uri.getPathSegments().size() > 0 && parseUri(uri)) {
-                return;
-            }
-        }
+        if (maybeLaunchIntent(getIntent(), true)) return;
 
         if (!Utils.hasAuth(getApplicationContext())) {
             startActivityForResult(new Intent(this, SignInActivity.class), ACTIVITY_SIGNIN);
@@ -171,6 +175,16 @@ public class MainActivity extends FragmentActivity implements
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
+    }
+
+    private boolean maybeLaunchIntent(Intent intent, boolean shouldFinish) {
+        if (intent != null) {
+            Uri uri = intent.getData();
+            if (uri != null && uri.getPathSegments().size() > 0 && parseUri(uri, shouldFinish)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Thread usageReportThread;
@@ -580,25 +594,67 @@ public class MainActivity extends FragmentActivity implements
         }
     }
 
-    private boolean parseUri(Uri uri) {
+    private boolean parseUri(Uri uri, boolean shouldFinish) {
         List<String> segs = uri.getPathSegments();
-        if ((segs.size() == 1 && segs.get(0).matches("\\A[0-9]+\\z"))
-                || (segs.size() == 2 && segs.get(1).matches("\\A[0-9]+\\z") && !segs.get(0).equals("places"))) {
-            int mid = Integer.parseInt(segs.get(segs.size() - 1));
-            if (mid > 0) {
-                finish();
-                Intent intent = new Intent(this, ThreadActivity.class);
+        if (uri.getHost().contains("juick.com")) {
+            if ((segs.size() == 1 && segs.get(0).matches("\\A[0-9]+\\z"))
+                    || (segs.size() == 2 && segs.get(1).matches("\\A[0-9]+\\z") && !segs.get(0).equals("places"))) {
+                int mid = Integer.parseInt(segs.get(segs.size() - 1));
+                if (mid > 0) {
+                    if (shouldFinish) finish();
+                    Intent intent = new Intent(this, ThreadActivity.class);
+                    intent.setData(null);
+                    intent.putExtra("mid", mid);
+                    intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    return true;
+                }
+            } else if (segs.size() == 1 && segs.get(0).matches("\\A[a-zA-Z0-9\\-]+\\z")) {
+                //TODO show user
+            }
+        }
+        if (uri.getHost().contains("psto.net")) {
+            String[] hostPart = uri.getHost().split("\\.");
+            if (hostPart.length == 2) {
+                // open main page
+                if (shouldFinish) finish();
+                Intent intent = new Intent(this, MessagesActivity.class);
                 intent.setData(null);
-                intent.putExtra("mid", mid);
-                intent.putExtra("isolated", true);
-                intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
+                intent.putExtra("messageSource", new PstoCompatibleMessageSource(this, "PSTO Main","http://psto.net/recent"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
-                return true;
             }
-        } else if (segs.size() == 1 && segs.get(0).matches("\\A[a-zA-Z0-9\\-]+\\z")) {
-            //TODO show user
+            if (hostPart.length == 3 && segs.size() == 1) { // http://abc.psto.net/klmnop
+                // open thread
+                if (shouldFinish) finish();
+                Intent intent = new Intent(this, ThreadActivity.class);
+                intent.setData(null);
+                PstoMessageID mid = new PstoMessageID(hostPart[0], segs.get(0));
+                intent.putExtra("mid", mid);
+                intent.putExtra("messageSource", new PstoCompatibleMessageSource(this, getString(R.string.navigationPSTORecent),"http://psto.net/recent"));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+            }
+        }
+        if (uri.getHost().contains("bnw.im")) {
+            String[] hostPart = uri.getHost().split("\\.");
+            if (hostPart.length == 2 && segs.size() == 2 && segs.get(0).equals("p")) { // http://bnw.im/p/KLMNOP
+                // open thread
+                if (shouldFinish) finish();
+                Intent intent = new Intent(this, ThreadActivity.class);
+                intent.setData(null);
+                BnwMessageID mid = new BnwMessageID(segs.get(1));
+                intent.putExtra("mid", mid);
+                intent.putExtra("messageSource", new BnwCompatibleMessageSource(this, getString(R.string.navigationBNWAll),"/show"));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+            }
+
         }
         return false;
     }
@@ -703,6 +759,11 @@ public class MainActivity extends FragmentActivity implements
                 break;
             }
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
 }

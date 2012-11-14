@@ -43,6 +43,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.*;
+import com.juick.android.juick.JuickMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
@@ -64,16 +65,16 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     public static final int ACTIVITY_ATTACHMENT_IMAGE = 2;
     public static final int ACTIVITY_ATTACHMENT_VIDEO = 3;
     private static final int ACTIVITY_TAGS = 4;
-    private EditText etTo;
+    public EditText etTo;
     private EditText etMessage;
-    private Button bLocationHint;
-    private ImageButton bTags;
-    private ImageButton bLocation;
-    private ImageButton bAttachment;
+    public Button bLocationHint;
+    public ImageButton bTags;
+    public ImageButton bLocation;
+    public ImageButton bAttachment;
     private Button bSend;
     private ProgressBar progressSend;
     private int pid = 0;
-    private int pidHint = 0;
+    public int pidHint = 0;
     private String pname = null;
     private double lat = 0;
     private double lon = 0;
@@ -93,7 +94,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             }
         }
     };
-    MessagesSource messagesSource;
+    public MessagesSource messagesSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +107,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         setContentView(R.layout.newmessage);
 
         messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
+
 
         etTo = (EditText) findViewById(R.id.editTo);
         etMessage = (EditText) findViewById(R.id.editMessage);
@@ -144,49 +146,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         progressDialog = null;
         progressDialogCancel.bool = false;
         etMessage.requestFocus();
-
-        Thread thr = new Thread(new Runnable() {
-
-            public void run() {
-                String jsonUrl = "http://api.juick.com/postform";
-
-                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                Location loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                if (loc != null) {
-                    jsonUrl += "?lat=" + loc.getLatitude() + "&lon=" + loc.getLongitude() + "&acc=" + loc.getAccuracy() + "&fixage=" + Math.round((System.currentTimeMillis() - loc.getTime()) / 1000);
-                }
-
-                final String jsonStr = Utils.getJSON(NewMessageActivity.this, jsonUrl, null).getResult();
-
-                NewMessageActivity.this.runOnUiThread(new Runnable() {
-
-                    public void run() {
-                        if (jsonStr != null) {
-
-                            try {
-                                JSONObject json = new JSONObject(jsonStr);
-                                if (json.has("facebook")) {
-                                    etTo.setText(etTo.getText() + ", Facebook");
-                                }
-                                if (json.has("twitter")) {
-                                    etTo.setText(etTo.getText() + ", Twitter");
-                                }
-                                if (json.has("place")) {
-                                    JSONObject jsonPlace = json.getJSONObject("place");
-                                    pidHint = jsonPlace.getInt("pid");
-                                    bLocationHint.setVisibility(View.VISIBLE);
-                                    bLocationHint.setText(jsonPlace.getString("name"));
-                                }
-                            } catch (JSONException e) {
-                                System.err.println(e);
-                            }
-                        }
-                        NewMessageActivity.this.setProgressBarIndeterminateVisibility(false);
-                    }
-                });
-            }
-        },"Post message");
-        thr.start();
+        messagesSource.getMicroBlog().decorateNewMessageActivity(this);
     }
 
     private void setFormEnabled(boolean state) {
@@ -672,6 +632,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
         fos.close();
         inputStream.close();
+    }
+
+    public MessagesSource getMessagesSource() {
+        return messagesSource;
+    }
+
+    public void setMessagesSource(MessagesSource messagesSource) {
+        this.messagesSource = messagesSource;
     }
 
     public static class BooleanReference {
