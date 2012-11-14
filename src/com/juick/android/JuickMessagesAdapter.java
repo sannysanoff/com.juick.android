@@ -197,6 +197,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     public void onPressStateChanged(boolean selected) {
                         MainActivity.restyleChildrenOrWidget(sll);
                     }
+
+                    @Override
+                    public void onSelectStateChanged(boolean selected) {
+                        MainActivity.restyleChildrenOrWidget(sll);
+                    }
                 });
 //                TextView tv = (TextView) v.findViewById(R.id.text);
 //                float textSize = tv.getTextSize();

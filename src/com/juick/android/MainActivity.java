@@ -683,6 +683,7 @@ public class MainActivity extends FragmentActivity implements
         if (view == null) return;
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         boolean pressed = view.isPressed();
+        boolean selected = view.isSelected();
         if (view instanceof AbsListView) {
             ((AbsListView) view).setCacheColorHint(colorTheme.getBackground(pressed));
         }
@@ -709,7 +710,7 @@ public class MainActivity extends FragmentActivity implements
                 }
             }
             if (shouldRecolor)
-                restyleViewGroup((Spinner) view, colorTheme, pressed);
+                restyleViewGroup((Spinner) view, colorTheme, pressed, selected);
         } else if (view instanceof Button) {
 //            Button btn = (Button) view;
 //            btn.setTextColor(colorTheme.getForeground(pressed));
@@ -718,19 +719,39 @@ public class MainActivity extends FragmentActivity implements
             TextView text = (TextView) view;
             text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
-            restyleViewGroup((ViewGroup) view, colorTheme, pressed);
+            restyleViewGroup((ViewGroup) view, colorTheme, pressed, selected);
         }
     }
 
-    private static void restyleViewGroup(ViewGroup view, ColorsTheme.ColorTheme colorTheme, boolean pressed) {
+    private static void restyleViewGroup(ViewGroup view, ColorsTheme.ColorTheme colorTheme, boolean pressed, boolean selected) {
         ViewGroup parent = (ViewGroup) view;
         int childCount = parent.getChildCount();
-        parent.setBackgroundColor(colorTheme.getBackground(pressed));
+        int background = colorTheme.getBackground(pressed);
+        int foreground = colorTheme.getForeground(pressed);
+        if (selected) {
+            background  = calculatePressedBackground(background, foreground);
+        }
+        parent.setBackgroundColor(background);
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
             System.out.println(child);
             restyleChildrenOrWidget(child);
         }
+    }
+
+    private static int calculatePressedBackground(int background, int foreground) {
+        int r1 = (background & 0x00FF0000) >> 16;
+        int g1 = (background & 0x0000FF00) >> 8;
+        int b1 = (background & 0x000000FF) >> 0;
+        int r2= (foreground & 0x00FF0000) >> 16;
+        int g2 = (foreground & 0x0000FF00) >> 8;
+        int b2 = (foreground & 0x000000FF) >> 0;
+        final double K = r1 > r2 ? 0.1 : 0.2;
+        int r = r1 + (int)((r2-r1)* K);
+        int g = g1 + (int)((g2-g1)* K);
+        int b = b1 + (int)((b2-b1)* K);
+        int newColor = 0xFF000000 + (r << 16) + (g << 8) + b;
+        return newColor;
     }
 
     @Override

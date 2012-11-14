@@ -559,6 +559,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 public void onPressStateChanged(boolean selected) {
                     MainActivity.restyleChildrenOrWidget(sll);
                 }
+
+                @Override
+                public void onSelectStateChanged(boolean selected) {
+                    MainActivity.restyleChildrenOrWidget(sll);
+                }
             });
         }
     }

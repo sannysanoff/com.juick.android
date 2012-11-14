@@ -25,6 +25,7 @@ public class PressableLinearLayout extends LinearLayout {
 
     interface PressedListener {
         public void onPressStateChanged(boolean selected);
+        public void onSelectStateChanged(boolean selected);
     }
 
     PressedListener pressedListener;
@@ -50,5 +51,12 @@ public class PressableLinearLayout extends LinearLayout {
 
     public void setPressedListener(PressedListener pressedListener) {
         this.pressedListener = pressedListener;
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+        super.setSelected(selected);    //To change body of overridden methods use File | Settings | File Templates.
+        if (pressedListener != null)
+            pressedListener.onSelectStateChanged(selected);
     }
 }
