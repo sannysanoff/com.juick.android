@@ -305,7 +305,7 @@
 
             <b>11 ноября 2012</b>
             <li>
-            Отправление сообщений об ошибках теперь делается с помощью ACRA
+            Отправление сообщений об ошибках теперь делается с помощью ACRA, без подтверждения. Уходит больше данных об устройстве.
             </li>
             <li>
             Приватные сообщения. Парсятся с нового сайта (dev.juick.com). Спросит логин и пароль для сайта (1 раз). Дискуссии (тоже раздел с сайта). Включить?
@@ -801,6 +801,7 @@
     <string name="navigationBNWAll">BNW All Messages</string>
     <string name="navigationBNWHot">BNW Hot Today</string>
     <string name="navigationPSTORecent">PSTO Recent</string>
+    <string name="navigationPSTOMy">PSTO My Blog</string>
     <string name="navigationPSTOPopular">PSTO Popular</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
 

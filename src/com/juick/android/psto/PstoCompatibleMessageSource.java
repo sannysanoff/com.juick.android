@@ -8,7 +8,6 @@ import com.juick.android.Utils;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
 import com.juick.android.api.MessageID;
-import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.juick.JuickWebCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
 
@@ -65,37 +64,6 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                 cont.apply(badRetval);
             }
         }
-//        try {
-//            JSONObject fullThread = new JSONObject(jsonStr);
-//            JSONObject root = fullThread.getJSONObject("message");
-//            ArrayList<BNWMessage> msgs = new ArrayList<BNWMessage>();
-//            msgs.add(initFromJSON(root));
-//            JSONArray replies = fullThread.getJSONArray("replies");
-//            HashMap<String,Integer> numbersRemap = new HashMap<String, Integer>();
-//            int replyNo = 1;
-//            for(int i = 0; i < replies.length(); i++) {
-//                BNWMessage reply = initFromJSON(replies.getJSONObject(i));
-//                msgs.add(reply);
-//                reply.setRID(replyNo);
-//                numbersRemap.put(reply.getRIDString(), replyNo);
-//                replyNo++;
-//            }
-//            for (int i = 1; i < msgs.size(); i++) {
-//                BNWMessage msg = msgs.get(i);
-//                String replyToString = msg.getReplyToString();
-//                if (replyToString == null) {
-//                    msg.setReplyTo(0);
-//                } else {
-//                    Integer prevComment = numbersRemap.get(replyToString);
-//                    if (prevComment == null) prevComment = 0;
-//                    msg.setReplyTo(prevComment);
-//                }
-//            }
-//            cont.apply(new ArrayList<JuickMessage>(msgs));
-//        } catch (JSONException e) {
-//            cont.apply(new ArrayList<JuickMessage>());
-//        }
-//        System.out.println("oh");
 
     }
 
@@ -162,7 +130,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(BNWMicroBlog.CODE);
+        return MainActivity.getMicroBlog(PstoMicroBlog.CODE);
     }
 
     public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
@@ -170,12 +138,13 @@ public class PstoCompatibleMessageSource extends MessagesSource {
     }
 
 
-    static Pattern messageStart = Pattern.compile("<div class=\"post\">");
+    static Pattern messageStart = Pattern.compile("<div class=\"post\">|<div class=\"post private\">");
     static Pattern commentStart = Pattern.compile("div class=\"post\" id=\"comment-(.*?)\" ");
     static Pattern commentNumber = Pattern.compile("data-comment-id=\"(.*?)\"");
     static Pattern commentReplyto = Pattern.compile("data-to-comment-id=\"(.*?)\"");
     static Pattern messageTime = Pattern.compile("<span class=\"info\">(.*?)</span>");
     static Pattern messageUser = Pattern.compile("<a class=\"name\" href=\"(.*?)/\" title=\"(.*?)\">(.*?)</a>");
+    static Pattern answer = Pattern.compile("<a class=\"answer\" href=\"#\" data-to=\"(.*)\" data-to-comment=\"(.*?)\"");
     static Pattern messageTag = Pattern.compile("<a href=\"http://psto.net/tag\\?tag=(.*?)\">(.*)</a>");
     static Pattern messageID = Pattern.compile("<div class=\"post-id\"><a href=\"(.*)\">#(.*)</a></div>");
     static Pattern nreplies = Pattern.compile("title=\"Add comment\"><img src=\"/img/reply.png\" alt=\"re\"/>(.*)</a>");
@@ -211,6 +180,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                 message.User = new JuickUser();
                 message.messagesSource = this;
                 message.microBlogCode = PstoMicroBlog.CODE;
+                message.privateMessage = line.contains("private");
                 if (parseMode == ParseMode.PARSE_THREAD_COMMENTS) {
                     matcher = commentNumber.matcher(line);
                     if (matcher.find()) {
@@ -273,6 +243,9 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                 }
                 line = line.substring(3, line.length() - 4);
                 message.Text = JuickWebCompatibleURLMessagesSource.unwebMessageText(line);
+                if (message.privateMessage) {
+                    message.Text = "[private] " +message.Text;
+                }
                 continue;
             }
             Matcher tagMatcher = messageTag.matcher(line);
@@ -286,6 +259,11 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                 if (message.getMID() != null) {
                     ((PstoMessageID) message.getMID()).user = message.User.UName;
                 }
+                continue;
+            }
+            Matcher answerMatcher = answer.matcher(line);
+            if (answerMatcher.find() && answerMatcher.group(1).length() > 0) {
+                message.User.UID = Integer.parseInt(answerMatcher.group(1));
                 continue;
             }
             Matcher postidMatcher = messageID.matcher(line);

@@ -44,7 +44,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorize(Activity act, String url, Utils.Function<Void, String> withCookie) {
+    public void authorize(Activity act, boolean forceOptionalAuth, String url, Utils.Function<Void, String> withCookie) {
         withCookie.apply(getBasicAuthString(act.getApplicationContext()));
     }
 
@@ -56,13 +56,23 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorizeRequest(HttpURLConnection conn, String cookie) {
+    public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
         conn.setRequestProperty("Authorization", cookie);
     }
 
     @Override
     public String authorizeURL(String url, String cookie) {
         return url;
+    }
+
+    @Override
+    public ReplyCode validateReply(HttpURLConnection conn, String url) {
+        return ReplyCode.FAIL;
+    }
+
+    @Override
+    public void clearCookie(Activity context, Runnable then) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public static String getBasicAuthString(Context context) {

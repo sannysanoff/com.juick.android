@@ -5,16 +5,21 @@ import android.app.ProgressDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.View;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 import com.juick.android.*;
 import com.juick.android.api.JuickMessage;
+import com.juick.android.api.JuickUser;
 import com.juick.android.api.MessageID;
-import com.juick.android.bnw.BnwMessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,12 +40,24 @@ public class PstoMicroBlog implements MicroBlog {
     @Override
     public void addNavigationSources(ArrayList<MainActivity.NavigationItem> navigationItems, final MainActivity mainActivity) {
         SharedPreferences sp = mainActivity.sp;
+        final String weblogin = sp.getString("psto.web_login", null);
         if (sp.getBoolean("msrcPSTORecent", false)) {
             navigationItems.add(new MainActivity.NavigationItem(R.string.navigationPSTORecent) {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
                     PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://psto.net/recent");
+                    args.putSerializable("messagesSource", ms);
+                    mainActivity.runDefaultFragmentWithBundle(args, this);
+                }
+            });
+        }
+        if (sp.getBoolean("msrcPSTOMy", false) && weblogin != null) {
+            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationPSTOMy) {
+                @Override
+                public void action() {
+                    final Bundle args = new Bundle();
+                    PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://"+weblogin+".psto.net/");
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -65,7 +82,7 @@ public class PstoMicroBlog implements MicroBlog {
         newMessageActivity.bLocation.setVisibility(View.GONE);
         newMessageActivity.bAttachment.setVisibility(View.GONE);
         newMessageActivity.bLocationHint.setVisibility(View.GONE);
-        newMessageActivity.setTitle(R.string.BnW__New_message);
+        newMessageActivity.setTitle(R.string.Psto__New_message);
         newMessageActivity.setProgressBarIndeterminateVisibility(false);
     }
 
@@ -101,17 +118,132 @@ public class PstoMicroBlog implements MicroBlog {
 
     @Override
     public MessageMenu getMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
-        return new MessageMenu(activity, messagesSource, listView, listAdapter);
+        return new PstoMessageMenu(activity, messagesSource, listView, listAdapter);
     }
 
     @Override
-    public void postReply(Activity context, MessageID mid, JuickMessage selectedReply, String msg, String attachmentUri, String attachmentMime, Utils.Function<Void, String> then) {
+    public void postReply(final Activity context_, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+        final ThreadActivity context = (ThreadActivity)context_;
+        new Thread("Post reply") {
+            @Override
+            public void run() {
+                try {
+                    PstoMessageID pstoMid = (PstoMessageID) mid;
+                    final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                    final String webLogin = sp.getString("psto.web_login", null);
+                    if (webLogin == null) {
+                        throw new IllegalArgumentException("No PSTO authorization available");
+                    }
+                    StringBuilder data = new StringBuilder();
+                    data.append("text="+ URLEncoder.encode(msg, "utf-8"));
+                    int replyTo = 0;
+                    if (selectedReply != null && selectedReply.getRID() != 0) {
+                        data.append("&to_user="+URLEncoder.encode(""+selectedReply.User.UID,"utf-8"));
+                        data.append("&to_comment="+(replyTo = selectedReply.getRID()));
+                    } else {
+                        data.append("&to_user=");
+                        data.append("&to_comment=");
+                    }
+                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://"+webLogin+".psto.net/"+pstoMid.getId()+"/comment", data.toString());
+                    final int finalReplyTo = replyTo;
+                    context.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (restResponse.getErrorText() == null) {
+                                PstoMessage newmsg = new PstoMessage();
+                                JuickMessagesAdapter listAdapter = context.tf.listAdapter;
+                                Object lastItem = listAdapter.getItem(listAdapter.getCount() - 1);
+                                int lastRid = 0;
+                                if (lastItem != null && lastItem instanceof PstoMessage) {
+                                    lastRid = ((PstoMessage)lastItem).getRID();
+                                }
+                                newmsg.User = new JuickUser();
+                                newmsg.User.UName = webLogin;
+                                newmsg.Text = msg;
+                                newmsg.Timestamp = new Date();
+                                newmsg.setRID(lastRid+1);
+                                newmsg.setReplyTo(finalReplyTo);
+                                newmsg.microBlogCode = CODE;
+                                newmsg.setMID(mid);
+                                ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
+                                messages.add(newmsg);
+                                listAdapter.addAllMessages(messages);
+                                listAdapter.notifyDataSetChanged();
+
+                            }
+                            then.apply(restResponse.getErrorText());
+                        }
+                    });
+                } catch (final Exception e) {
+                    context.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+                            then.apply(e.toString());
+                        }
+                    });
+                }
+            }
+        }.start();
         then.apply("Not implemented yet");
     }
 
     @Override
-    public void postNewMessage(NewMessageActivity newMessageActivity, String msg, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, Utils.Function<Void, String> then) {
-        then.apply("Not implemented");
+    public void postNewMessage(NewMessageActivity newMessageActivity, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, final Utils.Function<Void, String> then) {
+        try {
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(newMessageActivity);
+            String webLogin = sp.getString("psto.web_login", null);
+            if (webLogin == null) {
+                throw new IllegalArgumentException("No PSTO authorization available");
+            }
+
+            int start = 0;
+            int i = 0;
+            StringBuilder tags = new StringBuilder();
+            StringBuilder clubs = new StringBuilder();
+            String text = "";
+            boolean hastags = false;
+            boolean hasclubs = false;
+            while (start<txt.length()) {
+                i=txt.indexOf(" ",start);
+                if (i==-1)
+                    i=txt.length();
+                String word=txt.substring(start,i);
+                if (i!=start) {
+                    if (word.startsWith("*")) {
+                        if (hastags)
+                            tags.append(",");
+                        else
+                            hastags = true;
+                        tags.append(word.substring(1));
+                    } else {
+                        text = txt.substring(start);
+                        break;
+                    }
+                }
+                start=i+1;
+            }
+
+            StringBuilder data = new StringBuilder();
+            data.append("text="+ URLEncoder.encode(txt, "utf-8"));
+            if (hastags)
+                data.append("&tags="+URLEncoder.encode(tags.toString(),"utf-8"));
+            data.append("&private=1");
+            final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://"+webLogin+".psto.net/post?", data.toString());
+            newMessageActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    then.apply(restResponse.getErrorText());
+                }
+            });
+        } catch (final Exception e) {
+            newMessageActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    then.apply(e.toString());
+                }
+            });
+        }
     }
 
     @Override

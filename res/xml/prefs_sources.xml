@@ -107,6 +107,11 @@
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
+            android:key="msrcPSTOMy"
+            android:title="@string/navigationPSTOMy"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
             android:key="msrcPSTOPopular"
             android:title="@string/navigationPSTOPopular"
             android:defaultValue="false"

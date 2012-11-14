@@ -51,6 +51,7 @@ public class JuickMessage {
     public boolean translated;
     public String source;
     public String microBlogCode;
+    public boolean privateMessage;
 
     transient public String continuationInformation;
     transient public long messageSaveDate;

@@ -13,8 +13,8 @@ import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.*;
@@ -39,6 +39,7 @@ public class PstoAuthorizer extends Utils.URLAuth {
     // 0 = not accepting 1 = accepting, required -1 = accepting not requred
     public boolean allowsOptionalAuthorization(String url) {
         if (url.indexOf("http://psto.net/top") != -1) return true;
+        if (url.indexOf("/post") != -1) return false;
         if (url.indexOf(".psto.net") != -1) return true;
         return false;
     }
@@ -46,29 +47,42 @@ public class PstoAuthorizer extends Utils.URLAuth {
     public static String myCookie;
     public static boolean skipAskPassword;
     @Override
-    public void authorize(final Activity activity, String url, final Utils.Function<Void, String> cont) {
+    public void authorize(final Activity activity, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         if (myCookie == null) {
             myCookie = sp.getString("psto.web_cookie", null);
         }
-        if (myCookie == null && !allowsOptionalAuthorization(url)) {
-            if (skipAskPassword) {
+        if (myCookie == null && (!allowsOptionalAuthorization(url) || forceOptionalAuth)) {
+            if (skipAskPassword && !forceOptionalAuth) {
                 cont.apply(null);
             } else {
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        final Runnable uiThreadWithMaybeDialog = this;
                         String webLogin = sp.getString("psto.web_login", null);
                         String webPassword = sp.getString("psto.web_password", null);
-                        final Runnable thiz = this;
                         if (webLogin != null && webPassword != null) {
-                            tryLoginWithPassword(webLogin, webPassword, new Runnable() {
+                            tryLoginWithPassword(webLogin, webPassword, new Utils.Function<Void, Utils.RESTResponse>() {
                                 @Override
-                                public void run() {
-                                    sp.edit().remove("psto.web_login").remove("psto.web_password").commit();
-                                    thiz.run();
+                                public Void apply(Utils.RESTResponse restResponse) {
+                                    if (restResponse.getErrorText() != null) {
+                                        // invalid password or whatever
+                                        sp.edit().remove("psto.web_password").commit();
+                                        uiThreadWithMaybeDialog.run();
+                                    } else {
+                                        // ok
+                                        new Thread() {
+                                            @Override
+                                            public void run() {
+                                                cont.apply(myCookie);
+                                            }
+                                        }.start();
+                                    }
+                                    return null;
                                 }
                             });
+                            return;
                         }
                         final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
                         final EditText login = (EditText) content.findViewById(R.id.login);
@@ -81,14 +95,13 @@ public class PstoAuthorizer extends Utils.URLAuth {
                                 .setPositiveButton("Login", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        new Thread() {
-                                            @Override
-                                            public void run() {
-                                                final String loginS = login.getText().toString().trim();
-                                                final String passwordS = password.getText().toString().trim();
-                                                tryLoginWithPassword(loginS, passwordS, thiz);
-                                            }
-                                        }.start();
+                                        final String loginS = login.getText().toString().trim();
+                                        final String passwordS = password.getText().toString().trim();
+                                        sp.edit()
+                                                .putString("psto.web_login", loginS)
+                                                .putString("psto.web_password", passwordS)
+                                                .commit();
+                                        uiThreadWithMaybeDialog.run();  // try to login with this
                                     }
                                 })
                                 .setCancelable(false)
@@ -113,14 +126,13 @@ public class PstoAuthorizer extends Utils.URLAuth {
                         dlg.show();
                     }
 
-                    private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {
+                    private void tryLoginWithPassword(final String loginS, final String passwordS, final Utils.Function<Void, Utils.RESTResponse> safeCont) {
                         obtainCookieByLoginPassword(activity, loginS, passwordS,
                                 new Utils.Function<Void, Utils.RESTResponse>() {
                                     @Override
                                     public Void apply(final Utils.RESTResponse s) {
                                         if (s.result != null) {
                                             myCookie = s.result;
-                                            cont.apply(s.result);
                                             activity.runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
@@ -130,6 +142,7 @@ public class PstoAuthorizer extends Utils.URLAuth {
                                                             .putString("psto.web_login", loginS)
                                                             .putString("psto.web_password", passwordS)
                                                             .commit();
+                                                    safeCont.apply(s);
 
                                                 }
                                             });
@@ -138,7 +151,7 @@ public class PstoAuthorizer extends Utils.URLAuth {
                                                 @Override
                                                 public void run() {
                                                     Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
-                                                    thiz.run();
+                                                    safeCont.apply(s);
                                                 }
                                             });
                                         }
@@ -218,16 +231,55 @@ public class PstoAuthorizer extends Utils.URLAuth {
 
     @Override
     public void authorizeRequest(HttpRequestBase request, String cookie) {
-        request.addHeader("Cookie","sessid="+myCookie);
+        request.addHeader("Cookie","sessid="+cookie);
     }
 
     @Override
-    public void authorizeRequest(HttpURLConnection conn, String cookie) {
-        conn.setRequestProperty("Cookie","sessid="+myCookie);
+    public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
+        conn.setRequestProperty("Cookie","sessid="+cookie);
+        if (postingSomething(url)) {
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+            String login = sp.getString("psto.web_login", null);
+            if (login != null) {
+                conn.setRequestProperty("Origin","http://"+login+".psto.net");
+                conn.setRequestProperty("Referer","http://"+login+".psto.net/");
+            }
+        }
+    }
+
+    private boolean postingSomething(String url) {
+        return url.indexOf("/post") != -1 || url.indexOf("/comment") != -1;
     }
 
     @Override
     public String authorizeURL(String url, String cookie) {
         return url;
     }
+
+    @Override
+    public ReplyCode validateReply(HttpURLConnection conn, String url) throws IOException {
+        if (postingSomething(url) && conn.getResponseCode() == 302) return ReplyCode.NORMAL;
+        if (conn.getResponseCode() == 403) return ReplyCode.FORBIDDEN;
+        return ReplyCode.FAIL;
+    }
+
+    @Override
+    public void clearCookie(final Activity context, final Runnable then) {
+        context.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                sp.edit().remove("psto.web_cookie").commit();
+                myCookie = null;
+                new Thread() {
+                    @Override
+                    public void run() {
+                        then.run();
+                    }
+                }.start();
+            }
+        });
+    }
+
+
 }

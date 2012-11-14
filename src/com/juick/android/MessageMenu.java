@@ -40,7 +40,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
-import com.juick.android.api.MessageID;
 import com.juick.android.juick.*;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickMessage;
@@ -63,8 +62,8 @@ import java.util.regex.Matcher;
  */
 public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
-    Activity activity;
-    JuickMessage listSelectedItem;
+    protected Activity activity;
+    protected JuickMessage listSelectedItem;
     ArrayList<String> urls;
     ListView listView;
     JuickMessagesAdapter listAdapter;
@@ -77,12 +76,12 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         this.messagesSource = messagesSource;
     }
 
-    ArrayList<RunnableItem> menuActions = new ArrayList<RunnableItem>();
+    protected ArrayList<RunnableItem> menuActions = new ArrayList<RunnableItem>();
 
-    static class RunnableItem implements Runnable {
+    protected static class RunnableItem implements Runnable {
         String title;
 
-        RunnableItem(String title) {
+        protected RunnableItem(String title) {
             this.title = title;
         }
 
@@ -93,7 +92,6 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     }
 
     public boolean onItemLongClick(final AdapterView parent, View view, final int position, long id) {
-
         menuActions.clear();
         listSelectedItem = (JuickMessage) parent.getAdapter().getItem(position);
 
@@ -118,6 +116,14 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
             }
         }
+
+        collectMenuActions();
+
+        runActions();
+        return true;
+    }
+
+    private void collectMenuActions() {
         final String UName = listSelectedItem.User.UName;
         menuActions.add(new RunnableItem('@' + UName + " " + activity.getResources().getString(R.string.blog)) {
             @Override
@@ -140,15 +146,41 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 }
             });
         }
+        addMicroblogSpecificCommands(UName);
+        if (UName.equalsIgnoreCase(JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
+            maybeAddDeleteItem();
+        }
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.TranslateToRussian)) {
+            @Override
+            public void run() {
+                actionTranslateMessage();
+            }
+        });
+
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Share)) {
+            @Override
+            public void run() {
+                actionShareMessage();
+            }
+        });
+
+
+        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " @" + UName) {
+            @Override
+            public void run() {
+                actionFilterUser(UName);
+            }
+
+        });
+    }
+
+    protected void addMicroblogSpecificCommands(final String UName) {
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " @" + UName) {
             @Override
             public void run() {
                 actionSubscribeUser();
             }
         });
-        if (UName.equalsIgnoreCase(JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
-            maybeAddDeleteItem();
-        }
         if (listSelectedItem.getRID() == 0) {
             menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " "+listSelectedItem.getDisplayMessageNo()) {
                 @Override
@@ -177,31 +209,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 }
             });
         }
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.TranslateToRussian)) {
-            @Override
-            public void run() {
-                actionTranslateMessage();
-            }
-        });
 
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Share)) {
-            @Override
-            public void run() {
-                actionShareMessage();
-            }
-        });
-
-
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " @" + UName) {
-            @Override
-            public void run() {
-                actionFilterUser(UName);
-            }
-
-        });
-
-        runActions();
-        return true;
     }
 
     protected void maybeAddDeleteItem() {
@@ -246,7 +254,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         }
     }
 
-    private void actionUserBlog() {
+    protected void actionUserBlog() {
         Intent i = new Intent(activity, MessagesActivity.class);
         i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + listSelectedItem.User.UName, activity).putArg("user_id", ""+listSelectedItem.User.UID));
         activity.startActivity(i);
@@ -334,7 +342,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         });
     }
 
-    private void actionRecommendMessage() {
+    protected void actionRecommendMessage() {
         confirmAction(R.string.ReallyRecommend, new Runnable() {
             @Override
             public void run() {
@@ -383,7 +391,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         });
     }
 
-    private void actionSubscribeUser() {
+    protected void actionSubscribeUser() {
         confirmAction(R.string.ReallySubscribe, new Runnable() {
             @Override
             public void run() {

@@ -41,7 +41,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
 
     public static String myCookie;
     @Override
-    public void authorize(final Activity activity, String url, final Utils.Function<Void, String> cont) {
+    public void authorize(final Activity activity, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         if (myCookie == null) {
             myCookie = sp.getString("bnw.web_cookie", null);
@@ -177,7 +177,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorizeRequest(HttpURLConnection conn, String cookie) {
+    public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
 
     }
 
@@ -191,5 +191,15 @@ public class BnwAuthorizer extends Utils.URLAuth {
         }
         url += "login=" + cookie;
         return url;
+    }
+
+    @Override
+    public ReplyCode validateReply(HttpURLConnection conn, String url) {
+        return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void clearCookie(Activity context, Runnable then) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }

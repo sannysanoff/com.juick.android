@@ -82,7 +82,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             }
         }
     };
-    ThreadFragment tf;
+    public ThreadFragment tf;
     private MessagesSource messagesSource;
     private JuickMessage selectedReply;
 

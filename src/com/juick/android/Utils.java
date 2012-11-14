@@ -61,13 +61,20 @@ public class Utils {
     public static ArrayList<URLAuth> authorizers = new ArrayList<URLAuth>();
 
     public static abstract class URLAuth {
+
+        public enum ReplyCode {
+            FORBIDDEN,
+            NORMAL,
+            FAIL
+        }
+
         public abstract boolean acceptsURL(String url);
-        public abstract void authorize(Activity act, String url, Function<Void, String> withCookie);
+        public abstract void authorize(Activity act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie);
         public abstract void authorizeRequest(HttpRequestBase request, String cookie);
-        public abstract void authorizeRequest(HttpURLConnection conn, String cookie);
+        public abstract void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url);
         public abstract String authorizeURL(String url, String cookie);
-
-
+        public abstract ReplyCode validateReply(HttpURLConnection conn, String url) throws IOException;
+        public abstract void clearCookie(Activity context, Runnable then);
     }
 
     static class DummyAuthorizer extends URLAuth {
@@ -77,7 +84,7 @@ public class Utils {
         }
 
         @Override
-        public void authorize(Activity act, String url, Function<Void, String> withCookie) {
+        public void authorize(Activity act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie) {
             withCookie.apply(null);
         }
 
@@ -87,13 +94,23 @@ public class Utils {
         }
 
         @Override
-        public void authorizeRequest(HttpURLConnection conn, String cookie) {
+        public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
             //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
         public String authorizeURL(String url, String cookie) {
             return url;
+        }
+
+        @Override
+        public ReplyCode validateReply(HttpURLConnection conn, String url) {
+            return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public void clearCookie(Activity context, Runnable then) {
+            //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 
@@ -303,7 +320,7 @@ public class Utils {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
         final URLAuth finalAuthorizer = authorizer;
-        authorizer.authorize((Activity)context, url, new Function<Void, String>() {
+        authorizer.authorize((Activity)context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 final DefaultHttpClient client = new DefaultHttpClient();
@@ -528,7 +545,8 @@ public class Utils {
     public static RESTResponse postJSON(final Context context, final String url, final String data) {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
-        authorizer.authorize((Activity)context, url, new Function<Void, String>() {
+        final boolean[] cookieCleared = new boolean[] { false };
+        authorizer.authorize((Activity)context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 HttpURLConnection conn = null;
@@ -537,7 +555,7 @@ public class Utils {
                     URL jsonURL = new URL(authorizer.authorizeURL(url, myCookie));
                     conn = (HttpURLConnection) jsonURL.openConnection();
 
-                    authorizer.authorizeRequest(conn, myCookie);
+                    authorizer.authorizeRequest((Activity) context, conn, myCookie, url);
 
                     conn.setUseCaches(false);
                     conn.setDoInput(true);
@@ -549,14 +567,29 @@ public class Utils {
                     wr.write(data);
                     wr.close();
 
-                    if (conn.getResponseCode() == 200) {
-                        InputStream inputStream = conn.getInputStream();
-                        ret[0] = streamToString(inputStream, null);
-                        inputStream.close();
-                    } else {
-                        ret[0] = new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
+                    URLAuth.ReplyCode authReplyCode = authorizer.validateReply(conn, url);
+                    try {
+                        if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
+                            cookieCleared[0] = true;    // don't enter loop
+                            final Function<Void, String> thiz = this;
+                            authorizer.clearCookie((Activity) context, new Runnable() {
+                                @Override
+                                public void run() {
+                                    authorizer.authorize((Activity) context, true, url, thiz);
+                                }
+                            });
+                        } else {
+                            if (conn.getResponseCode() == 200 || authReplyCode == URLAuth.ReplyCode.NORMAL) {
+                                InputStream inputStream = conn.getInputStream();
+                                ret[0] = streamToString(inputStream, null);
+                                inputStream.close();
+                            } else {
+                                ret[0] = new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
+                            }
+                        }
+                    } finally {
+                        conn.disconnect();
                     }
-                    conn.disconnect();
                 } catch (Exception e) {
                     Log.e("getJSON", e.toString());
                     ret[0] = new RESTResponse(e.toString(), true, null);

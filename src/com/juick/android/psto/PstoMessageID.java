@@ -39,7 +39,7 @@ public class PstoMessageID extends MessageID implements Serializable {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(BNWMicroBlog.CODE);
+        return MainActivity.getMicroBlog(PstoMicroBlog.CODE);
     }
 
     public static PstoMessageID fromString(String str) {

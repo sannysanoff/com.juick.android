@@ -51,7 +51,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private ThreadFragmentListener parentActivity;
-    private JuickMessagesAdapter listAdapter;
+    public JuickMessagesAdapter listAdapter;
     private ScaleGestureDetector mScaleDetector = null;
     private ThreadExternalUpdater ws = null;
     private MessageID mid = null;
