@@ -7,7 +7,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.XMPPConnection;
 
 import java.util.Date;
@@ -25,7 +24,6 @@ public class XMPPControlActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xmpp_control);
         final TextView xmppStatus = (TextView) findViewById(R.id.xmpp_status);

@@ -13,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,7 +64,6 @@ public class EditFiltersActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         super.onCreate(savedInstanceState);    //To change body of overridden methods use File | Settings | File Templates.
         setContentView(R.layout.edit_filters);
         final ListView lv = (ListView) findViewById(R.id.list);

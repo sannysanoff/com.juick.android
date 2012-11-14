@@ -41,7 +41,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -56,7 +55,6 @@ public class ContactsSyncService extends Service {
 
     @Override
     public void onCreate() {
-        ExceptionReporter.register(this);
         super.onCreate();
     }
 

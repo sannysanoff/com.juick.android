@@ -12,7 +12,6 @@ import com.google.gson.Gson;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.MessageID;
 import com.juick.android.juick.JuickMessageID;
-import de.quist.app.errorreporter.ExceptionReporter;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.filter.MessageTypeFilter;
 import org.jivesoftware.smack.packet.Message;
@@ -1072,7 +1071,6 @@ public class XMPPService extends Service {
 
     @Override
     public void onCreate() {
-        ExceptionReporter.register(this);
         String cachedJubo = readFile(getCachedJuboFile());
         if (cachedJubo != null) {
             juboMessageFilter_tmp = new Gson().fromJson(cachedJubo, JuboMessageFilter.class);

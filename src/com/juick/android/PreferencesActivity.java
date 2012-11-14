@@ -25,7 +25,6 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  *
@@ -35,7 +34,6 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
         int prefs = getIntent().getIntExtra("prefs", 0);

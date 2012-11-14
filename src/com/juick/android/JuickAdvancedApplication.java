@@ -1,7 +1,11 @@
 package com.juick.android;
 
 import android.app.Application;
+import com.juickadvanced.R;
 import org.acra.ACRA;
+import org.acra.ACRAConfiguration;
+import org.acra.ACRAConfigurationException;
+import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
 /**
@@ -12,11 +16,16 @@ import org.acra.annotation.ReportsCrashes;
  * To change this template use File | Settings | File Templates.
  */
 
-@ReportsCrashes(formKey = "0AulfZDKVUroUdDh3SG5BSTkzSkRXV2pEUGI0cU5MVEE")
+@ReportsCrashes(formKey = "dDh3SG5BSTkzSkRXV2pEUGI0cU5MVEE6MA", resDialogText = R.string.JuickAdvancedCrashed)
 public class JuickAdvancedApplication extends Application {
     @Override
     public void onCreate() {
         ACRA.init(this);
+//        try {
+//            ACRA.getConfig().setMode(ReportingInteractionMode.DIALOG);
+//        } catch (ACRAConfigurationException e) {
+//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//        }
         super.onCreate();
     }
 }

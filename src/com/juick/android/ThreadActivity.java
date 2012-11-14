@@ -49,7 +49,6 @@ import com.juick.android.api.JuickUser;
 import com.juick.android.api.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.io.File;
 import java.util.Vector;
@@ -89,7 +88,6 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
         handler = new Handler();

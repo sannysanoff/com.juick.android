@@ -48,7 +48,6 @@ import com.juick.android.psto.PstoCompatibleMessageSource;
 import com.juick.android.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 import yuku.ambilwarna.widget.AmbilWarnaPreference;
 
 import java.io.File;
@@ -135,7 +134,6 @@ public class MainActivity extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         nActiveMainActivities++;
         System.out.println(AmbilWarnaPreference.class);
-        ExceptionReporter.register(this);
         Utils.updateThemeHolo(this);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();

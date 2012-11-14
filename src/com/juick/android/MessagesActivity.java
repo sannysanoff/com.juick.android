@@ -28,7 +28,6 @@ import android.view.MenuInflater;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  *
@@ -46,7 +45,6 @@ public class MessagesActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
         Intent i = getIntent();

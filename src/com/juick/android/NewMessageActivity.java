@@ -21,14 +21,11 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
-import android.location.Location;
-import android.location.LocationManager;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,17 +40,12 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.*;
-import com.juick.android.juick.JuickMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
 import java.io.*;
 import java.util.ArrayList;
-
-import de.quist.app.errorreporter.ExceptionReporter;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  *
@@ -98,7 +90,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

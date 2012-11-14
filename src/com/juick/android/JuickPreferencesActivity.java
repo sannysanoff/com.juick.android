@@ -10,7 +10,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.util.ArrayList;
 
@@ -25,7 +24,6 @@ public class JuickPreferencesActivity extends PreferencesActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         super.onCreate(savedInstanceState);
     }
 

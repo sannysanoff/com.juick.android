@@ -363,6 +363,7 @@
     <string name="AsJPEG">Это JPEG</string>
     <string name="AsMP4Video">Это MP4 video</string>
     <string name="navigationBNWFeed">BNW Моё</string>
+    <string name="JuickAdvancedCrashed">Juick Advanced - внутренняя ошибка</string>
 
 
 </resources>

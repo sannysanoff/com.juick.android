@@ -305,6 +305,9 @@
 
             <b>11 ноября 2012</b>
             <li>
+            Отправление сообщений об ошибках теперь делается с помощью ACRA
+            </li>
+            <li>
             Приватные сообщения. Парсятся с нового сайта (dev.juick.com). Спросит логин и пароль для сайта (1 раз). Дискуссии (тоже раздел с сайта). Включить?
             <input type="checkbox" name="prefs.msrcPrivate" #prefs.checked.msrcPrivate#>
             Дискуссии (тоже раздел с сайта). Включить? <input type="checkbox" name="prefs.msrcDiscuss" #prefs.checked.msrcDiscuss#>
@@ -637,9 +640,8 @@
             На <b><i>XMPP/jabber сервер</i></b> уходит только ваша XMPP авторизация, если вы его включили.
 
             <br>
-            На <b><i>сайт разработчика</i></b> уходит информация о падениях программы (только если вы ее
-            отправляете соответствующей кнопкой), в которую входит информация об ошибке и версии программы, версия
-            вашего андроида и модель телефона, количество памяти.
+            <b><i>разработчику</i></b> уходит информация о падениях программы, в том виде в котором ее отправляет
+            ACRA (тулза для отправления сообщений об ошибке), туда уходят много параметров системы, для ловли глюков.
             <br> Кроме того, только если вы разрешили анонимную статистику, то туда же уходит, изредка:
             <ul>
             <li>
@@ -800,6 +802,7 @@
     <string name="navigationBNWHot">BNW Hot Today</string>
     <string name="navigationPSTORecent">PSTO Recent</string>
     <string name="navigationPSTOPopular">PSTO Popular</string>
+    <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
 
 
 </resources>

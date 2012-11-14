@@ -18,7 +18,6 @@ import com.juick.android.api.MessageID;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
- import de.quist.app.errorreporter.ExceptionReporter;
 
 import java.util.*;
 
@@ -64,7 +63,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
 
         super.onCreate(savedInstanceState);
         overridePendingTransition(R.anim.enter_slide_to_bottom, android.R.anim.fade_out);

@@ -27,7 +27,6 @@ import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.juickadvanced.R;
-import de.quist.app.errorreporter.ExceptionReporter;
 
 /**
  *
@@ -41,7 +40,6 @@ public class PickLocationActivity extends MapActivity implements OnClickListener
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 

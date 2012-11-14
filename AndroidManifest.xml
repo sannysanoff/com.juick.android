@@ -55,6 +55,9 @@
                 <data android:mimeType="vnd.android.cursor.item/vnd.com.juick.profile"/>
             </intent-filter>
         </activity>
+        <activity android:name="org.acra.CrashReportDialog"
+                  android:configChanges="keyboard|keyboardHidden|orientation">
+        </activity>
         <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/New_message"
                   android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>

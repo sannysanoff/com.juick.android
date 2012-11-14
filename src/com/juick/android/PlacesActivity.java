@@ -43,7 +43,6 @@ import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
 import com.juick.android.api.JuickPlace;
-import de.quist.app.errorreporter.ExceptionReporter;
 import org.json.JSONArray;
 
 /**
@@ -64,7 +63,6 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ExceptionReporter.register(this);
         Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 
