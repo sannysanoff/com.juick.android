@@ -750,7 +750,7 @@
     <string name="FixJuboJuickKeyword">Fix JuBo \'juick\' keyword</string>
     <string name="ExcludeJuickImageMessages">Exclude messages with image attachment and subscribed juick keyword appearing only in image URL</string>
     <string name="AllMessages">All messages</string>
-    <string name="EditList">Edit list</string>
+    <string name="MessagesDeleteMode">Delete mode</string>
     <string name="LoginPasswordExplanation">
         You must use login and password obtained on juick.com site, NOT the jabber/xmpp password.
 

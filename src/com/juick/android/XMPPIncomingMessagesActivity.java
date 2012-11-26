@@ -638,6 +638,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
                 startActivity(prefsIntent);
                 return true;
+            case R.id.editable_list:
+                editMode = !editMode;
+                final MyListView lv = (MyListView)findViewById(R.id.list);
+                MyListAdapter adapter = (MyListAdapter)lv.getAdapter();
+                adapter.notifyDataSetChanged();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
