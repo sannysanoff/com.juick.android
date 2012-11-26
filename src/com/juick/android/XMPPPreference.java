@@ -1,23 +1,15 @@
 package com.juick.android;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.preference.Preference;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.*;
 import com.google.gson.Gson;
 import com.juickadvanced.R;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.SASLAuthentication;
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
+import com.juickadvanced.xmpp.XMPPConnectionSetup;
 
 /**
  */
@@ -57,7 +49,7 @@ public class XMPPPreference extends Preference {
         });
         btn.setOnClickListener(new View.OnClickListener() {
             Gson gson = new Gson();
-            XMPPPreferenceActivity.Value value = gson.fromJson((String) currentValueJSON, XMPPPreferenceActivity.Value.class);
+            XMPPConnectionSetup value = gson.fromJson((String) currentValueJSON, XMPPConnectionSetup.class);
 
             @Override
             public void onClick(View v) {
@@ -74,11 +66,11 @@ public class XMPPPreference extends Preference {
         if (restorePersistedValue) {
             currentValueJSON = getPersistedString(currentValueJSON);
         } else {
-            XMPPPreferenceActivity.Value value = gson.fromJson((String) defaultValue, XMPPPreferenceActivity.Value.class);
+            XMPPConnectionSetup value = gson.fromJson((String) defaultValue, XMPPConnectionSetup.class);
             currentValueJSON = gson.toJson(value);
             persistString(currentValueJSON);
         }
-        XMPPPreferenceActivity.Value value = gson.fromJson(currentValueJSON, XMPPPreferenceActivity.Value.class);
+        XMPPConnectionSetup value = gson.fromJson(currentValueJSON, XMPPConnectionSetup.class);
         if (value == null || value.login == null || value.login.length() == 0 || value.password == null || value.password.length() == 0 || value.server == null || value.server.length() == 0) {
             setSummary("Not set up");
         } else {

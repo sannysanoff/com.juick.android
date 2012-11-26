@@ -27,6 +27,12 @@
             android:title="@string/VerboseEventNotifications"
             android:defaultValue="false"
             android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="xmpp_external"
+            android:title="External XMPP"
+            android:summary="XMPP client running on Juick Advanced server"
+            android:defaultValue="false"
+            android:persistent="true"/>
     <Preference android:title="@string/XMPPControl">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
     </Preference>

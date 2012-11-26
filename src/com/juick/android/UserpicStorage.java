@@ -147,7 +147,7 @@ public class UserpicStorage {
             bmp = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.default_userpic);
         } else {
             bmp = BitmapFactory.decodeByteArray(arr, 0, arr.length);
-            if (bmp.getWidth() < 3 || bmp.getHeight() < 3) {
+            if (bmp ==  null || (bmp.getWidth() < 3 || bmp.getHeight() < 3)) {
                 bmp = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.default_userpic);
             } else {
                 goodAvatar = true;

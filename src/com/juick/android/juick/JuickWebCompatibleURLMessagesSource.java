@@ -79,8 +79,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     static Pattern messageTime = Pattern.compile("<div class=\"msg-ts\"><a href=\"(.*)\" title=\"(.*).0 GMT\">");
     static Pattern messageUser = Pattern.compile("<div class=\"msg-avatar\"><a href=\"/(.*)/\"><img src=\"//i.juick.com/a/(.*).png\" alt=");
     static Pattern messageHeader = Pattern.compile("<div class=\"msg-header\"><a href=");
-    static Pattern nreplies = Pattern.compile("<div class=\"msg-comments\"><a href=\"(.*?)\">(\\d*) replies</a>");
-    static Pattern onereply = Pattern.compile("<div class=\"msg-comments\"><a href=\"(.*?)\">1 reply</a>");
+    static Pattern nreplies = Pattern.compile("<div class=\"msg-comments\"><a href=\"(.*?)\">(\\d+) repl</a>");
     static Pattern mediaImage = Pattern.compile("<div class=\"msg-media\"><a href=\"(.*?)\">");
     static String messageBodyStart = "<div class=\"msg-txt\">";
     static Pattern hyperlink = Pattern.compile("<a (.*?)href=\"(.*?)\"(.*?)>(.*?)</a>");
@@ -120,9 +119,6 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
                     Matcher nrepliesMatcher = nreplies.matcher(line);
                     if (nrepliesMatcher.find()) {
                         retval.get(retval.size()-1).replies = Integer.parseInt(nrepliesMatcher.group(2));
-                    }
-                    if (onereply.matcher(line).find()) {
-                        retval.get(retval.size()-1).replies = 1;
                     }
                     Matcher mediaImageMatcher = mediaImage.matcher(line);
                     if (mediaImageMatcher.find()) {

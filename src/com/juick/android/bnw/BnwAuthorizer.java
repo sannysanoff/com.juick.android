@@ -2,6 +2,7 @@ package com.juick.android.bnw;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -42,13 +43,15 @@ public class BnwAuthorizer extends Utils.URLAuth {
 
     public static String myCookie;
     @Override
-    public void authorize(final Activity activity, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+    public void authorize(final Context context, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         if (myCookie == null) {
             myCookie = sp.getString("bnw.web_cookie", null);
         }
-        if (myCookie == null && !allowsOptionalAuthorization(url)) {
-            activity.runOnUiThread(new Runnable() {
+        if (!(context instanceof Activity)) {
+            cont.apply(null);
+        } else if (myCookie == null && !allowsOptionalAuthorization(url)) {
+            ((Activity)context).runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     String webLogin = sp.getString("bnw.web_login", null);
@@ -63,12 +66,12 @@ public class BnwAuthorizer extends Utils.URLAuth {
                             }
                         });
                     }
-                    final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
+                    final View content = ((Activity) context).getLayoutInflater().inflate(R.layout.web_login, null);
                     final EditText login = (EditText) content.findViewById(R.id.login);
-                    final String accountName = JuickComAuthorizer.getJuickAccountName(activity);
+                    final String accountName = JuickComAuthorizer.getJuickAccountName(context);
                     final EditText password = (EditText) content.findViewById(R.id.password);
                     login.setText(accountName);
-                    AlertDialog dlg = new AlertDialog.Builder(activity)
+                    AlertDialog dlg = new AlertDialog.Builder(context)
                             .setTitle("BNW Web login")
                             .setView(content)
                             .setPositiveButton("Login", new DialogInterface.OnClickListener() {
@@ -106,17 +109,17 @@ public class BnwAuthorizer extends Utils.URLAuth {
                 }
 
                 private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {
-                    obtainCookieByLoginPassword(activity, loginS, passwordS,
+                    obtainCookieByLoginPassword(context, loginS, passwordS,
                             new Utils.Function<Void, Utils.RESTResponse>() {
                                 @Override
                                 public Void apply(final Utils.RESTResponse s) {
                                     if (s.result != null) {
                                         myCookie = s.result;
                                         cont.apply(s.result);
-                                        activity.runOnUiThread(new Runnable() {
+                                        ((Activity) context).runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                                                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
                                                 sp.edit()
                                                         .putString("bnw.web_cookie", myCookie)
                                                         .putString("bnw.web_login", loginS)
@@ -126,10 +129,10 @@ public class BnwAuthorizer extends Utils.URLAuth {
                                             }
                                         });
                                     } else {
-                                        activity.runOnUiThread(new Runnable() {
+                                        ((Activity) context).runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
+                                                Toast.makeText(context, s.errorText, Toast.LENGTH_LONG).show();
                                                 thiz.run();
                                             }
                                         });
@@ -144,10 +147,10 @@ public class BnwAuthorizer extends Utils.URLAuth {
         }
     }
 
-    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
+    static void obtainCookieByLoginPassword(final Context context, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
-            final Utils.RESTResponse response = Utils.getJSON(activity,
+            final Utils.RESTResponse response = Utils.getJSON(context,
                     "http://ipv4.bnw.im/api/passlogin?user=" + login + "&password="
                             + URLEncoder.encode(password.toString(), "ISO-8859-1"),
                     null);
@@ -178,7 +181,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
+    public void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url) {
 
     }
 
@@ -205,7 +208,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void clearCookie(Activity context, Runnable then) {
+    public void clearCookie(Context context, Runnable then) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 }

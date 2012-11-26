@@ -37,11 +37,6 @@
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/res/values-fr" />
     </content>
-    <content url="file://$MODULE_DIR$/../svg-android/svgandroid">
-      <sourceFolder url="file://$MODULE_DIR$/../svg-android/svgandroid/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../svg-android/svgandroid/tests/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../svg-android/svgandroid/gen" isTestSource="false" />
-    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="AmbilWarna" />

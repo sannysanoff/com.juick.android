@@ -157,6 +157,28 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:id="@+id/user_blog"
+                        android:text="Blog"
+                        >
+                </Button>
+                <Button
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:id="@+id/user_stats"
+                        android:text="Stats"
+                        >
+                </Button>
+            </LinearLayout>
+            <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    >
+                <Button
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:id="@+id/subscribe_user"
                         android:text="Sub@"
                         >
@@ -166,7 +188,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:id="@+id/unsubscribe_user"
-                        android:text="U @"
+                        android:text="U@"
                         >
                 </Button>
                 <Button
@@ -183,28 +205,6 @@
                         android:layout_weight="1"
                         android:id="@+id/filter_user"
                         android:text="Filter"
-                        >
-                </Button>
-            </LinearLayout>
-            <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    >
-                <Button
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:id="@+id/user_blog"
-                        android:text="Blog"
-                        >
-                </Button>
-                <Button
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:id="@+id/user_stats"
-                        android:text="Stats"
                         >
                 </Button>
             </LinearLayout>

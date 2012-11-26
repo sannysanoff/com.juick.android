@@ -43,6 +43,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
+import com.juickadvanced.xmpp.ServerToClient;
 import org.apache.http.*;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -70,13 +71,13 @@ public class Utils {
         }
 
         public abstract boolean acceptsURL(String url);
-        public abstract void authorize(Activity act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie);
+        public abstract void authorize(Context act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie);
         public abstract void authorizeRequest(HttpRequestBase request, String cookie);
-        public abstract void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url);
+        public abstract void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url);
         public abstract String authorizeURL(String url, String cookie);
         public abstract ReplyCode validateNon200Reply(HttpURLConnection conn, String url) throws IOException;
         public abstract ReplyCode validateNon200Reply(HttpResponse o, String url);
-        public abstract void clearCookie(Activity context, Runnable then);
+        public abstract void clearCookie(Context context, Runnable then);
     }
 
     static class DummyAuthorizer extends URLAuth {
@@ -86,7 +87,7 @@ public class Utils {
         }
 
         @Override
-        public void authorize(Activity act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie) {
+        public void authorize(Context act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie) {
             withCookie.apply(null);
         }
 
@@ -96,7 +97,7 @@ public class Utils {
         }
 
         @Override
-        public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
+        public void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url) {
             //To change body of implemented methods use File | Settings | File Templates.
         }
 
@@ -116,7 +117,7 @@ public class Utils {
         }
 
         @Override
-        public void clearCookie(Activity context, Runnable then) {
+        public void clearCookie(Context context, Runnable then) {
             //To change body of implemented methods use File | Settings | File Templates.
         }
     }
@@ -328,7 +329,7 @@ public class Utils {
         final RESTResponse[] ret = new RESTResponse[]{null};
         final URLAuth finalAuthorizer = authorizer;
         final boolean[] cookieCleared = {false};
-        authorizer.authorize((Activity)context, false, url, new Function<Void, String>() {
+        authorizer.authorize(context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 final DefaultHttpClient client = new DefaultHttpClient();
@@ -569,7 +570,7 @@ public class Utils {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
         final boolean[] cookieCleared = new boolean[] { false };
-        authorizer.authorize((Activity)context, false, url, new Function<Void, String>() {
+        authorizer.authorize(context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 HttpURLConnection conn = null;
@@ -578,7 +579,7 @@ public class Utils {
                     URL jsonURL = new URL(authorizer.authorizeURL(url, myCookie));
                     conn = (HttpURLConnection) jsonURL.openConnection();
 
-                    authorizer.authorizeRequest((Activity) context, conn, myCookie, url);
+                    authorizer.authorizeRequest(context, conn, myCookie, url);
 
                     conn.setUseCaches(false);
                     conn.setDoInput(true);
@@ -595,10 +596,10 @@ public class Utils {
                         if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
                             cookieCleared[0] = true;    // don't enter loop
                             final Function<Void, String> thiz = this;
-                            authorizer.clearCookie((Activity) context, new Runnable() {
+                            authorizer.clearCookie(context, new Runnable() {
                                 @Override
                                 public void run() {
-                                    authorizer.authorize((Activity) context, true, url, thiz);
+                                    authorizer.authorize(context, true, url, thiz);
                                 }
                             });
                         } else {
@@ -615,7 +616,7 @@ public class Utils {
                     }
                 } catch (Exception e) {
                     Log.e("getJSON", e.toString());
-                    ret[0] = new RESTResponse(e.toString(), true, null);
+                    ret[0] = new RESTResponse(ServerToClient.NETWORK_CONNECT_ERROR + e.toString(), true, null);
                 } finally {
                     if (conn != null) {
                         conn.disconnect();

@@ -154,6 +154,7 @@ public class MainActivity extends FragmentActivity implements
 
         sp.registerOnSharedPreferenceChangeListener(this);
         toggleXMPP();
+        toggleJAMessaging();
         startService(new Intent(this, DatabaseService.class));
 
         clearObsoleteImagesInCache();
@@ -461,7 +462,7 @@ public class MainActivity extends FragmentActivity implements
         if (useXMPP) {
             startService(new Intent(this, XMPPService.class));
         } else {
-            if (isMyServiceRunning()) {
+            if (isXMPPServiceRunning()) {
                 Intent service = new Intent(this, XMPPService.class);
                 service.putExtra("terminate", true);
                 startService(service);
@@ -469,9 +470,33 @@ public class MainActivity extends FragmentActivity implements
         }
     }
 
-    private boolean isMyServiceRunning() {
+    private void toggleJAMessaging() {
+        boolean useJAM = sp.getBoolean("enableJAMessaging", false);
+        if (useJAM) {
+            startService(new Intent(this, JAMService.class));
+        } else {
+            if (isJAMServiceRunning()) {
+                Intent service = new Intent(this, JAMService.class);
+                service.putExtra("terminate", true);
+                startService(service);
+            }
+        }
+    }
+
+    private boolean isXMPPServiceRunning() {
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         String className = XMPPService.class.getName();
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (className.equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isJAMServiceRunning() {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        String className = JAMService.class.getName();
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (className.equals(service.service.getClassName())) {
                 return true;
@@ -758,6 +783,9 @@ public class MainActivity extends FragmentActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (s.equals("useXMPP")) {
             toggleXMPP();
+        }
+        if (s.equals("enableJAMessaging")) {
+            toggleJAMessaging();
         }
         boolean dontWatchPreferences = sp.getBoolean("dontWatchPreferences", false);
         if (dontWatchPreferences) return;

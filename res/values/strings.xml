@@ -778,7 +778,7 @@
         By the way, there\'s an option \'download blacklists and disconnect\' for those who does not like to use XMPP
         in Juick Advanced on regular basis.
     </string>
-    <string name="ClickToReply">Click to reply</string>
+    <string name="ClickToReply">Click here to reply</string>
     <string name="OtherImages">Images From URLs</string>
     <string name="OtherImages2">..that are not located on juick.com</string>
     <string name="EditingJuboFilters">Editing JuBo/Juick filters</string>
@@ -807,6 +807,10 @@
     <string name="navigationPSTOMy">psto.Blog</string>
     <string name="navigationPSTOPopular">psto.Popular</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
+    <string name="UnreadMessagesNotification">Unread messages notification</string>
+    <string name="SubCommentsNotification___">Subscriptions/Comments notification implemented on Juick Advanced server
+        (no private)
+    </string>
 
 
 </resources>

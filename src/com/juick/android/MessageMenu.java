@@ -326,20 +326,21 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     listSelectedItem.parsedText = null;
                     listSelectedItem.translated = true;
                     //Parcelable parcelable = listView.onSaveInstanceState();
-                    ListAdapter wrappedAdapter = ((WrapperListAdapter) listView.getAdapter()).getWrappedAdapter();
-                    ((BaseAdapter)wrappedAdapter).notifyDataSetChanged();
-//                    listView.setAdapter(listAdapter);
-//                    try {
-//                        listView.onRestoreInstanceState(parcelable);
-//                    } catch (Throwable e) {
-//                        // bad luck
-//                    }
+                    BaseAdapter adapter = (BaseAdapter)unwrapAdapter(listView.getAdapter());
+                    adapter.notifyDataSetChanged();
                 } else {
                     Toast.makeText(activity, "Error translating..", Toast.LENGTH_LONG).show();
                 }
                 return null;
             }
         });
+    }
+
+    private ListAdapter unwrapAdapter(ListAdapter adapter) {
+        if (adapter instanceof WrapperListAdapter) {
+            return unwrapAdapter(((WrapperListAdapter)adapter).getWrappedAdapter());
+        }
+        return adapter;
     }
 
     protected void actionRecommendMessage() {

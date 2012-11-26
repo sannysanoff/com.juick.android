@@ -342,7 +342,7 @@
         сюда автоматически, и они даже будут работать. Между прочим, для тех кто не любит держать Jabber-подключение
         постоянно, существует опция \'скачать блеклисты и отключиться\'
     </string>
-    <string name="ClickToReply">Ответить</string>
+    <string name="ClickToReply">Нажать здесь</string>
     <string name="OtherImages">Картинки из прочих урлов</string>
     <string name="OtherImages2">..помимо картинок с juick.com</string>
     <string name="Message_numbers_will_be_shown">..будут показаны, а также номера комментариев</string>
@@ -369,7 +369,10 @@
     <string name="navigationPSTORecent">psto.Подписки</string>
     <string name="navigationPSTOMy">psto.Блог</string>
     <string name="navigationPSTOPopular">psto.Популярные</string>
-
+    <string name="UnreadMessagesNotification">Уведомл. о сообщениях</string>
+    <string name="SubCommentsNotification___">Уведомления о подписках и ответах через Juick Advanced server
+        (исключая приватные)
+    </string>
 
 
 </resources>

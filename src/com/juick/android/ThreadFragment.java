@@ -354,8 +354,10 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
         String replies = getResources().getString(R.string.Replies) + " (" + Integer.toString(listAdapter.getCount() - 1) + ")";
         listAdapter.addDisabledItem(replies, 1);
-        if (!cached)
-            parentActivity.onThreadLoaded(listAdapter.getItem(0));
+        if (!cached) {
+            if (listAdapter.getCount() > 0)
+                parentActivity.onThreadLoaded(listAdapter.getItem(0));
+        }
 
         getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
             @Override

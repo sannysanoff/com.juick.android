@@ -3,21 +3,16 @@ package com.juick.android;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.Preference;
 import android.preference.PreferenceManager;
-import android.util.AttributeSet;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.webkit.WebView;
 import android.widget.*;
 import com.google.gson.Gson;
 import com.juickadvanced.R;
+import com.juickadvanced.xmpp.XMPPConnectionSetup;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SASLAuthentication;
 import org.jivesoftware.smack.XMPPConnection;
@@ -26,76 +21,7 @@ import org.jivesoftware.smack.XMPPConnection;
  */
 public class XMPPPreferenceActivity extends Activity {
 
-    public static class Value {
-        public String login;
-        public String password;
-        public String service;
-        public String server;
-        public String jid;
-        public int port;
-        public String resource;
-        public int priority;
-        public boolean secure;
-
-        public Value() {
-        }
-
-        public Value(String jid, String password, int port, int priority, String resource, String server, boolean secure) {
-            this.port = port;
-            this.jid = jid;
-            this.priority = priority;
-            this.resource = resource;
-            this.server = server;
-            this.secure = secure;
-        }
-
-        public String getJid() {
-            if (jid == null) {
-                return nvl(login)+"@"+nvl(getService());
-            }
-            return jid;
-        }
-
-        private String nvl(String str) {
-            if (str == null) return "";
-            return str;
-        }
-
-
-        public String getLogin() {
-            if (jid == null || jid.length() == 0) {
-                return login;
-            }
-            int index = jid.indexOf("@");
-            if (index == -1) {
-                return jid;
-            }
-            return jid.substring(0, index);
-        }
-
-        public String getService() {
-            if (jid == null || jid.length() == 0) {
-                if (service == null || service.length() == 0) {
-                    return server;
-                }
-                return service;
-            }
-            int index = jid.indexOf("@");
-            if (index == -1) {
-                return server;
-            }
-            return jid.substring(index+1);
-        }
-
-        public String getServer() {
-            if (server == null || server.length() == 0) {
-                return getService();
-            }
-            return server;
-        }
-    }
-
-    Value value;
+    XMPPConnectionSetup value;
     SharedPreferences sp;
     Gson gson = new Gson();
     @Override
@@ -105,9 +31,9 @@ public class XMPPPreferenceActivity extends Activity {
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         String oldConfig = sp.getString("xmpp_config", "");
         if (oldConfig.length() != 0) {
-            value = gson.fromJson(oldConfig, Value.class);
+            value = gson.fromJson(oldConfig, XMPPConnectionSetup.class);
         } else {
-            value = new Value("someone@jabber.org","",5222, 50, "JuickAdvanced","",true);
+            value = new XMPPConnectionSetup("someone@jabber.org","",5222, 50, "JuickAdvanced","",true);
         }
         View view = getWindow().getDecorView();
         final Spinner templates = (Spinner) view.findViewById(R.id.template_selection);
@@ -171,7 +97,7 @@ public class XMPPPreferenceActivity extends Activity {
                 pd.show();
                 pd.setCancelable(true);
                 String svr = server.getText().toString();
-                final Value testValue = new Value();
+                final XMPPConnectionSetup testValue = new XMPPConnectionSetup();
 
                 testValue.jid = jid.getText().toString();
                 testValue.password = password.getText().toString();
@@ -231,7 +157,7 @@ public class XMPPPreferenceActivity extends Activity {
                 }.start();
             }
         });
-        if (value == null) value = new Value();
+        if (value == null) value = new XMPPConnectionSetup();
         jid.setText(value.getLogin()+"@"+value.getService());
         password.setText(value.password);
         port.setText("" + value.port);

@@ -44,7 +44,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorize(Activity act, boolean forceOptionalAuth, String url, Utils.Function<Void, String> withCookie) {
+    public void authorize(Context act, boolean forceOptionalAuth, String url, Utils.Function<Void, String> withCookie) {
         getMyCookie(act, withCookie);
     }
 
@@ -220,7 +220,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
+    public void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url) {
 
     }
 
@@ -240,7 +240,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void clearCookie(Activity context, Runnable then) {
+    public void clearCookie(Context context, Runnable then) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 }

@@ -154,14 +154,17 @@ public class DatabaseService extends Service {
         while(!cursor.isAfterLast()) {
             byte[] blob = cursor.getBlob(blobIndex);
             String str = decompressGZIP(blob);
-            JsonObject jsonObject = (JsonObject) getGson().fromJson(str, JsonElement.class);
-            MessageID mid = tmp.deserialize(jsonObject.get("MID"), null, null);
-            JuickMessage msg = mid.getMicroBlog().createMessage();
-            JuickMessage mesg = getGson().fromJson(jsonObject, msg.getClass());
-            if (mesg != null) {
-                mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
-                mesg.messageSaveDate = cursor.getLong(saveDateIndex);
-                retval.add(mesg);
+            Gson gson = getGson();
+            if (str != null && gson != null) {
+                JsonObject jsonObject = (JsonObject) gson.fromJson(str, JsonElement.class);
+                MessageID mid = tmp.deserialize(jsonObject.get("MID"), null, null);
+                JuickMessage msg = mid.getMicroBlog().createMessage();
+                JuickMessage mesg = gson.fromJson(jsonObject, msg.getClass());
+                if (mesg != null) {
+                    mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
+                    mesg.messageSaveDate = cursor.getLong(saveDateIndex);
+                    retval.add(mesg);
+                }
             }
             cursor.moveToNext();
         }

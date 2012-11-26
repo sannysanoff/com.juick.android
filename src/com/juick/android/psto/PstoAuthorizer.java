@@ -2,6 +2,7 @@ package com.juick.android.psto;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -48,16 +49,18 @@ public class PstoAuthorizer extends Utils.URLAuth {
     public static String myCookie;
     public static boolean skipAskPassword;
     @Override
-    public void authorize(final Activity activity, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+    public void authorize(final Context context, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         if (myCookie == null) {
             myCookie = sp.getString("psto.web_cookie", null);
         }
-        if (myCookie == null && (!allowsOptionalAuthorization(url) || forceOptionalAuth)) {
+        if (!(context instanceof Activity)) {
+            cont.apply(null);
+        } else if (myCookie == null && (!allowsOptionalAuthorization(url) || forceOptionalAuth)) {
             if (skipAskPassword && !forceOptionalAuth) {
                 cont.apply(null);
             } else {
-                activity.runOnUiThread(new Runnable() {
+                ((Activity)context).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         final Runnable uiThreadWithMaybeDialog = this;
@@ -85,12 +88,12 @@ public class PstoAuthorizer extends Utils.URLAuth {
                             });
                             return;
                         }
-                        final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
+                        final View content = ((Activity) context).getLayoutInflater().inflate(R.layout.web_login, null);
                         final EditText login = (EditText) content.findViewById(R.id.login);
-                        final String accountName = JuickComAuthorizer.getJuickAccountName(activity);
+                        final String accountName = JuickComAuthorizer.getJuickAccountName(context);
                         final EditText password = (EditText) content.findViewById(R.id.password);
                         login.setText(accountName);
-                        AlertDialog dlg = new AlertDialog.Builder(activity)
+                        AlertDialog dlg = new AlertDialog.Builder(context)
                                 .setTitle("PSTO Web login")
                                 .setView(content)
                                 .setPositiveButton("Login", new DialogInterface.OnClickListener() {
@@ -131,16 +134,16 @@ public class PstoAuthorizer extends Utils.URLAuth {
                         new Thread() {
                             @Override
                             public void run() {
-                                obtainCookieByLoginPassword(activity, loginS, passwordS,
+                                obtainCookieByLoginPassword(context, loginS, passwordS,
                                         new Utils.Function<Void, Utils.RESTResponse>() {
                                             @Override
                                             public Void apply(final Utils.RESTResponse s) {
                                                 if (s.result != null) {
                                                     myCookie = s.result;
-                                                    activity.runOnUiThread(new Runnable() {
+                                                    ((Activity)context).runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
                                                             sp.edit()
                                                                     .putString("psto.web_cookie", myCookie)
                                                                     .putString("psto.web_login", loginS)
@@ -151,10 +154,10 @@ public class PstoAuthorizer extends Utils.URLAuth {
                                                         }
                                                     });
                                                 } else {
-                                                    activity.runOnUiThread(new Runnable() {
+                                                    ((Activity)context).runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            Toast.makeText(activity, s.errorText, Toast.LENGTH_LONG).show();
+                                                            Toast.makeText(context, s.errorText, Toast.LENGTH_LONG).show();
                                                             safeCont.apply(s);
                                                         }
                                                     });
@@ -175,7 +178,7 @@ public class PstoAuthorizer extends Utils.URLAuth {
     /**
      * unsafe
      */
-    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
+    static void obtainCookieByLoginPassword(final Context activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
             URL u = new URL("http://psto.net/login");
@@ -244,10 +247,10 @@ public class PstoAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorizeRequest(Activity activity, HttpURLConnection conn, String cookie, String url) {
+    public void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url) {
         conn.setRequestProperty("Cookie","sessid="+cookie);
         if (postingSomething(url)) {
-            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
             String login = sp.getString("psto.web_login", null);
             if (login != null) {
                 conn.setRequestProperty("Origin","http://"+login+".psto.net");
@@ -279,21 +282,23 @@ public class PstoAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void clearCookie(final Activity context, final Runnable then) {
-        context.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                sp.edit().remove("psto.web_cookie").commit();
-                myCookie = null;
-                new Thread() {
-                    @Override
-                    public void run() {
-                        then.run();
-                    }
-                }.start();
-            }
-        });
+    public void clearCookie(final Context context, final Runnable then) {
+        if (context instanceof Activity) {
+            ((Activity)context).runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                    sp.edit().remove("psto.web_cookie").commit();
+                    myCookie = null;
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            then.run();
+                        }
+                    }.start();
+                }
+            });
+        }
     }
 
 

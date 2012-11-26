@@ -16,6 +16,14 @@
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+
+    <permission android:name="com.juickadvanced.permission.C2D_MESSAGE" android:protectionLevel="signature"/>
+    <uses-permission android:name="com.juickadvanced.permission.C2D_MESSAGE"/>
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
+
+
 
     <uses-feature android:name="android.hardware.location" android:required="false"/>
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
@@ -128,6 +136,17 @@
                     android:resource="@xml/searchable"/>
         </activity>
 
+        <receiver android:name="com.google.android.gcm.GCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND">
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION"/>
+                <category android:name="com.juickadvanced"/>
+            </intent-filter>
+        </receiver>
+        <service android:name="com.juickadvanced.GCMIntentService">
+
+        </service>
+
         <receiver android:name="com.juick.android.XMPPMessageReceiver">
             <intent-filter>
                 <action android:name="com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED"/>
@@ -146,10 +165,9 @@
             </intent-filter>
             <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/authenticator"/>
         </service>
-        <service android:name="com.juick.android.DatabaseService" android:exported="false">
-        </service>
-        <service android:name="com.juick.android.XMPPService" android:exported="false">
-        </service>
+        <service android:name="com.juick.android.DatabaseService" android:exported="false"/>
+        <service android:name="com.juick.android.XMPPService" android:exported="false"/>
+        <service android:name="com.juick.android.JAMService" android:exported="false"/>
         <service android:name="com.juick.android.ContactsSyncService" android:exported="true"
                  android:process=":contacts">
             <intent-filter>
