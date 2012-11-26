@@ -39,11 +39,7 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import com.juick.android.api.JuickMessage;
 import com.juick.android.api.JuickUser;
 import com.juick.android.api.MessageID;
@@ -62,6 +58,8 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     public static final int ACTIVITY_ATTACHMENT_IMAGE = 2;
     public static final int ACTIVITY_ATTACHMENT_VIDEO = 3;
     private TextView tvReplyTo;
+    private RelativeLayout replyToContainer;
+    private Button showThread;
     private EditText etMessage;
     private Button bSend;
     private ImageButton bAttach;
@@ -124,6 +122,9 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         });
 
         tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
+        replyToContainer = (RelativeLayout) findViewById(R.id.replyToContainer);
+        replyToContainer.setVisibility(View.GONE);
+        showThread = (Button) findViewById(R.id.showThread);
         etMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -168,7 +169,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
     private void resetForm() {
         rid = 0;
-        tvReplyTo.setVisibility(View.GONE);
+        replyToContainer.setVisibility(View.GONE);
         etMessage.setText("");
         attachmentMime = null;
         attachmentUri = null;
@@ -207,7 +208,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         DatabaseService.rememberVisited(message);
     }
     
-    public void onReplySelected(JuickMessage msg) {
+    public void onReplySelected(final JuickMessage msg) {
         selectedReply = msg;
         rid = msg.getRID();
         if (rid > 0) {
@@ -216,9 +217,15 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             ssb.append(inreplyto + msg.Text);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, inreplyto.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             tvReplyTo.setText(ssb);
-            tvReplyTo.setVisibility(View.VISIBLE);
+            replyToContainer.setVisibility(View.VISIBLE);
+            showThread.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    tf.showThread(msg);
+                }
+            });
         } else {
-            tvReplyTo.setVisibility(View.GONE);
+            replyToContainer.setVisibility(View.GONE);
         }
     }
 

@@ -80,6 +80,7 @@ public class SearchActivity extends MessagesActivity {
 
     private void doSearch(String query) {
         messagesSource = new JuickCompatibleURLMessagesSource(getString(R.string.Search) + ": " + query, this).putArg("search", Uri.encode(query));
+        ((JuickCompatibleURLMessagesSource)messagesSource).setCanNext(false);
         initWithMessagesSource();
     }
 

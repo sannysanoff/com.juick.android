@@ -445,36 +445,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
-        if (jmsg.getReplyTo() != 0) {
-            JuickMessage reply = jmsg;
-            LinearLayout ll = new LinearLayout(getActivity());
-            ll.setOrientation(LinearLayout.VERTICAL);
-            int totalCount = 0;
-            while(reply != null) {
-                totalCount += reply.Text.length();
-                if (totalCount > 500 || ll.getChildCount() > 10) break;
-                JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(getActivity(), reply, true);
-                TextView child = new TextView(getActivity());
-                ll.addView(child, 0);
-                child.setText(parsedMessage.textContent);
-                if (reply.getReplyTo() < 1) break;
-                reply = findReply(parent, reply.getReplyTo());
-            }
-            if (ll.getChildCount() != 0) {
-                int xy[] = new int[2];
-                getListView().getLocationOnScreen(xy);
-                int windowHeight = getActivity().getWindow().getWindowManager().getDefaultDisplay().getHeight();
-                int listBottom = getListView().getHeight() + xy[1];
-                int bottomSize = windowHeight - listBottom;
-                ll.setPressed(true);
-                MainActivity.restyleChildrenOrWidget(ll);
-                Toast result = new Toast(getActivity());
-                result.setView(ll);
-                result.setGravity(Gravity.BOTTOM|Gravity.LEFT, 0, bottomSize);
-                result.setDuration(Toast.LENGTH_LONG);
-                result.show();
-            }
-        }
         parentActivity.onReplySelected(jmsg);
     }
 
@@ -518,6 +488,39 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             }
         }
         return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void showThread(JuickMessage jmsg) {
+        if (jmsg.getReplyTo() != 0) {
+            JuickMessage reply = jmsg;
+            LinearLayout ll = new LinearLayout(getActivity());
+            ll.setOrientation(LinearLayout.VERTICAL);
+            int totalCount = 0;
+            while(reply != null) {
+                totalCount += reply.Text.length();
+                if (totalCount > 500 || ll.getChildCount() > 10) break;
+                JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(getActivity(), reply, true);
+                TextView child = new TextView(getActivity());
+                ll.addView(child, 0);
+                child.setText(parsedMessage.textContent);
+                if (reply.getReplyTo() < 1) break;
+                reply = findReply(getListView(), reply.getReplyTo());
+            }
+            if (ll.getChildCount() != 0) {
+                int xy[] = new int[2];
+                getListView().getLocationOnScreen(xy);
+                int windowHeight = getActivity().getWindow().getWindowManager().getDefaultDisplay().getHeight();
+                int listBottom = getListView().getHeight() + xy[1];
+                int bottomSize = windowHeight - listBottom;
+                ll.setPressed(true);
+                MainActivity.restyleChildrenOrWidget(ll);
+                Toast result = new Toast(getActivity());
+                result.setView(ll);
+                result.setGravity(Gravity.BOTTOM|Gravity.LEFT, 0, bottomSize);
+                result.setDuration(Toast.LENGTH_LONG);
+                result.show();
+            }
+        }
     }
 
 

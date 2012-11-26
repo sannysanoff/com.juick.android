@@ -27,18 +27,34 @@
         android:layout_height="wrap_content"
         android:layout_weight="0"
         style="@android:style/ButtonBar">
-        <TextView
-            android:id="@+id/textReplyTo"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:visibility="gone"
-            android:paddingBottom="2dip"
-            android:textColor="#000"/>
+        <RelativeLayout
+                android:id="@+id/replyToContainer"
+                android:visibility="visible"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                >
+            <Button
+                    android:id="@+id/showThread"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dip"
+                    android:layout_alignParentRight="true"
+                    android:text="Thread"
+                    />
+            <TextView
+                android:id="@+id/textReplyTo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/showThread"
+                android:singleLine="false"
+                android:maxLines="2"
+                android:text="Here here sdjaldj alj aldsj alsdjalkdj alksdj alksdjal ksdjalsdj qq j ldvjsldvj lsdvjk lsdvjk lskdvj lsdvjslk vjlskvjd lskvj lskdvj sldvj  lkvj ldvkj sldkvjl skdvjlskvjd sldvkj slvjk"
+                android:paddingBottom="2dip"
+                android:textColor="#000"/>
+        </RelativeLayout>
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/textReplyTo"
+            android:layout_below="@id/replyToContainer"
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:orientation="vertical">

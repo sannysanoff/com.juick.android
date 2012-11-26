@@ -70,6 +70,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
             Intent i = new Intent(this, MessagesActivity.class);
             String tagg = Uri.encode(search.substring(1));
             JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + search.substring(1), this);
+            jms.setCanNext(false);
             jms.putArg("tag", tagg);
             if (uid > 0) {
                 jms.putArg("user_id", "" + uid);
@@ -80,6 +81,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         } else {
             Intent i = new Intent(this, MessagesActivity.class);
             JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Search) + ": " + search, this);
+            jms.setCanNext(false);
             if (uid > 0) {
                 jms.putArg("user_id", "" + uid);
             }

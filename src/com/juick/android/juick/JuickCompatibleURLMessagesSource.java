@@ -272,4 +272,8 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     public boolean canNext() {
         return canNext;
     }
+
+    public void setCanNext(boolean canNext) {
+        this.canNext = canNext;
+    }
 }
