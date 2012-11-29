@@ -20,9 +20,10 @@ import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.*;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
-import com.juick.android.juick.JuickMessageID;
+import com.juick.android.api.MessageIDAdapter;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.juick.JuickMessageID;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class DatabaseService extends Service {
 
     GsonBuilder gsonBuilder = new GsonBuilder();
     {
-        gsonBuilder.registerTypeAdapter(MessageID.class, new MessageID.MessageIDAdapter());
+        gsonBuilder.registerTypeAdapter(MessageID.class, new MessageIDAdapter());
     }
 
     private Gson getGson() {
@@ -150,7 +151,7 @@ public class DatabaseService extends Service {
         cursor.moveToFirst();
         int blobIndex = cursor.getColumnIndex("body");
         int saveDateIndex = cursor.getColumnIndex("save_date");
-        MessageID.MessageIDAdapter tmp = new MessageID.MessageIDAdapter();
+        MessageIDAdapter tmp = new MessageIDAdapter();
         while(!cursor.isAfterLast()) {
             byte[] blob = cursor.getBlob(blobIndex);
             String str = decompressGZIP(blob);
@@ -158,7 +159,7 @@ public class DatabaseService extends Service {
             if (str != null && gson != null) {
                 JsonObject jsonObject = (JsonObject) gson.fromJson(str, JsonElement.class);
                 MessageID mid = tmp.deserialize(jsonObject.get("MID"), null, null);
-                JuickMessage msg = mid.getMicroBlog().createMessage();
+                JuickMessage msg = MainActivity.getMicroBlog(mid.getMicroBlogCode()).createMessage();
                 JuickMessage mesg = gson.fromJson(jsonObject, msg.getClass());
                 if (mesg != null) {
                     mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
@@ -819,7 +820,7 @@ public class DatabaseService extends Service {
         jo.addProperty("display", Build.DISPLAY);
         jo.addProperty("display_width", MainActivity.displayWidth);
         jo.addProperty("display_height", MainActivity.displayHeight);
-        String uniqueId = getUniqueInstallationId();
+        String uniqueId = getUniqueInstallationId(this, "");
         jo.addProperty("device_install_id", uniqueId);
         try {
             jo.addProperty("ja_version", ""+getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode);
@@ -837,27 +838,37 @@ public class DatabaseService extends Service {
         return jo;
     }
 
-    public String getUniqueInstallationId() {
+    public static String getUniqueInstallationId(Context ctx, String salt) {
         String uniqueId = "";
-        WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager)ctx.getSystemService(Context.WIFI_SERVICE);
         if (wifiManager != null) {
             String wifiMac = wifiManager.getConnectionInfo().getMacAddress();
             uniqueId += wifiMac;
         }
-        String androidID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        String androidID = Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (androidID != null)
             uniqueId += androidID;
+
+        if (salt.length() > 0) {
+            // salt = '' for submitting usage reports. Leaving it compatible to keep statistics.
+            // Today, for sessionId for extxmpp (uses salt != ''), i decided
+            // to add more randomness when I saw that "UNKNOWN_ID" below...
+            String buildProp = XMPPService.readFile(new File("/system/build.prop"));
+            if (buildProp != null) {
+                uniqueId += buildProp;
+            }
+        }
         if (uniqueId.length() == 0) {
             uniqueId = "UNKNOWN_ID";
         } else {
-            uniqueId = Utils.getMD5DigestForString(uniqueId);
+            uniqueId = Utils.getMD5DigestForString(uniqueId+salt);
         }
         uniqueId += "__";
 
 
         try {
-            PackageManager pm = getPackageManager();
-            ApplicationInfo appInfo = pm.getApplicationInfo(getPackageName(), 0);
+            PackageManager pm = ctx.getPackageManager();
+            ApplicationInfo appInfo = pm.getApplicationInfo(ctx.getPackageName(), 0);
             String appFile = appInfo.sourceDir;
             long installed = new File(appFile).lastModified(); //Epoch Time
             uniqueId += ""+installed;

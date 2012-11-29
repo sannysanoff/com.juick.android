@@ -6,9 +6,9 @@ import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.URLParser;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickUser;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -131,7 +131,6 @@ public class BnwCompatibleMessageSource extends MessagesSource {
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
                     JuickMessage msg = BnwCompatibleMessageSource.initFromJSON(jsonObject);
-                    msg.messagesSource = this;
                     messages.add(msg);
                     if (!storeSource)
                         msg.source = null;
@@ -176,7 +175,7 @@ public class BnwCompatibleMessageSource extends MessagesSource {
         if (json.has("replycount")) {
             jmsg.replies = json.getInt("replycount");
         }
-        jmsg.microBlogCode = BNWMicroBlog.CODE;
+        jmsg.microBlogCode = BnwMessageID.CODE;
         return jmsg;
     }
 
@@ -194,7 +193,7 @@ public class BnwCompatibleMessageSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(BNWMicroBlog.CODE);
+        return MainActivity.getMicroBlog(BnwMessageID.CODE);
     }
 
     public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {

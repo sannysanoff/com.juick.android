@@ -3,8 +3,9 @@ package com.juick.android.juick;
 import android.content.Context;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.juick.JuickUser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,7 +41,7 @@ public abstract class JuickMessagesSource extends MessagesSource {
             jmsg.setReplyTo(json.getInt("replyto"));
         }
         jmsg.Text = json.getString("body").replace("&quot;", "\"");
-        jmsg.User = JuickUser.parseJSON(json.getJSONObject("user"));
+        jmsg.User = parseUserJSON(json.getJSONObject("user"));
 
         try {
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -66,9 +67,19 @@ public abstract class JuickMessagesSource extends MessagesSource {
         if (json.has("video")) {
             jmsg.Video = json.getJSONObject("video").getString("mp4");
         }
-        jmsg.microBlogCode = JuickMicroBlog.CODE;
+        jmsg.microBlogCode = JuickMessageID.CODE;
 
         return jmsg;
+    }
+
+    public static JuickUser parseUserJSON(JSONObject json) throws JSONException {
+        JuickUser juser = new JuickUser();
+        juser.UID = json.getInt("uid");
+        juser.UName = json.getString("uname");
+        if (json.has("fullname")) {
+            juser.FullName = json.getString("fullname");
+        }
+        return juser;
     }
 
     public String getKind() {
@@ -77,7 +88,7 @@ public abstract class JuickMessagesSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(JuickMicroBlog.CODE);
+        return MainActivity.getMicroBlog(JuickMessageID.CODE);
     }
 
     public void setKind(String kind) {

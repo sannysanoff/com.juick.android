@@ -35,16 +35,31 @@ public class JAMService extends Service {
     }
 
     private void startup() {
+        final Utils.ServiceGetter<XMPPService> getter = new Utils.ServiceGetter<XMPPService>(JAMService.this, XMPPService.class);
         if (client == null) {
             new Thread("JAM.startup") {
                 @Override
                 public void run() {
                     if (client == null) {
                         String juickAccountName = JuickComAuthorizer.getJuickAccountName(JAMService.this);
-                        client.loginLocal(JAMService.this, handler, juickAccountName);
+                        String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
+                        client = new JAXMPPClient();
+                        client.loginLocal(JAMService.this, handler, juickAccountName, authString);
                         client.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
                             @Override
-                            public boolean onMessage(String jid, String message) {
+                            public boolean onMessage(final String jid, final String message) {
+                                getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                    @Override
+                                    public void withService(XMPPService service) {
+                                        if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
+                                            service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void withoutService() {
+                                    }
+                                });
                                 return false;
                             }
 

@@ -12,12 +12,12 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.view.*;
 import android.widget.*;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickUser;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juick.android.juick.JuickMicroBlog;
+import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.R;
 
 import java.util.*;
@@ -96,7 +96,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                                 final String fromUser = jim.getFrom();
                                 final MessageID thread = jim.getMID();
                                 JuickMessage msg = new JuickMessage();
-                                msg.microBlogCode = JuickMicroBlog.CODE;
+                                msg.microBlogCode = JuickMessageID.CODE;
                                 msg.setMID(thread);
                                 msg.Text = jim.getBody();
                                 msg.setRID(jim.getRID());

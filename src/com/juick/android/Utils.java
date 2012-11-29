@@ -31,15 +31,14 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.R;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.net.*;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
@@ -48,11 +47,27 @@ import org.apache.http.*;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.HttpEntityWrapper;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+
+import javax.net.ssl.*;
 
 /**
  * @author Ugnich Anton
@@ -71,12 +86,19 @@ public class Utils {
         }
 
         public abstract boolean acceptsURL(String url);
+
         public abstract void authorize(Context act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie);
+
         public abstract void authorizeRequest(HttpRequestBase request, String cookie);
+
         public abstract void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url);
+
         public abstract String authorizeURL(String url, String cookie);
+
         public abstract ReplyCode validateNon200Reply(HttpURLConnection conn, String url) throws IOException;
+
         public abstract ReplyCode validateNon200Reply(HttpResponse o, String url);
+
         public abstract void clearCookie(Context context, Runnable then);
     }
 
@@ -123,8 +145,7 @@ public class Utils {
     }
 
     //public static final String JA_IP = "192.168.1.77";
-    public static final String JA_IP = "79.133.74.9";
-    public static final String JA_PORT = "8080";
+    public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
@@ -143,19 +164,19 @@ public class Utils {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(wv.getContext());
             File file = new File(wv.getContext().getCacheDir(), "temp.html");
             String PREFIX = "#prefs.checked.";
-            while(true) {
+            while (true) {
                 int ix = content.indexOf(PREFIX);
                 if (ix == -1) break;
-                int ix2 = content.indexOf("#", ix+1);
+                int ix2 = content.indexOf("#", ix + 1);
                 if (ix2 == -1) break;
                 String key = content.substring(ix + PREFIX.length(), ix2);
                 boolean def = false;
                 if (key.endsWith("!")) {
                     def = true;
-                    key = key.substring(0, key.length()-1);
+                    key = key.substring(0, key.length() - 1);
                 }
                 boolean checked = sp.getBoolean(key, def);
-                content = content.substring(0, ix) + (checked ? "checked": "") + content.substring(ix2+1);
+                content = content.substring(0, ix) + (checked ? "checked" : "") + content.substring(ix2 + 1);
             }
             FileWriter fileWriter = new FileWriter(file);
             fileWriter.write(content);
@@ -374,7 +395,7 @@ public class Utils {
                                     return null;
                                 } else if (o.getStatusLine().getStatusCode() / 100 == 4) {
                                     if (context instanceof Activity) {
-                                        final Activity activity = (Activity)context;
+                                        final Activity activity = (Activity) context;
                                         reloginTried++;
                                         if (reloginTried == 3) {
                                             activity.runOnUiThread(new Runnable() {
@@ -393,14 +414,14 @@ public class Utils {
                                 if (progressNotification instanceof DownloadErrorNotification) {
                                     ((DownloadErrorNotification) progressNotification).notifyDownloadError("HTTP response code: " + o.getStatusLine().getStatusCode());
                                 }
-                                ret[0] = new RESTResponse("HTTP: "+o.getStatusLine().getStatusCode()+" " + o.getStatusLine().getReasonPhrase(), false, null);
+                                ret[0] = new RESTResponse("HTTP: " + o.getStatusLine().getStatusCode() + " " + o.getStatusLine().getReasonPhrase(), false, null);
                             }
                             return o;
                         }
                     });
-                    l  = System.currentTimeMillis() - l;
+                    l = System.currentTimeMillis() - l;
                     if (reportTimes) {
-                        Toast.makeText(context, "Load time="+l+" msec", Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, "Load time=" + l + " msec", Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
                     if (progressNotification instanceof DownloadErrorNotification) {
@@ -414,7 +435,7 @@ public class Utils {
                 return null;  //To change body of implemented methods use File | Settings | File Templates.
             }
         });
-        while(ret[0] == null) { // bad, but true
+        while (ret[0] == null) { // bad, but true
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -434,8 +455,6 @@ public class Utils {
         }
         return authorizer;
     }
-
-
 
 
     public static BINResponse getBinary(Context context, final String url, final Notification progressNotification, int timeout) {
@@ -464,9 +483,9 @@ public class Utils {
 
         @Override
         public InputStream getContent()
-            throws IOException, IllegalStateException {
+                throws IOException, IllegalStateException {
 
-              // the wrapped entity's getContent() decides about repeatability
+            // the wrapped entity's getContent() decides about repeatability
             InputStream wrappedin = wrappedEntity.getContent();
 
             return new GZIPInputStream(wrappedin);
@@ -481,7 +500,6 @@ public class Utils {
     } // class GzipDecompressingEntity
 
     private static void initCompressionSupport(DefaultHttpClient httpclient) {
-
 
 
         httpclient.addRequestInterceptor(new HttpRequestInterceptor() {
@@ -566,10 +584,108 @@ public class Utils {
         }
     }
 
+    static byte[][] allowedSignatures = new byte[][] {
+            /*ja.ip.rt.ru */ new byte[] {-114,53,80,-7,114,-98,6,-50,-121,-46,127,58,-64,-4,12,-125,-19,38,-31,112,-10,56,-32,-101,113,67,-84,-9,60,-70,73,73,31,-46,123,98,-23,-118,45,-37,-7,-90,-117,111,123,-66,-15,-59,-69,-108,-16,-26,18,-71,112,33,2,88,39,62,30,-40,110,119,106,-90,95,91,127,-32,-54,107,37,-118,-8,-27,57,-85,7,36,-12,81,36,103,31,29,64,31,37,77,-48,-114,-24,-101,73,98,-39,-22,41,102,58,-40,-11,-115,-26,59,110,-44,49,58,80,-128,59,106,-93,56,104,-65,25,40,-59,-21,-48,65,-78,91,-107,68,-12,-72,37,-28,-53,54,73,28,-35,-68,34,-91,32,124,57,-76,61,111,-12,-56,3,48,-68,111,121,127,28,-50,50,67,-21,15,-116,-12,7,57,31,38,29,79,45,-96,104,-1,-62,17,122,99,10,35,-60,83,38,-103,57,-81,-77,-44,52,-65,45,93,110,-59,24,2,119,5,95,-44,-51,-71,106,122,37,-14,-89,42,92,-64,71,-57,14,-44,57,-83,-30,-34,87,-119,106,41,110,-57,51,-4,32,-27,86,62,113,-35,40,108,90,-55,91,90,-89,8,-45,63,-123,-59,-108,9,100,13,68,87,-112,-19,84,-71,-17,-2,-74,40},
+            /* localhost */ new byte[] {106,51,41,24,68,-57,-20,13,-94,88,-18,-30,-127,-128,-41,56,98,-26,-49,-95,69,127,-72,-24,68,-85,46,-8,112,44,-76,51,79,25,-55,34,63,79,-85,-49,-22,44,90,-108,59,-63,96,-33,18,71,94,-58,-25,-102,30,21,-6,78,-122,-48,-7,-36,-25,-16,79,-72,-40,-17,72,-55,-122,71,2,-44,-81,-29,108,14,34,78,-3,110,9,81,21,84,-90,67,26,68,-124,-42,112,-103,-114,-15,40,-125,-60,-12,-100,102,20,87,-13,-97,71,-103,-41,-84,106,-78,-16,-35,-35,27,-37,-108,70,3,-101,78,-90,17,91,97,3,70,-68,-72,-94,19,54,117,-28,102,78,-42,13,-23,-118,12,-55,-33,-32,107,19,-32,80,-78,-42,107,94,28,-95,-123,-31,-50,58,-120,103,-100,-75,-95,-124,-121,57,-39,-40,54,-12,47,6,-106,-5,3,37,-88,-22,120,-27,117,122,114,-114,-39,-36,-89,-104,107,-32,89,7,-45,-15,117,54,-32,123,-124,46,-76,96,-35,68,28,-98,63,94,16,-43,-18,44,-120,-8,-57,52,33,66,91,21,41,-120,-29,-51,10,82,-89,65,-72,-122,103,67,8,-77,56,95,43,-128,-4,113,-23,-2,125,-68,28,-38,-7,-124,40,87,103,33,87,20,45}
+    };
+
+    public static HttpClient getNewHttpClient() {
+
+        class MySSLSocketFactory extends SSLSocketFactory {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+
+            public MySSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
+                super(truststore);
+
+                TrustManager tm = new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                        boolean verified = false;
+                        if (chain.length == 1) {
+                            byte[] thisSignature = chain[0].getSignature();
+                            for (byte[] allowedSignature : allowedSignatures) {
+                                if (thisSignature.length == allowedSignature.length) {
+                                    verified = true;
+                                    for (int i = 0; i < allowedSignature.length; i++) {
+                                        if (thisSignature[i] != allowedSignature[i]) {
+                                            verified = false;
+                                            break;
+                                        }
+                                    }
+                                    if (verified)
+                                        break;
+                                }
+                            }
+                        }
+                        if (!verified)
+                            throw new CertificateException("Invalid HTTPS certificate for Juick Advanced server. Please update Juick Advanced client, this may fix it.");
+                    }
+
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                };
+
+                sslContext.init(null, new TrustManager[]{tm}, null);
+            }
+
+            @Override
+            public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException, UnknownHostException {
+                return sslContext.getSocketFactory().createSocket(socket, host, port, autoClose);
+            }
+
+            @Override
+            public Socket createSocket() throws IOException {
+                return sslContext.getSocketFactory().createSocket();
+            }
+        }
+        try {
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            trustStore.load(null, null);
+
+            SSLSocketFactory sf = new MySSLSocketFactory(trustStore);
+            sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+            HttpParams params = new BasicHttpParams();
+            HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+            HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
+
+            SchemeRegistry registry = new SchemeRegistry();
+            registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+            registry.register(new Scheme("https", sf, 443));
+
+            ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
+
+            return new DefaultHttpClient(ccm, params);
+        } catch (Exception e) {
+            return new DefaultHttpClient();
+        }
+    }
+
+    public static RESTResponse postJA(final Context context, final String url, final String dataValue) {
+        try {
+            HttpClient client = getNewHttpClient();
+            HttpPost post = new HttpPost(url);
+            List<NameValuePair> args = new ArrayList<NameValuePair>();
+            args.add(new BasicNameValuePair("data", dataValue));
+            post.setEntity(new UrlEncodedFormEntity(args));
+            HttpResponse execute = client.execute(post);
+            HttpEntity result = execute.getEntity();
+            InputStream content = result.getContent();
+            RESTResponse restResponse = streamToString(content, null);
+            content.close();
+            return restResponse;
+        } catch (Exception e) {
+            return new RESTResponse(e.toString(), false, null);
+        }
+    }
+
     public static RESTResponse postJSON(final Context context, final String url, final String data) {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
-        final boolean[] cookieCleared = new boolean[] { false };
+        final boolean[] cookieCleared = new boolean[]{false};
         authorizer.authorize(context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
@@ -608,7 +724,7 @@ public class Utils {
                                 ret[0] = streamToString(inputStream, null);
                                 inputStream.close();
                             } else {
-                                ret[0] = new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
+                                ret[0] = new RESTResponse("HTTP " + conn.getResponseCode() + " " + conn.getResponseMessage(), false, null);
                             }
                         }
                     } finally {
@@ -625,7 +741,7 @@ public class Utils {
                 return null;  //To change body of implemented methods use File | Settings | File Templates.
             }
         });
-        while(ret[0] == null) { // bad, but true
+        while (ret[0] == null) { // bad, but true
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -716,7 +832,7 @@ public class Utils {
         List<String> strings = Arrays.asList(str.split("@"));
         HashSet<String> strings1 = new HashSet<String>();
         for (String string : strings) {
-            string = string.replace("[SOBAKA]","@");               // kind of escaped
+            string = string.replace("[SOBAKA]", "@");               // kind of escaped
             strings1.add(string);
         }
         return strings1;
@@ -727,7 +843,7 @@ public class Utils {
         for (String s : set) {
             if (sb.length() != 0)
                 sb.append("@");
-            sb.append(s.replace("@","[SOBAKA]"));
+            sb.append(s.replace("@", "[SOBAKA]"));
         }
         return sb.toString();
     }

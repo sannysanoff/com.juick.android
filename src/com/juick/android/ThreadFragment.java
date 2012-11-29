@@ -24,9 +24,9 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
 import android.view.*;
 import android.widget.*;
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 import android.support.v4.app.ListFragment;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
@@ -160,7 +160,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
         }
         if (ws == null) {
-            ws = mid.getMicroBlog().getThreadExternalUpdater(getActivity(), mid);
+            ws = MainActivity.getMicroBlog(mid.getMicroBlogCode()).getThreadExternalUpdater(getActivity(), mid);
             if (ws != null) {
                 ws.setListener(new ThreadExternalUpdater.Listener() {
                     @Override
@@ -211,7 +211,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage) {
                     JuickMessage msg = (JuickMessage)itemAtPosition;
-                    MessageMenu messageMenu = msg.getMicroBlog().getMessageMenu(getActivity(), parentMessageSource, getListView(), listAdapter);
+                    MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessageSource, getListView(), listAdapter);
                     messageMenu.onItemLongClick(parent, view, position, id);
 
                 }

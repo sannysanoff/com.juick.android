@@ -5,9 +5,11 @@ import android.util.Log;
 import com.juick.android.DatabaseService;
 import com.juick.android.URLParser;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.parsers.DevJuickComMessages;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -87,10 +89,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     }
 
     private ArrayList<JuickMessage> parseAndProcess(String jsonStr) {
-        //boolean enableMessageDB = sp.getBoolean("enableMessageDB", true);
-        //String fromS = getArg("before_mid");
         ArrayList<JuickMessage> messages = parseJSONpure(jsonStr);
-        //processPureMessages(enableMessageDB ? databaseGetter : null, messages, fromS != null && areMessagesInRow() ? Integer.parseInt(fromS) : -1);
         return messages;
     }
 
@@ -114,7 +113,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
         return parseJSONpure(jsonStr, false);
     }
 
-    public ArrayList<JuickMessage> parseJSONpure(String jsonStr, boolean storeSource) {
+    public static ArrayList<JuickMessage> parseJSONpure(String jsonStr, boolean storeSource) {
         ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
         if (jsonStr != null) {
             try {
@@ -123,8 +122,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
                     JuickMessage msg = initFromJSON(jsonObject);
-                    msg.Text = JuickWebCompatibleURLMessagesSource.unjuick(msg.Text);
-                    msg.messagesSource = this;
+                    msg.Text = DevJuickComMessages.unjuick(msg.Text);
                     messages.add(msg);
                     if (!storeSource)
                         msg.source = null;
@@ -238,8 +236,9 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 // backup
                 URLParser urlParser = new URLParser(url);
                 urlParser.setPath("api/" + urlParser.getPathPart());
-                urlParser.setHost(Utils.JA_IP);
-                urlParser.setPort(Utils.JA_PORT);
+                String[] hostPort = Utils.JA_ADDRESS.split(":");
+                urlParser.setHost(hostPort[0]);
+                urlParser.setPort(hostPort[1]);
                 Utils.RESTResponse s = Utils.getJSON(ctx,urlParser.getFullURL(), notifications);
                 if (s.getResult() != null && s.getResult().length() > 0) return s;
                 lastResponse = s;

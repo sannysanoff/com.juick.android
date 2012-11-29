@@ -15,6 +15,7 @@ import com.juickadvanced.xmpp.messages.ContactOnline;
 import com.juickadvanced.xmpp.messages.TimestampedMessage;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 
 /**
@@ -24,9 +25,9 @@ import java.util.HashSet;
  * Time: 12:32 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JAXMPPClient {
-    //String url = "http://192.168.1.77:8222/xmpp/control";
-    String url = "http://ja.ip.rt.ru:8222/xmpp/control";
+public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener {
+    String url = "https://192.168.1.77:8222/xmpp/control";
+    //String url = "https://ja.ip.rt.ru:8222/xmpp/control";
     String sessionId;
     HashSet<String> wachedJids;
     long since;
@@ -43,37 +44,51 @@ public class JAXMPPClient {
         this.context = context;
         this.setup = setup;
         this.handler = handler;
-        return performLogin(context, setup);
+        String retval = performLogin(context, setup);
+        if (retval == null) {
+            addListeners();
+        }
+        return retval;
     }
 
-    public String loginLocal(Context context, Handler handler, String username) {
+    private void addListeners() {
+        GCMIntentService.listeners.add(this);
+        GCMIntentService.serverPingTimerListeners.add(this);
+    }
+
+    public String loginLocal(Context context, Handler handler, String username, String cookie) {
         this.context = context;
         this.handler = handler;
         this.username = username;
-        return performLoginLocal(context, username);
+        String retval = performLoginLocal(context, username, cookie);
+        if (retval == null) {
+                addListeners();
+        }
+        return retval;
     }
 
     private String performLogin(Context context, XMPPConnectionSetup setup) {
-        sessionId = Math.random()+"-"+System.currentTimeMillis()+"-"+setup.login;
+        sessionId = DatabaseService.getUniqueInstallationId(context, setup.getJid());
         ClientToServer c2s = new ClientToServer(sessionId);
         c2s.setLogin(new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId));
         ServerToClient serverToClient = callXmppControl(context, c2s);
         return serverToClient.getErrorMessage();
     }
 
-    private String performLoginLocal(Context context, String username) {
-        sessionId = Math.random()+"-"+System.currentTimeMillis()+"-"+setup.login;
-        ClientToServer c2s = new ClientToServer(sessionId);
-        XMPPConnectionSetup setup = new XMPPConnectionSetup();
+    private String performLoginLocal(Context context, String username, String cookie) {
+        setup = new XMPPConnectionSetup();
         setup.jid = username+"@local";
+        setup.password = cookie;
+        sessionId = DatabaseService.getUniqueInstallationId(context, setup.getJid());
+        ClientToServer c2s = new ClientToServer(sessionId);
         c2s.setLogin(new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId));
         ServerToClient serverToClient = callXmppControl(context, c2s);
         return serverToClient.getErrorMessage();
     }
 
     private ServerToClient callXmppControl(Context context, ClientToServer c2s) {
-        String data = "data="+ Uri.encode(new Gson().toJson(c2s));
-        Utils.RESTResponse restResponse = Utils.postJSON(context, url, data);
+        String dataValue = new Gson().toJson(c2s);
+        Utils.RESTResponse restResponse = Utils.postJA(context, url, dataValue);
         ServerToClient result;
         if (restResponse.getErrorText() != null) {
             result = new ServerToClient(sessionId, restResponse.getErrorText());
@@ -130,6 +145,8 @@ public class JAXMPPClient {
         ClientToServer c2s = new ClientToServer(sessionId);
         c2s.setDisconnect(new Disconnect());
         callXmppControl(context, c2s);
+        GCMIntentService.listeners.remove(this);
+        GCMIntentService.serverPingTimerListeners.remove(this);
     }
 
     enum SyncState {
@@ -248,4 +265,23 @@ public class JAXMPPClient {
     public void setXmppClientListener(XMPPClientListener xmppClientListener) {
         this.xmppClientListener = xmppClientListener;
     }
+
+    @Override
+    public void onGCMMessage(String message) {
+        XMPPService.lastGCMMessage = new Date();
+        XMPPService.nGCMMessages++;
+        handleMessageFromServer(message);
+    }
+
+    public void onServerPingTime() {
+        startSync(new Runnable() {
+            @Override
+            public void run() {
+            }
+        });
+    }
+
+
+
+
 }

@@ -7,9 +7,10 @@ import android.util.Log;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.juick.JuickUser;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -106,7 +107,7 @@ public class JuboMessagesSource extends MessagesSource {
         jm.Text = txt;
         jm.User = new JuickUser();
         jm.User.UID = -1;
-        jm.microBlogCode = JuickMicroBlog.CODE;
+        jm.microBlogCode = JuickMessageID.CODE;
         NodeList titles = item.getElementsByTagName("title");
         String title = titles.item(0).getTextContent();
         int titleColon = title.indexOf(":");
@@ -137,7 +138,7 @@ public class JuboMessagesSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(JuickMicroBlog.CODE);
+        return MainActivity.getMicroBlog(JuickMessageID.CODE);
     }
 
     @Override

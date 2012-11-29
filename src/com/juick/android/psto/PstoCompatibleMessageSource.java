@@ -5,11 +5,11 @@ import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.URLParser;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
-import com.juick.android.api.MessageID;
-import com.juick.android.juick.JuickWebCompatibleURLMessagesSource;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickUser;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
+import com.juickadvanced.parsers.DevJuickComMessages;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -141,7 +141,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(PstoMicroBlog.CODE);
+        return MainActivity.getMicroBlog(PstoMessageID.CODE);
     }
 
     public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
@@ -189,8 +189,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                 }
                 message = new PstoMessage();
                 message.User = new JuickUser();
-                message.messagesSource = this;
-                message.microBlogCode = PstoMicroBlog.CODE;
+                message.microBlogCode = PstoMessageID.CODE;
                 message.privateMessage = line.contains("private");
                 if (parseMode == ParseMode.PARSE_THREAD_COMMENTS) {
                     matcher = commentNumber.matcher(line);
@@ -253,7 +252,7 @@ public class PstoCompatibleMessageSource extends MessagesSource {
                     return badRetval;
                 }
                 line = line.substring(3, line.length() - 4);
-                message.Text = JuickWebCompatibleURLMessagesSource.unwebMessageText(line);
+                message.Text = DevJuickComMessages.unwebMessageText(line);
                 if (message.privateMessage) {
                     message.Text = "[private] " +message.Text;
                 }

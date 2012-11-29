@@ -4,9 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
 
 import java.util.ArrayList;
 

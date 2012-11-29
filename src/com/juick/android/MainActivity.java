@@ -40,6 +40,8 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwCompatibleMessageSource;
 import com.juick.android.bnw.BnwMessageID;
@@ -48,6 +50,7 @@ import com.juick.android.psto.PstoCompatibleMessageSource;
 import com.juick.android.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
 import yuku.ambilwarna.widget.AmbilWarnaPreference;
 
 import java.io.File;
@@ -94,6 +97,14 @@ public class MainActivity extends FragmentActivity implements
 
     public static MicroBlog getMicroBlog(String key) {
         return microBlogs.get(key);
+    }
+
+    public static MicroBlog getMicroBlog(MessageID mid) {
+        return microBlogs.get(mid.getMicroBlogCode());
+    }
+
+    public static MicroBlog getMicroBlog(JuickMessage msg) {
+        return microBlogs.get(msg.getMID().getMicroBlogCode());
     }
 
 

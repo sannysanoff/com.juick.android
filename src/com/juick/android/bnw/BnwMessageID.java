@@ -1,9 +1,6 @@
 package com.juick.android.bnw;
 
-import com.juick.android.MainActivity;
-import com.juick.android.MicroBlog;
-import com.juick.android.api.MessageID;
-import com.juick.android.juick.JuickMicroBlog;
+import com.juickadvanced.data.MessageID;
 
 import java.io.Serializable;
 
@@ -15,6 +12,7 @@ import java.io.Serializable;
  * To change this template use File | Settings | File Templates.
  */
 public class BnwMessageID extends MessageID implements Serializable {
+    public static final String CODE = "bnw";
     String id;
 
     public BnwMessageID(String id) {
@@ -36,8 +34,8 @@ public class BnwMessageID extends MessageID implements Serializable {
     }
 
     @Override
-    public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(BNWMicroBlog.CODE);
+    public String getMicroBlogCode() {
+        return CODE;
     }
 
     public static BnwMessageID fromString(String str) {

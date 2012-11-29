@@ -24,9 +24,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import android.content.Context;
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juick.android.juick.JuickMessageID;
+import com.juickadvanced.data.juick.JuickMessageID;
 import org.apache.http.util.ByteArrayBuffer;
 
 /**

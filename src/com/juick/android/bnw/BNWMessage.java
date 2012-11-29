@@ -1,6 +1,6 @@
 package com.juick.android.bnw;
 
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 
 import java.util.ArrayList;
 import java.util.Vector;

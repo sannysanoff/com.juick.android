@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import com.juick.android.DatabaseService;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;

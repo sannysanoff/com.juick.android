@@ -27,7 +27,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -35,9 +35,9 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juick.android.juick.JuickMessageID;
+import com.juickadvanced.data.juick.JuickMessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
@@ -209,7 +209,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage) {
                     JuickMessage msg = (JuickMessage)itemAtPosition;
-                    MessageMenu messageMenu = msg.getMicroBlog().getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
+                    MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
                     messageMenu.onItemLongClick(parent, view, position, id);
 
                 }

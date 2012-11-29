@@ -1,20 +1,12 @@
 package com.juick.android;
 
 import android.app.Application;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import com.google.android.gcm.GCMRegistrar;
 import com.juickadvanced.R;
 import org.acra.ACRA;
-import org.acra.ACRAConfiguration;
-import org.acra.ACRAConfigurationException;
-import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
 import static org.acra.ReportField.*;
-import static org.acra.ReportField.SETTINGS_SECURE;
-import static org.acra.ReportField.SETTINGS_SYSTEM;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,13 +24,19 @@ import static org.acra.ReportField.SETTINGS_SYSTEM;
             INSTALLATION_ID, DEVICE_FEATURES, ENVIRONMENT, SETTINGS_SYSTEM, SETTINGS_SECURE })
 public class JuickAdvancedApplication extends Application {
 
+    static boolean supportsGCM = false;
+
     @Override
     public void onCreate() {
         ACRA.init(this);
         super.onCreate();
-        GCMRegistrar.checkDevice(getApplicationContext());
-        GCMRegistrar.checkManifest(getApplicationContext());
-        GCMRegistrar.register(getApplicationContext(), GCMIntentService.SENDER_ID);
+        try {
+            GCMRegistrar.checkDevice(getApplicationContext());
+            GCMRegistrar.checkManifest(getApplicationContext());
+            GCMRegistrar.register(getApplicationContext(), GCMIntentService.SENDER_ID);
+            supportsGCM = true;
+        } catch (Throwable th) {
+        }
         GCMIntentService.rescheduleAlarm(this);
     }
 

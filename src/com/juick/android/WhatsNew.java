@@ -64,7 +64,7 @@ public class WhatsNew {
                         @Override
                         public void withService(final DatabaseService service) {
                             final JsonObject jo = new JsonObject();
-                            String uniqueInstallationId = service.getUniqueInstallationId();
+                            String uniqueInstallationId = service.getUniqueInstallationId(context, "");
                             jo.addProperty("device_install_id", uniqueInstallationId);
                             new Thread() {
                                 @Override

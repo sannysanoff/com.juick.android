@@ -2,12 +2,11 @@ package com.juick.android.juick;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 
 import java.io.Serializable;
 import java.util.ArrayList;

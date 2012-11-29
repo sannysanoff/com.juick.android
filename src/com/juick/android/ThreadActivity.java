@@ -40,9 +40,9 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickUser;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
@@ -334,7 +334,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
     private void sendReplyMain(String msg) {
         setFormEnabled(false);
-        mid.getMicroBlog().postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
+        MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
             @Override
             public Void apply(String error) {
                 if (error == null) {

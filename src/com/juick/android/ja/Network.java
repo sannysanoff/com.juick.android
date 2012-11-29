@@ -20,7 +20,7 @@ public class Network {
     public static Utils.RESTResponse postJSONHome(Context context, String path, String data) {
         Utils.RESTResponse ret = null;
         try {
-            URL jsonURL = new URL("http://" + Utils.JA_IP + ":" + Utils.JA_PORT + path);
+            URL jsonURL = new URL("http://" + Utils.JA_ADDRESS + path);
             HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
 
             conn.setUseCaches(false);

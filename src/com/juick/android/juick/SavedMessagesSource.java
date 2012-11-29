@@ -3,10 +3,11 @@ package com.juick.android.juick;
 import android.app.Activity;
 import android.content.Context;
 import com.juick.android.DatabaseService;
+import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class SavedMessagesSource extends MessagesSource {
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        mid.getMicroBlog().getChildren((Activity) ctx, mid, notifications, cont);
+        MainActivity.getMicroBlog(mid.getMicroBlogCode()).getChildren((Activity) ctx, mid, notifications, cont);
     }
 
     @Override

@@ -33,7 +33,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.webkit.WebView;
 import android.widget.*;
-import com.juick.android.api.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -232,7 +232,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 userPic.getLayoutParams().height = lrr.pictureSize;
                 int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
                 userPic.setPadding(padding, padding, padding, padding);
-                final UserpicStorage.AvatarID avatarId = jmsg.getAvatarId();
+                final UserpicStorage.AvatarID avatarId = getAvatarId(jmsg);
 
                 lrr.userpicListener = new UserpicStorage.Listener() {
                     @Override
@@ -426,6 +426,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return v;
     }
 
+    private UserpicStorage.AvatarID getAvatarId(JuickMessage jmsg) {
+        MicroBlog microBlog = MainActivity.getMicroBlog(jmsg);
+        if (microBlog == null)
+            return UserpicStorage.NO_AVATAR;
+        return microBlog.getAvatarID(jmsg);
+    }
+
     public static float getDefaultTextSize(Context context) {
         if (defaultTextSize == 0) {
             TextView textView = new TextView(context);
@@ -511,7 +518,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ListRowRuntime lrr = (ListRowRuntime)view.getTag();
             if (lrr != null) {
                 if (lrr.userpicListener != null) {
-                    UserpicStorage.instance.removeListener(lrr.jmsg.getAvatarId(), lrr.pictureSize, lrr.userpicListener);
+                    UserpicStorage.instance.removeListener(getAvatarId(lrr.jmsg), lrr.pictureSize, lrr.userpicListener);
                 }
             }
             ViewGroup vg = (ViewGroup)view;
@@ -573,7 +580,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public static ParsedMessage formatMessageText(final Context ctx, final JuickMessage jmsg, boolean condensed) {
         if (jmsg.parsedText != null) {
-            return jmsg.parsedText;    // was parsed before
+            return (ParsedMessage)jmsg.parsedText;    // was parsed before
         }
         getColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
@@ -707,12 +714,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             //
             if (jmsg.replies > 0) {
                 String replies = Replies + jmsg.replies;
-                ssb.append("  " + replies + " ");
+                ssb.append(" " + replies);
                 ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.NUMBER_OF_COMMENTS, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ssb.setSpan(new WrapTogetherSpan(){}, spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
             // right align
             ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+
 
         LeadingMarginSpan.LeadingMarginSpan2 userpicSpan = null;
         if (showUserpics(ctx) && !condensed) {

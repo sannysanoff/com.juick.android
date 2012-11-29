@@ -42,7 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
-import com.juick.android.api.JuickPlace;
+import com.juickadvanced.data.juick.JuickPlace;
 import org.json.JSONArray;
 
 /**
@@ -218,7 +218,7 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
                 JSONArray json = new JSONArray(jsonStr);
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
-                    add(JuickPlace.parseJSON(json.getJSONObject(i)));
+                    add(com.juick.android.JuickPlacesAdapter.parseJuickPlaceJSON(json.getJSONObject(i)));
                 }
                 return true;
             } catch (Exception e) {

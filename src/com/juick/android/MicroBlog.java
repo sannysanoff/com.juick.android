@@ -4,10 +4,9 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.Handler;
 import android.widget.ListView;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
-import com.juick.android.juick.SavedMessagesSource;
 
 import java.util.ArrayList;
 

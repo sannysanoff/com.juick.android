@@ -10,11 +10,9 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
-import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
-import com.juick.android.juick.SavedMessagesSource;
 import com.juickadvanced.R;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +31,6 @@ import java.util.ArrayList;
 public class BNWMicroBlog implements MicroBlog {
 
     public static BNWMicroBlog instance;
-    public static final String CODE = "bnw";
 
     public BNWMicroBlog() {
         instance = this;
@@ -46,7 +43,7 @@ public class BNWMicroBlog implements MicroBlog {
 
     @Override
     public String getCode() {
-        return CODE;
+        return BnwMessageID.CODE;
     }
 
     @Override
@@ -259,7 +256,7 @@ public class BNWMicroBlog implements MicroBlog {
     @Override
     public JuickMessage createMessage() {
         JuickMessage juickMessage = new BNWMessage();
-        juickMessage.microBlogCode = CODE;
+        juickMessage.microBlogCode = BnwMessageID.CODE;
         return juickMessage;
     }
 

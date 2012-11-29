@@ -1,9 +1,6 @@
 package com.juick.android.psto;
 
-import com.juick.android.MainActivity;
-import com.juick.android.MicroBlog;
-import com.juick.android.api.MessageID;
-import com.juick.android.bnw.BNWMicroBlog;
+import com.juickadvanced.data.MessageID;
 
 import java.io.Serializable;
 
@@ -15,6 +12,7 @@ import java.io.Serializable;
  * To change this template use File | Settings | File Templates.
  */
 public class PstoMessageID extends MessageID implements Serializable {
+    public static final String CODE = "psto";
     String id;
     String user;
 
@@ -38,8 +36,8 @@ public class PstoMessageID extends MessageID implements Serializable {
     }
 
     @Override
-    public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(PstoMicroBlog.CODE);
+    public String getMicroBlogCode() {
+        return CODE;
     }
 
     public static PstoMessageID fromString(String str) {

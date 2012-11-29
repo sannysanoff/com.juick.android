@@ -10,12 +10,10 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.JuickUser;
-import com.juick.android.api.MessageID;
-import com.juick.android.bnw.BNWMessage;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickUser;
+import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
-import com.juick.android.juick.SavedMessagesSource;
 import com.juickadvanced.R;
 
 import java.net.URLEncoder;
@@ -31,7 +29,6 @@ import java.util.Date;
  */
 public class PstoMicroBlog implements MicroBlog {
     public static PstoMicroBlog instance;
-    public static final String CODE = "psto";
 
     public PstoMicroBlog() {
         instance = this;
@@ -139,7 +136,7 @@ public class PstoMicroBlog implements MicroBlog {
     @Override
     public JuickMessage createMessage() {
         JuickMessage juickMessage = new PstoMessage();
-        juickMessage.microBlogCode = CODE;
+        juickMessage.microBlogCode = PstoMessageID.CODE;
         return juickMessage;
     }
 
@@ -151,7 +148,7 @@ public class PstoMicroBlog implements MicroBlog {
 
     @Override
     public String getCode() {
-        return CODE;
+        return PstoMessageID.CODE;
     }
 
     @Override
@@ -221,7 +218,7 @@ public class PstoMicroBlog implements MicroBlog {
                                 newmsg.Timestamp = new Date();
                                 newmsg.setRID(lastRid+1);
                                 newmsg.setReplyTo(finalReplyTo);
-                                newmsg.microBlogCode = CODE;
+                                newmsg.microBlogCode = PstoMessageID.CODE;
                                 newmsg.setMID(mid);
                                 ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
                                 messages.add(newmsg);

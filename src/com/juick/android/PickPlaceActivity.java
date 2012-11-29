@@ -32,19 +32,19 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+import com.juickadvanced.data.juick.JuickPlace;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
-import com.juick.android.api.JuickPlace;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -354,6 +354,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
         });
         thr2.start();
     }
+
     private void finishWithPlace(JuickPlace jplace) {
         Intent i = new Intent();
         if (location != null) {
@@ -370,45 +371,4 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
         setResult(RESULT_OK, i);
         finish();
     }}
-
-class JuickPlacesAdapter extends ArrayAdapter<JuickPlace> {
-
-    private static final int textViewResourceId = android.R.layout.simple_list_item_1;
-
-    public JuickPlacesAdapter(Context context) {
-        super(context, textViewResourceId);
-    }
-
-    public boolean parseJSON(String jsonStr) {
-        try {
-            JSONArray json = new JSONArray(jsonStr);
-            int cnt = json.length();
-            for (int i = 0; i < cnt; i++) {
-                add(JuickPlace.parseJSON(json.getJSONObject(i)));
-            }
-            return true;
-        } catch (Exception e) {
-            Log.e("initPlacesAdapter", e.toString());
-        }
-        return false;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        TextView t;
-        if (convertView != null && convertView instanceof TextView) {
-            t = (TextView) convertView;
-        } else {
-            LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            t = (TextView) vi.inflate(textViewResourceId, null);
-        }
-        JuickPlace item = getItem(position);
-        String label = item.name;
-        if (item.source != null && item.source.equals("google")) {
-            label = "[auto] " + label;
-        }
-        t.setText(label);
-        return t;
-    }
-}
 

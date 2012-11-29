@@ -21,9 +21,10 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
-import com.juick.android.api.JuickMessage;
-import com.juick.android.api.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,7 +44,6 @@ import java.util.ArrayList;
 public class JuickMicroBlog implements MicroBlog {
 
     public static JuickMicroBlog instance;
-    public static final String CODE = "juick";
     Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter;
 
     public JuickMicroBlog() {
@@ -174,7 +174,7 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public String getCode() {
-        return CODE;
+        return JuickMessageID.CODE;
     }
 
     @Override
@@ -447,7 +447,7 @@ public class JuickMicroBlog implements MicroBlog {
     @Override
     public JuickMessage createMessage() {
         JuickMessage juickMessage = new JuickMessage();
-        juickMessage.microBlogCode = CODE;
+        juickMessage.microBlogCode = JuickMessageID.CODE;
         return juickMessage;
     }
 
