@@ -442,6 +442,15 @@ public class XMPPService extends Service  {
         maybeCancelNotification();
     }
 
+    public class MyBroadcastSender implements Runnable {
+        @Override
+        public void run() {
+            sendMyBroadcast(false);
+        }
+    }
+
+    MyBroadcastSender broadcastSender = new MyBroadcastSender();
+
     public void requestMessageBody(MessageID finalTopicMessageId) {
         try {
             final int mid = ((JuickMessageID) finalTopicMessageId).getMid();
@@ -471,9 +480,10 @@ public class XMPPService extends Service  {
                                     @Override
                                     public void run() {
                                         handleIncomingTopicStarter(obtained);
-                                        sendMyBroadcast(false);
                                     }
                                 });
+                                handler.removeCallbacks(broadcastSender);
+                                handler.postDelayed(broadcastSender, 3000);
                             }
                         }
                     }
@@ -682,6 +692,9 @@ public class XMPPService extends Service  {
 
     public ArrayList<IncomingMessage> incomingMessages = new ArrayList<IncomingMessage>();
 
+    // duplicates from various sources
+    ArrayList<String> recentlyReceivedMessages = new ArrayList<String>();
+
     public void handleJuickMessage(String from, String body) {
         IncomingMessage handled = null;
         boolean silent = false;
@@ -809,11 +822,31 @@ public class XMPPService extends Service  {
                 if (fromm.startsWith("@")) {
                     fromm = fromm.substring(1);
                 }
+                //
+                // Filter message through blacklists
+                //
                 boolean shouldDelete = filteredOutUsers.contains(fromm);
-
                 if (!shouldDelete) {
                     if (isFromJuBo && getAnyJuboMessageFilter() != null) {
                         shouldDelete = !getAnyJuboMessageFilter().allowXMPPMessage(handled, sp);
+                    }
+                }
+
+                //
+                // Filter through DUP-list
+                //
+                if (!shouldDelete) {
+                    if (handled instanceof JuickIncomingMessage) {
+                        JuickIncomingMessage jim = (JuickIncomingMessage)handled;
+                        String ky = jim.getMID()+"/"+jim.getRID();
+                        if (recentlyReceivedMessages.contains(ky)) {
+                            shouldDelete = true;
+                        } else {
+                            recentlyReceivedMessages.add(ky);
+                            if (recentlyReceivedMessages.size() > 500) {    // that big!
+                                recentlyReceivedMessages.remove(0);
+                            }
+                        }
                     }
                 }
 

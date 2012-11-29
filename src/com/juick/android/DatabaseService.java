@@ -201,7 +201,6 @@ public class DatabaseService extends Service {
                     if (raw.size() == 0) return true;        // broken?
                     Cursor cursor = db.rawQuery("select * from msg2 where mid=?", new String[]{mid.toString()});
                     boolean exists = cursor.moveToFirst();
-                    int nreplies = exists ? cursor.getInt(cursor.getColumnIndex("nreplies")) : 0;
                     cursor.close();
                     try {
                         insertOrUpdateThread(exists, raw, mid);
