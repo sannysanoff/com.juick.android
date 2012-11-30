@@ -370,6 +370,7 @@
     <string name="navigationPSTOMy">psto.Блог</string>
     <string name="navigationPSTOPopular">psto.Популярные</string>
     <string name="UnreadMessagesNotification">Уведомл. о сообщениях</string>
+    <string name="IsNotEnabledOrServiceIsNotRunning">не включено или сервис не работает</string>
     <string name="SubCommentsNotification___">Уведомления о подписках и ответах через Juick Advanced server
         (исключая приватные)
     </string>

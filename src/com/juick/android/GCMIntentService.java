@@ -8,10 +8,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentService {
 
@@ -73,6 +70,8 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
                 @Override
                 public void run() {
                     for (GCMMessageListener listener : (List<GCMMessageListener>)listeners.clone()) {
+                        XMPPService.lastGCMMessage = new Date();
+                        XMPPService.nGCMMessages++;
                         listener.onGCMMessage(messag);
                     }
                 }
@@ -99,7 +98,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
         PendingIntent scheduledAlarm = PendingIntent.getService(ctx, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(ALARM_SERVICE);
         Calendar calendar = GregorianCalendar.getInstance();
-        calendar.add(Calendar.MINUTE, 1);
+        calendar.add(Calendar.MINUTE, 15);
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), scheduledAlarm);
         XMPPService.lastAlarmScheduled = calendar.getTimeInMillis();
     }

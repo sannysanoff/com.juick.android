@@ -23,8 +23,10 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import com.juickadvanced.R;
 
@@ -35,6 +37,7 @@ import java.util.ArrayList;
  */
 public class ConnectivityChangeReceiver extends BroadcastReceiver {
 
+    boolean connectivity = true;
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
@@ -42,13 +45,20 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
             NetworkInfo ni = (NetworkInfo) intent.getExtras().get(ConnectivityManager.EXTRA_NETWORK_INFO);
             if (ni != null && ni.getState() == NetworkInfo.State.CONNECTED) {
                 context.startService(new Intent(context, XMPPService.class));
+                MainActivity.toggleJAMessaging(context, false);
+                connectivity = true;
             }
         }
         if (intent.getExtras().getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {
+            connectivity = false;
             Intent service = new Intent(context, XMPPService.class);
             service.putExtra("terminate", true);
             service.putExtra("terminateMessage", "connectivity lost");
             context.startService(service);
+
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+            boolean useJAM = sp.getBoolean("enableJAMessaging", false);
+            MainActivity.toggleJAMessaging(context, useJAM);
         }
     }
 }

@@ -20,6 +20,7 @@ package com.juick.android;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -483,13 +484,27 @@ public class MainActivity extends FragmentActivity implements
 
     private void toggleJAMessaging() {
         boolean useJAM = sp.getBoolean("enableJAMessaging", false);
-        if (useJAM) {
-            startService(new Intent(this, JAMService.class));
+        toggleJAMessaging(this, useJAM);
+    }
+
+    public static boolean commandJAMService(Context ctx, String command) {
+        if (isJAMServiceRunning(ctx)) {
+            Intent service = new Intent(ctx, JAMService.class);
+            service.putExtra(command, true);
+            ctx.startService(service);
+            return true;
         } else {
-            if (isJAMServiceRunning()) {
-                Intent service = new Intent(this, JAMService.class);
+            return false;
+        }
+    }
+    public static void toggleJAMessaging(Context ctx, boolean useJAM) {
+        if (useJAM) {
+            ctx.startService(new Intent(ctx, JAMService.class));
+        } else {
+            if (isJAMServiceRunning(ctx)) {
+                Intent service = new Intent(ctx, JAMService.class);
                 service.putExtra("terminate", true);
-                startService(service);
+                ctx.startService(service);
             }
         }
     }
@@ -505,10 +520,11 @@ public class MainActivity extends FragmentActivity implements
         return false;
     }
 
-    private boolean isJAMServiceRunning() {
-        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+    public static boolean isJAMServiceRunning(Context ctx) {
+        ActivityManager manager = (ActivityManager) ctx.getSystemService(ACTIVITY_SERVICE);
         String className = JAMService.class.getName();
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+        List<ActivityManager.RunningServiceInfo> runningServices = manager.getRunningServices(Integer.MAX_VALUE);
+        for (ActivityManager.RunningServiceInfo service : runningServices) {
             if (className.equals(service.service.getClassName())) {
                 return true;
             }

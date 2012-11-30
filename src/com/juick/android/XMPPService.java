@@ -52,10 +52,13 @@ public class XMPPService extends Service  {
     public static JuickBlacklist juickBlacklist_tmp; // restored from file until fresh comes
     public static long lastSuccessfulConnect;
     static public Date lastGCMMessage;
+    static public Date lastWSMessage;
     static public String lastGCMMessageID;
+    static public String lastWSMessageID;
     static public long lastAlarmScheduled;
     static public long lastAlarmFired;
     public static int nGCMMessages;
+    public static int nWSMessages;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -71,7 +74,6 @@ public class XMPPService extends Service  {
                 String message = intent.getStringExtra("terminateMessage");
                 if (message == null) message = "user terminated";
                 cleanup(message);
-                stopSelf();
             } else {
                 if (startId != 2) {     // i don't know what is this, really
                     if (!up)
@@ -611,6 +613,7 @@ public class XMPPService extends Service  {
 
     public static abstract class JuickIncomingMessage extends IncomingMessage {
         String messageNoPlain;
+        transient JuickMessageID parsedMid;
 
         public JuickIncomingMessage(String from, String body, String messageNoPlain, Date date) {
             super(from, body, date);
@@ -624,10 +627,16 @@ public class XMPPService extends Service  {
 
         public JuickMessageID getMID() {
             try {
-                int ix = messageNoPlain.indexOf("/");
-                if (ix == -1) return new JuickMessageID(Integer.parseInt(messageNoPlain.substring(1)));
-                int ix2 = messageNoPlain.indexOf("#");   // -1 not found
-                return new JuickMessageID(Integer.parseInt(messageNoPlain.substring(ix2 + 1, ix)));
+                if (parsedMid == null) {
+                    int ix = messageNoPlain.indexOf("/");
+                    if (ix == -1) {
+                        parsedMid = new JuickMessageID(Integer.parseInt(messageNoPlain.substring(1)));
+                    } else {
+                        int ix2 = messageNoPlain.indexOf("#");   // -1 not found
+                        parsedMid = new JuickMessageID(Integer.parseInt(messageNoPlain.substring(ix2 + 1, ix)));
+                    }
+                }
+                return parsedMid;
             } catch (NumberFormatException e) {
                 return null;
             }
@@ -1011,32 +1020,42 @@ public class XMPPService extends Service  {
         handler = new Handler();
         super.onCreate();
 
+        new Thread() {
+            @Override
+            public void run() {
+                ArrayList<IncomingMessage> readMessages = new ArrayList<IncomingMessage>();
+                File savedMessagesDirectory = getSavedMessagesDirectory();
+                String[] list = savedMessagesDirectory.list();
+                try {
+                    if (list != null) {
+                        for (String fname : list) {
+                            File file = new File(savedMessagesDirectory, fname);
+                            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+                            try {
+                                IncomingMessage o = (IncomingMessage) ois.readObject();
+                                readMessages.add(o);
+                            } catch (Exception ex) {
+                                file.delete();
+                            } finally {
+                                ois.close();
+                            }
 
-
-        File savedMessagesDirectory = getSavedMessagesDirectory();
-        String[] list = savedMessagesDirectory.list();
-        try {
-            if (list != null) {
-                for (String fname : list) {
-                    File file = new File(savedMessagesDirectory, fname);
-                    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
-                    try {
-                        IncomingMessage o = (IncomingMessage) ois.readObject();
-                        incomingMessages.add(o);
-                    } catch (Exception ex) {
-                        file.delete();
-                    } finally {
-                        ois.close();
+                        }
                     }
-
+                } catch (Exception e) {
+                    Log.e("com.juickadvanced", "restoreMessages", e);
+                }
+                incomingMessages.addAll(readMessages);
+                if (incomingMessages.size() > 0) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            XMPPMessageReceiver.updateInfo(XMPPService.this, incomingMessages.size(), true);
+                        }
+                    });
                 }
             }
-        } catch (Exception e) {
-            Log.e("com.juickadvanced", "restoreMessages", e);
-        }
-        if (incomingMessages.size() > 0) {
-            XMPPMessageReceiver.updateInfo(this, incomingMessages.size(), true);
-        }
+        }.start();
 
     }
 

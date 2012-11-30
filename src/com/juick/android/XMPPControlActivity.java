@@ -31,12 +31,13 @@ public class XMPPControlActivity extends Activity {
         setContentView(R.layout.xmpp_control);
         final TextView xmppStatus = (TextView) findViewById(R.id.xmpp_status);
         final TextView lastGCM = (TextView) findViewById(R.id.last_gcm);
-        final TextView ngcm = (TextView) findViewById(R.id.ngcm);
+        final TextView lastGCMId = (TextView) findViewById(R.id.last_gcm_id);
+        final TextView lastWS = (TextView) findViewById(R.id.last_ws);
+        final TextView lastWSId = (TextView) findViewById(R.id.last_ws_id);
         final TextView lastException = (TextView) findViewById(R.id.last_exception);
         final TextView messagesReceived = (TextView) findViewById(R.id.messages_received);
         final TextView alarmScheduled = (TextView) findViewById(R.id.alarm_scheduled);
         final TextView alarmFired = (TextView) findViewById(R.id.alarm_fired);
-        final TextView lastGCMId = (TextView) findViewById(R.id.last_gcm_id);
         final TextView juickbot = (TextView) findViewById(R.id.xmpp_juickbot);
         final TextView jubobot = (TextView) findViewById(R.id.xmpp_jubobot);
         final TextView juickBlacklist = (TextView) findViewById(R.id.xmpp_juickblacklist);
@@ -50,18 +51,28 @@ public class XMPPControlActivity extends Activity {
         final Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final Button retry = (Button) findViewById(R.id.retry);
         final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ssZ");
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean xmppExternal = sp.getBoolean("xmpp_external", false);
         retry.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                sp.edit().putBoolean("useXMPP", false).commit();
+                new Thread() {
                     @Override
-                    public void withService(XMPPService service) {
-                        service.cleanup("Manual reconnect");
-                        service.startup();
+                    public void run() {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                sp.edit().putBoolean("useXMPP", true).commit();
+                            }
+                        });
                     }
-                });
+                }.start();
             }
         });
         final Button gc = (Button) findViewById(R.id.gc);
@@ -129,10 +140,11 @@ public class XMPPControlActivity extends Activity {
                         jmaCount.setText("" + JuickMessagesAdapter.instanceCount + " instances");
                         infoDate.setText("" + sdf.format(new Date()));
                         lastGCM.setText("" + (XMPPService.lastGCMMessage != null ? sdf.format(XMPPService.lastGCMMessage): " --- "));
-                        ngcm.setText("" + service.nGCMMessages);
+                        lastWS.setText("" + (XMPPService.lastWSMessage != null ? sdf.format(XMPPService.lastWSMessage): " --- "));
                         alarmScheduled.setText(XMPPService.lastAlarmScheduled != 0 ? "" + sdf.format(new Date(XMPPService.lastAlarmScheduled)): " --- ");
                         alarmFired.setText(XMPPService.lastAlarmFired != 0 ? "" + sdf.format(new Date(XMPPService.lastAlarmFired)): " --- ");
-                        lastGCMId.setText(XMPPService.lastGCMMessageID);
+                        lastGCMId.setText(XMPPService.lastGCMMessageID+" count="+service.nGCMMessages);
+                        lastWSId.setText(XMPPService.lastWSMessageID+" count="+service.nWSMessages);
                         handler.postDelayed(thiz, 2000);
                     }
                 });

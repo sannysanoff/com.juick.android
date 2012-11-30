@@ -808,6 +808,7 @@
     <string name="navigationPSTOPopular">psto.Popular</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
     <string name="UnreadMessagesNotification">Unread messages notification</string>
+    <string name="IsNotEnabledOrServiceIsNotRunning">is not enabled or service is not running</string>
     <string name="SubCommentsNotification___">Subscriptions/Comments notification implemented on Juick Advanced server
         (no private)
     </string>

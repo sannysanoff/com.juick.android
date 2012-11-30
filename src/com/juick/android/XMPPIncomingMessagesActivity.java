@@ -10,6 +10,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -81,7 +82,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 new MessageMenu(XMPPIncomingMessagesActivity.this, null, null, null) {
-
                     XMPPService.IncomingMessage incomingMessage;
                     View view;
                     @Override
@@ -192,6 +192,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
             }
         });
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     private void clickedOnMessage(final XMPPService.IncomingMessage incomingMessage) {
@@ -255,20 +256,26 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
     @Override
     public boolean onMessageReceived(XMPPService.IncomingMessage msg) {
+        Log.i("XMPPIncomingMessages","message received");
         refreshList();
         return false;
     }
 
     void refreshList() {
-
+        final long serviceObtainer = System.currentTimeMillis();
         xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
             @Override
             public void withService(XMPPService service) {
+                long l = System.currentTimeMillis() - serviceObtainer;
+                Log.i("XMPPIncomingMessages","obtain service time="+l);
+                ArrayList<XMPPService.IncomingMessage> incomingMessages;
                 synchronized (service.incomingMessages) {
                     //Toast.makeText(XMPPIncomingMessagesActivity.this, "NMessages="+service.incomingMessages.size(), Toast.LENGTH_SHORT).show();
-                    refreshListWithAllMessages(service, service.incomingMessages);
+                    incomingMessages = new ArrayList<XMPPService.IncomingMessage>(service.incomingMessages);
                     service.maybeCancelNotification();
                 }
+                Log.i("XMPPIncomingMessages","begin refresh all");
+                refreshListWithAllMessages(service, incomingMessages);
             }
 
             @Override
@@ -278,14 +285,16 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 refreshListWithAllMessages(null, new ArrayList<XMPPService.IncomingMessage>());
             }
         });
-        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
+    MyListAdapter adapter;
+
     private void refreshListWithAllMessages(XMPPService service, ArrayList<XMPPService.IncomingMessage> allMessages) {
+        long l = System.currentTimeMillis();
         ArrayList<Item> privateMessages = new ArrayList<Item>();
         ArrayList<Item> jabberMessages = new ArrayList<Item>();
         ArrayList<Item> subscriptions = new ArrayList<Item>();
-        HashMap<String, Item> threadMessages = new HashMap<String, Item>();
+        HashMap<JuickMessageID, Item> threadMessages = new HashMap<JuickMessageID, Item>();
 
         int nCommentsTotal = 0;
 
@@ -295,10 +304,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
             if (message instanceof XMPPService.JuickThreadIncomingMessage) {
                 XMPPService.JuickThreadIncomingMessage tim = (XMPPService.JuickThreadIncomingMessage)message;
-                Item item = threadMessages.get(""+tim.getMID());
+                Item item = threadMessages.get(tim.getMID());
                 if (item == null) {
                     item = new Item();
-                    threadMessages.put(""+tim.getMID(), item);
+                    threadMessages.put(tim.getMID(), item);
                 }
                 item.messages.add(tim);
                 nCommentsTotal++;
@@ -307,11 +316,13 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 jabberMessages.add(new Item(message));
             }
             if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
-                XMPPService.JuickSubscriptionIncomingMessage subscriptionIncomingMessage = (XMPPService.JuickSubscriptionIncomingMessage) message;
                 subscriptions.add(new Item(message));
             }
         }
 
+        l = System.currentTimeMillis() - l;
+        Log.i("XMPPIncomingMessages","group by time="+l);
+        l = System.currentTimeMillis();
         displayItems = new ArrayList<Object>();
         if (threadMessages.size() > 0) {
             displayItems.add(new Header("Thread comments: " + nCommentsTotal+" total", new Runnable() {
@@ -364,15 +375,23 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 displayItems.add(jabberMessages.get(i));
             }
         }
+        l = System.currentTimeMillis() - l;
+        Log.i("XMPPIncomingMessages","display items time="+l);
+        l = System.currentTimeMillis();
         ListView lv = (ListView)findViewById(R.id.list);
-        Parcelable parcelable = lv.onSaveInstanceState();
-        lv.setAdapter(new MyListAdapter());
-        lv.onRestoreInstanceState(parcelable);
-
+        if (adapter == null) {
+            adapter = new MyListAdapter();
+            lv.setAdapter(adapter);
+        } else{
+            adapter.notifyDataSetChanged();
+        }
+        l = System.currentTimeMillis() - l;
+        Log.i("XMPPIncomingMessages","update adapter time="+l);
+        //MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     private int compareJuickMessages(XMPPService.JuickIncomingMessage im, XMPPService.JuickIncomingMessage im1) {
-        return im.getMID().toString().compareTo(im1.getMID().toString());
+        return im.getMID().getMid() -  im1.getMID().getMid();
     }
 
     private void deleteMessages(final Class incomingMessageClass) {
@@ -415,148 +434,154 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
-            Object item = displayItems.get(i);
-            if (item instanceof Header) {
-                view = getLayoutInflater().inflate(R.layout.incoming_messages_section, null);
-                TextView tv = (TextView)view.findViewById(R.id.value);
-                TextView btn = (TextView)view.findViewById(R.id.button);
-                final Header header = (Header) item;
-                tv.setText(header.label);
-                btn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        header.action.run();
-                        refreshList();
-                    }
-                });
-                return view;
-            }
-            Item messagesItem = (Item)item;
-            XMPPService.IncomingMessage message = messagesItem.messages.get(0);
-            if (message instanceof XMPPService.JuickPrivateIncomingMessage) {
-                XMPPService.JuickPrivateIncomingMessage privmsg = (XMPPService.JuickPrivateIncomingMessage)message;
-                view = getLayoutInflater().inflate(R.layout.incoming_messages_private, null);
-                makePressable(view);
-                TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
-                TextView preview = (TextView)view.findViewById(R.id.preview);
-                fromTags.setText(privmsg.getFrom());
-                preview.setText(privmsg.getBody());
-                enableInternalButtons(view, message);
-                MainActivity.restyleChildrenOrWidget(view);
-                return view;
-            }
-            if (message instanceof XMPPService.JuickThreadIncomingMessage) {
-                HashMap<String,Integer> counts = new HashMap<String, Integer>();
-                int totalCount = 0;
-                MessageID topicMessageId = null;
-                int toYouCount = 0;
-                for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
-                    XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
-                    String from = commentMessage.getFrom();
-                    Integer oldCount = counts.get(from);
-                    if (oldCount == null) oldCount = 0;
-                    oldCount = oldCount + 1;
-                    counts.put(from, oldCount);
-                    totalCount++;
-                    String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
-                    String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
-                    int scan = 0;
-                    while(true) {
-                        int myNick = nickScanArea.indexOf("@" + accountName, scan);
-                        if (myNick != -1) {
-                            if (!JuickMessagesAdapter.isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
-                                toYouCount++;
+            long l = System.currentTimeMillis();
+            try {
+                Object item = displayItems.get(i);
+                if (item instanceof Header) {
+                    view = getLayoutInflater().inflate(R.layout.incoming_messages_section, null);
+                    TextView tv = (TextView)view.findViewById(R.id.value);
+                    TextView btn = (TextView)view.findViewById(R.id.button);
+                    final Header header = (Header) item;
+                    tv.setText(header.label);
+                    btn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            header.action.run();
+                            refreshList();
+                        }
+                    });
+                    return view;
+                }
+                Item messagesItem = (Item)item;
+                XMPPService.IncomingMessage message = messagesItem.messages.get(0);
+                if (message instanceof XMPPService.JuickPrivateIncomingMessage) {
+                    XMPPService.JuickPrivateIncomingMessage privmsg = (XMPPService.JuickPrivateIncomingMessage)message;
+                    view = getLayoutInflater().inflate(R.layout.incoming_messages_private, null);
+                    makePressable(view);
+                    TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
+                    TextView preview = (TextView)view.findViewById(R.id.preview);
+                    fromTags.setText(privmsg.getFrom());
+                    preview.setText(privmsg.getBody());
+                    enableInternalButtons(view, message);
+                    MainActivity.restyleChildrenOrWidget(view);
+                    return view;
+                }
+                if (message instanceof XMPPService.JuickThreadIncomingMessage) {
+                    HashMap<String,Integer> counts = new HashMap<String, Integer>();
+                    int totalCount = 0;
+                    MessageID topicMessageId = null;
+                    int toYouCount = 0;
+                    for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
+                        XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
+                        String from = commentMessage.getFrom();
+                        Integer oldCount = counts.get(from);
+                        if (oldCount == null) oldCount = 0;
+                        oldCount = oldCount + 1;
+                        counts.put(from, oldCount);
+                        totalCount++;
+                        String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
+                        String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
+                        int scan = 0;
+                        while(true) {
+                            int myNick = nickScanArea.indexOf("@" + accountName, scan);
+                            if (myNick != -1) {
+                                if (!JuickMessagesAdapter.isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
+                                    toYouCount++;
+                                    break;
+                                }
+                                scan = myNick + 1;
+                            } else {
                                 break;
                             }
-                            scan = myNick + 1;
-                        } else {
-                            break;
+                        }
+                        if (topicMessageId == null) {
+                            topicMessageId = commentMessage.getMID();
                         }
                     }
-                    if (topicMessageId == null) {
-                        topicMessageId = commentMessage.getMID();
+                    SpannableStringBuilder sb = new SpannableStringBuilder();
+                    for (Map.Entry<String, Integer> stringIntegerEntry : counts.entrySet()) {
+                        sb.append(stringIntegerEntry.getKey());
+                        Integer commentCount = stringIntegerEntry.getValue();
+                        if (commentCount != 1) {
+                            sb.append("("+commentCount+")");
+                        }
+                        sb.append(" ");
                     }
-                }
-                SpannableStringBuilder sb = new SpannableStringBuilder();
-                for (Map.Entry<String, Integer> stringIntegerEntry : counts.entrySet()) {
-                    sb.append(stringIntegerEntry.getKey());
-                    Integer commentCount = stringIntegerEntry.getValue();
-                    if (commentCount != 1) {
-                        sb.append("("+commentCount+")");
+                    view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
+                    makePressable(view);
+                    XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
+                    TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
+                    fromTags.setText(commentMessage.getOriginalFrom());
+                    TextView preview = (TextView)view.findViewById(R.id.preview);
+                    String originalBody = commentMessage.getOriginalBody() != null && commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody().toString() : "[ loading ... ]";
+                    if (originalBody.startsWith("http://i.juick.com")) {
+                        int ix = originalBody.indexOf(".jpg");
+                        if (ix != -1) {
+                            originalBody = "[img] "+ originalBody.substring(ix+5);
+                        }
                     }
-                    sb.append(" ");
-                }
-                view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
-                makePressable(view);
-                XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
-                TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
-                fromTags.setText(commentMessage.getOriginalFrom());
-                TextView preview = (TextView)view.findViewById(R.id.preview);
-                String originalBody = commentMessage.getOriginalBody() != null && commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody().toString() : "[ loading ... ]";
-                if (originalBody.startsWith("http://i.juick.com")) {
-                    int ix = originalBody.indexOf(".jpg");
-                    if (ix != -1) {
-                        originalBody = "[img] "+ originalBody.substring(ix+5);
+                    preview.setText(originalBody);
+                    TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
+                    String insertString;
+                    if (totalCount == 1) {
+                        insertString = "1 comment ";
+                    } else {
+                        insertString = totalCount + " comments ";
                     }
-                }
-                preview.setText(originalBody);
-                TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
-                String insertString;
-                if (totalCount == 1) {
-                    insertString = "1 comment ";
-                } else {
-                    insertString = totalCount + " comments ";
-                }
-                sb.insert(0, insertString);
-                sb.setSpan(new ForegroundColorSpan(0xFF008000), 0, insertString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                int offset = insertString.length();
-                if (toYouCount != 0) {
-                    String toYou = " ("+toYouCount + " to you)  ";
-                    sb.insert(offset, toYou);
-                    sb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), offset, offset + toYou.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    offset += toYou.length();
-                }
-                sb.insert(offset, "from: ");
-                offset += 6;
+                    sb.insert(0, insertString);
+                    sb.setSpan(new ForegroundColorSpan(0xFF008000), 0, insertString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    int offset = insertString.length();
+                    if (toYouCount != 0) {
+                        String toYou = " ("+toYouCount + " to you)  ";
+                        sb.insert(offset, toYou);
+                        sb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), offset, offset + toYou.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        offset += toYou.length();
+                    }
+                    sb.insert(offset, "from: ");
+                    offset += 6;
 
 
-                // paint all grouped nicks
-                sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                commentCounts.setText(sb);
-                enableInternalButtons(view, message);
-                MainActivity.restyleChildrenOrWidget(view);
-                return view;
-            }
-            if (message instanceof XMPPService.JabberIncomingMessage) {
-                XMPPService.JabberIncomingMessage jabberIncomingMessage = (XMPPService.JabberIncomingMessage)message;
-                view = getLayoutInflater().inflate(R.layout.incoming_messages_other, null);
-                makePressable(view);
-                TextView from  = (TextView)view.findViewById(R.id.from);
-                TextView preview = (TextView)view.findViewById(R.id.preview);
-                from.setText(jabberIncomingMessage.getFrom());
-                preview.setText(jabberIncomingMessage.getBody());
-                enableInternalButtons(view, message);
-                MainActivity.restyleChildrenOrWidget(view);
-                return view;
-            }
-            if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
-                XMPPService.JuickSubscriptionIncomingMessage subscriptionMessage = (XMPPService.JuickSubscriptionIncomingMessage)message;
-                view = getLayoutInflater().inflate(R.layout.incoming_messages_subscription, null);
-                makePressable(view);
-
-                TextView fromTags  = (TextView)view.findViewById(R.id.from_tags);
-                TextView preview = (TextView)view.findViewById(R.id.preview);
-                fromTags.setText(subscriptionMessage.getFrom());
-                String body = subscriptionMessage.getBody();
-                while(body.endsWith("\n")) {
-                    body = body.substring(0, body.length()-1);
+                    // paint all grouped nicks
+                    sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    commentCounts.setText(sb);
+                    enableInternalButtons(view, message);
+                    MainActivity.restyleChildrenOrWidget(view);
+                    return view;
                 }
-                preview.setText(body);
-                enableInternalButtons(view, message);
-                MainActivity.restyleChildrenOrWidget(view);
-                return view;
+                if (message instanceof XMPPService.JabberIncomingMessage) {
+                    XMPPService.JabberIncomingMessage jabberIncomingMessage = (XMPPService.JabberIncomingMessage)message;
+                    view = getLayoutInflater().inflate(R.layout.incoming_messages_other, null);
+                    makePressable(view);
+                    TextView from  = (TextView)view.findViewById(R.id.from);
+                    TextView preview = (TextView)view.findViewById(R.id.preview);
+                    from.setText(jabberIncomingMessage.getFrom());
+                    preview.setText(jabberIncomingMessage.getBody());
+                    enableInternalButtons(view, message);
+                    MainActivity.restyleChildrenOrWidget(view);
+                    return view;
+                }
+                if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                    XMPPService.JuickSubscriptionIncomingMessage subscriptionMessage = (XMPPService.JuickSubscriptionIncomingMessage)message;
+                    view = getLayoutInflater().inflate(R.layout.incoming_messages_subscription, null);
+                    makePressable(view);
+
+                    TextView fromTags  = (TextView)view.findViewById(R.id.from_tags);
+                    TextView preview = (TextView)view.findViewById(R.id.preview);
+                    fromTags.setText(subscriptionMessage.getFrom());
+                    String body = subscriptionMessage.getBody();
+                    while(body.endsWith("\n")) {
+                        body = body.substring(0, body.length()-1);
+                    }
+                    preview.setText(body);
+                    enableInternalButtons(view, message);
+                    MainActivity.restyleChildrenOrWidget(view);
+                    return view;
+                }
+                return null;
+            } finally {
+                l = System.currentTimeMillis() - l;
+                Log.i("XMPPIncomingMessages","get item ("+i+") time="+l);
             }
-            return null;
         }
     }
 
@@ -630,6 +655,17 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         return true;
     }
 
+    static boolean listeningAll;
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem listenAll = menu.findItem(R.id.listen_all);
+        MenuItem unlistenAll = menu.findItem(R.id.unlisten_all);
+        listenAll.setVisible(!listeningAll);
+        unlistenAll.setVisible(listeningAll);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -637,6 +673,14 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
                 prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
                 startActivity(prefsIntent);
+                return true;
+            case R.id.listen_all:
+            case R.id.unlisten_all:
+                if (MainActivity.commandJAMService(this, item.getItemId() == R.id.listen_all ? "listen_all": "unlisten_all")) {
+                    listeningAll = item.getItemId() == R.id.listen_all;
+                } else {
+                    Toast.makeText(this, "\""+getString(R.string.UnreadMessagesNotification)+"\" "+getString(R.string.IsNotEnabledOrServiceIsNotRunning), Toast.LENGTH_LONG).show();
+                }
                 return true;
             case R.id.editable_list:
                 editMode = !editMode;

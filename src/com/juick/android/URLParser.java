@@ -119,6 +119,14 @@ public class URLParser implements Serializable {
         this.port = port;
     }
 
+    public String getPort() {
+        return port;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
     public void setHost(String host) {
         this.host = host;
     }

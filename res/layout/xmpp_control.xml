@@ -77,6 +77,40 @@
         <TextView
                 android:layout_height="wrap_content"
                 android:layout_gravity="right"
+                android:text="Last WS:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/last_ws"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:text="Last WS ID:"
+                android:textStyle="bold"
+                >
+
+        </TextView>
+        <TextView
+                android:id="@+id/last_ws_id"
+                android:layout_height="wrap_content"
+                android:paddingLeft="20sp"
+                android:text=""
+                >
+        </TextView>
+    </TableRow>
+    <TableRow>
+        <TextView
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
                 android:text="Alarm Scheduled:"
                 android:textStyle="bold"
                 >
@@ -101,23 +135,6 @@
         </TextView>
         <TextView
                 android:id="@+id/alarm_fired"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="GCM Count:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/ngcm"
                 android:layout_height="wrap_content"
                 android:paddingLeft="20sp"
                 android:text=""

@@ -272,7 +272,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             ListRowRuntime tag = (ListRowRuntime)t.getTag();
                                             if (tag.jmsg.getMID() == jmsg.getMID()) {
                                                 // still valid
-                                                parsedMessage.markAsRead();
+                                                parsedMessage.markAsRead(getContext());
                                                 t.setText(parsedMessage.textContent);
                                             }
                                         }
@@ -554,13 +554,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             this.urls = urls;
         }
 
-        public void markAsRead() {
+        public void markAsRead(Context ctx) {
             this.read = true;
             textContent.removeSpan(userNameBoldSpan);
             textContent.removeSpan(userNameColorSpan);
             if (messageNumberStart != -1) {
                 textContent.setSpan(new StrikethroughSpan(), messageNumberStart, messageNumberEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                textContent.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_READ, 0xFFc84e4e)), userNameStart, userNameEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                textContent.setSpan(new ForegroundColorSpan(getColorTheme(ctx).getColor(ColorsTheme.ColorKey.USERNAME_READ, 0xFFc84e4e)), userNameStart, userNameEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.app.Application;
+import android.content.Intent;
 import com.google.android.gcm.GCMRegistrar;
 import com.juickadvanced.R;
 import org.acra.ACRA;
@@ -38,6 +39,8 @@ public class JuickAdvancedApplication extends Application {
         } catch (Throwable th) {
         }
         GCMIntentService.rescheduleAlarm(this);
+        startService(new Intent(this, XMPPService.class));
+
     }
 
     public static String registrationId;

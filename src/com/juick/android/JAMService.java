@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import com.juick.android.juick.JuickComAuthorizer;
+import com.juickadvanced.xmpp.ClientToServer;
 
 /**
  */
@@ -26,6 +27,10 @@ public class JAMService extends Service {
             handler.removeCallbacksAndMessages(null);
             cleanup();
             stopSelf();
+        } else if (intent != null && intent.getBooleanExtra("listen_all", false)){
+            client.listenAll();
+        } else if (intent != null && intent.getBooleanExtra("unlisten_all", false)){
+            client.unlistenAll();
         } else {
             if (startId != 2) {     // i don't know what is this, really
                 startup();
@@ -91,5 +96,10 @@ public class JAMService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

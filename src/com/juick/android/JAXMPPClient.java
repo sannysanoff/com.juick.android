@@ -1,7 +1,6 @@
 package com.juick.android;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
@@ -14,6 +13,7 @@ import com.juickadvanced.xmpp.messages.ContactOffline;
 import com.juickadvanced.xmpp.messages.ContactOnline;
 import com.juickadvanced.xmpp.messages.TimestampedMessage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -25,7 +25,7 @@ import java.util.HashSet;
  * Time: 12:32 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener {
+public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JettyWsClient.WsClientListener {
     String url = "https://192.168.1.77:8222/xmpp/control";
     //String url = "https://ja.ip.rt.ru:8222/xmpp/control";
     String sessionId;
@@ -35,6 +35,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     private Handler handler;
     XMPPConnectionSetup setup;
     String username;
+    JettyWsClient wsClient;
+    Thread wsclientLoop;
 
     public JAXMPPClient() {
     }
@@ -54,6 +56,42 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     private void addListeners() {
         GCMIntentService.listeners.add(this);
         GCMIntentService.serverPingTimerListeners.add(this);
+        maybeStartWSClient();
+    }
+
+    private void maybeStartWSClient() {
+        if (wsClient != null) return;
+        wsClient = new JettyWsClient();
+        final URLParser pa = new URLParser(url);
+        wsClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
+        wsClient.send("sessionId|"+sessionId);
+        (wsclientLoop = new Thread() {
+            JettyWsClient myClient = wsClient;
+            long connectTime = System.currentTimeMillis();
+            @Override
+            public void run() {
+                while(!myClient.shuttingDown) {
+                    if (myClient != wsClient) {
+                        // replaced by another one
+                        myClient.disconnect();
+                        return;
+                    }
+                    myClient.setListener(JAXMPPClient.this);
+                    myClient.readLoop();
+                    connectTime = System.currentTimeMillis() - connectTime;
+                    if (connectTime < 5000) {
+                        wsClient = null;        // something goes wrong, will try later
+                        return;
+                    } else {
+                        if (!myClient.shuttingDown) {
+                            myClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
+                            wsClient.send("sessionId|"+sessionId);
+                            connectTime = System.currentTimeMillis();
+                        }
+                    }
+                }
+            }
+        }).start();
     }
 
     public String loginLocal(Context context, Handler handler, String username, String cookie) {
@@ -86,7 +124,22 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         return serverToClient.getErrorMessage();
     }
 
-    private ServerToClient callXmppControl(Context context, ClientToServer c2s) {
+    public void callXmppControlSafe(final Context context, final ClientToServer c2s, final Utils.Function<Void, ServerToClient> then) {
+        new Thread("callXmppControlInThread") {
+            @Override
+            public void run() {
+                final ServerToClient serverToClient = callXmppControl(context, c2s);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        then.apply(serverToClient);
+                    }
+                });
+            }
+        }.start();
+    }
+
+    public ServerToClient callXmppControl(Context context, ClientToServer c2s) {
         String dataValue = new Gson().toJson(c2s);
         Utils.RESTResponse restResponse = Utils.postJA(context, url, dataValue);
         ServerToClient result;
@@ -125,7 +178,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }.start();
     }
 
-    public void handleMessageFromServer(String messag) {
+    public void handleGCMessageFromServer(String messag) {
         if (messag.startsWith("sync")) {
             String[] args = messag.split("\\|");
             XMPPService.lastGCMMessageID = args[2];
@@ -142,11 +195,57 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public void disconnect() {
+        if (wsClient != null) {
+            wsClient.shuttingDown = true;
+            wsClient.disconnect();
+        }
         ClientToServer c2s = new ClientToServer(sessionId);
         c2s.setDisconnect(new Disconnect());
         callXmppControl(context, c2s);
         GCMIntentService.listeners.remove(this);
         GCMIntentService.serverPingTimerListeners.remove(this);
+    }
+
+    @Override
+    public void onWebSocketTextFrame(String data) throws IOException {
+        XMPPService.nWSMessages++;
+        XMPPService.lastWSMessage = new Date();
+        if (data.startsWith("sync")) {
+            String[] args = data.split("\\|");
+            XMPPService.lastWSMessageID = args[1];
+            wsClient.send("pong");
+            startSync(new Runnable() {
+                @Override
+                public void run() {}});
+        }
+    }
+
+    public void listenAll() {
+        ClientToServer clientToServer = new ClientToServer(sessionId);
+        clientToServer.setSubscribeToAll(new SubscribeToAll("S"));
+        callXmppControlSafe(context, clientToServer, new Utils.Function<Void, ServerToClient>() {
+            @Override
+            public Void apply(ServerToClient serverToClient) {
+                if (serverToClient.getErrorMessage() != null) {
+                    Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
+                }
+                return null;
+            }
+        });
+    }
+
+    public void unlistenAll() {
+        ClientToServer clientToServer = new ClientToServer(sessionId);
+        clientToServer.setSubscribeToAll(new SubscribeToAll("U"));
+        callXmppControlSafe(context, clientToServer, new Utils.Function<Void, ServerToClient>() {
+            @Override
+            public Void apply(ServerToClient serverToClient) {
+                if (serverToClient.getErrorMessage() != null) {
+                    Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
+                }
+                return null;
+            }
+        });
     }
 
     enum SyncState {
@@ -268,12 +367,28 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     @Override
     public void onGCMMessage(String message) {
-        XMPPService.lastGCMMessage = new Date();
-        XMPPService.nGCMMessages++;
-        handleMessageFromServer(message);
+        handleGCMessageFromServer(message);
     }
 
     public void onServerPingTime() {
+        new Thread("Check WS") {
+            @Override
+            public void run() {
+                if (wsClient == null) {
+                    maybeStartWSClient();
+                } else {
+                    try {
+                        if (!wsClient.send("ping")) {
+                            wsClient.disconnect();
+                            wsClient = null;
+                            maybeStartWSClient();
+                        }
+                    } catch (Exception e) {
+                        //
+                    }
+                }
+            }
+        }.start();
         startSync(new Runnable() {
             @Override
             public void run() {
