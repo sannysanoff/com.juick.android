@@ -13,9 +13,8 @@ import android.widget.*;
 import com.google.gson.Gson;
 import com.juickadvanced.R;
 import com.juickadvanced.xmpp.XMPPConnectionSetup;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.SASLAuthentication;
-import org.jivesoftware.smack.XMPPConnection;
+
+import java.util.HashSet;
 
 /**
  */
@@ -49,11 +48,10 @@ public class XMPPPreferenceActivity extends Activity {
         AdapterView.OnItemSelectedListener templatesUpdater = new AdapterView.OnItemSelectedListener() {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                //To change body of implemented methods use File | Settings | File Templates.
+
             }
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Object itemAtPosition = templates.getItemAtPosition(position);
                 switch(position) {
                     case 1: // plain jabber
                         jid.setText("xxxxxxx@jabber.ru");
@@ -96,7 +94,6 @@ public class XMPPPreferenceActivity extends Activity {
                 pd.setIndeterminate(true);
                 pd.show();
                 pd.setCancelable(true);
-                String svr = server.getText().toString();
                 final XMPPConnectionSetup testValue = new XMPPConnectionSetup();
 
                 testValue.jid = jid.getText().toString();
@@ -107,28 +104,29 @@ public class XMPPPreferenceActivity extends Activity {
                 testValue.priority = atoi(priority.getText().toString());
                 testValue.secure = secure.isChecked();
 
-                final ConnectionConfiguration configuration = new ConnectionConfiguration(testValue.getServer(), testValue.port, testValue.getService());
-                configuration.setSecurityMode(secure.isChecked() ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
-                SASLAuthentication.supportSASLMechanism("PLAIN", 0);
-                final XMPPConnection connection = new XMPPConnection(configuration);
-                pd.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialog) {
-                        pd.hide();
-                    }
-                });
                 new Thread("XMPP test connect") {
                     @Override
                     public void run() {
-                        try {
-                            connection.connect();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                pd.setMessage("Logging in...");
+                            }
+                        });
+                        JAXMPPClient client = new JAXMPPClient();
+                        final String error = client.loginXMPP(XMPPPreferenceActivity.this, JuickAdvancedApplication.foreverHandler, testValue, new HashSet<String>());
+                        if (error != null) {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    pd.setMessage("Logging in...");
+                                    if (pd.isShowing()) {
+                                        Toast.makeText(XMPPPreferenceActivity.this, error, Toast.LENGTH_LONG).show();
+                                        pd.hide();
+                                    }
                                 }
                             });
-                            connection.login(testValue.getLogin(), password.getText().toString());
+                        } else {
+                            client.disconnect();
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -136,22 +134,6 @@ public class XMPPPreferenceActivity extends Activity {
                                     Toast.makeText(XMPPPreferenceActivity.this, "SUCCESS !", Toast.LENGTH_SHORT).show();
                                 }
                             });
-                        } catch (final Exception e) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (pd.isShowing()) {
-                                        Toast.makeText(XMPPPreferenceActivity.this, e.toString(), Toast.LENGTH_LONG).show();
-                                        pd.hide();
-                                    }
-                                }
-                            });
-                        } finally {
-                            try {
-                                connection.disconnect();
-                            } catch (Exception e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                            }
                         }
                     }
                 }.start();

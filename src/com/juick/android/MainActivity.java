@@ -52,7 +52,6 @@ import com.juick.android.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickMessageID;
-import yuku.ambilwarna.widget.AmbilWarnaPreference;
 
 import java.io.File;
 import java.util.*;
@@ -145,7 +144,6 @@ public class MainActivity extends FragmentActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         nActiveMainActivities++;
-        System.out.println(AmbilWarnaPreference.class);
         Utils.updateThemeHolo(this);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();
@@ -490,7 +488,12 @@ public class MainActivity extends FragmentActivity implements
     public static boolean commandJAMService(Context ctx, String command) {
         if (isJAMServiceRunning(ctx)) {
             Intent service = new Intent(ctx, JAMService.class);
-            service.putExtra(command, true);
+            String[] split = command.split(":");
+            if (split.length == 1) {
+                service.putExtra(command, true);
+            } else {
+                service.putExtra(split[0], split[1]);
+            }
             ctx.startService(service);
             return true;
         } else {
@@ -498,6 +501,7 @@ public class MainActivity extends FragmentActivity implements
         }
     }
     public static void toggleJAMessaging(Context ctx, boolean useJAM) {
+        JuickAdvancedApplication.showToast("toggleJAMessaging: "+useJAM);
         if (useJAM) {
             ctx.startService(new Intent(ctx, JAMService.class));
         } else {

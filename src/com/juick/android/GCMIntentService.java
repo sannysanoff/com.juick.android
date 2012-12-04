@@ -14,6 +14,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
     public interface GCMMessageListener {
         public void onGCMMessage(String message);
+        public void onRegistration(String regid);
     }
 
     static ArrayList<GCMMessageListener> listeners = new ArrayList<GCMMessageListener>();
@@ -38,7 +39,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
             for (ServerPingTimerListener serverPingTimerListener : serverPingTimerListeners) {
                 serverPingTimerListener.onServerPingTime();
             }
-            rescheduleAlarm(this);
+            rescheduleAlarm(this, 15);
             return 0;
         }
         if (intent != null && intent.getAction() == null) return START_NOT_STICKY;
@@ -80,9 +81,18 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     }
 
     @Override
-    protected void onRegistered(Context context, String registrationId) {
+    protected void onRegistered(Context context, final String registrationId) {
         Log.i("JuickAdvanced", "GCM registered");
         JuickAdvancedApplication.registrationId = registrationId;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                for (GCMMessageListener listener : (List<GCMMessageListener>)listeners.clone()) {
+                    listener.onRegistration(registrationId);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -92,13 +102,13 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
     private static final String CATEGORY_HARDWARE_ALARM = "HARDWARE_ALARM";
 
-    public static void rescheduleAlarm(Context ctx) {
+    public static void rescheduleAlarm(Context ctx, int minutes) {
         Intent intent = new Intent(ctx, com.juickadvanced.GCMIntentService.class);
         intent.addCategory(CATEGORY_HARDWARE_ALARM);
         PendingIntent scheduledAlarm = PendingIntent.getService(ctx, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(ALARM_SERVICE);
         Calendar calendar = GregorianCalendar.getInstance();
-        calendar.add(Calendar.MINUTE, 15);
+        calendar.add(Calendar.MINUTE, minutes);
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), scheduledAlarm);
         XMPPService.lastAlarmScheduled = calendar.getTimeInMillis();
     }

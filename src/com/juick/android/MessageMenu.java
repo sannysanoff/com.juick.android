@@ -261,7 +261,16 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         activity.startActivity(i);
     }
 
-    private void actionFilterUser(final String UName) {
+    protected void actionUserCenter() {
+        Intent i = new Intent(activity, UserCenterActivity.class);
+        i.putExtra("uname", listSelectedItem.User.UName);
+        i.putExtra("uid", listSelectedItem.User.UID);
+        i.putExtra("messageSource", messagesSource);
+        i.putExtra("mid", listSelectedItem.getMID());
+        activity.startActivity(i);
+    }
+
+    protected void actionFilterUser(final String UName) {
         confirmAction(R.string.ReallyFilterOut, new Runnable() {
             @Override
             public void run() {
@@ -353,7 +362,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         });
     }
 
-    private void actionBlacklistUser() {
+    protected void actionBlacklistUser() {
         confirmAction(R.string.ReallyBlacklist, new Runnable() {
             @Override
             public void run() {
@@ -367,6 +376,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             @Override
             public void run() {
                 postMessage("U #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Unsubscribed));
+                MainActivity.commandJAMService(activity, "unsubscribeMessage:"+getCurrentMIDInt());
             }
         });
     }
@@ -376,6 +386,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             @Override
             public void run() {
                 postMessage("S #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Subscribed));
+                MainActivity.commandJAMService(activity, "subscribeMessage:"+getCurrentMIDInt());
             }
         });
     }
@@ -402,7 +413,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         });
     }
 
-    private void actionUnsubscribeUser() {
+    protected void actionUnsubscribeUser() {
         confirmAction(R.string.ReallyUnsubscribe, new Runnable() {
             @Override
             public void run() {
@@ -567,7 +578,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             });
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-            View dialogView = activity.getLayoutInflater().inflate(R.layout.message_menu, null);
+            View dialogView = activity.getLayoutInflater().inflate(R.layout.message_menu2, null);
             builder.setView(dialogView);
             builder.setCancelable(true);
             int width = activity.getWindowManager().getDefaultDisplay().getWidth();
@@ -659,17 +670,18 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             View deleteMessage = dialogView.findViewById(R.id.delete_message);
             View saveMessage = dialogView.findViewById(R.id.save_message);
             View unsaveMessage = dialogView.findViewById(R.id.unsave_message);
-            View subscribeUser = dialogView.findViewById(R.id.subscribe_user);
+            //View subscribeUser = dialogView.findViewById(R.id.subscribe_user);
             View subscribeMessage = dialogView.findViewById(R.id.subscribe_message);
-            View unsubscribeUser = dialogView.findViewById(R.id.unsubscribe_user);
+            //View unsubscribeUser = dialogView.findViewById(R.id.unsubscribe_user);
             View unsubscribeMessage = dialogView.findViewById(R.id.unsubscribe_message);
             View translateMessage = dialogView.findViewById(R.id.translate_message);
             View shareMessage = dialogView.findViewById(R.id.share_message);
-            View blacklistUser = dialogView.findViewById(R.id.blacklist_user);
-            View filterUser = dialogView.findViewById(R.id.filter_user);
-            View userBlog = dialogView.findViewById(R.id.user_blog);
-            View userStats = dialogView.findViewById(R.id.user_stats);
+            //View blacklistUser = dialogView.findViewById(R.id.blacklist_user);
+            //View filterUser = dialogView.findViewById(R.id.filter_user);
+            //View userBlog = dialogView.findViewById(R.id.user_blog);
+            //View userStats = dialogView.findViewById(R.id.user_stats);
             View openMessageInBrowser = dialogView.findViewById(R.id.open_message_in_browser);
+            View userCenter = dialogView.findViewById(R.id.user_center);
 
             unsubscribeMessage.setEnabled (listSelectedItem.getRID() == 0);
             subscribeMessage.setEnabled (listSelectedItem.getRID() == 0);
@@ -714,13 +726,13 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     actionUnsaveMessage();
                 }
             });
-            subscribeUser.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                    actionSubscribeUser();
-                }
-            });
+//            subscribeUser.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    alertDialog.dismiss();
+//                    actionSubscribeUser();
+//                }
+//            });
             subscribeMessage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -728,13 +740,13 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     actionSubscribeMessage();
                 }
             });
-            unsubscribeUser.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                    actionUnsubscribeUser();
-                }
-            });
+//            unsubscribeUser.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    alertDialog.dismiss();
+//                    actionUnsubscribeUser();
+//                }
+//            });
             unsubscribeMessage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -756,39 +768,46 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     actionShareMessage();
                 }
             });
-            blacklistUser.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                    actionBlacklistUser();
-                }
-            });
-            filterUser.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                    actionFilterUser(UName);
-                }
-            });
-            userBlog.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                    actionUserBlog();
-                }
-            });
-            userStats.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    alertDialog.dismiss();
-                    actionUserStats();
-                }
-            });
+//            blacklistUser.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    alertDialog.dismiss();
+//                    actionBlacklistUser();
+//                }
+//            });
+//            filterUser.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    alertDialog.dismiss();
+//                    actionFilterUser(UName);
+//                }
+//            });
+//            userBlog.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    alertDialog.dismiss();
+//                    actionUserBlog();
+//                }
+//            });
+//            userStats.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    alertDialog.dismiss();
+//                    actionUserStats();
+//                }
+//            });
             openMessageInBrowser.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     alertDialog.dismiss();
                     actionOpenMessageInBrowser();
+                }
+            });
+            userCenter.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alertDialog.dismiss();
+                    actionUserCenter();
                 }
             });
             completeInitDialogMode(alertDialog, dialogView);

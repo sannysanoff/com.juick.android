@@ -23,12 +23,12 @@ public class UserpicStorage {
     public static UserpicStorage instance = new UserpicStorage();
     public static final AvatarID NO_AVATAR = new AvatarID() {
         @Override
-        public String toString() {
+        public String toString(int size) {
             return "NO_AVATAR";
         }
 
         @Override
-        public String getURL() {
+        public String getURL(int size) {
             return null;
         }
     };
@@ -41,8 +41,8 @@ public class UserpicStorage {
     }
 
     public static abstract class AvatarID {
-        public abstract String toString();
-        public abstract String getURL();
+        public abstract String toString(int size);
+        public abstract String getURL(int size);
     }
 
     HashMap<String, ArrayList<Listener>> listeners = new HashMap<String, ArrayList<Listener>>();
@@ -90,7 +90,7 @@ public class UserpicStorage {
                 dbs.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                     @Override
                     public void withService(DatabaseService service) {
-                        final byte[] arr = service.getStoredUserpic(id.toString());
+                        final byte[] arr = service.getStoredUserpic(id.toString(size));
                         if (arr == null) {
                             synchronized (loadingImages) {
                                 if (!loadingImages.contains(key)) {
@@ -99,7 +99,7 @@ public class UserpicStorage {
                                         @Override
                                         public void run() {
                                             try {
-                                                Utils.BINResponse binary = Utils.getBinary(ctx, id.getURL(), null, 0);
+                                                Utils.BINResponse binary = Utils.getBinary(ctx, id.getURL(size), null, 0);
                                                 boolean persist = true;
                                                 if (binary.errorText != null) {
                                                     binary.result = new byte[0];

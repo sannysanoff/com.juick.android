@@ -53,6 +53,7 @@
     <string name="DeleteMessage">Удалить</string>
     <string name="Unsubscribe_from">Отписаться от</string>
     <string name="Blacklist">Добавить в черный список</string>
+    <string name="Blacklist2">Чёрн.список</string>
     <string name="FilterOutUser">Не показывать</string>
     <string name="Filters">Фильтры юзеров...</string>
     <string name="Recommended">Рекомендовано</string>
@@ -374,6 +375,22 @@
     <string name="SubCommentsNotification___">Уведомления о подписках и ответах через Juick Advanced server
         (исключая приватные)
     </string>
+    <string name="JAMNotEnabledEnable">У вас не включена подписка на не-XMPP Juick-нотификации. Включить и продолжить?</string>
+    <string name="JuickAdvancedFunctionality">Спец. функция Juick Advanced</string>
+    <string name="WaitingForService">Ожидаем запуска сервиса...</string>
+    <string name="UserCenter">О пользователе</string>
+    <string name="InBrowser">В бровзере</string>
+    <string name="__Recommend">!Рекомменд</string>
+    <string name="Unsave">Выхранить</string>
+    <string name="Open">Открыть</string>
+    <string name="Expand">Распахнуть</string>
+    <string name="ReadBlog">Читать блог</string>
+    <string name="SubscribeComments">Подп. на комменты</string>
+    <string name="UnsubscribeComments">Отпис. от комментов</string>
+    <string name="FilterOut">Вычеркнуть</string>
+    <string name="Delete">Удалить</string>
+    <string name="Subscribe">Подпис.</string>
+    <string name="Unsubscribe">Отпис.</string>
 
 
 </resources>

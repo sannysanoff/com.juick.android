@@ -61,7 +61,7 @@ public class BNWMessageMenu extends MessageMenu {
     }
 
 
-    private void actionBlacklistUser() {
+    protected void actionBlacklistUser() {
         confirmAction(R.string.ReallyBlacklist, new Runnable() {
             @Override
             public void run() {

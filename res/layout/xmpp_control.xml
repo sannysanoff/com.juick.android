@@ -1,342 +1,384 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:dividerPadding="10sp"
-    android:orientation="vertical">
 
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Info date:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/info_date"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Connection status:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/xmpp_status"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text="Connected"
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Last GCM:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/last_gcm"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Last GCM ID:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/last_gcm_id"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Last WS:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/last_ws"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Last WS ID:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/last_ws_id"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Alarm Scheduled:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/alarm_scheduled"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Alarm Fired:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/alarm_fired"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Last succ. connect:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/xmpp_last_connect"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Juick bot:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/xmpp_juickbot"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="JuBo bot:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/xmpp_jubobot"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Juick blacklist:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/xmpp_juickblacklist"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="JuBo blacklist:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/xmpp_juboblacklist"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:text="Messages received:"
-                android:layout_gravity="right"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/messages_received"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text="112345"
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Last exception:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/last_exception"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="WebViews:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/webview_count"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="JMA count:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/jma_count"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Memory total:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/memory_total"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
-        <TextView
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:text="Memory used:"
-                android:textStyle="bold"
-                >
-
-        </TextView>
-        <TextView
-                android:id="@+id/memory_used"
-                android:layout_height="wrap_content"
-                android:paddingLeft="20sp"
-                android:text=""
-                >
-        </TextView>
-    </TableRow>
-    <TableRow>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        >
+    <LinearLayout
+            android:id="@+id/buttons"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            >
         <Button
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:id="@+id/retry"
                 android:text="Пнуть"
                 />
         <Button
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:id="@+id/gc"
                 android:text="GC"
                 />
-    </TableRow>
-</TableLayout>
+    </LinearLayout>
+    <ScrollView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_above="@id/buttons"
+            >
+        <TableLayout
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:dividerPadding="1sp"
+                android:orientation="vertical">
+
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Info date:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/info_date"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="XMPP status:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/xmpp_status"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JAM status:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/jam_status"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JAM connect:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/jam_last_connect"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Last GCM:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/last_gcm"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Last GCM ID:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/last_gcm_id"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Last WS:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/last_ws"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Last WS ID:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/last_ws_id"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Alarm Set:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/alarm_scheduled"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Alarm Fired:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/alarm_fired"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Juick bot:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/xmpp_juickbot"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JuBo bot:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/xmpp_jubobot"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Juick blacklist:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/xmpp_juickblacklist"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JuBo blacklist:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/xmpp_juboblacklist"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:text="Msgs recvd:"
+                        android:layout_gravity="right"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/messages_received"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Last excptn:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/last_exception"
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:singleLine="false"
+                        android:maxLines="5"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="WebViews:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/webview_count"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JMA count:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/jma_count"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Memory total:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/memory_total"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="Memory used:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/memory_used"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+        </TableLayout>
+    </ScrollView>
+</RelativeLayout>

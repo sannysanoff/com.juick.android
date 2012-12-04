@@ -144,8 +144,8 @@ public class Utils {
         }
     }
 
-    //public static final String JA_IP = "192.168.1.77";
-    public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
+    public static final String JA_ADDRESS = "192.168.1.77:8080";
+    //public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
@@ -589,58 +589,59 @@ public class Utils {
             /* localhost */ new byte[] {106,51,41,24,68,-57,-20,13,-94,88,-18,-30,-127,-128,-41,56,98,-26,-49,-95,69,127,-72,-24,68,-85,46,-8,112,44,-76,51,79,25,-55,34,63,79,-85,-49,-22,44,90,-108,59,-63,96,-33,18,71,94,-58,-25,-102,30,21,-6,78,-122,-48,-7,-36,-25,-16,79,-72,-40,-17,72,-55,-122,71,2,-44,-81,-29,108,14,34,78,-3,110,9,81,21,84,-90,67,26,68,-124,-42,112,-103,-114,-15,40,-125,-60,-12,-100,102,20,87,-13,-97,71,-103,-41,-84,106,-78,-16,-35,-35,27,-37,-108,70,3,-101,78,-90,17,91,97,3,70,-68,-72,-94,19,54,117,-28,102,78,-42,13,-23,-118,12,-55,-33,-32,107,19,-32,80,-78,-42,107,94,28,-95,-123,-31,-50,58,-120,103,-100,-75,-95,-124,-121,57,-39,-40,54,-12,47,6,-106,-5,3,37,-88,-22,120,-27,117,122,114,-114,-39,-36,-89,-104,107,-32,89,7,-45,-15,117,54,-32,123,-124,46,-76,96,-35,68,28,-98,63,94,16,-43,-18,44,-120,-8,-57,52,33,66,91,21,41,-120,-29,-51,10,82,-89,65,-72,-122,103,67,8,-77,56,95,43,-128,-4,113,-23,-2,125,-68,28,-38,-7,-124,40,87,103,33,87,20,45}
     };
 
-    public static HttpClient getNewHttpClient() {
+    public static class MySSLSocketFactory extends SSLSocketFactory {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
 
-        class MySSLSocketFactory extends SSLSocketFactory {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
+        public MySSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
+            super(truststore);
 
-            public MySSLSocketFactory(KeyStore truststore) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, UnrecoverableKeyException {
-                super(truststore);
+            TrustManager tm = new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                }
 
-                TrustManager tm = new X509TrustManager() {
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                    }
-
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        boolean verified = false;
-                        if (chain.length == 1) {
-                            byte[] thisSignature = chain[0].getSignature();
-                            for (byte[] allowedSignature : allowedSignatures) {
-                                if (thisSignature.length == allowedSignature.length) {
-                                    verified = true;
-                                    for (int i = 0; i < allowedSignature.length; i++) {
-                                        if (thisSignature[i] != allowedSignature[i]) {
-                                            verified = false;
-                                            break;
-                                        }
-                                    }
-                                    if (verified)
+                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    boolean verified = false;
+                    if (chain.length == 1) {
+                        byte[] thisSignature = chain[0].getSignature();
+                        for (byte[] allowedSignature : allowedSignatures) {
+                            if (thisSignature.length == allowedSignature.length) {
+                                verified = true;
+                                for (int i = 0; i < allowedSignature.length; i++) {
+                                    if (thisSignature[i] != allowedSignature[i]) {
+                                        verified = false;
                                         break;
+                                    }
                                 }
+                                if (verified)
+                                    break;
                             }
                         }
-                        if (!verified)
-                            throw new CertificateException("Invalid HTTPS certificate for Juick Advanced server. Please update Juick Advanced client, this may fix it.");
                     }
+                    if (!verified)
+                        throw new CertificateException("Invalid HTTPS certificate for Juick Advanced server. Please update Juick Advanced client, this may fix it.");
+                }
 
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                };
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+            };
 
-                sslContext.init(null, new TrustManager[]{tm}, null);
-            }
-
-            @Override
-            public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException, UnknownHostException {
-                return sslContext.getSocketFactory().createSocket(socket, host, port, autoClose);
-            }
-
-            @Override
-            public Socket createSocket() throws IOException {
-                return sslContext.getSocketFactory().createSocket();
-            }
+            sslContext.init(null, new TrustManager[]{tm}, null);
         }
+
+        @Override
+        public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException, UnknownHostException {
+            return sslContext.getSocketFactory().createSocket(socket, host, port, autoClose);
+        }
+
+        @Override
+        public Socket createSocket() throws IOException {
+            return sslContext.getSocketFactory().createSocket();
+        }
+    }
+
+    public static HttpClient getNewHttpClient() {
+
         try {
             KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
             trustStore.load(null, null);

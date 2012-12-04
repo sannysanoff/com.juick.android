@@ -3,9 +3,11 @@ package com.juick.android;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
@@ -193,6 +195,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
         });
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        listeningAll = sp.getBoolean("extxmpp.local.listeningAll", false);
     }
 
     private void clickedOnMessage(final XMPPService.IncomingMessage incomingMessage) {
@@ -209,7 +213,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
             Intent intent = new Intent(XMPPIncomingMessagesActivity.this, ThreadActivity.class);
             if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
-                intent.putExtra("scrollToBottom", true);
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                if (!sp.getBoolean("enableMessageDB", false)) {
+                    intent.putExtra("scrollToBottom", true);
+                } else {
+                    // for enabled messagedb, it will be placed properly automatically
+                }
             }
             intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getMID());
             intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
@@ -653,6 +662,13 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.xmpp_messages, menu);
         return true;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sp.edit().putBoolean("extxmpp.local.listeningAll", listeningAll).commit();
     }
 
     static boolean listeningAll;

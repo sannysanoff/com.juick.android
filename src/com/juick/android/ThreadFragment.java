@@ -408,6 +408,10 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private void onWebSocketMessages(final ArrayList<JuickMessage> messages) {
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
+                // don't scroll
+                getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+                getListView().setStackFromBottom(false);
+                //
                 if (sp.getBoolean("current_vibration_enabled", true))
                     ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
                 if (listAdapter.getCount() > 0) {

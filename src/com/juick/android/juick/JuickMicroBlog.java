@@ -182,13 +182,25 @@ public class JuickMicroBlog implements MicroBlog {
         if (jmsg.User == null || jmsg.User.UID == 0) return UserpicStorage.NO_AVATAR;
         return new UserpicStorage.AvatarID() {
             @Override
-            public String toString() {
-                return "J"+jmsg.User.UID;
+            public String toString(int size) {
+                if (isLargeSize(size)) {
+                    return "J"+jmsg.User.UID+"L";
+                } else {
+                    return "J"+jmsg.User.UID;
+                }
+            }
+
+            boolean isLargeSize(int size) {
+                return size > 64;
             }
 
             @Override
-            public String getURL() {
-                return "http://i.juick.com/as/" + jmsg.User.UID + ".png";
+            public String getURL(int size) {
+                if (!isLargeSize(size)) {
+                    return "http://i.juick.com/as/" + jmsg.User.UID + ".png";
+                } else {
+                    return "http://i.juick.com/a/" + jmsg.User.UID + ".png";
+                }
             }
         };
     }

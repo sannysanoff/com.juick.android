@@ -426,7 +426,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return v;
     }
 
-    private UserpicStorage.AvatarID getAvatarId(JuickMessage jmsg) {
+    public static UserpicStorage.AvatarID getAvatarId(JuickMessage jmsg) {
         MicroBlog microBlog = MainActivity.getMicroBlog(jmsg);
         if (microBlog == null)
             return UserpicStorage.NO_AVATAR;

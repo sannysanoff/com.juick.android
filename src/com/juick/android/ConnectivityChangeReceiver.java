@@ -24,41 +24,54 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.StyleSpan;
 import android.util.Log;
+import android.widget.TextView;
+import android.widget.Toast;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  *
  */
 public class ConnectivityChangeReceiver extends BroadcastReceiver {
 
-    boolean connectivity = true;
+    static boolean connectivity = true;
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
-        if (intent.getExtras() != null) {
-            NetworkInfo ni = (NetworkInfo) intent.getExtras().get(ConnectivityManager.EXTRA_NETWORK_INFO);
-            if (ni != null && ni.getState() == NetworkInfo.State.CONNECTED) {
-                context.startService(new Intent(context, XMPPService.class));
-                MainActivity.toggleJAMessaging(context, false);
-                connectivity = true;
+        boolean newConnectivity = connectivity;
+        Bundle extras = intent.getExtras();
+        if (extras.getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {
+            newConnectivity = false;
+        } else {
+            NetworkInfo ni = (NetworkInfo) extras.get(ConnectivityManager.EXTRA_NETWORK_INFO);
+            if (ni != null && ni.isAvailable()) {
+                newConnectivity = true;
             }
         }
-        if (intent.getExtras().getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {
-            connectivity = false;
-            Intent service = new Intent(context, XMPPService.class);
-            service.putExtra("terminate", true);
-            service.putExtra("terminateMessage", "connectivity lost");
-            context.startService(service);
-
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-            boolean useJAM = sp.getBoolean("enableJAMessaging", false);
-            MainActivity.toggleJAMessaging(context, useJAM);
+        if (newConnectivity != connectivity) {
+            connectivity = newConnectivity;
+            if (connectivity) {
+                context.startService(new Intent(context, XMPPService.class));
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                MainActivity.toggleJAMessaging(context, sp.getBoolean("enableJAMessaging",false));
+            } else {
+                Intent service = new Intent(context, XMPPService.class);
+                service.putExtra("terminate", true);
+                service.putExtra("terminateMessage", "connectivity lost");
+                context.startService(service);
+                MainActivity.toggleJAMessaging(context, false);
+            }
         }
     }
 }

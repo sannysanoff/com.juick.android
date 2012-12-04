@@ -1,10 +1,14 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.juick.android.juick.JuickComAuthorizer;
+import com.juickadvanced.R;
 import com.juickadvanced.xmpp.ClientToServer;
 import com.juickadvanced.xmpp.ServerToClient;
 import com.juickadvanced.xmpp.XMPPConnectionSetup;
@@ -37,6 +41,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     String username;
     JettyWsClient wsClient;
     Thread wsclientLoop;
+    public boolean loggedIn;
 
     public JAXMPPClient() {
     }
@@ -48,6 +53,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         this.handler = handler;
         String retval = performLogin(context, setup);
         if (retval == null) {
+            loggedIn = true;
             addListeners();
         }
         return retval;
@@ -59,11 +65,19 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         maybeStartWSClient();
     }
 
+    // if server is down for long time
+    static int increasingReconnectDelay = 1;
+
     private void maybeStartWSClient() {
         if (wsClient != null) return;
         wsClient = new JettyWsClient();
         final URLParser pa = new URLParser(url);
-        wsClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
+        boolean connected = wsClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
+        if (!connected) {
+            wsClient = null;
+            scheduleRetryConnection();
+            return;
+        }
         wsClient.send("sessionId|"+sessionId);
         (wsclientLoop = new Thread() {
             JettyWsClient myClient = wsClient;
@@ -81,8 +95,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                     connectTime = System.currentTimeMillis() - connectTime;
                     if (connectTime < 5000) {
                         wsClient = null;        // something goes wrong, will try later
+                        scheduleRetryConnection();
                         return;
                     } else {
+                        increasingReconnectDelay = 1;
                         if (!myClient.shuttingDown) {
                             myClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
                             wsClient.send("sessionId|"+sessionId);
@@ -94,13 +110,27 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }).start();
     }
 
+    private void scheduleRetryConnection() {
+        ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connManager.getActiveNetworkInfo();
+        if (activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting()) {
+            GCMIntentService.rescheduleAlarm(context, increasingReconnectDelay);
+            increasingReconnectDelay *= 2;
+        }
+    }
+
     public String loginLocal(Context context, Handler handler, String username, String cookie) {
+        JuickAdvancedApplication.showToast("JAXMPPClient loginLocal");
         this.context = context;
         this.handler = handler;
         this.username = username;
         String retval = performLoginLocal(context, username, cookie);
         if (retval == null) {
-                addListeners();
+            JuickAdvancedApplication.showToast("JAXMPPClient loginLocal success");
+            loggedIn = true;
+            addListeners();
+        } else {
+            JuickAdvancedApplication.showToast("JAXMPPClient loginLocal failure");
         }
         return retval;
     }
@@ -108,8 +138,20 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     private String performLogin(Context context, XMPPConnectionSetup setup) {
         sessionId = DatabaseService.getUniqueInstallationId(context, setup.getJid());
         ClientToServer c2s = new ClientToServer(sessionId);
-        c2s.setLogin(new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId));
+        Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId);
+        login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
+        login.setProofAccountToken(JuickComAuthorizer.getBasicAuthString(context));
+        login.setProofAccountType("juick");
+        c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
+        if (serverToClient.haveMoreMessages) {
+            startSync(new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            });
+        }
         return serverToClient.getErrorMessage();
     }
 
@@ -119,8 +161,20 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         setup.password = cookie;
         sessionId = DatabaseService.getUniqueInstallationId(context, setup.getJid());
         ClientToServer c2s = new ClientToServer(sessionId);
-        c2s.setLogin(new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId));
+        Login login = new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId);
+        login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
+        login.setProofAccountToken(JuickComAuthorizer.getBasicAuthString(context));
+        login.setProofAccountType("juick");
+        c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
+        if (serverToClient.haveMoreMessages) {
+            startSync(new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            });
+        }
         return serverToClient.getErrorMessage();
     }
 
@@ -195,6 +249,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public void disconnect() {
+        JuickAdvancedApplication.showToast("JAXMPPClient disconnect");
         if (wsClient != null) {
             wsClient.shuttingDown = true;
             wsClient.disconnect();
@@ -220,32 +275,84 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }
     }
 
-    public void listenAll() {
+    private void callXMPPControlSafeWithArgs(Utils.Function<Void, ClientToServer> configurer, final Utils.Function<Void, ServerToClient> then) {
         ClientToServer clientToServer = new ClientToServer(sessionId);
-        clientToServer.setSubscribeToAll(new SubscribeToAll("S"));
+        configurer.apply(clientToServer);
         callXmppControlSafe(context, clientToServer, new Utils.Function<Void, ServerToClient>() {
             @Override
             public Void apply(ServerToClient serverToClient) {
-                if (serverToClient.getErrorMessage() != null) {
-                    Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
+                if (then == null) {
+                    if (serverToClient.getErrorMessage() != null) {
+                        Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(context, R.string.Done, Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    then.apply(serverToClient);
                 }
                 return null;
             }
         });
     }
 
-    public void unlistenAll() {
-        ClientToServer clientToServer = new ClientToServer(sessionId);
-        clientToServer.setSubscribeToAll(new SubscribeToAll("U"));
-        callXmppControlSafe(context, clientToServer, new Utils.Function<Void, ServerToClient>() {
+    public void listenAll() {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
             @Override
-            public Void apply(ServerToClient serverToClient) {
-                if (serverToClient.getErrorMessage() != null) {
-                    Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
-                }
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSubscribeToAll(new SubscribeToAll("S"));
                 return null;
             }
-        });
+        }, null);
+    }
+
+    public void unlistenAll() {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSubscribeToAll(new SubscribeToAll("U"));
+                return null;
+            }
+        }, null);
+    }
+
+    public void unsubscribeMessage(final String mid) {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSubscribeToThread(new SubscribeToThread(Integer.parseInt(mid), "R"));
+                return null;
+            }
+        }, null);
+    }
+
+    public void subscribeMessage(final String mid) {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSubscribeToThread(new SubscribeToThread(Integer.parseInt(mid), "S"));
+                return null;
+            }
+        }, null);
+    }
+
+    public void subscribeToComments(final String uname) {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSubscribeToComments(new SubscribeToComments(uname, "S"));
+                return null;
+            }
+        }, null);
+    }
+
+    public void unsubscribeFromComments(final String uname) {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSubscribeToComments(new SubscribeToComments(uname, null));
+                return null;
+            }
+        }, null);
     }
 
     enum SyncState {
@@ -368,6 +475,20 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     @Override
     public void onGCMMessage(String message) {
         handleGCMessageFromServer(message);
+    }
+
+    @Override
+    public void onRegistration(final String regid) {
+        new Thread("SendGCMReg") {
+            @Override
+            public void run() {
+                if (sessionId != null) {
+                    ClientToServer c2s = new ClientToServer(sessionId);
+                    c2s.setSendGCMRegistration(new SendGCMRegistration(regid));
+                    final ServerToClient serverToClient = callXmppControl(context, c2s);
+                }
+            }
+        }.start();
     }
 
     public void onServerPingTime() {

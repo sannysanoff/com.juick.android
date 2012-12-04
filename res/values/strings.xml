@@ -55,6 +55,7 @@
     <string name="DeleteMessage">Delete</string>
     <string name="Unsubscribe_from">Unsubscribe from</string>
     <string name="Blacklist">Blacklist</string>
+    <string name="Blacklist2">Blacklist</string>
     <string name="FilterOutUser">Filter out</string>
     <string name="ExpandMessage">Expand message from</string>
     <string name="OpenThread">Open thread</string>
@@ -305,6 +306,25 @@
 
             <b>14 ноября 2012</b>
             <li>
+            Нотификация о сообщениях <b>без XMPP/Jabber!</b>. На juick advanced сервере трекаются все комментарии и новые мессаги,
+            приходящие с официального juick сервера. Затем по известным правилам уведомления рассылаются всем заинтересованным устройствам.
+            Исключение составляют приватные сообщения. Важно понять, что подписка на произвольный тред, сделанная НЕ через juick advanced,
+            не будет приходить, т.к. не существует способа для сторонних серверов узнавать таковые подробности с
+            официального сервера для включения в свои уведомления. Ставим галочку, включаем:
+            <input type="checkbox" name="prefs.enableJAMessaging" #prefs.checked.enableJAMessaging#> .
+            В связи с тем, что ваши подписки на треды (и не только), сделанные через juick advanced,
+            тоже хранятся на juick advanced сервере, требуется какая-то авторизация, что ли. Для этих целей
+            вместе с вашим логином отправляется ваш авторизационный токен, который проверяется на сервере жуйка
+            во время логина на juick advanced сервер, и затем выбрасывается.
+            Всё ходит через HTTPS, подробности в политике приватности (читать её в настройках).
+            </li>
+            <li>
+            Удалена XMPP подсистема (smack) из android-клиента. Но XMPP функциональность жива и работает по принципу opera mini:
+            XMPP-клиент вынесен с телефона на сервер, и если вы залогинены, то он постоянно онлайн,
+            даже пока вы едете в метро. Протокол связи телефона с сервером прост и батарейко-оптимизирован.
+            Технические подробности <a href="http://sanny2android.wordpress.com/2012/11/30/extxmpp-details/">читать здесь</a>
+            </li>
+            <li>
             Отправление сообщений об ошибках теперь делается с помощью ACRA, без подтверждения. Уходит больше данных об устройстве.
             </li>
             <li>
@@ -313,9 +333,9 @@
               c возможностью постинга и комментирования, и еще несколько функций.
             </li>
             <li>
-            Приватные сообщения. Парсятся с нового сайта (dev.juick.com). Спросит логин и пароль для сайта (1 раз). Дискуссии (тоже раздел с сайта). Включить?
+            Приватные сообщения. Парсятся с нового сайта (dev.juick.com). Спросит логин и пароль для сайта (1 раз). Включить в список навигации?
             <input type="checkbox" name="prefs.msrcPrivate" #prefs.checked.msrcPrivate#>
-            Дискуссии (тоже раздел с сайта). Включить? <input type="checkbox" name="prefs.msrcDiscuss" #prefs.checked.msrcDiscuss#>
+            Дискуссии (тоже раздел с сайта). Включить в список? <input type="checkbox" name="prefs.msrcDiscuss" #prefs.checked.msrcDiscuss#>
             </li>
             <li>
             Также, и лента подписок может браться не c глючными старыми сообщениями с json api, а с сайта. Если на сайте нет глюка с датами, то значит нет глюка и в Juick Advanced.
@@ -665,12 +685,21 @@
             Отправляемые данные занимают около 1КБ.
             <br>
             На сервер <b><i>ja.ip.rt.ru</i></b> (Juick Advanced server, JA) уходят ваши запросы на мессаги и треды,
-             в случаях когда сервер может заменить juick.com, если вы настроили это. Туда не уходит ваша авторизация,
-             и поэтому запросы на вашу персональную ленту сервер не обрабатывает. Также туда не идут запросы на
-             top и сообщения с картинками. Туда же идут запросы за графиками.
-
+             в случаях когда сервер может заменить juick.com, если вы настроили это. Для получения этой информации
+             туда не уходит ваша авторизация, и поэтому запросы на вашу персональную ленту сервер не обрабатывает.
+             Туда же идут запросы за графиками.<br>
+            <b>НО</b> если вы используете нотификацию о сообщениях (не jabber/xmpp), тогда с целью авторизации на этом сервере
+              туда уходит ваша жуйковская авторизация. Во время логина на ja.ip.rt.ru происходит проверка на возможность
+              залогиниться на juick.com с этими данными, и затем эта информация не используется и постепенно пропадает.
+              Это нужно для того, чтобы сторонний Вася не мог назваться вами и получить сформированные для вас данные.<br>
+            <b>А</b> если вы еще и используете XMPP, то ваши jabber-пароли хранятся в ОЗУ, с целью восстановления соединения
+            с jabber сервером, буде оно упадет. Стандартные предупреждения в таком случае звучат так: если хакеры
+            взломают ja.ip.rt.ru, сделают снимок озу или стырят своп-файл, то они конечно всех поимеют. Хорошая новость
+                состоит в том, что сервер работает под управлением красноглазого gentoo, там лишь недырявая java и
+                ssh, устойчивый к brute force.
              <br>
              <hr/>
+
             Собранная анонимная информация будет использована для
             моего будущего доминирования над всем миром, я гарантирую это.
             ]]>
@@ -812,6 +841,22 @@
     <string name="SubCommentsNotification___">Subscriptions/Comments notification implemented on Juick Advanced server
         (no private)
     </string>
+    <string name="JAMNotEnabledEnable">You are NOT subscribed to NON-XMPP juick notifications, subscribe to proceed?</string>
+    <string name="JuickAdvancedFunctionality">Juick Advanced functionality</string>
+    <string name="WaitingForService">Waiting for service to come up...</string>
+    <string name="UserCenter">User Center</string>
+    <string name="InBrowser">In browser</string>
+    <string name="__Recommend">!Recommend</string>
+    <string name="Unsave">Unsave</string>
+    <string name="Open">Open</string>
+    <string name="Expand">Expand</string>
+    <string name="ReadBlog">Read blog</string>
+    <string name="SubscribeComments">Subscribe to comments</string>
+    <string name="UnsubscribeComments">Unsub from comments</string>
+    <string name="FilterOut">Filter</string>
+    <string name="Delete">Delete</string>
+    <string name="Subscribe">Subscribe</string>
+    <string name="Unsubscribe">Unsubscribe</string>
 
 
 </resources>

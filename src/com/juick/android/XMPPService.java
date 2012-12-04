@@ -10,19 +10,12 @@ import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
-import com.juickadvanced.serializers.JuickPlainTextMessages;
 import com.juickadvanced.xmpp.XMPPConnectionSetup;
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.filter.MessageTypeFilter;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Packet;
-import org.jivesoftware.smack.packet.Presence;
 
 import java.io.*;
-import java.net.SocketException;
 import java.util.*;
 
 /**
@@ -31,15 +24,10 @@ public class XMPPService extends Service  {
 
     private static final IncomingMessage DUMMY = new IncomingMessage("", "", null) {
     };
-    ArrayList<XMPPConnection> connections = new ArrayList<XMPPConnection>();
     Handler handler;
-    Chat juickChat;
-    Chat juboChat;
-    ArrayList<Utils.Function<Void, Message>> messageReceivers = new ArrayList<Utils.Function<Void, Message>>();
     public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
     public static final String ACTION_LAUNCH_MESSAGELIST = "com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
-    int reconnectDelay = 10000;
     int messagesReceived = 0;
     public boolean botOnline;
     public boolean juboOnline;
@@ -91,7 +79,7 @@ public class XMPPService extends Service  {
     }
 
 
-    Thread currentThread;
+    public Thread currentThread;
     SharedPreferences sp;
 
 
@@ -108,23 +96,15 @@ public class XMPPService extends Service  {
         if (sp == null)
             sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
-        boolean xmppExternal = sp.getBoolean("xmpp_external", false);
         boolean useXMPPOnlyForBL = sp.getBoolean("useXMPPOnlyForBL", false);
-        if (useXMPP && useXMPPOnlyForBL && juboMessageFilter != null && juboMessageFilter != null) {
+        if (useXMPP && useXMPPOnlyForBL && juboMessageFilter != null && juickBlacklist != null) {
             // we have everything.
             useXMPP = false;
         }
         Gson gson = new Gson();
         final XMPPConnectionSetup connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPConnectionSetup.class);
-        synchronized (connections) {
-            log("enter sync");
-            if (useXMPP && connectionArgs != null && connections.size() == 0) {
-                if (xmppExternal) {
-                    (currentThread = new ExternalXMPPThread(connectionArgs)).start();
-                } else {
-                    (currentThread = new SmackThread(connectionArgs)).start();
-                }
-            }
+        if (useXMPP && connectionArgs != null) {
+            (currentThread = new ExternalXMPPThread(connectionArgs)).start();
         }
         log("leave startup()");
         up = true;
@@ -177,8 +157,8 @@ public class XMPPService extends Service  {
         public ArrayList<String> subscribedTags = new ArrayList<String>();
 
         public boolean allowXMPPMessage(IncomingMessage message, SharedPreferences sp) {
-            if (message instanceof JuickThreadIncomingMessage) {
-                JuickSubscriptionIncomingMessage jtim = (JuickSubscriptionIncomingMessage) message;
+            if (message instanceof JuickSubscriptionIncomingMessage) {
+                JuickSubscriptionIncomingMessage jtim = (JuickSubscriptionIncomingMessage)message;
                 for (String stopTag : stopTags) {
                     for (String tag : jtim.tags) {
                         if (tag.startsWith("*")) tag = tag.substring(1);
@@ -264,16 +244,14 @@ public class XMPPService extends Service  {
             }
             s = s.trim();
             if (okToParse && s.length() > 0) {
-                boolean tag = s.indexOf("{tag:*") != -1;
-                boolean stop = s.indexOf("-{") != -1 || s.indexOf("{tag:-*") != -1 || s.startsWith("-");
+                boolean tag = s.contains("{tag:*");
+                boolean stop = s.contains("-{") || s.contains("{tag:-*") || s.startsWith("-");
                 if (tag) {
                     if (stop) {
                         if (s.startsWith("-")) s = s.substring(1);
-                        if (s.indexOf("tag:-*") != -1) s = s.replace("tag:-*", "");
+                        if (s.contains("tag:-*")) s = s.replace("tag:-*", "");
                     }
-                    if (tag) {
-                        s = s.replace("{tag:", "").replace("}", "").replace("*", "");
-                    }
+                    s = s.replace("{tag:", "").replace("}", "").replace("*", "");
                 }
                 if (tag && stop) filter.stopTags.add(s.toLowerCase());
                 if (tag && !stop) filter.subscribedTags.add(s.toLowerCase());
@@ -281,9 +259,9 @@ public class XMPPService extends Service  {
                 if (!tag && !stop) filter.subscribedWords.add(s.toLowerCase());
             }
         }
-        this.juboMessageFilter = filter;
-        this.juboMessageFilter_tmp = null;
-        writeStringToFile(getCachedJuboFile(), new Gson().toJson(this.juboMessageFilter));
+        juboMessageFilter = filter;
+        juboMessageFilter_tmp = null;
+        writeStringToFile(getCachedJuboFile(), new Gson().toJson(juboMessageFilter));
         maybeTerminateXMPP();
     }
 
@@ -310,9 +288,9 @@ public class XMPPService extends Service  {
                 }
             }
         }
-        this.juickBlacklist = filter;
-        this.juickBlacklist_tmp = null;
-        writeStringToFile(getCachedJuickFile(), new Gson().toJson(this.juickBlacklist));
+        juickBlacklist = filter;
+        juickBlacklist_tmp = null;
+        writeStringToFile(getCachedJuickFile(), new Gson().toJson(juickBlacklist));
         maybeTerminateXMPP();
 
     }
@@ -340,37 +318,6 @@ public class XMPPService extends Service  {
     private boolean verboseXMPP() {
         return sp.getBoolean("xmpp_verbose", false);
     }
-
-    boolean scheduledForReconnect = false;
-
-
-    PacketListener packetListener = new PacketListener() {
-        @Override
-        public void processPacket(Packet packet) {
-            messagesReceived++;
-            if (packet instanceof Message) {
-                Message msg = (Message) packet;
-                if (JUBO_ID.equalsIgnoreCase(packet.getFrom())) {
-                    handleJuickMessage(msg.getFrom(), msg.getBody());
-                } else if (JUICK_ID.equals(packet.getFrom())) {
-                    handleJuickMessage(msg.getFrom(), msg.getBody());
-                    // handled elsewhere
-                } else if (!JUICK_ID.equals(packet.getFrom())) {
-                    handleTextMessage(msg.getFrom(), msg.getBody());
-                }
-            }
-        }
-    };
-
-    PacketListener packetListener2 = new PacketListener() {
-        @Override
-        public void processPacket(Packet packet) {
-            messagesReceived++;
-            if (packet instanceof Message && !JUICK_ID.equals(packet.getFrom())) {
-                handleTextMessage(packet.getFrom(), ((Message) packet).getBody());
-            }
-        }
-    };
 
     public void removeMessagesFrom(String user) {
         boolean changed = false;
@@ -423,7 +370,7 @@ public class XMPPService extends Service  {
     }
 
     public void removeMessage(IncomingMessage incomingMessage) {
-        synchronized (incomingMessage) {
+        synchronized (incomingMessages) {
             removeMessageFile(incomingMessage.id);
             incomingMessages.remove(incomingMessage);
         }
@@ -454,45 +401,39 @@ public class XMPPService extends Service  {
     MyBroadcastSender broadcastSender = new MyBroadcastSender();
 
     public void requestMessageBody(MessageID finalTopicMessageId) {
-        try {
-            final int mid = ((JuickMessageID) finalTopicMessageId).getMid();
-            String messageRequest = "#" + mid;
-            if (juickChat != null) {
-                juickChat.sendMessage(messageRequest);
-            } else if (currentThread instanceof ExternalXMPPThread) {
-                    ExternalXMPPThread externalXMPPThread = (ExternalXMPPThread)currentThread;
-                    externalXMPPThread.client.sendMessage(JUICK_ID, messageRequest);
-            } else {
-                new Thread() {
-                    @Override
-                    public void run() {
-                        Utils.RESTResponse json = Utils.getJSON(XMPPService.this, "http://" + Utils.JA_ADDRESS + "/api/thread?mid=" + mid + "&onlybody=true", null);
-                        if (json.getResult() != null) {
-                            ArrayList<JuickMessage> messages = JuickCompatibleURLMessagesSource.parseJSONpure(json.getResult(), false);
-                            if (messages != null && messages.size() > 0) {
-                                JuickMessage juickMessage = messages.get(0);
-                                final JuickSubscriptionIncomingMessage obtained = new JuickSubscriptionIncomingMessage(
-                                        juickMessage.User.UName,
-                                        juickMessage.Text,
-                                        "#" + mid,
-                                        new String[0],
-                                        juickMessage.Timestamp
-                                );
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        handleIncomingTopicStarter(obtained);
-                                    }
-                                });
-                                handler.removeCallbacks(broadcastSender);
-                                handler.postDelayed(broadcastSender, 3000);
-                            }
+        final int mid = ((JuickMessageID) finalTopicMessageId).getMid();
+        String messageRequest = "#" + mid;
+        if (currentThread instanceof ExternalXMPPThread) {
+                ExternalXMPPThread externalXMPPThread = (ExternalXMPPThread)currentThread;
+                externalXMPPThread.client.sendMessage(JUICK_ID, messageRequest);
+        } else {
+            new Thread() {
+                @Override
+                public void run() {
+                    Utils.RESTResponse json = Utils.getJSON(XMPPService.this, "http://" + Utils.JA_ADDRESS + "/api/thread?mid=" + mid + "&onlybody=true", null);
+                    if (json.getResult() != null) {
+                        ArrayList<JuickMessage> messages = JuickCompatibleURLMessagesSource.parseJSONpure(json.getResult(), false);
+                        if (messages != null && messages.size() > 0) {
+                            JuickMessage juickMessage = messages.get(0);
+                            final JuickSubscriptionIncomingMessage obtained = new JuickSubscriptionIncomingMessage(
+                                    juickMessage.User.UName,
+                                    juickMessage.Text,
+                                    "#" + mid,
+                                    new String[0],
+                                    juickMessage.Timestamp
+                            );
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    handleIncomingTopicStarter(obtained);
+                                }
+                            });
+                            handler.removeCallbacks(broadcastSender);
+                            handler.postDelayed(broadcastSender, 3000);
                         }
                     }
-                }.start();
-            }
-        } catch (XMPPException e) {
-            Toast.makeText(this, "requestMessageBody: " + e.toString(), Toast.LENGTH_LONG).show();
+                }
+            }.start();
         }
     }
 
@@ -507,18 +448,17 @@ public class XMPPService extends Service  {
                 @Override
                 public boolean onMessage(String jid, String message) {
                     if (jid.equals(JUBO_ID)) {
-                        String mbody = message;
-                        if (mbody.contains("rss start")) {              // issue 'rss start' to start
+                        if (message.contains("rss start")) {              // issue 'rss start' to start
                             juboRSSError = "Response to 'rss start' did not come yet";
                             et.client.sendMessage(JUBO_ID, "rss start");
                         }
-                        if (mbody.contains("http://") && mbody.contains("/rss/")) {     // rss start response
-                            int start = mbody.indexOf("http://");
-                            int end = mbody.indexOf(".xml");
+                        if (message.contains("http://") && message.contains("/rss/")) {     // rss start response
+                            int start = message.indexOf("http://");
+                            int end = message.indexOf(".xml");
                             if (start != -1 && end != -1) {
                                 end += 4;
                             }
-                            juboRSS = mbody.substring(start, end);
+                            juboRSS = message.substring(start, end);
                             if (et.nextListener == this) et.nextListener = null;
                         }
                         return true;
@@ -532,34 +472,6 @@ public class XMPPService extends Service  {
                 }
             };
             et.client.sendMessage(JUBO_ID, "rss");
-        } else {
-            juboChat = connections.get(connections.size() - 1).getChatManager().createChat(JUBO_ID, new MessageListener() {
-                @Override
-                public void processMessage(Chat chat, Message message) {
-                    String mbody = message.getBody();
-                    if (mbody.contains("rss start")) {              // issue 'rss start' to start
-                        try {
-                            juboRSSError = "Response to 'rss start' did not come yet";
-                            juboChat.sendMessage("rss start");
-                        } catch (XMPPException e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                        }
-                    }
-                    if (mbody.contains("http://") && mbody.contains("/rss/")) {     // rss start response
-                        int start = mbody.indexOf("http://");
-                        int end = mbody.indexOf(".xml");
-                        if (start != -1 && end != -1) {
-                            end += 4;
-                        }
-                        juboRSS = mbody.substring(start, end);
-                    }
-                }
-            });
-            try {
-                juboChat.sendMessage("rss");
-            } catch (XMPPException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
         }
     }
 
@@ -598,11 +510,8 @@ public class XMPPService extends Service  {
 
             IncomingMessage that = (IncomingMessage) o;
 
-            if (id != null ? !id.equals(that.id) : that.id != null) {
-                return false;
-            }
+            return !(id != null ? !id.equals(that.id) : that.id != null);
 
-            return true;
         }
 
         @Override
@@ -699,7 +608,7 @@ public class XMPPService extends Service  {
         }
     }
 
-    public ArrayList<IncomingMessage> incomingMessages = new ArrayList<IncomingMessage>();
+    final public ArrayList<IncomingMessage> incomingMessages = new ArrayList<IncomingMessage>();
 
     // duplicates from various sources
     ArrayList<String> recentlyReceivedMessages = new ArrayList<String>();
@@ -733,7 +642,7 @@ public class XMPPService extends Service  {
                         XMPPService.JuickIncomingMessage topicStarter = cachedTopicStarters.get(threadIncomingMessage.getMID());
                         if (topicStarter == null) {
                             // reply; no master message found ;-(
-                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + ((JuickMessageID) threadIncomingMessage.getMID()).getMid(), new Date());    // put placeholder for details
+                            topicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID().getMid(), new Date());    // put placeholder for details
                             cachedTopicStarters.put(threadIncomingMessage.getMID(), topicStarter);
                             requestMessageBody(threadIncomingMessage.getMID());
                         } else {
@@ -753,7 +662,7 @@ public class XMPPService extends Service  {
                 int colon = head.indexOf(":");
                 if (colon != -1) {
                     String username = head.substring(0, colon);
-                    if (head.indexOf("*private") != -1) {
+                    if (head.contains("*private")) {
                         if (split.length >= 7) {
                             try {
                                 String msgno = split[split.length - 1].trim().split(" ")[0].trim();
@@ -928,57 +837,22 @@ public class XMPPService extends Service  {
         sendMyBroadcast(true);
     }
 
-    private void sendJuickMessage(String text) {
-        try {
-            juickChat.sendMessage(text);
-        } catch (XMPPException e) {
-            cleanup("Error sending message");
-        }
-    }
 
     public void cleanup(final String reason) {
-        ArrayList<XMPPConnection> xmppConnections = null;
-        synchronized (connections) {
-            xmppConnections = new ArrayList<XMPPConnection>(connections);
-            connections.clear();
+        up = false;
+        if (currentThread != null) {
+            currentThread.interrupt();
+            currentThread = null;
         }
-        for (XMPPConnection connection : xmppConnections) {
-            if (connection != null) {
-                try {
-                    connection.disconnect();
-                } catch (Exception e) {
-                    //
+        if (reason != null) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (verboseXMPP() || reason.startsWith("!"))
+                        Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
                 }
-                if (currentThread != null) {
-                    currentThread.interrupt();
-                    currentThread = null;
-                }
-                if (reason != null) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (verboseXMPP() || reason.startsWith("!"))
-                                Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
-            }
+            });
         }
-    }
-
-    private void updateStateOnDisconnect() {
-        synchronized (connections) {
-            if (juickBlacklist != null) {
-                juickBlacklist_tmp = juickBlacklist;
-                juickBlacklist = null;
-            }
-            if (juboMessageFilter != null) {
-                juboMessageFilter_tmp = juboMessageFilter;
-                juboMessageFilter = null;
-            }
-        }
-        botOnline = false;
-        juboOnline = false;
     }
 
     public static String readFile(File f) {
@@ -1012,7 +886,7 @@ public class XMPPService extends Service  {
         }
         String cachedJuick = readFile(getCachedJuickFile());
         if (cachedJuick != null) {
-            juickBlacklist_tmp = new Gson().fromJson(cachedJubo, JuickBlacklist.class);
+            juickBlacklist_tmp = new Gson().fromJson(cachedJuick, JuickBlacklist.class);
             if (juickBlacklist_tmp != null && !juickBlacklist_tmp.valid()) {
                 juickBlacklist_tmp = null;
             }
@@ -1066,225 +940,6 @@ public class XMPPService extends Service  {
         super.onDestroy();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    private class SmackThread extends Thread {
-
-        private final XMPPConnectionSetup connectionArgs;
-        XMPPConnection connection;
-
-        public SmackThread(XMPPConnectionSetup connectionArgs) {
-            super("XMPP worker");
-            this.connectionArgs = connectionArgs;
-        }
-
-        @Override
-        public void run() {
-            try {
-                ConnectionConfiguration configuration = new ConnectionConfiguration(connectionArgs.getServer(), connectionArgs.port, connectionArgs.getService().trim());
-                configuration.setSecurityMode(connectionArgs.secure ? ConnectionConfiguration.SecurityMode.required : ConnectionConfiguration.SecurityMode.enabled);
-                configuration.setReconnectionAllowed(true);
-                SASLAuthentication.supportSASLMechanism("PLAIN", 0);
-                //configuration.setSASLAuthenticationEnabled(secure);
-                //configuration.setCompressionEnabled(true);
-                int delay = 1000;
-                while (true) {
-                    if (currentThread != Thread.currentThread()) return;        // we are abandoned!
-                    if (connection != null && connection.isConnected()) break;
-                    connection = new XMPPConnection(configuration);
-                    synchronized (connections) {
-                        connections.add(connection);
-                    }
-                    connection.connect();
-                    if (connection.isConnected()) break;
-                    try {
-                        cleanup(null);
-                        Thread.sleep(delay);
-                    } catch (InterruptedException e) {
-                        scheduleReconnect();
-                        return;
-                    }
-                    delay *= 2;
-                    if (delay > 15 * 60 * 1000) {
-                        delay = 15 * 60 * 1000;
-                    }
-                }
-                reconnectDelay = 10000;     // reset value
-                connection.addConnectionListener(new ConnectionListener() {
-                    @Override
-                    public void connectionClosed() {
-                        System.out.println();
-                        //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public void connectionClosedOnError(Exception e) {
-                        System.out.println();
-                        //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public void reconnectingIn(int seconds) {
-                        System.out.println();
-                    }
-
-                    @Override
-                    public void reconnectionSuccessful() {
-                        System.out.println();
-                    }
-
-                    @Override
-                    public void reconnectionFailed(Exception e) {
-                        cleanup("failed to reconnect, juick will retry later");
-                        scheduleReconnect();
-                    }
-                });
-                connection.login(connectionArgs.getLogin(), connectionArgs.password, connectionArgs.resource);
-            } catch (final IllegalStateException e) {
-                cleanup(null);
-                scheduleReconnect();
-                return;
-            } catch (final NullPointerException e) {
-                // concurrent connection change
-                // todo implement properly, shame on me
-                return;
-            } catch (final XMPPException e) {
-                if (currentThread() == currentThread) {
-                    String message = e.toString();
-                    if (message.toLowerCase().indexOf("auth") >= 0)
-                        message = "!" + message;
-                    cleanup(message);
-                }
-                if (e.getWrappedThrowable() instanceof SocketException) {
-                    scheduleReconnect();
-                }
-                lastException = e.toString();
-                return;
-            }
-            try {
-                if (currentThread() != currentThread) return;
-                lastSuccessfulConnect = System.currentTimeMillis();
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (verboseXMPP())
-                            Toast.makeText(XMPPService.this, "XMPP connect OK", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                if (Thread.currentThread().isInterrupted()) return;
-                Roster roster = connection.getRoster();
-                juickChat = connection.getChatManager().createChat(JUICK_ID, new MessageListener() {
-                    @Override
-                    public void processMessage(Chat chat, Message message) {
-                        for (Utils.Function<Void, Message> messageReceiver : (Iterable<? extends Utils.Function<Void, Message>>) messageReceivers.clone()) {
-                            messageReceiver.apply(message);
-                        }
-                    }
-                });
-                if (Thread.currentThread().isInterrupted()) return;
-                if (currentThread() != currentThread) return;
-                connection.addPacketListener(packetListener, new MessageTypeFilter(Message.Type.chat));
-                connection.addPacketListener(packetListener2, new MessageTypeFilter(Message.Type.normal));
-                try {
-                    connection.sendPacket(new Presence(Presence.Type.available, "android juick client here", connectionArgs.priority, Presence.Mode.available));
-                } catch (Exception e) {
-                    cleanup("error while sending presence");
-                    scheduleReconnect();
-                    return;
-                }
-                roster.addRosterListener(new RosterListener() {
-                    @Override
-                    public void entriesAdded(Collection<String> addresses) {
-                        System.out.println();
-                    }
-
-                    @Override
-                    public void entriesUpdated(Collection<String> addresses) {
-                        System.out.println();
-                    }
-
-                    @Override
-                    public void entriesDeleted(Collection<String> addresses) {
-                        //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public void presenceChanged(final Presence presence) {
-                        boolean fromJubo = presence.getFrom().equals(JUBO_ID);
-                        if (fromJubo) {
-                            juboOnline = presence.isAvailable();
-
-                            Chat chat = connections.get(connections.size() - 1).getChatManager().createChat(JUBO_ID, new MessageListener() {
-                                @Override
-                                public void processMessage(Chat chat, Message message) {
-                                    String mbody = message.getBody();
-                                    if (mbody.length() > 0) {
-                                        String firstLine = mbody.split("\n")[0];
-                                        if (firstLine.contains("на которые вы подписаны")) {
-                                            parseJuboSubscriptions(mbody);
-
-                                        }
-                                    }
-                                }
-                            });
-                            try {
-                                chat.sendMessage("ls");
-                            } catch (XMPPException e) {
-                                //
-                            }
-                        }
-                        if (presence.getFrom().equals(JUICK_ID)) {
-                            botOnline = presence.isAvailable();
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (verboseXMPP()) {
-                                        if (botOnline) {
-                                            Toast.makeText(XMPPService.this, "juick bot online", Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            Toast.makeText(XMPPService.this, "JUICK BOT OFFLINE", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                }
-                            });
-                            if (botOnline) {
-                                String sendOn = sp.getString("juickBotOn", "skip");
-                                if (sendOn.equals("on")) {
-                                    sendJuickMessage("ON");
-                                }
-                                if (sendOn.equals("off")) {
-                                    sendJuickMessage("OFF");
-                                }
-                                sendJuickMessage("BL");
-                            }
-                        }
-                    }
-                });
-            } catch (Exception ex) {
-                if (currentThread() != currentThread) return;
-                Log.e("XMPPThread", "exception in main thread", ex);
-                cleanup("Exception in main server thread");
-                scheduleReconnect();
-            }
-        }
-
-        private void scheduleReconnect() {
-            if (scheduledForReconnect) return;
-            scheduledForReconnect = true;
-            reconnectDelay *= 2;
-            handler.removeCallbacksAndMessages(null);
-            handler.postDelayed(new Runnable() {
-                final Connection retryConnection = connection;
-
-                @Override
-                public void run() {
-                    scheduledForReconnect = false;
-                    up = false;
-                    startup();
-                }
-            }, reconnectDelay);
-        }
-
-
-    }
 
     public class ExternalXMPPThread extends Thread implements JAXMPPClient.XMPPClientListener {
         XMPPConnectionSetup connectionArgs;
@@ -1298,50 +953,32 @@ public class XMPPService extends Service  {
         @Override
         public void run() {
             final ExternalXMPPThread thiz = this;
-            if (JuickAdvancedApplication.registrationId == null || JuickAdvancedApplication.registrationId.length() == 0) {
-                handler.postDelayed(new Runnable() {
+            client = new JAXMPPClient();
+            client.setXmppClientListener(thiz);
+            HashSet<String> watchedJids = new HashSet<String>();
+            watchedJids.add(JUBO_ID);
+            watchedJids.add(JUICK_ID);
+            final String error = client.loginXMPP(XMPPService.this, handler, connectionArgs, watchedJids);
+            if (error == null) {
+                // ok
+            } else {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        new Thread("ExtXMPPLogin") {
-                            @Override
-                            public void run() {
-                                thiz.run();
-                            }
-                        }.start();
+                        Toast.makeText(XMPPService.this, "ExtXMPP:"+error, Toast.LENGTH_LONG).show();
                     }
-                }, 2000);
-            } else {
-                client = new JAXMPPClient();
-                client.setXmppClientListener(thiz);
-                HashSet<String> watchedJids = new HashSet<String>();
-                watchedJids.add(JUBO_ID);
-                watchedJids.add(JUICK_ID);
-                final String error = client.loginXMPP(XMPPService.this, handler, connectionArgs, watchedJids);
-                if (error == null) {
-                    // ok
-                } else {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(XMPPService.this, "ExtXMPP:"+error, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
+                });
             }
-
-
             try {
                 synchronized (this) {
                     try {
                         this.wait();
                     } catch (InterruptedException e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        e.printStackTrace();
                     }
                 }
             } finally {
-                if (client != null) {
-                    client.disconnect();
-                }
+                client.disconnect();
             }
         }
 
@@ -1352,11 +989,10 @@ public class XMPPService extends Service  {
             if (nextListener != null && nextListener.onMessage(jid, message)) return true;
             Log.i("JuickAdvanced", "ExtXMPP Message: "+jid+": "+message);
             if (jid.equals(JUBO_ID)) {
-                String mbody = message;
-                if (mbody.length() > 0) {
-                    String firstLine = mbody.split("\n")[0];
+                if (message.length() > 0) {
+                    String firstLine = message.split("\n")[0];
                     if (firstLine.contains("на которые вы подписаны")) {
-                        parseJuboSubscriptions(mbody);
+                        parseJuboSubscriptions(message);
                         return true;
                     }
                 }

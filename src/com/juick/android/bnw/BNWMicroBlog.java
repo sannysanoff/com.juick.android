@@ -50,12 +50,12 @@ public class BNWMicroBlog implements MicroBlog {
     public UserpicStorage.AvatarID getAvatarID(final JuickMessage jmsg) {
         return new UserpicStorage.AvatarID() {
             @Override
-            public String toString() {
+            public String toString(int size) {
                 return "BNW:"+jmsg.User.UName;
             }
 
             @Override
-            public String getURL() {
+            public String getURL(int size) {
                 return "http://bnw.im/u/" + jmsg.User.UName + "/avatar/thumb";
             }
         };

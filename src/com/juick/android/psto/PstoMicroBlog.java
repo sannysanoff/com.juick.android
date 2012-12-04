@@ -155,12 +155,12 @@ public class PstoMicroBlog implements MicroBlog {
     public UserpicStorage.AvatarID getAvatarID(final JuickMessage jmsg) {
         return new UserpicStorage.AvatarID() {
             @Override
-            public String toString() {
+            public String toString(int size) {
                 return "PSTO:"+jmsg.User.UName;
             }
 
             @Override
-            public String getURL() {
+            public String getURL(int size) {
                 return "http://psto.net/img/a/40/"+jmsg.User.UName+".png";
             }
         };

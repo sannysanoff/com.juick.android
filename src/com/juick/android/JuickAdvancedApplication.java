@@ -2,6 +2,8 @@ package com.juick.android;
 
 import android.app.Application;
 import android.content.Intent;
+import android.os.Handler;
+import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
 import com.juickadvanced.R;
 import org.acra.ACRA;
@@ -26,11 +28,16 @@ import static org.acra.ReportField.*;
 public class JuickAdvancedApplication extends Application {
 
     static boolean supportsGCM = false;
+    static JuickAdvancedApplication instance;
+
+    public static Handler foreverHandler;
 
     @Override
     public void onCreate() {
+        instance = this;
         ACRA.init(this);
         super.onCreate();
+        foreverHandler = new Handler();
         try {
             GCMRegistrar.checkDevice(getApplicationContext());
             GCMRegistrar.checkManifest(getApplicationContext());
@@ -38,9 +45,27 @@ public class JuickAdvancedApplication extends Application {
             supportsGCM = true;
         } catch (Throwable th) {
         }
-        GCMIntentService.rescheduleAlarm(this);
+        GCMIntentService.rescheduleAlarm(this, 15);
         startService(new Intent(this, XMPPService.class));
 
+    }
+
+    public static void showToast(final String msg) {
+        foreverHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public static void showToast(final Toast toast) {
+        foreverHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                toast.show();
+            }
+        });
     }
 
     public static String registrationId;

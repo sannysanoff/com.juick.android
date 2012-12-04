@@ -15,8 +15,11 @@ public class JAMService extends Service {
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<JAMService>(this);
     JAXMPPClient client;
 
+    static JAMService instance;
+
     @Override
     public void onCreate() {
+        instance = this;
         super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
         handler = new Handler();
     }
@@ -24,13 +27,15 @@ public class JAMService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getBooleanExtra("terminate", false)) {
-            handler.removeCallbacksAndMessages(null);
-            cleanup();
             stopSelf();
         } else if (intent != null && intent.getBooleanExtra("listen_all", false)){
             client.listenAll();
         } else if (intent != null && intent.getBooleanExtra("unlisten_all", false)){
             client.unlistenAll();
+        } else if (intent != null && intent.getStringExtra("unsubscribeMessage") != null){
+            client.unsubscribeMessage(intent.getStringExtra("unsubscribeMessage"));
+        } else if (intent != null && intent.getStringExtra("subscribeMessage") != null){
+            client.subscribeMessage(intent.getStringExtra("subscribeMessage"));
         } else {
             if (startId != 2) {     // i don't know what is this, really
                 startup();
@@ -45,11 +50,17 @@ public class JAMService extends Service {
             new Thread("JAM.startup") {
                 @Override
                 public void run() {
-                    if (client == null) {
-                        String juickAccountName = JuickComAuthorizer.getJuickAccountName(JAMService.this);
-                        String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
-                        client = new JAXMPPClient();
-                        client.loginLocal(JAMService.this, handler, juickAccountName, authString);
+                    synchronized (JAMService.this) {
+                        if (client == null) {
+                            client = new JAXMPPClient();
+                        } else {
+                            return;
+                        }
+                    }
+                    String juickAccountName = JuickComAuthorizer.getJuickAccountName(JAMService.this);
+                    String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
+                    String error = client.loginLocal(JAMService.this, handler, juickAccountName, authString);
+                    if (error == null) {
                         client.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
                             @Override
                             public boolean onMessage(final String jid, final String message) {
@@ -71,6 +82,14 @@ public class JAMService extends Service {
                             @Override
                             public boolean onPresence(String jid, boolean on) {
                                 return false;
+                            }
+                        });
+                    } else {
+                        XMPPService.lastException = error;
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                stopSelf();
                             }
                         });
                     }
@@ -100,6 +119,9 @@ public class JAMService extends Service {
 
     @Override
     public void onDestroy() {
+        cleanup();
+        instance = null;
+        handler.removeCallbacksAndMessages(null);
         super.onDestroy();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }
