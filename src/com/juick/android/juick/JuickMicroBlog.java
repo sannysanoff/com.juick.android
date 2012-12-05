@@ -350,6 +350,7 @@ public class JuickMicroBlog implements MicroBlog {
                             public void withService(XMPPService service) {
                                 boolean canAskJubo = false;
                                 String message = getString(R.string.JuboRSSURLIsUnknown);
+                                boolean canManuallyConnectJabber = false;
                                 if (!service.juboOnline) {
                                     boolean useXMPP = sp.getBoolean("useXMPP", false);
                                     if (!useXMPP) {
@@ -358,6 +359,9 @@ public class JuickMicroBlog implements MicroBlog {
                                         if (service.botOnline) {
                                             message += getString(R.string.JuboNotThere);
                                         } else {
+                                            if (sp.getBoolean("useXMPPOnlyForBL", false)) {
+                                                canManuallyConnectJabber = true;
+                                            }
                                             message += getString(R.string.ICouldButXMPPIfNotWorking);
                                         }
                                     }
@@ -382,11 +386,19 @@ public class JuickMicroBlog implements MicroBlog {
                                                 activity.restoreLastNavigationPosition();
                                             }
                                         });
+                                if (canManuallyConnectJabber) {
+                                    builder.setPositiveButton(service.getString(R.string.StartServiceAndTry), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            askJuboFirst(myIndex, true);
+                                        }
+                                    });
+                                }
                                 if (canAskJubo) {
                                     builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            askJuboFirst(myIndex);
+                                            askJuboFirst(myIndex, false);
                                         }
                                     });
                                 }
@@ -605,23 +617,38 @@ public class JuickMicroBlog implements MicroBlog {
         }
     }
 
-    private void askJuboFirst(final int juboIndex) {
+    private void askJuboFirst(final int juboIndex, final boolean startServiceFromTemporary) {
         final ProgressDialog pd = new ProgressDialog(activity);
         pd.setIndeterminate(true);
         pd.setMessage(getString(R.string.TalkingToJuBo));
         pd.show();
-        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+        Runnable dowithXMPP = new Runnable() {
             @Override
-            public void withService(XMPPService service) {
-                service.askJuboRSS();
-                activity.handler.postDelayed(new Runnable() {
+            public void run() {
+                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
-                    public void run() {
-                        checkJuboReturnedRSS(juboIndex, pd);
+                    public void withService(XMPPService service) {
+                        service.askJuboRSS();
+                        activity.handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                checkJuboReturnedRSS(juboIndex, pd);
+                                if (startServiceFromTemporary) {
+                                    activity.sp.edit().putBoolean("useXMPPOnlyForBL", true).commit();
+                                }
+                            }
+                        }, 10000);
                     }
-                }, 10000);
+                });
             }
-        });
+        };
+        if (startServiceFromTemporary) {
+            activity.sp.edit().putBoolean("useXMPPOnlyForBL", false).commit();
+            MainActivity.toggleXMPP(activity);
+            activity.handler.postDelayed(dowithXMPP, 5000);
+        } else {
+            dowithXMPP.run();
+        }
     }
 
     private void checkJuboReturnedRSS(final int juboIndex, final ProgressDialog pd) {

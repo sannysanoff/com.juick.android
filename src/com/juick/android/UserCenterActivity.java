@@ -81,11 +81,13 @@ public class UserCenterActivity extends FragmentActivity {
                     @Override
                     public void run() {
                         if (json.getErrorText() != null) {
-                            Toast.makeText(UserCenterActivity.this, json.getErrorText(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(UserCenterActivity.this, "JA server: "+json.getErrorText(), Toast.LENGTH_LONG).show();
+                            listWait.setVisibility(View.GONE);
                         } else {
                             final UserInfo userInfo = new Gson().fromJson(json.getResult(), UserInfo.class);
                             if (userInfo == null){
                                 Toast.makeText(UserCenterActivity.this, "Unable to parse JSON", Toast.LENGTH_LONG).show();
+                                listWait.setVisibility(View.GONE);
                             } else {
                                 userRealName.setText(userInfo.fullName);
                                 ListView list = (ListView) findViewById(R.id.list);

@@ -119,7 +119,7 @@
             <EditText
                     android:id="@+id/priority"
                     android:text="55"
-                    android:inputType="numberDecimal"
+                    android:inputType="numberSigned"
                     android:paddingRight="10dp"
                     android:paddingLeft="10dp"
                     android:layout_width="fill_parent"

@@ -391,6 +391,7 @@
     <string name="Delete">Удалить</string>
     <string name="Subscribe">Подпис.</string>
     <string name="Unsubscribe">Отпис.</string>
+    <string name="StartServiceAndTry">Запустить XMPP и продолжить</string>
 
 
 </resources>

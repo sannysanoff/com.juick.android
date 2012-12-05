@@ -64,8 +64,7 @@ public class XMPPService extends Service  {
                 cleanup(message);
             } else {
                 if (startId != 2) {     // i don't know what is this, really
-                    if (!up)
-                        startup();
+                    startup();
                 }
             }
             return super.onStartCommand(intent, flags, startId);
@@ -89,6 +88,7 @@ public class XMPPService extends Service  {
     public static String lastException;
 
     public void startup() {
+        if (up) return;
         log("startup()");
         lastException = null;
         botOnline = false;

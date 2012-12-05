@@ -22,6 +22,7 @@ import com.juick.android.juick.JuickComAuthorizer;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.R;
+import org.acra.ACRA;
 
 import java.util.*;
 
@@ -587,6 +588,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     return view;
                 }
                 return null;
+            } catch (Exception ex) {
+                TextView tv = new TextView(XMPPIncomingMessagesActivity.this);
+                tv.setText("Error here: "+ex.toString());
+                ACRA.getErrorReporter().handleException(ex, false);
+                return tv;
             } finally {
                 l = System.currentTimeMillis() - l;
                 Log.i("XMPPIncomingMessages","get item ("+i+") time="+l);

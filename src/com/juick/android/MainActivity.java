@@ -163,7 +163,7 @@ public class MainActivity extends FragmentActivity implements
 
 
         sp.registerOnSharedPreferenceChangeListener(this);
-        toggleXMPP();
+        toggleXMPP(this);
         toggleJAMessaging();
         startService(new Intent(this, DatabaseService.class));
 
@@ -467,15 +467,16 @@ public class MainActivity extends FragmentActivity implements
             sp.unregisterOnSharedPreferenceChangeListener(this);
     }
 
-    private void toggleXMPP() {
+    public static void toggleXMPP(Context ctx) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
         if (useXMPP) {
-            startService(new Intent(this, XMPPService.class));
+            ctx.startService(new Intent(ctx, XMPPService.class));
         } else {
-            if (isXMPPServiceRunning()) {
-                Intent service = new Intent(this, XMPPService.class);
+            if (isXMPPServiceRunning(ctx)) {
+                Intent service = new Intent(ctx, XMPPService.class);
                 service.putExtra("terminate", true);
-                startService(service);
+                ctx.startService(service);
             }
         }
     }
@@ -513,8 +514,8 @@ public class MainActivity extends FragmentActivity implements
         }
     }
 
-    private boolean isXMPPServiceRunning() {
-        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+    static boolean isXMPPServiceRunning(Context ctx) {
+        ActivityManager manager = (ActivityManager) ctx.getSystemService(ACTIVITY_SERVICE);
         String className = XMPPService.class.getName();
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (className.equals(service.service.getClassName())) {
@@ -813,7 +814,7 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (s.equals("useXMPP")) {
-            toggleXMPP();
+            toggleXMPP(this);
         }
         if (s.equals("enableJAMessaging")) {
             toggleJAMessaging();

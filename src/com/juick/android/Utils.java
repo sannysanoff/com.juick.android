@@ -144,8 +144,8 @@ public class Utils {
         }
     }
 
-    public static final String JA_ADDRESS = "192.168.1.77:8080";
-    //public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
+    //public static final String JA_ADDRESS = "192.168.1.77:8080";
+    public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);

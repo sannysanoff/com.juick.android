@@ -857,6 +857,7 @@
     <string name="Delete">Delete</string>
     <string name="Subscribe">Subscribe</string>
     <string name="Unsubscribe">Unsubscribe</string>
+    <string name="StartServiceAndTry">Start service and try ask</string>
 
 
 </resources>

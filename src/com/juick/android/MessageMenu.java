@@ -280,7 +280,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
                 for (int i = 0; i < listAdapter.getCount(); i++) {
                     JuickMessage jm = listAdapter.getItem(i);
-                    if (jm.User.UName.equals(UName)) {
+                    if (jm != null && jm.User.UName.equals(UName)) {
                         listAdapter.remove(jm);
                         i--;
                     }
@@ -312,6 +312,8 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 StringBuilder sb = new StringBuilder();
                 int successes = 0;
                 for (String s : ss) {
+                    if (s == null)
+                        continue;
                     try {
                         JSONObject json = new JSONObject(s);
                         JSONArray sentences = json.getJSONArray("sentences");
@@ -950,6 +952,8 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                             out.setLength(0);
                             out.append(retval);
                         } catch (IOException e) {
+                            if (s.length() > 0)
+                                out.append("[error: "+e.toString()+"]");
                             Log.e("com.juickadvanced", "Error calling google translate", e);
                         } finally {
                             synchronized (pieces) {

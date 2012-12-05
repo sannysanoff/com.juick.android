@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 import com.juickadvanced.xmpp.ClientToServer;
@@ -30,8 +31,8 @@ import java.util.HashSet;
  * To change this template use File | Settings | File Templates.
  */
 public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JettyWsClient.WsClientListener {
-    String url = "https://192.168.1.77:8222/xmpp/control";
-    //String url = "https://ja.ip.rt.ru:8222/xmpp/control";
+    //String url = "https://192.168.1.77:8222/xmpp/control";
+    String url = "https://ja.ip.rt.ru:8222/xmpp/control";
     String sessionId;
     HashSet<String> wachedJids;
     long since;
@@ -200,7 +201,11 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         if (restResponse.getErrorText() != null) {
             result = new ServerToClient(sessionId, restResponse.getErrorText());
         } else {
-            result = new Gson().fromJson(restResponse.getResult(), ServerToClient.class);
+            try {
+                result = new Gson().fromJson(restResponse.getResult(), ServerToClient.class);
+            } catch (JsonSyntaxException e) {
+                result = null;
+            }
             if (result == null || !sessionId.equals(result.getSessionId())) {
                 result = new ServerToClient(sessionId, "Unable to decode server reply");
             }

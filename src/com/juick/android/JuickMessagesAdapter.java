@@ -671,18 +671,21 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
         // Highlight nick
-        String accountName = JuickComAuthorizer.getJuickAccountName(ctx).toLowerCase();
-        int scan = spanOffset;
-        String nickScanArea = ssb.toString().toLowerCase()+" ";
-        while(true) {
-            int myNick = nickScanArea.indexOf("@" + accountName, scan);
-            if (myNick != -1) {
-                if (!isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
-                    ssb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick-1, myNick + accountName.length()+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        String accountName = JuickComAuthorizer.getJuickAccountName(ctx);
+        if (accountName != null) {
+            accountName = accountName.toLowerCase();
+            int scan = spanOffset;
+            String nickScanArea = ssb.toString().toLowerCase()+" ";
+            while(true) {
+                int myNick = nickScanArea.indexOf("@" + accountName, scan);
+                if (myNick != -1) {
+                    if (!isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
+                        ssb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick-1, myNick + accountName.length()+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    }
+                    scan = myNick + 1;
+                } else {
+                    break;
                 }
-                scan = myNick + 1;
-            } else {
-                break;
             }
         }
 
