@@ -143,6 +143,7 @@
                             android:layout_weight="1"
                             android:gravity="left|center_vertical"
                             android:id="@+id/open_message"
+                            android:visibility="gone"
                             android:drawableLeft="@drawable/mm_open"
                             android:text="@string/Open"
                             >
@@ -152,6 +153,7 @@
                             android:layout_height="42sp"
                             android:layout_weight="1"
                             android:gravity="left|center_vertical"
+                            android:visibility="gone"
                             android:drawableLeft="@drawable/mm_expand"
                             android:id="@+id/expand_message"
                             android:text="@string/Expand"

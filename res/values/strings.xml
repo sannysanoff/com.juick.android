@@ -297,14 +297,20 @@
                 ]]>
     </string>
 
-    <string name="rf_2012111401"><![CDATA[
+    <string name="rf_2012120501"><![CDATA[
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style>
+                input {
+                    -webkit-transform: scale(1.4,1.4);
+                }
+            </style>
             </head>
             <body>
 
-            <b>14 ноября 2012</b>
+            <form>
+            <b>5 декабря 2012</b>
             <li>
             Нотификация о сообщениях <b>без XMPP/Jabber!</b>. На juick advanced сервере трекаются все комментарии и новые мессаги,
             приходящие с официального juick сервера. Затем по известным правилам уведомления рассылаются всем заинтересованным устройствам.
@@ -319,10 +325,18 @@
             Всё ходит через HTTPS, подробности в политике приватности (читать её в настройках).
             </li>
             <li>
+            Подписка на комментарии пользователя. Используется описанный механизм. Доступна через новое меню (см ниже).
+            </li>
+            <li>
             Удалена XMPP подсистема (smack) из android-клиента. Но XMPP функциональность жива и работает по принципу opera mini:
             XMPP-клиент вынесен с телефона на сервер, и если вы залогинены, то он постоянно онлайн,
             даже пока вы едете в метро. Протокол связи телефона с сервером прост и батарейко-оптимизирован.
-            Технические подробности <a href="http://sanny2android.wordpress.com/2012/11/30/extxmpp-details/">читать здесь</a>
+            Технические подробности <a href=\"http://sanny2android.wordpress.com/2012/12/05/extxmpp-details/\">читать здесь</a>.
+            </li>
+            <li>
+            Новое меню при нажатии на сообщение (переработано, landscape added): <br><img border=1 src=\"http://sanny2android.files.wordpress.com/2012/12/message_menu.jpg\"/><br>
+            Если еще не включили, включаем: <input type=\"checkbox\" name=\"prefs.dialogMessageMenu\" #prefs.checked.dialogMessageMenu#">.
+            Новый экран информации о пользователе, доступен из нового меню:<br><img border=1 src=\"http://sanny2android.files.wordpress.com/2012/12/about_user.jpg\"/><br>
             </li>
             <li>
             Отправление сообщений об ошибках теперь делается с помощью ACRA, без подтверждения. Уходит больше данных об устройстве.
@@ -836,7 +850,7 @@
     <string name="navigationPSTOMy">psto.Blog</string>
     <string name="navigationPSTOPopular">psto.Popular</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
-    <string name="UnreadMessagesNotification">Unread messages notification</string>
+    <string name="UnreadMessagesNotification">Non-Jabber notification</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">is not enabled or service is not running</string>
     <string name="SubCommentsNotification___">Subscriptions/Comments notification implemented on Juick Advanced server
         (no private)

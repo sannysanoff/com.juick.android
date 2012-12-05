@@ -34,8 +34,9 @@ public class JuickAdvancedApplication extends Application {
 
     @Override
     public void onCreate() {
+        if (instance == null)
+            ACRA.init(this);
         instance = this;
-        ACRA.init(this);
         super.onCreate();
         foreverHandler = new Handler();
         try {

@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -303,12 +304,14 @@ public class XMPPControlActivity extends Activity {
         final Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final Utils.ServiceGetter<JAMService> jamServiceServiceGetter = new Utils.ServiceGetter<JAMService>(this, JAMService.class);
         final Button retry = (Button) findViewById(R.id.retry);
+        final Button showMessages = (Button) findViewById(R.id.show_messages);
         final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         retry.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sp.edit().putBoolean("useXMPP", false).commit();
+                GCMIntentService.keepAlive();
                 new Thread() {
                     @Override
                     public void run() {
@@ -325,6 +328,13 @@ public class XMPPControlActivity extends Activity {
                         });
                     }
                 }.start();
+            }
+        });
+        showMessages.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent nintent = new Intent(XMPPControlActivity.this, XMPPIncomingMessagesActivity.class);
+                startActivity(nintent);
             }
         });
         final Button gc = (Button) findViewById(R.id.gc);

@@ -20,7 +20,7 @@ import java.util.*;
 
 /**
  */
-public class XMPPService extends Service  {
+public class XMPPService extends Service {
 
     private static final IncomingMessage DUMMY = new IncomingMessage("", "", null) {
     };
@@ -158,7 +158,7 @@ public class XMPPService extends Service  {
 
         public boolean allowXMPPMessage(IncomingMessage message, SharedPreferences sp) {
             if (message instanceof JuickSubscriptionIncomingMessage) {
-                JuickSubscriptionIncomingMessage jtim = (JuickSubscriptionIncomingMessage)message;
+                JuickSubscriptionIncomingMessage jtim = (JuickSubscriptionIncomingMessage) message;
                 for (String stopTag : stopTags) {
                     for (String tag : jtim.tags) {
                         if (tag.startsWith("*")) tag = tag.substring(1);
@@ -403,10 +403,12 @@ public class XMPPService extends Service  {
     public void requestMessageBody(MessageID finalTopicMessageId) {
         final int mid = ((JuickMessageID) finalTopicMessageId).getMid();
         String messageRequest = "#" + mid;
+        boolean handled = false;
         if (currentThread instanceof ExternalXMPPThread) {
-                ExternalXMPPThread externalXMPPThread = (ExternalXMPPThread)currentThread;
-                externalXMPPThread.client.sendMessage(JUICK_ID, messageRequest);
-        } else {
+            ExternalXMPPThread externalXMPPThread = (ExternalXMPPThread) currentThread;
+            handled = externalXMPPThread.client.sendMessage(JUICK_ID, messageRequest);
+        }
+        if (!handled) {
             new Thread() {
                 @Override
                 public void run() {
@@ -434,6 +436,7 @@ public class XMPPService extends Service  {
                     }
                 }
             }.start();
+            handled = true;
         }
     }
 
@@ -443,7 +446,7 @@ public class XMPPService extends Service  {
     public void askJuboRSS() {
         juboRSSError = "No response from JuBo";
         if (currentThread instanceof ExternalXMPPThread) {
-            final ExternalXMPPThread et = (ExternalXMPPThread)currentThread;
+            final ExternalXMPPThread et = (ExternalXMPPThread) currentThread;
             et.nextListener = new JAXMPPClient.XMPPClientListener() {
                 @Override
                 public boolean onMessage(String jid, String message) {
@@ -755,8 +758,8 @@ public class XMPPService extends Service  {
                 //
                 if (!shouldDelete) {
                     if (handled instanceof JuickIncomingMessage) {
-                        JuickIncomingMessage jim = (JuickIncomingMessage)handled;
-                        String ky = jim.getMID()+"/"+jim.getRID();
+                        JuickIncomingMessage jim = (JuickIncomingMessage) handled;
+                        String ky = jim.getMID() + "/" + jim.getRID();
                         if (recentlyReceivedMessages.contains(ky)) {
                             shouldDelete = true;
                         } else {
@@ -965,7 +968,7 @@ public class XMPPService extends Service  {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(XMPPService.this, "ExtXMPP:"+error, Toast.LENGTH_LONG).show();
+                        Toast.makeText(XMPPService.this, "ExtXMPP:" + error, Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -987,7 +990,7 @@ public class XMPPService extends Service  {
         @Override
         public boolean onMessage(String jid, String message) {
             if (nextListener != null && nextListener.onMessage(jid, message)) return true;
-            Log.i("JuickAdvanced", "ExtXMPP Message: "+jid+": "+message);
+            Log.i("JuickAdvanced", "ExtXMPP Message: " + jid + ": " + message);
             if (jid.equals(JUBO_ID)) {
                 if (message.length() > 0) {
                     String firstLine = message.split("\n")[0];
@@ -1011,7 +1014,7 @@ public class XMPPService extends Service  {
         @Override
         public boolean onPresence(String jid, boolean on) {
             if (nextListener != null && nextListener.onPresence(jid, on)) return true;
-            Log.i("JuickAdvanced", "ExtXMPP Presence: "+jid+": "+on);
+            Log.i("JuickAdvanced", "ExtXMPP Presence: " + jid + ": " + on);
             juboOnline = jid.equals(JUBO_ID) ? on : juboOnline;
             botOnline = jid.equals(JUICK_ID) ? on : juboOnline;
             if (on) {

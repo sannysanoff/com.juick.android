@@ -16,6 +16,7 @@
         <item>Выберите шаблон</item>
         <item>Обычный jabber сервер</item>
         <item>Google Talk</item>
+        <item>Yandex.ru</item>
     </string-array>
 
     <string-array name="imageLoadMode">

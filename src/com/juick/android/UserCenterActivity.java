@@ -70,6 +70,11 @@ public class UserCenterActivity extends FragmentActivity {
             finish();
             return;
         }
+        int height = getWindow().getWindowManager().getDefaultDisplay().getHeight();
+        final int userpicSize = height <= 320 ? 32 : 96;
+        float scaledDensity = getResources().getDisplayMetrics().scaledDensity;
+        userPic.setMinimumHeight((int)(scaledDensity * userpicSize));
+        userPic.setMinimumWidth((int)(scaledDensity * userpicSize));
         userName.setText("@"+uname);
         final boolean russian = Locale.getDefault().getLanguage().equals("ru");
         new Thread() {
@@ -173,14 +178,14 @@ public class UserCenterActivity extends FragmentActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        UserpicStorage.instance.removeListener(avatarID, 96, thiz);
-                        final Bitmap userpic = UserpicStorage.instance.getUserpic(UserCenterActivity.this, avatarID, 96, thiz);
+                        UserpicStorage.instance.removeListener(avatarID, userpicSize, thiz);
+                        final Bitmap userpic = UserpicStorage.instance.getUserpic(UserCenterActivity.this, avatarID, userpicSize, thiz);
                         userPic.setImageBitmap(userpic);    // can be null
                     }
                 });
             }
         };
-        Bitmap userpic = UserpicStorage.instance.getUserpic(this, avatarID, 96, userpicListener);
+        Bitmap userpic = UserpicStorage.instance.getUserpic(this, avatarID, userpicSize, userpicListener);
         userPic.setImageBitmap(userpic);    // can be null
 
 

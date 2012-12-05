@@ -182,6 +182,9 @@ public class Utils {
             fileWriter.write(content);
             fileWriter.close();
             wv.getSettings().setJavaScriptEnabled(true);
+//            wv.getSettings().setBlockNetworkImage(false);
+//            wv.getSettings().setBlockNetworkLoads(false);
+            wv.getSettings().setLoadsImagesAutomatically(true);
             Uri uri = Uri.fromFile(file);
             wv.addJavascriptInterface(new Object() {
                 public void onFormData(String str) {

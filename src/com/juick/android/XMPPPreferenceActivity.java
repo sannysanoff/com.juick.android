@@ -65,11 +65,13 @@ public class XMPPPreferenceActivity extends Activity {
                         port.setText("5222");
                         secure.setChecked(true);
                         jid.requestFocus();
+                        break;
                     case 3:
                         jid.setText("xxxxxx@ya.ru");
                         server.setText("xmpp.yandex.ru");
                         port.setText("5222");
                         jid.requestFocus();
+                        break;
                 }
             }
         };

@@ -160,12 +160,16 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         View translateMessage = dialogView.findViewById(R.id.translate_message);
                         View shareMessage = dialogView.findViewById(R.id.share_message);
                         View userBlog = dialogView.findViewById(R.id.user_blog);
+                        View userCenter = dialogView.findViewById(R.id.user_center);
                         saveMessage.setEnabled(false);      // because in this mode doing smth with message body is not implemented properly
                         translateMessage.setEnabled(false);
                         shareMessage.setEnabled(false);
                         if (incomingMessage instanceof XMPPService.JuickThreadIncomingMessage) {
-                            userBlog.setEnabled(false);
+                            if (userBlog != null)
+                                userBlog.setEnabled(false);
                         }
+                        if (userCenter != null)
+                            userCenter.setEnabled(false);
 
                     }
                 }.onItemLongClick(parent, view, position, id);

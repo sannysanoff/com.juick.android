@@ -213,7 +213,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         return result;
     }
 
-    public void sendMessage(final String jid, final String message) {
+    public boolean sendMessage(final String jid, final String message) {
+        if (!loggedIn) return false;
         new Thread("SendMessage") {
             @Override
             public void run() {
@@ -235,6 +236,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                 }
             }
         }.start();
+        return true;
     }
 
     public void handleGCMessageFromServer(String messag) {

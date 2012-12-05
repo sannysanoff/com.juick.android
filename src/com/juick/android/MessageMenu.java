@@ -278,20 +278,22 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 filteredOutUzers.add(UName);
                 SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
                 sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
-                for (int i = 0; i < listAdapter.getCount(); i++) {
-                    JuickMessage jm = listAdapter.getItem(i);
-                    if (jm != null && jm.User.UName.equals(UName)) {
-                        listAdapter.remove(jm);
-                        i--;
+                if (listAdapter != null) {
+                    for (int i = 0; i < listAdapter.getCount(); i++) {
+                        JuickMessage jm = listAdapter.getItem(i);
+                        if (jm != null && jm.User.UName.equals(UName)) {
+                            listAdapter.remove(jm);
+                            i--;
+                        }
                     }
-                }
-                JuickMessagesAdapter.filteredOutUsers = null;
-                Parcelable parcelable = listView.onSaveInstanceState();
-                listView.setAdapter(listAdapter);
-                try {
-                    listView.onRestoreInstanceState(parcelable);
-                } catch (Throwable e) {
-                    // bad luck
+                    JuickMessagesAdapter.filteredOutUsers = null;
+                    Parcelable parcelable = listView.onSaveInstanceState();
+                    listView.setAdapter(listAdapter);
+                    try {
+                        listView.onRestoreInstanceState(parcelable);
+                    } catch (Throwable e) {
+                        // bad luck
+                    }
                 }
             }
         });
@@ -450,12 +452,14 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     public void withService(DatabaseService service) {
                         service.unsaveMessage(listSelectedItem);
                         if (activity instanceof MainActivity) {
-                            for (int i = 0; i < listAdapter.getCount(); i++) {
-                                JuickMessage jm = listAdapter.getItem(i);
-                                if (jm.getMID().equals(listSelectedItem.getMID())) {
-                                    listAdapter.remove(jm);
-                                    listAdapter.notifyDataSetInvalidated();
-                                    break;
+                            if (listAdapter != null) {
+                                for (int i = 0; i < listAdapter.getCount(); i++) {
+                                    JuickMessage jm = listAdapter.getItem(i);
+                                    if (jm.getMID().equals(listSelectedItem.getMID())) {
+                                        listAdapter.remove(jm);
+                                        listAdapter.notifyDataSetInvalidated();
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -600,6 +604,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             Spinner openUrl = (Spinner)dialogView.findViewById(R.id.open_url);
             Button singleURL = (Button)dialogView.findViewById(R.id.single_url);
             if (urls != null && urls.size() == 1) {
+                singleURL.setVisibility(View.VISIBLE);
                 openUrl.setVisibility(View.GONE);
                 SpannableStringBuilder sb = new SpannableStringBuilder();
                 sb.append(urls.get(0));
@@ -614,6 +619,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 });
             } else if (urls != null && urls.size() > 0) {
                 singleURL.setVisibility(View.GONE);
+                openUrl.setVisibility(View.VISIBLE);
                 openUrl.setOnItemSelectedListener(
                         new AdapterView.OnItemSelectedListener() {
                             @Override
@@ -829,12 +835,14 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         JuickMessageID mid = (JuickMessageID)listSelectedItem.getMID();
         int rid = listSelectedItem.getRID();
         String author = null;
-        if (rid == 0) {
-            author = listSelectedItem.User.UName;
-        } else {
-            if (activity instanceof ThreadActivity) {
-                JuickMessage item = listAdapter.getItem(0);
-                author = item.User.UName;
+        if (listAdapter != null) {
+            if (rid == 0) {
+                author = listSelectedItem.User.UName;
+            } else {
+                if (activity instanceof ThreadActivity) {
+                    JuickMessage item = listAdapter.getItem(0);
+                    author = item.User.UName;
+                }
             }
         }
         String url = "http://www.juick.com/";

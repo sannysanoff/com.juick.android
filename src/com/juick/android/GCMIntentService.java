@@ -36,14 +36,18 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getCategories() != null && intent.getCategories().contains(CATEGORY_HARDWARE_ALARM)) {
             XMPPService.lastAlarmFired = System.currentTimeMillis();
-            for (ServerPingTimerListener serverPingTimerListener : serverPingTimerListeners) {
-                serverPingTimerListener.onServerPingTime();
-            }
+            keepAlive();
             rescheduleAlarm(this, 15);
             return 0;
         }
         if (intent != null && intent.getAction() == null) return START_NOT_STICKY;
         return super.onStartCommand(intent, flags, startId);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    public static void keepAlive() {
+        for (ServerPingTimerListener serverPingTimerListener : serverPingTimerListeners) {
+            serverPingTimerListener.onServerPingTime();
+        }
     }
 
     @Override
