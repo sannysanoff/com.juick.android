@@ -10,10 +10,8 @@ import com.juick.android.MessageMenu;
 import com.juick.android.JuickMessagesAdapter;
 import com.juick.android.MessagesActivity;
 import com.juick.android.Utils;
-import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -134,7 +132,7 @@ public class BNWMessageMenu extends MessageMenu {
 
     protected void actionUserBlog() {
         Intent i = new Intent(activity, MessagesActivity.class);
-        i.putExtra("messagesSource", new BnwCompatibleMessageSource(activity, "@" + listSelectedItem.User.UName, "/show?user=" + listSelectedItem.User.UName));
+        i.putExtra("messagesSource", new BnwCompatibleMessagesSource(activity, "@" + listSelectedItem.User.UName, "/show?user=" + listSelectedItem.User.UName));
         activity.startActivity(i);
     }
 

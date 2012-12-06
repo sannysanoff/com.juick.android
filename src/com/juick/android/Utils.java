@@ -468,6 +468,10 @@ public class Utils {
             InputStream inputStream = urlConnection.getInputStream();
             BINResponse binResponse = streamToByteArray(inputStream, progressNotification);
             inputStream.close();
+            String location = urlConnection.getHeaderField("Location");
+            if (location != null) {
+                return getBinary(context, location, progressNotification, timeout);
+            }
             return binResponse;
         } catch (Exception e) {
             if (progressNotification instanceof DownloadErrorNotification) {

@@ -202,7 +202,7 @@
     <string name="TranslatedLabel">метка ``Переведено`` </string>
     <string name="Dates">Даты</string>
     <string name="TranslateToRussian">Перевести на русский</string>
-    <string name="MessageSources">Источники мессаг</string>
+    <string name="MessagesSources">Источники мессаг</string>
 
     <string name="Save_position">Сохранять позицию во "Всех"</string>
     <string name="Show_Numbers">Номера сообщений</string>
@@ -392,6 +392,7 @@
     <string name="Subscribe">Подпис.</string>
     <string name="Unsubscribe">Отпис.</string>
     <string name="StartServiceAndTry">Запустить XMPP и продолжить</string>
+    <string name="CannotSaveComments">Сохранять комментарии пока не умеем, извините</string>
 
 
 </resources>

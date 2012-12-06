@@ -390,7 +390,6 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                         c2s.setPoll(new Poll(since));
                         final ServerToClient serverToClient = callXmppControl(context, c2s);
                         if (serverToClient.getErrorMessage() == null) {
-                            XMPPService.lastException = null;
                             XMPPService.lastSuccessfulConnect = System.currentTimeMillis();
                             ArrayList<TimestampedMessage> incomingMessages = serverToClient.getIncomingMessages();
                             boolean hasSomething = false;
@@ -432,6 +431,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             }
                             if (error != null) {
                                 XMPPService.lastException = error;
+                                XMPPService.lastExceptionTime = System.currentTimeMillis();
                                 final String finalError = error;
                                 handler.post(new Runnable() {
                                     @Override

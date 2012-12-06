@@ -314,6 +314,26 @@
                         android:paddingLeft="5sp"
                         android:singleLine="false"
                         android:maxLines="5"
+                        android:text="ef wefwefjl wefjlkwj flkwefj wkljf lwkefj lwkefj lwkjf lkwjef lkwjefl wejf"
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="excptn time:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/exception_time"
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:singleLine="false"
+                        android:maxLines="5"
                         android:text=""
                         >
                 </TextView>

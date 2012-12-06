@@ -23,13 +23,13 @@ import java.util.regex.Pattern;
  * Time: 12:59 AM
  * To change this template use File | Settings | File Templates.
  */
-public class PstoCompatibleMessageSource extends MessagesSource {
+public class PstoCompatibleMessagesSource extends MessagesSource {
 
     URLParser urlParser;
     String title;
     int page;
 
-    public PstoCompatibleMessageSource(Context ctx, String title, String path) {
+    public PstoCompatibleMessagesSource(Context ctx, String title, String path) {
         super(ctx);
         this.title = title;
         urlParser = new URLParser(path);

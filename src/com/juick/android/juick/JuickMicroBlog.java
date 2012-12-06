@@ -554,67 +554,81 @@ public class JuickMicroBlog implements MicroBlog {
             myUserId = "";
         }
         if (myUserId.equals("")) {
-            final String value = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
-            final ProgressDialog pd = new ProgressDialog(activity);
-            pd.setTitle(activity.getString(R.string.GettingYourId));
-            pd.setMessage(activity.getString(R.string.ConnectingToWwwJuick));
-            pd.setIndeterminate(true);
-            pd.show();
-            final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(activity.getString(R.string.com_juick));
-            new Thread("UserID obtainer") {
-                @Override
-                public void run() {
-                    String fullName = value;
-                    if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                    try {
-                        URL u = new URL("http://juick.com/" + fullName.trim() + "/");
-                        HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
-                        urlConnection.setInstanceFollowRedirects(true);
-                        Utils.RESTResponse response = Utils.streamToString((InputStream) urlConnection.getContent(), null);
-                        if (response.getErrorText() != null) {
-                            throw new IOException(response.getErrorText());
-                        } else {
-                            String retval = response.getResult();
-                            String SEARCH_MARKER = "http://i.juick.com/a/";
-                            int ix = retval.indexOf(SEARCH_MARKER);
-                            if (ix < 0) {
-                                throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
-                            }
-                            int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
-                            if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                                throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
-                            }
-                            final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    sp.edit().putString("myUserId", uidS).commit();
-                                    action.apply(Integer.parseInt(uidS));
-                                }
-                            });
-                        }
+            final String userName = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
+            String titleOfDialog = activity.getString(R.string.GettingYourId);
 
-                    } catch (final Exception e) {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(activity, activity.getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    } finally {
-                        httpClient.close();
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                pd.hide();
-                            }
-                        });
-                    }
+            final Utils.Function<Void, String> withUserId = new Utils.Function<Void, String>() {
+                @Override
+                public Void apply(String uidS) {
+                    sp.edit().putString("myUserId", uidS).commit();
+                    action.apply(Integer.parseInt(uidS));
+                    return null;
                 }
-            }.start();
+            };
+
+            obtainUserIdByName(activity, userName, titleOfDialog, withUserId);
         } else {
             action.apply(Integer.parseInt(myUserId));
         }
+    }
+
+    public static void obtainUserIdByName(final Activity activity, final String userName, String titleOfDialog, final Utils.Function<Void, String> withUserId) {
+        final ProgressDialog pd = new ProgressDialog(activity);
+        pd.setTitle(titleOfDialog);
+        pd.setMessage(activity.getString(R.string.ConnectingToWwwJuick));
+        pd.setIndeterminate(true);
+        pd.show();
+        final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(activity.getString(R.string.com_juick));
+        new Thread("UserID obtainer") {
+            @Override
+            public void run() {
+                String fullName = userName;
+                if (fullName.startsWith("@")) fullName = fullName.substring(1);
+                try {
+                    URL u = new URL("http://juick.com/" + fullName.trim() + "/");
+                    HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
+                    urlConnection.setInstanceFollowRedirects(true);
+                    Utils.RESTResponse response = Utils.streamToString((InputStream) urlConnection.getContent(), null);
+                    if (response.getErrorText() != null) {
+                        throw new IOException(response.getErrorText());
+                    } else {
+                        String retval = response.getResult();
+                        String SEARCH_MARKER = "http://i.juick.com/a/";
+                        int ix = retval.indexOf(SEARCH_MARKER);
+                        if (ix < 0) {
+                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
+                        }
+                        int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
+                        if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
+                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
+                        }
+                        final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                withUserId.apply(uidS);
+                            }
+                        });
+                    }
+
+                } catch (final Exception e) {
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(activity, activity.getString(R.string.UnableToDetectNick) + e.toString(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } finally {
+                    httpClient.close();
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pd.hide();
+                        }
+                    });
+                }
+            }
+        }.start();
     }
 
     private void askJuboFirst(final int juboIndex, final boolean startServiceFromTemporary) {

@@ -41,13 +41,13 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.juick.android.bnw.BnwCompatibleMessagesSource;
+import com.juick.android.psto.PstoCompatibleMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.bnw.BNWMicroBlog;
-import com.juick.android.bnw.BnwCompatibleMessageSource;
 import com.juick.android.bnw.BnwMessageID;
 import com.juick.android.juick.*;
-import com.juick.android.psto.PstoCompatibleMessageSource;
 import com.juick.android.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
@@ -77,7 +77,7 @@ public class MainActivity extends FragmentActivity implements
     Object restoreData;
     public SharedPreferences sp;
     public Handler handler;
-    private boolean resumed;
+    public boolean resumed;
     private boolean reloadOnResume;
 
     public static Map<String, MicroBlog> microBlogs = new HashMap<String, MicroBlog>();
@@ -184,7 +184,11 @@ public class MainActivity extends FragmentActivity implements
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
+
+        WhatsNew.checkForUpdates(this);
     }
+
+    public static String updateAvailable;
 
     private boolean maybeLaunchIntent(Intent intent, boolean shouldFinish) {
         if (intent != null) {
@@ -223,7 +227,7 @@ public class MainActivity extends FragmentActivity implements
 
     private void gotoSubscriptions() {
         final Bundle args = new Bundle();
-        JuickMessagesSource ms = getSubscriptionsMessageSource(R.string.navigationSubscriptions);
+        JuickMessagesSource ms = getSubscriptionsMessagesSource(R.string.navigationSubscriptions);
         ms.setKind("home");
         args.putSerializable("messagesSource", ms);
         runDefaultFragmentWithBundle(args, subscriptionsItem);
@@ -392,7 +396,7 @@ public class MainActivity extends FragmentActivity implements
     }
 
 
-    private JuickMessagesSource getSubscriptionsMessageSource(int labelId) {
+    private JuickMessagesSource getSubscriptionsMessagesSource(int labelId) {
         if (sp.getBoolean("web_for_subscriptions", false)) {
             return new JuickWebCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://dev.juick.com/?show=my");
         } else {
@@ -660,7 +664,7 @@ public class MainActivity extends FragmentActivity implements
                     Intent intent = new Intent(this, ThreadActivity.class);
                     intent.setData(null);
                     intent.putExtra("mid", new JuickMessageID(mid));
-                    intent.putExtra("messageSource", new JuickCompatibleURLMessagesSource(this));
+                    intent.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(this));
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
@@ -677,7 +681,7 @@ public class MainActivity extends FragmentActivity implements
                 if (shouldFinish) finish();
                 Intent intent = new Intent(this, MessagesActivity.class);
                 intent.setData(null);
-                intent.putExtra("messageSource", new PstoCompatibleMessageSource(this, "PSTO Main","http://psto.net/recent"));
+                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, "PSTO Main","http://psto.net/recent"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -689,7 +693,7 @@ public class MainActivity extends FragmentActivity implements
                 intent.setData(null);
                 PstoMessageID mid = new PstoMessageID(hostPart[0], segs.get(0));
                 intent.putExtra("mid", mid);
-                intent.putExtra("messageSource", new PstoCompatibleMessageSource(this, getString(R.string.navigationPSTORecent),"http://psto.net/recent"));
+                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, getString(R.string.navigationPSTORecent),"http://psto.net/recent"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -704,7 +708,7 @@ public class MainActivity extends FragmentActivity implements
                 intent.setData(null);
                 BnwMessageID mid = new BnwMessageID(segs.get(1));
                 intent.putExtra("mid", mid);
-                intent.putExtra("messageSource", new BnwCompatibleMessageSource(this, getString(R.string.navigationBNWAll),"/show"));
+                intent.putExtra("messagesSource", new BnwCompatibleMessagesSource(this, getString(R.string.navigationBNWAll),"/show"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -714,6 +718,8 @@ public class MainActivity extends FragmentActivity implements
         return false;
     }
 
+    public static Runnable installerOnResume;
+
     @Override
     protected void onResume() {
         restyle();
@@ -721,6 +727,13 @@ public class MainActivity extends FragmentActivity implements
         super.onResume();
         if (reloadOnResume) {
             doReload();
+        }
+        if (installerOnResume != null) {
+            try {
+                installerOnResume.run();
+            } finally {
+                installerOnResume = null;
+            }
         }
     }
 

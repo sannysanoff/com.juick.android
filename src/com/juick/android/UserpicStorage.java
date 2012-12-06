@@ -64,7 +64,7 @@ public class UserpicStorage {
     }
 
     public Bitmap getUserpic(final Context ctx, final AvatarID id, final int size, Listener toAdd) {
-        final String key = "" + id + "|" + size;
+        final String key = "" + id.toString(size) + "|" + size;
         Bitmap bitmap = cache.get(key);
         if (bitmap != null) {
             return bitmap;
@@ -116,7 +116,7 @@ public class UserpicStorage {
                                                     dbs.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                                         @Override
                                                         public void withService(DatabaseService service) {
-                                                            service.storeUserpic(id.toString(), arr);
+                                                            service.storeUserpic(id.toString(size), arr);
                                                         }
                                                     });
                                                 }

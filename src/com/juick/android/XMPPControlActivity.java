@@ -288,6 +288,7 @@ public class XMPPControlActivity extends Activity {
         final TextView lastWS = (TextView) findViewById(R.id.last_ws);
         final TextView lastWSId = (TextView) findViewById(R.id.last_ws_id);
         final TextView lastException = (TextView) findViewById(R.id.last_exception);
+        final TextView exceptionTime = (TextView) findViewById(R.id.exception_time);
         final TextView messagesReceived = (TextView) findViewById(R.id.messages_received);
         final TextView alarmScheduled = (TextView) findViewById(R.id.alarm_scheduled);
         final TextView alarmFired = (TextView) findViewById(R.id.alarm_fired);
@@ -410,6 +411,7 @@ public class XMPPControlActivity extends Activity {
                         lastWS.setText("" + (XMPPService.lastWSMessage != null ? sdf.format(XMPPService.lastWSMessage) : " --- "));
                         alarmScheduled.setText(XMPPService.lastAlarmScheduled != 0 ? "" + sdf.format(new Date(XMPPService.lastAlarmScheduled)) : " --- ");
                         alarmFired.setText(XMPPService.lastAlarmFired != 0 ? "" + sdf.format(new Date(XMPPService.lastAlarmFired)) : " --- ");
+                        exceptionTime.setText(XMPPService.lastExceptionTime != 0 ? "" + sdf.format(new Date(XMPPService.lastExceptionTime)) : " --- ");
                         lastGCMId.setText(XMPPService.lastGCMMessageID + " count=" + XMPPService.nGCMMessages);
                         lastWSId.setText(XMPPService.lastWSMessageID + " count=" + XMPPService.nWSMessages);
                         handler.postDelayed(thiz, 2000);

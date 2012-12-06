@@ -2,16 +2,32 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.RadioButton;
+import android.widget.TextView;
 import android.widget.Toast;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.juick.android.ja.Network;
 import com.juickadvanced.R;
+import org.acra.ACRA;
+import org.apache.http.client.HttpClient;
+
+import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,6 +39,178 @@ import com.juickadvanced.R;
 public class WhatsNew {
 
     public static final long REPORT_SEND_PERIOD = 2 * 24 * 60 * 60 * 1000L;
+    public static String updateURL;
+    static File updatesDir;
+    public final static long UPDATE_CHECK_INTERVAL = 60 * 60 * 1000L;
+
+    public static File getUpdateAPK() {
+        return new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
+    }
+
+    public static void checkForUpdates(final MainActivity activity) {
+        updatesDir = new File(activity.getFilesDir(), "updates");
+        updatesDir.mkdirs();
+        final File last_check = new File(updatesDir, "last_check");
+        if (last_check.exists()) {
+            if (System.currentTimeMillis() - last_check.lastModified() < UPDATE_CHECK_INTERVAL) return;
+        }
+        final int currentVersionCode;
+        try {
+            currentVersionCode = activity.getApplicationContext().getPackageManager().getPackageInfo(activity.getApplicationContext().getPackageName(), 0).versionCode;
+        } catch (Exception ex) {
+            ACRA.getErrorReporter().handleException(ex, false);
+            return;
+        }
+        final SharedPreferences sp = activity.getSharedPreferences("versions", Context.MODE_PRIVATE);
+        final String reportedKey = "reported_version_" + currentVersionCode;
+        boolean reported = sp.getBoolean(reportedKey, false);
+        if (!reported) {
+            new Thread() {
+                @Override
+                public void run() {
+                    Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/notify_updated?version=" + currentVersionCode, null);
+                    if (json.getErrorText() == null) {
+                        JuickAdvancedApplication.foreverHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                sp.edit().putBoolean(reportedKey, true).commit();
+                            }
+                        });
+                    }
+                    super.run();    //To change body of overridden methods use File | Settings | File Templates.
+                }
+            }.start();
+        }
+        new Thread() {
+            @Override
+            public void run() {
+                Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version", null);
+                try {
+                    last_check.createNewFile();
+                } catch (IOException e) {
+                    //
+                }
+                if (json.getResult() != null) {
+                    // https://github.com/downloads/sannysanoff/com.juick.android/com.juickadvanced-2012120502.apk
+                    Matcher matcher = Pattern.compile("com.juickadvanced-(\\d+).apk").matcher(json.getResult());
+                    if (matcher.find()) {
+                        String version = matcher.group(1);
+                        try {
+                            int updateVersionCode = Integer.parseInt(version);
+                            if (updateVersionCode > currentVersionCode) {
+                                if (!new File(updatesDir, "ignore-"+version).exists()) {
+                                    JsonObject jsonElement = (JsonObject)new Gson().fromJson(json.getResult(), JsonElement.class);
+                                    JsonPrimitive url = (JsonPrimitive)jsonElement.get("url");
+                                    updateURL = url.getAsString();
+                                    MainActivity.updateAvailable = version;
+                                    activity.handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            setUpdateVisible(activity);
+                                        }
+                                    });
+                                }
+                            } else {
+                                File file = getUpdateAPK();
+                                if (file.exists()) {
+                                    file.delete();
+                                }
+                            }
+                        } catch (Exception e) {
+                            ACRA.getErrorReporter().handleException(e, false);
+                        }
+                    }
+                }
+                super.run();
+            }
+        }.start();
+    }
+
+    public static void setUpdateVisible(final MainActivity activity) {
+        if (MainActivity.updateAvailable != null) {
+            if (activity.resumed) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder.setTitle("New Beta available");
+                View view = activity.getLayoutInflater().inflate(R.layout.update_dialog, null);
+                TextView versionCode = (TextView)view.findViewById(R.id.versionCode);
+                versionCode.setText(MainActivity.updateAvailable);
+
+                builder.setView(view);
+                builder.setPositiveButton("Download and install", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        Toast.makeText(activity, "Download will start now.", Toast.LENGTH_LONG).show();
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                final Utils.BINResponse binary = Utils.getBinary(activity, updateURL, new Utils.DownloadProgressNotification() {
+                                    @Override
+                                    public void notifyDownloadProgress(int progressBytes) {
+                                    }
+
+                                    @Override
+                                    public void notifyHttpClientObtained(HttpClient client) {
+                                        //To change body of implemented methods use File | Settings | File Templates.
+                                    }
+                                }, -1);
+
+                                Runnable afterDownload = new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (binary.getErrorText() == null) {
+                                            try {
+                                                FileOutputStream fos = new FileOutputStream(getUpdateAPK());
+                                                fos.write(binary.getResult());
+                                                fos.close();
+                                                installUpdate(activity);
+                                            } catch (Exception e) {
+                                                Toast.makeText(activity, "Store Juick Advanced update: "+e.toString(), Toast.LENGTH_LONG).show();
+                                            }
+                                        } else {
+                                            Toast.makeText(activity, "Download Juick Advanced update: "+binary.getErrorText(), Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                };
+                                if (activity.resumed) {
+                                    activity.handler.post(afterDownload);
+                                } else {
+                                    MainActivity.installerOnResume = afterDownload;
+                                }
+                                super.run();    //To change body of overridden methods use File | Settings | File Templates.
+                            }
+                        }.start();
+                    }
+                });
+                builder.setNeutralButton("Ask later", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        File last_check = new File(updatesDir, "last_check");
+                        last_check.delete();
+                        try {
+                            last_check.createNewFile();
+                        } catch (IOException e) {
+                            //
+                        }
+                        dialog.cancel();
+                    }
+                });
+                builder.setNegativeButton("Skip", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            new File(updatesDir, "ignore-"+ MainActivity.updateAvailable).createNewFile();
+                        } catch (IOException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
+            }
+        }
+
+    }
 
 
     class ReleaseFeatures {
@@ -35,7 +223,7 @@ public class WhatsNew {
         }
     }
 
-    ReleaseFeatures[] features = new ReleaseFeatures[] {
+    ReleaseFeatures[] features = new ReleaseFeatures[]{
             new ReleaseFeatures("2012120501", R.string.rf_2012120501),
             new ReleaseFeatures("2012092002", R.string.rf_2012092001),
             new ReleaseFeatures("2012091402", R.string.rf_2012091402),
@@ -58,7 +246,7 @@ public class WhatsNew {
                 String chosen = sp.getString("usage_statistics", "no");
                 if (chosen.equals("no_hello")) {
                     // say hello
-                    sp.edit().putString("usage_statistics","no").commit();
+                    sp.edit().putString("usage_statistics", "no").commit();
                     Utils.ServiceGetter<DatabaseService> databaseServiceServiceGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
                     databaseServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                         @Override
@@ -115,19 +303,19 @@ public class WhatsNew {
     }
 
     public static String getSendStatValueFromUI(View stat) {
-        RadioButton us_send = (RadioButton)stat.findViewById(R.id.us_send);
-        RadioButton us_send_wifi = (RadioButton)stat.findViewById(R.id.us_send_wifi);
-        RadioButton us_no_hello = (RadioButton)stat.findViewById(R.id.us_no_hello);
-        RadioButton us_no = (RadioButton)stat.findViewById(R.id.us_no);
+        RadioButton us_send = (RadioButton) stat.findViewById(R.id.us_send);
+        RadioButton us_send_wifi = (RadioButton) stat.findViewById(R.id.us_send_wifi);
+        RadioButton us_no_hello = (RadioButton) stat.findViewById(R.id.us_no_hello);
+        RadioButton us_no = (RadioButton) stat.findViewById(R.id.us_no);
         String option = "";
         if (us_send.isChecked())
-            option  = "send";
+            option = "send";
         if (us_send_wifi.isChecked())
-            option  = "send_wifi";
+            option = "send_wifi";
         if (us_no_hello.isChecked())
-            option  = "no_hello";
+            option = "no_hello";
         if (us_no.isChecked())
-            option  = "no";
+            option = "no";
         return option;
     }
 
@@ -217,7 +405,7 @@ public class WhatsNew {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     applySettings(wv);
-                    reportFeatures(sequence+1, cycle, notCycle);
+                    reportFeatures(sequence + 1, cycle, notCycle);
                 }
             });
         }
@@ -225,7 +413,7 @@ public class WhatsNew {
     }
 
     private void applySettings(WebView wv) {
-        String tag = (String)wv.getTag();
+        String tag = (String) wv.getTag();
         if (tag == null) {
             Toast.makeText(context, "Error getting checkbox values from embedded browser, sorry. Try using Settings screen", Toast.LENGTH_LONG).show();
         } else {
@@ -240,7 +428,7 @@ public class WhatsNew {
                         boolean def = false;
                         if (av[0].endsWith("!")) {
                             def = true;
-                            av[0] = av[0].substring(0, av[0].length()-1);
+                            av[0] = av[0].substring(0, av[0].length() - 1);
                         }
                         boolean newValue = "true".equals(av[1]);
                         if (sp.getBoolean(av[0], def) != newValue) {
@@ -254,7 +442,8 @@ public class WhatsNew {
     }
 
     public static class FeatureSaver {
-        public void saveFeature(DatabaseService db) {}
+        public void saveFeature(DatabaseService db) {
+        }
     }
 
     public void reportFeature(final String feature_name, final String feature_value) {
@@ -349,7 +538,7 @@ public class WhatsNew {
                 sb.append("<br><hr>");
                 JsonObject jsonObject = service.prepareUsageReportValue();
                 String unsafeString = jsonObject.toString();
-                String safeString = unsafeString.replace("<","&lt;");
+                String safeString = unsafeString.replace("<", "&lt;");
                 sb.append(safeString);
                 WebView wv = new WebView(service);
                 String htmlContent = sb.toString();
@@ -376,6 +565,65 @@ public class WhatsNew {
         if (chosen.equals("send_wifi")) return context.getString(R.string.us_send_wifi);
         if (chosen.equals("send")) return context.getString(R.string.us_send);
         return "???";
+    }
+
+
+    private static void doLocalInstall(final Activity context) {
+        File file = new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
+        Intent promptInstall = new Intent(Intent.ACTION_VIEW)
+                .setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+        promptInstall.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(promptInstall);
+    }
+
+    private static void launchApplicationSettingsForUnknownSources(final Context context) {
+        if (context instanceof MainActivity) {
+            ((MainActivity) context).installerOnResume = new Runnable() {
+                @Override
+                public void run() {
+                    installUpdate((MainActivity) context);
+                }
+            };
+        }
+        if (Build.VERSION.SDK_INT >= 14 /* Build.VERSION_CODES.ICE_CREAM_SANDWICH */) {
+            Intent intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+            context.startActivity(intent);
+        } else {
+            // older setting
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_SETTINGS);
+            context.startActivity(intent);
+        }
+    }
+
+    public static void installUpdate(final Activity context) {
+        String string = Settings.System.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS);
+        if ("1".equals(string)) {
+            doLocalInstall(context);
+        } else {
+            new AlertDialog.Builder(context)
+                    .setMessage("You must allow 'unknown sources' to install update")
+                    .setPositiveButton("Enable unknown sources", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            launchApplicationSettingsForUnknownSources(context);
+                            //To change body of implemented methods use File | Settings | File Templates.
+                        }
+                    }).setNegativeButton("Skip update", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (context instanceof MainActivity) {
+                        MainActivity ma = (MainActivity)context;
+                        try {
+                            new File(new File(context.getFilesDir(),"updates"), "ignore-"+ma.updateAvailable).createNewFile();
+                        } catch (IOException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                    }
+                    dialog.cancel();
+                }
+            }).show();
+
+        }
     }
 
 

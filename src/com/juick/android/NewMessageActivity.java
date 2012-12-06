@@ -44,6 +44,7 @@ import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import org.acra.ACRA;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -99,9 +100,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         setContentView(R.layout.newmessage);
 
         messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
-        if (messagesSource == null) {
-            messagesSource = new JuickCompatibleURLMessagesSource("X", this, "http://nonsense.x/");
-        }
+        checkMessagesSource();
 
 
         etTo = (EditText) findViewById(R.id.editTo);
@@ -124,6 +123,12 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
+    private void checkMessagesSource() {
+        if (messagesSource == null) {
+            messagesSource = new JuickCompatibleURLMessagesSource("X", this, "http://nonsense.x/");
+        }
+    }
+
     private void resetForm() {
         setProgressBarIndeterminateVisibility(true);
         etMessage.setText("");
@@ -141,6 +146,12 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         progressDialog = null;
         progressDialogCancel.bool = false;
         etMessage.requestFocus();
+        checkMessagesSource();
+        if (messagesSource == null || messagesSource.getMicroBlog() == null) {
+            ACRA.getErrorReporter().handleException(new AssertionError("messagesSource == null || messagesSource.getMicroBlog() == null"), false);
+            Toast.makeText(this, "Assertion error", Toast.LENGTH_SHORT).show();
+            finish();
+        }
         messagesSource.getMicroBlog().decorateNewMessageActivity(this);
     }
 
@@ -627,14 +638,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
         fos.close();
         inputStream.close();
-    }
-
-    public MessagesSource getMessagesSource() {
-        return messagesSource;
-    }
-
-    public void setMessagesSource(MessagesSource messagesSource) {
-        this.messagesSource = messagesSource;
     }
 
     public static class BooleanReference {

@@ -518,7 +518,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
         Intent i = new Intent(getActivity(), ThreadActivity.class);
         i.putExtra("mid", jmsg.getMID());
-        i.putExtra("messageSource", messagesSource);
+        i.putExtra("messagesSource", messagesSource);
         startActivity(i);
     }
 

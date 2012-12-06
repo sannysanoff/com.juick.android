@@ -6,7 +6,6 @@ import android.widget.ListView;
 import com.juick.android.JuickMessagesAdapter;
 import com.juick.android.MessageMenu;
 import com.juick.android.MessagesActivity;
-import com.juick.android.bnw.BnwCompatibleMessageSource;
 import com.juick.android.juick.MessagesSource;
 
 /**
@@ -34,7 +33,7 @@ public class PstoMessageMenu extends MessageMenu {
 
     protected void actionUserBlog() {
         Intent i = new Intent(activity, MessagesActivity.class);
-        i.putExtra("messagesSource", new PstoCompatibleMessageSource(activity, "@" + listSelectedItem.User.UName, "http://"+listSelectedItem.User.UName+".psto.net/"));
+        i.putExtra("messagesSource", new PstoCompatibleMessagesSource(activity, "@" + listSelectedItem.User.UName, "http://"+listSelectedItem.User.UName+".psto.net/"));
         activity.startActivity(i);
     }
 

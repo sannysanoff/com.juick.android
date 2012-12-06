@@ -81,15 +81,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
     }
 
-    MessagesSource parentMessageSource;
+    MessagesSource parentMessagesSource;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
-        parentMessageSource = (MessagesSource) getArguments().getSerializable("messageSource");
-        parentMessageSource.setContext(getActivity());
+        parentMessagesSource = (MessagesSource) getArguments().getSerializable("messagesSource");
+        parentMessagesSource.setContext(getActivity());
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
         if (Build.VERSION.SDK_INT >= 8) {
@@ -211,7 +211,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage) {
                     JuickMessage msg = (JuickMessage)itemAtPosition;
-                    MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessageSource, getListView(), listAdapter);
+                    MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
                     messageMenu.onItemLongClick(parent, view, position, id);
 
                 }
@@ -230,7 +230,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     }
                 };
                 if (restoreData == null) {
-                    parentMessageSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                    parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                         @Override
                         public Void apply(ArrayList<JuickMessage> messages) {
                             then.apply(new MessagesFragment.RetainedData(messages, null));

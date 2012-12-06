@@ -31,6 +31,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.google.gson.Gson;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import com.juickadvanced.data.MessageID;
@@ -65,8 +66,8 @@ public class UserCenterActivity extends FragmentActivity {
         final int uid = extras.getInt("uid");
 
         final MessageID mid = (MessageID)extras.getSerializable("mid");
-        final MessagesSource messagesSource = (MessagesSource)extras.getSerializable("messageSource");
-        if (uname == null || mid == null || messagesSource == null) {
+        final MessagesSource messagesSource = (MessagesSource)extras.getSerializable("messagesSource");
+        if (uname == null || mid == null) {
             finish();
             return;
         }
@@ -198,7 +199,18 @@ public class UserCenterActivity extends FragmentActivity {
         show_blog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mm.actionUserBlog();
+                if (mm.listSelectedItem.User.UID == 0) {
+                    JuickMicroBlog.obtainUserIdByName(UserCenterActivity.this, mm.listSelectedItem.User.UName, "Getting Juick User Id", new Utils.Function<Void, String>() {
+                        @Override
+                        public Void apply(String s) {
+                            mm.listSelectedItem.User.UID = Integer.parseInt(s);
+                            mm.actionUserBlog();
+                            return null;  //To change body of implemented methods use File | Settings | File Templates.
+                        }
+                    });
+                } else {
+                    mm.actionUserBlog();
+                }
             }
         });
         search.setOnClickListener(new View.OnClickListener() {

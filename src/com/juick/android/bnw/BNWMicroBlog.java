@@ -207,7 +207,7 @@ public class BNWMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    BnwCompatibleMessageSource ms = new BnwCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "/feed");
+                    BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/feed");
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -218,7 +218,7 @@ public class BNWMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    BnwCompatibleMessageSource ms = new BnwCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "/show");
+                    BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/show");
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -229,7 +229,7 @@ public class BNWMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    BnwCompatibleMessageSource ms = new BnwCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "/today");
+                    BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/today");
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -249,7 +249,7 @@ public class BNWMicroBlog implements MicroBlog {
 
     @Override
     public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new BnwCompatibleMessageSource(context,"","/").getChildren(mid, notifications, cont);
+        new BnwCompatibleMessagesSource(context,"","/").getChildren(mid, notifications, cont);
 
     }
 

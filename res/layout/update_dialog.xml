@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/update_available"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:background="#FF003000"
+                android:orientation="vertical"
+        >
+    <TextView
+            android:id="@+id/versionCode"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="#FFFFFFFF"
+            android:text="12345"
+            />
+    <TextView
+            android:id="@+id/text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/versionCode"
+            android:gravity="center"
+            android:textColor="#FFFFFFFF"
+            android:text="New testing version of Juick Advanced is available in BETA channel."
+            />
+    <LinearLayout
+            android:layout_below="@id/text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+    </LinearLayout>
+</RelativeLayout>

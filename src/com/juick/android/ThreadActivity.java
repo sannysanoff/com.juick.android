@@ -96,7 +96,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             finish();
         }
 
-        messagesSource = (MessagesSource) i.getSerializableExtra("messageSource");
+        messagesSource = (MessagesSource) i.getSerializableExtra("messagesSource");
         setContentView(R.layout.thread);
         findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -148,7 +148,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         tf = new ThreadFragment(getLastCustomNonConfigurationInstance());
         Bundle args = new Bundle();
         args.putSerializable("mid", mid);
-        args.putSerializable("messageSource", messagesSource);
+        args.putSerializable("messagesSource", messagesSource);
         args.putBoolean("scrollToBottom", i.getBooleanExtra("scrollToBottom", false));
         tf.setArguments(args);
         ft.add(R.id.threadfragment, tf);

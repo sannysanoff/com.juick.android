@@ -23,13 +23,13 @@ import java.util.*;
  * Time: 12:59 AM
  * To change this template use File | Settings | File Templates.
  */
-public class BnwCompatibleMessageSource extends MessagesSource {
+public class BnwCompatibleMessagesSource extends MessagesSource {
 
     URLParser urlParser;
     String title;
     int page;
 
-    public BnwCompatibleMessageSource(Context ctx, String title, String path) {
+    public BnwCompatibleMessagesSource(Context ctx, String title, String path) {
         super(ctx);
         this.title = title;
         urlParser = new URLParser("http://ipv4.bnw.im/api"+path);
@@ -130,7 +130,7 @@ public class BnwCompatibleMessageSource extends MessagesSource {
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
-                    JuickMessage msg = BnwCompatibleMessageSource.initFromJSON(jsonObject);
+                    JuickMessage msg = BnwCompatibleMessagesSource.initFromJSON(jsonObject);
                     messages.add(msg);
                     if (!storeSource)
                         msg.source = null;

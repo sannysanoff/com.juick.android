@@ -231,7 +231,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             if (mid > 0) {
                 Intent intent = new Intent(activity, ThreadActivity.class);
                 intent.putExtra("mid", new JuickMessageID(mid));
-                intent.putExtra("messageSource", messagesSource);
+                intent.putExtra("messagesSource", messagesSource);
                 activity.startActivity(intent);
             }
             //} else if (url.startsWith("@")) {
@@ -265,7 +265,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         Intent i = new Intent(activity, UserCenterActivity.class);
         i.putExtra("uname", listSelectedItem.User.UName);
         i.putExtra("uid", listSelectedItem.User.UID);
-        i.putExtra("messageSource", messagesSource);
+        i.putExtra("messagesSource", messagesSource);
         i.putExtra("mid", listSelectedItem.getMID());
         activity.startActivity(i);
     }
@@ -427,19 +427,23 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     }
 
     private void actionSaveMessage() {
-        confirmAction(R.string.ReallySaveMessage, new Runnable() {
-            @Override
-            public void run() {
-                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
-                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                    @Override
-                    public void withService(DatabaseService service) {
-                        service.saveMessage(listSelectedItem);
-                        Toast.makeText(activity, activity.getString(R.string.Message_saved), Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
+        if (listSelectedItem.getRID() != 0) {
+            Toast.makeText(activity, activity.getString(R.string.CannotSaveComments), Toast.LENGTH_LONG).show();
+        } else {
+            confirmAction(R.string.ReallySaveMessage, new Runnable() {
+                @Override
+                public void run() {
+                    Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+                    databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                        @Override
+                        public void withService(DatabaseService service) {
+                            service.saveMessage(listSelectedItem);
+                            Toast.makeText(activity, activity.getString(R.string.Message_saved), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            });
+        }
     }
 
     private void actionUnsaveMessage() {
@@ -597,9 +601,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
                 }
             });
-            TextView userNo = (TextView)dialogView.findViewById(R.id.user_no);
             TextView messageNo = (TextView)dialogView.findViewById(R.id.message_no);
-            userNo.setText("@"+listSelectedItem.User.UName);
             messageNo.setText(listSelectedItem.getDisplayMessageNo());
             Spinner openUrl = (Spinner)dialogView.findViewById(R.id.open_url);
             Button singleURL = (Button)dialogView.findViewById(R.id.single_url);
@@ -689,7 +691,11 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             //View userBlog = dialogView.findViewById(R.id.user_blog);
             //View userStats = dialogView.findViewById(R.id.user_stats);
             View openMessageInBrowser = dialogView.findViewById(R.id.open_message_in_browser);
-            View userCenter = dialogView.findViewById(R.id.user_center);
+            Button userCenter = (Button)dialogView.findViewById(R.id.user_center);
+            if (null == dialogView.findViewById(R.id.column_3)) {
+                // only for portrait
+                userCenter.setText("@"+listSelectedItem.User.UName+" "+userCenter.getText());
+            }
 
             unsubscribeMessage.setEnabled (listSelectedItem.getRID() == 0);
             subscribeMessage.setEnabled (listSelectedItem.getRID() == 0);

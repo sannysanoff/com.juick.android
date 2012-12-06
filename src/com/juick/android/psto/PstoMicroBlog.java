@@ -48,7 +48,7 @@ public class PstoMicroBlog implements MicroBlog {
                         public void run() {
                             final Bundle args = new Bundle();
                             final String weblogin = sp.getString("psto.web_login", null);
-                            PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/subs");
+                            PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/subs");
                             args.putSerializable("messagesSource", ms);
                             mainActivity.runDefaultFragmentWithBundle(args, thiz);
                         }
@@ -61,7 +61,7 @@ public class PstoMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://psto.net/top");
+                    PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "http://psto.net/top");
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -72,7 +72,7 @@ public class PstoMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://psto.net/recent");
+                    PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "http://psto.net/recent");
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -88,7 +88,7 @@ public class PstoMicroBlog implements MicroBlog {
                         public void run() {
                             final Bundle args = new Bundle();
                             final String weblogin = sp.getString("psto.web_login", null);
-                            PstoCompatibleMessageSource ms = new PstoCompatibleMessageSource(mainActivity, mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/");
+                            PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/");
                             args.putSerializable("messagesSource", ms);
                             mainActivity.runDefaultFragmentWithBundle(args, thiz);
                         }
@@ -130,7 +130,7 @@ public class PstoMicroBlog implements MicroBlog {
 
     @Override
     public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new PstoCompatibleMessageSource(context, "","http://psto.net/").getChildren(mid, notifications, cont);
+        new PstoCompatibleMessagesSource(context, "","http://psto.net/").getChildren(mid, notifications, cont);
     }
 
     @Override

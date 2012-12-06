@@ -228,7 +228,7 @@
     <string name="NumberOfrComments">Number of comments</string>
     <string name="TranslatedLabel">``Translated`` label</string>
     <string name="Dates">Dates</string>
-    <string name="MessageSources">Message sources</string>
+    <string name="MessagesSources">Messages sources</string>
     <string name="SetupXMPP">Setup XMPP...</string>
     <string name="Presets_">Presets:</string>
     <string name="Test__">Test..</string>
@@ -872,6 +872,7 @@
     <string name="Subscribe">Subscribe</string>
     <string name="Unsubscribe">Unsubscribe</string>
     <string name="StartServiceAndTry">Start service and try ask</string>
+    <string name="CannotSaveComments">Cannot save comments, sorry</string>
 
 
 </resources>

@@ -44,7 +44,7 @@ public class JAMService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void startup() {
+    private synchronized void startup() {
         final Utils.ServiceGetter<XMPPService> getter = new Utils.ServiceGetter<XMPPService>(JAMService.this, XMPPService.class);
         if (client == null) {
             new Thread("JAM.startup") {
@@ -86,6 +86,7 @@ public class JAMService extends Service {
                         });
                     } else {
                         XMPPService.lastException = error;
+                        XMPPService.lastExceptionTime = System.currentTimeMillis();
                         handler.post(new Runnable() {
                             @Override
                             public void run() {

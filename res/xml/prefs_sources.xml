@@ -46,7 +46,7 @@
 -->
 
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/MessageSources">
+    <PreferenceCategory android:title="@string/MessagesSources">
         <CheckBoxPreference
             android:key="msrcTopMessages"
             android:title="@string/navigationTop"

@@ -86,11 +86,11 @@ public class XMPPService extends Service {
     public final static String JUICK_ID = "juick@juick.com/Juick";
     public final static String JUBO_ID = "jubo@nologin.ru/jubo";
     public static String lastException;
+    public static long lastExceptionTime;
 
     public void startup() {
         if (up) return;
         log("startup()");
-        lastException = null;
         botOnline = false;
         juboOnline = false;
         if (sp == null)
@@ -737,6 +737,10 @@ public class XMPPService extends Service {
                     handled = messag;
                 }
             }
+
+            boolean shouldDelete = false;
+
+
             if (handled != null && handled != DUMMY) {
                 Set<String> filteredOutUsers = JuickMessagesAdapter.getFilteredOutUsers(this);
                 String fromm = handled.getFrom();
@@ -746,16 +750,13 @@ public class XMPPService extends Service {
                 //
                 // Filter message through blacklists
                 //
-                boolean shouldDelete = filteredOutUsers.contains(fromm);
+                shouldDelete |= filteredOutUsers.contains(fromm);
                 if (!shouldDelete) {
                     if (isFromJuBo && getAnyJuboMessageFilter() != null) {
                         shouldDelete = !getAnyJuboMessageFilter().allowXMPPMessage(handled, sp);
                     }
                 }
 
-                //
-                // Filter through DUP-list
-                //
                 if (!shouldDelete) {
                     if (handled instanceof JuickIncomingMessage) {
                         JuickIncomingMessage jim = (JuickIncomingMessage) handled;
@@ -771,13 +772,13 @@ public class XMPPService extends Service {
                     }
                 }
 
-                if (shouldDelete) {
-                    // kill-em
-                    removeMessageFile(handled.id);
-                    incomingMessages.remove(handled);
-                    silent = true;
-                }
 
+            }
+            if (shouldDelete) {
+                // kill-em
+                removeMessageFile(handled.id);
+                incomingMessages.remove(handled);
+                silent = true;
             }
         }
         if (!silent)
