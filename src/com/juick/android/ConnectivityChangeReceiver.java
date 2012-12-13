@@ -17,28 +17,20 @@
  */
 package com.juick.android;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.StyleSpan;
-import android.util.Log;
-import android.widget.TextView;
-import android.widget.Toast;
-import com.juickadvanced.R;
+import android.telephony.TelephonyManager;
+import com.google.gson.Gson;
 
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.HashMap;
 
 /**
  *
@@ -47,8 +39,11 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
 
     static boolean connectivity = true;
 
+    static String currentConnectivityTypeKey = null;
+
     @Override
     public void onReceive(final Context context, final Intent intent) {
+        getCurrentConnectivityTypeKey(context);
         boolean newConnectivity = connectivity;
         Bundle extras = intent.getExtras();
         if (extras.getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {
@@ -73,5 +68,63 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
                 MainActivity.toggleJAMessaging(context, false);
             }
         }
+    }
+
+    public static String getCurrentConnectivityTypeKey(Context context) {
+        ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo active = connManager.getActiveNetworkInfo();
+        if (active != null) {
+            currentConnectivityTypeKey = "UNKNOWN";
+            // ?? maybe
+            if (active.getType() == ConnectivityManager.TYPE_MOBILE_DUN || active.getType() == ConnectivityManager.TYPE_MOBILE_HIPRI || active.getType() == ConnectivityManager.TYPE_MOBILE) {
+                TelephonyManager manager = (TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+                String carrierName = manager.getSimOperatorName();
+                currentConnectivityTypeKey = "MOB/"+carrierName;
+            } else {
+                WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+                if (wifiManager != null) {
+                    WifiInfo info = wifiManager.getConnectionInfo();
+                    if (info != null) {
+                        String ssid = info.getSSID();
+                        currentConnectivityTypeKey = "WIFI/"+ssid;
+                    }
+                }
+            }
+        } else {
+            currentConnectivityTypeKey = null;
+        }
+        return currentConnectivityTypeKey;
+    }
+
+    static HashMap<String, Long> bestPeriods = null;
+
+    public synchronized static void recordSuccessfulIdlePeriod(Context context, long period) {
+        if (currentConnectivityTypeKey == null)
+            getCurrentConnectivityTypeKey(context);
+        if (currentConnectivityTypeKey != null) {
+            getBestPeriods(context);
+            Long oldPeriod = bestPeriods.get(currentConnectivityTypeKey);
+            if (oldPeriod == null || oldPeriod < period) {
+                bestPeriods.put(currentConnectivityTypeKey, period);
+                String s = new Gson().toJson(bestPeriods);
+                context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).edit().putString("stats", s).commit();
+            }
+        }
+    }
+
+    public synchronized static HashMap<String, Long> getBestPeriods(Context context) {
+        if (bestPeriods == null) {
+            String savedStats = context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).getString("stats", null);
+            if (savedStats != null)
+                bestPeriods = new Gson().fromJson(savedStats, HashMap.class);
+            if (bestPeriods == null)
+                bestPeriods = new HashMap<String, Long>();
+        }
+        return bestPeriods;
+    }
+
+    public synchronized static void resetStatistics(Context context) {
+        bestPeriods = new HashMap<String, Long>();
+        context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).edit().remove("stats").commit();
     }
 }

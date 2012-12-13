@@ -21,7 +21,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
     public static ArrayList<ServerPingTimerListener> serverPingTimerListeners = new ArrayList<ServerPingTimerListener>();
     public interface ServerPingTimerListener {
-        public void onServerPingTime();
+        public void onKeepAlive();
     }
 
 
@@ -37,7 +37,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
         if (intent != null && intent.getCategories() != null && intent.getCategories().contains(CATEGORY_HARDWARE_ALARM)) {
             XMPPService.lastAlarmFired = System.currentTimeMillis();
             keepAlive();
-            rescheduleAlarm(this, 15);
+            rescheduleAlarm(this, 15*60);
             return 0;
         }
         if (intent != null && intent.getAction() == null) return START_NOT_STICKY;
@@ -46,7 +46,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
     public static void keepAlive() {
         for (ServerPingTimerListener serverPingTimerListener : serverPingTimerListeners) {
-            serverPingTimerListener.onServerPingTime();
+            serverPingTimerListener.onKeepAlive();
         }
     }
 
@@ -88,14 +88,14 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     protected void onRegistered(Context context, final String registrationId) {
         Log.i("JuickAdvanced", "GCM registered");
         JuickAdvancedApplication.registrationId = registrationId;
-        handler.post(new Runnable() {
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 for (GCMMessageListener listener : (List<GCMMessageListener>)listeners.clone()) {
                     listener.onRegistration(registrationId);
                 }
             }
-        });
+        }, 10000);
 
     }
 
@@ -106,13 +106,13 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
     private static final String CATEGORY_HARDWARE_ALARM = "HARDWARE_ALARM";
 
-    public static void rescheduleAlarm(Context ctx, int minutes) {
+    public static void rescheduleAlarm(Context ctx, int seconds) {
         Intent intent = new Intent(ctx, com.juickadvanced.GCMIntentService.class);
         intent.addCategory(CATEGORY_HARDWARE_ALARM);
         PendingIntent scheduledAlarm = PendingIntent.getService(ctx, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager alarmManager = (AlarmManager) ctx.getSystemService(ALARM_SERVICE);
         Calendar calendar = GregorianCalendar.getInstance();
-        calendar.add(Calendar.MINUTE, minutes);
+        calendar.add(Calendar.SECOND, seconds);
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), scheduledAlarm);
         XMPPService.lastAlarmScheduled = calendar.getTimeInMillis();
     }

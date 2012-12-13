@@ -61,29 +61,31 @@ public class JAMService extends Service {
                     String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
                     String error = client.loginLocal(JAMService.this, handler, juickAccountName, authString);
                     if (error == null) {
-                        client.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
-                            @Override
-                            public boolean onMessage(final String jid, final String message) {
-                                getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                    @Override
-                                    public void withService(XMPPService service) {
-                                        if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
-                                            service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                        if (client != null) {   // disconnected while login
+                            client.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
+                                @Override
+                                public boolean onMessage(final String jid, final String message) {
+                                    getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                        @Override
+                                        public void withService(XMPPService service) {
+                                            if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
+                                                service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                                            }
                                         }
-                                    }
 
-                                    @Override
-                                    public void withoutService() {
-                                    }
-                                });
-                                return false;
-                            }
+                                        @Override
+                                        public void withoutService() {
+                                        }
+                                    });
+                                    return false;
+                                }
 
-                            @Override
-                            public boolean onPresence(String jid, boolean on) {
-                                return false;
-                            }
-                        });
+                                @Override
+                                public boolean onPresence(String jid, boolean on) {
+                                    return false;
+                                }
+                            });
+                        }
                     } else {
                         XMPPService.lastException = error;
                         XMPPService.lastExceptionTime = System.currentTimeMillis();

@@ -2,7 +2,9 @@ package com.juick.android;
 
 import android.app.Application;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
 import com.juickadvanced.R;
@@ -31,12 +33,14 @@ public class JuickAdvancedApplication extends Application {
     static JuickAdvancedApplication instance;
 
     public static Handler foreverHandler;
+    public static SharedPreferences sp;
 
     @Override
     public void onCreate() {
         if (instance == null)
             ACRA.init(this);
         instance = this;
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
         super.onCreate();
         foreverHandler = new Handler();
         try {
@@ -46,27 +50,20 @@ public class JuickAdvancedApplication extends Application {
             supportsGCM = true;
         } catch (Throwable th) {
         }
-        GCMIntentService.rescheduleAlarm(this, 15);
+        GCMIntentService.rescheduleAlarm(this, 15*60);
         startService(new Intent(this, XMPPService.class));
 
     }
 
-    public static void showToast(final String msg) {
-        foreverHandler.post(new Runnable() {
+    public static void showXMPPToast(final String msg) {
+        if (sp.getBoolean("xmpp_verbose", false)) {
+            foreverHandler.post(new Runnable() {
             @Override
             public void run() {
                 Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    public static void showToast(final Toast toast) {
-        foreverHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                toast.show();
-            }
-        });
+        }
     }
 
     public static String registrationId;

@@ -506,7 +506,7 @@ public class MainActivity extends FragmentActivity implements
         }
     }
     public static void toggleJAMessaging(Context ctx, boolean useJAM) {
-        JuickAdvancedApplication.showToast("toggleJAMessaging: "+useJAM);
+        JuickAdvancedApplication.showXMPPToast("toggleJAMessaging: " + useJAM);
         if (useJAM) {
             ctx.startService(new Intent(ctx, JAMService.class));
         } else {

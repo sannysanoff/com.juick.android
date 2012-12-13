@@ -17,34 +17,34 @@
  */
 package com.juick.android;
 
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
+import android.net.ConnectivityManager;
 import org.apache.http.util.ByteArrayBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
-public class JettyWsClient {
+public class JASocketClient {
 
     Socket sock;
     InputStream is;
     OutputStream os;
     JASocketClientListener listener = null;
     public boolean shuttingDown = false;
+    long lastSuccessfulActivity = 0;
 
     public boolean send(String str) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             byte[] bytes = str.getBytes("utf-8");
-            baos.write(0x81);
-            baos.write((byte)bytes.length);
             baos.write(bytes);
             os.write(baos.toByteArray());
+            os.write('\n');
             os.flush();
+            markActivity();
             return true;
         } catch (IOException e) {
             System.out.println("WS send:" +e.toString());
@@ -52,38 +52,30 @@ public class JettyWsClient {
         }
     }
 
-    public JettyWsClient() {
+    // some successful activity happened on the socket
+    private void markActivity() {
+        long oldActivity = lastSuccessfulActivity;
+        lastSuccessfulActivity = System.currentTimeMillis();
+        if (oldActivity != 0) {
+            long period = lastSuccessfulActivity - oldActivity;
+            ConnectivityChangeReceiver.recordSuccessfulIdlePeriod(JuickAdvancedApplication.instance, period);
+        }
+    }
+
+    public JASocketClient() {
     }
 
     public void setListener(JASocketClientListener listener) {
         this.listener = listener;
     }
 
-    public boolean connect(String host, int port, String location, String headers) {
+    public boolean connect(String host, int port) {
         try {
 
-            Utils.MySSLSocketFactory sf = new Utils.MySSLSocketFactory(null);
-            sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            sock = sf.createSocket();
-            HttpParams params = new BasicHttpParams();
-            sock = sf.connectSocket(sock, host, port, null, 0, params);
-
-
+            sock = new Socket();
+            sock.connect(new InetSocketAddress(host, port));
             is = sock.getInputStream();
             os = sock.getOutputStream();
-
-            String handshake = "GET " + location + " HTTP/1.1\r\n" +
-                    "Host: " + host + "\r\n" +
-                    "Connection: Upgrade\r\n" +
-                    "Upgrade: WebSocket\r\n" +
-                    "Sec-WebSocket-Version: 13\r\n" +
-                    "Sec-WebSocket-Key: 9 9 9 9\r\n" +
-                    "Sec-WebSocket-Protocol: sample\r\n";
-            if (headers != null) {
-                handshake += headers;
-            }
-            handshake += "\r\n";
-            os.write(handshake.getBytes());
             return true;
         } catch (Exception e) {
             System.err.println(e);
@@ -106,26 +98,14 @@ public class JettyWsClient {
             int lenToRead = -1;
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             while ((b = is.read()) != -1) {
-                if (b == 0x81) {
-                    // 80 = final frame
-                    // 1 = text
-                    if ((b = is.read()) != -1) {
-                        lenToRead = b;
+                markActivity();
+                if (b == '\n') {
+                    if (listener != null) {
+                        listener.onWebSocketTextFrame(new String(baos.toByteArray(), "utf-8"));
                         baos.reset();
-                        continue;
-                    } else {
-                        break;
                     }
-                }
-                if (lenToRead != -1) {
+                } else {
                     baos.write(b);
-                    lenToRead--;
-                    if (lenToRead == 0) {
-                        lenToRead = -1;
-                        if (listener != null) {
-                            listener.onWebSocketTextFrame(new String(baos.toByteArray(), "utf-8"));
-                        }
-                    }
                 }
             }
             System.err.println("DISCONNECTED readLoop");

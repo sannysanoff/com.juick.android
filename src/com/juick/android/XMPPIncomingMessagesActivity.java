@@ -281,7 +281,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 Log.i("XMPPIncomingMessages","obtain service time="+l);
                 ArrayList<XMPPService.IncomingMessage> incomingMessages;
                 synchronized (service.incomingMessages) {
-                    //Toast.makeText(XMPPIncomingMessagesActivity.this, "NMessages="+service.incomingMessages.size(), Toast.LENGTH_SHORT).show();
                     incomingMessages = new ArrayList<XMPPService.IncomingMessage>(service.incomingMessages);
                     service.maybeCancelNotification();
                 }

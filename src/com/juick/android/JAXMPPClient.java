@@ -16,11 +16,14 @@ import com.juickadvanced.xmpp.XMPPConnectionSetup;
 import com.juickadvanced.xmpp.commands.*;
 import com.juickadvanced.xmpp.messages.ContactOffline;
 import com.juickadvanced.xmpp.messages.ContactOnline;
+import com.juickadvanced.xmpp.messages.PongFromServer;
 import com.juickadvanced.xmpp.messages.TimestampedMessage;
+import org.acra.ACRA;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -30,9 +33,11 @@ import java.util.HashSet;
  * Time: 12:32 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JettyWsClient.WsClientListener {
-    //String url = "https://192.168.1.77:8222/xmpp/control";
-    String url = "https://ja.ip.rt.ru:8222/xmpp/control";
+public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JASocketClientListener {
+    //String jahost = "ja.ip.rt.ru";
+    String jahost = "192.168.1.77";
+    int jaSocketPort = 8228;
+    String controlURL = "https://"+ jahost +":8222/xmpp/control";
     String sessionId;
     HashSet<String> wachedJids;
     long since;
@@ -40,9 +45,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     private Handler handler;
     XMPPConnectionSetup setup;
     String username;
-    JettyWsClient wsClient;
+    JASocketClient wsClient;
     Thread wsclientLoop;
     public boolean loggedIn;
+    private boolean someMessages;
 
     public JAXMPPClient() {
     }
@@ -67,21 +73,20 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     // if server is down for long time
-    static int increasingReconnectDelay = 1;
+    static int increasingReconnectDelay = 60;
 
     private void maybeStartWSClient() {
         if (wsClient != null) return;
-        wsClient = new JettyWsClient();
-        final URLParser pa = new URLParser(url);
-        boolean connected = wsClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
+        wsClient = new JASocketClient();
+        boolean connected = wsClient.connect(jahost, jaSocketPort);
         if (!connected) {
             wsClient = null;
             scheduleRetryConnection();
             return;
         }
-        wsClient.send("sessionId|"+sessionId);
+        wsClient.send(createClientPing());
         (wsclientLoop = new Thread() {
-            JettyWsClient myClient = wsClient;
+            JASocketClient myClient = wsClient;
             long connectTime = System.currentTimeMillis();
             @Override
             public void run() {
@@ -94,21 +99,24 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                     myClient.setListener(JAXMPPClient.this);
                     myClient.readLoop();
                     connectTime = System.currentTimeMillis() - connectTime;
-                    if (connectTime < 5000) {
-                        wsClient = null;        // something goes wrong, will try later
-                        scheduleRetryConnection();
-                        return;
-                    } else {
-                        increasingReconnectDelay = 1;
-                        if (!myClient.shuttingDown) {
-                            myClient.connect(pa.getHost(), Integer.parseInt(pa.getPort()), "/zebra", null);
-                            wsClient.send("sessionId|"+sessionId);
-                            connectTime = System.currentTimeMillis();
-                        }
+                    if (someMessages) {
+                        increasingReconnectDelay = 15;  // was working connection! delay 15 seconds
                     }
+                    someMessages = false;
+                    wsClient = null;        // something goes wrong, will try later
+                    scheduleRetryConnection();
+                    return;
                 }
             }
         }).start();
+    }
+
+    private String createClientPing() {
+        ClientToServer ping = ClientToServer.createPing(sessionId);
+        HashMap<String,Long> bestPeriods = ConnectivityChangeReceiver.getBestPeriods(context);
+        ping.setConnectivityInfoStatistics(new Gson().toJson(bestPeriods));
+        ping.setConnectivityInfo(ConnectivityChangeReceiver.getCurrentConnectivityTypeKey(context));
+        return new Gson().toJson(ping);
     }
 
     private void scheduleRetryConnection() {
@@ -121,23 +129,23 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public String loginLocal(Context context, Handler handler, String username, String cookie) {
-        JuickAdvancedApplication.showToast("JAXMPPClient loginLocal");
+        JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal");
         this.context = context;
         this.handler = handler;
         this.username = username;
         String retval = performLoginLocal(context, username, cookie);
         if (retval == null) {
-            JuickAdvancedApplication.showToast("JAXMPPClient loginLocal success");
+            JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal success");
             loggedIn = true;
             addListeners();
         } else {
-            JuickAdvancedApplication.showToast("JAXMPPClient loginLocal failure");
+            JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal failure");
         }
         return retval;
     }
 
     private String performLogin(Context context, XMPPConnectionSetup setup) {
-        sessionId = DatabaseService.getUniqueInstallationId(context, setup.getJid());
+        sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
         Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId);
         login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
@@ -156,11 +164,20 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         return serverToClient.getErrorMessage();
     }
 
+    private String createJASessionId(Context context, XMPPConnectionSetup setup) {
+        String value = DatabaseService.getUniqueInstallationId(context, setup.getJid());
+        int timestampBegin = value.indexOf("__");
+        if (timestampBegin != -1) {
+            value = value.substring(0, timestampBegin);     // do not saturate pool with app different versions
+        }
+        return value;
+    }
+
     private String performLoginLocal(Context context, String username, String cookie) {
         setup = new XMPPConnectionSetup();
         setup.jid = username+"@local";
         setup.password = cookie;
-        sessionId = DatabaseService.getUniqueInstallationId(context, setup.getJid());
+        sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
         Login login = new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId);
         login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
@@ -196,7 +213,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     public ServerToClient callXmppControl(Context context, ClientToServer c2s) {
         String dataValue = new Gson().toJson(c2s);
-        Utils.RESTResponse restResponse = Utils.postJA(context, url, dataValue);
+        Utils.RESTResponse restResponse = Utils.postJA(context, controlURL, dataValue);
         ServerToClient result;
         if (restResponse.getErrorText() != null) {
             result = new ServerToClient(sessionId, restResponse.getErrorText());
@@ -256,7 +273,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public void disconnect() {
-        JuickAdvancedApplication.showToast("JAXMPPClient disconnect");
+        JuickAdvancedApplication.showXMPPToast("JAXMPPClient disconnect");
         if (wsClient != null) {
             wsClient.shuttingDown = true;
             wsClient.disconnect();
@@ -270,15 +287,26 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     @Override
     public void onWebSocketTextFrame(String data) throws IOException {
+        someMessages = true;
         XMPPService.nWSMessages++;
         XMPPService.lastWSMessage = new Date();
-        if (data.startsWith("sync")) {
-            String[] args = data.split("\\|");
-            XMPPService.lastWSMessageID = args[1];
-            wsClient.send("pong");
-            startSync(new Runnable() {
-                @Override
-                public void run() {}});
+        ServerToClient serverToClient = new Gson().fromJson(data, ServerToClient.class);
+        if (serverToClient != null) {
+            if (serverToClient.getNewInfoNotification() != null) {
+                XMPPService.lastWSMessageID = serverToClient.getNewInfoNotification().getRequestId();
+                ClientToServer c2s = new ClientToServer(sessionId);
+                c2s.setWillSynchronize(new WillSynchronize());
+                wsClient.send(new Gson().toJson(c2s));
+                startSync(new Runnable() {
+                    @Override
+                    public void run() {}});
+            }
+            if (serverToClient.getPongFromServer() != null) {
+                PongFromServer pongFromServer = serverToClient.getPongFromServer();
+                if (pongFromServer.isShouldResetConnectionStatistics()) {
+                    ConnectivityChangeReceiver.resetStatistics(context);
+                }
+            }
         }
     }
 
@@ -395,9 +423,11 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             boolean hasSomething = false;
                             if (incomingMessages != null) {
                                 for (TimestampedMessage incomingMessage : incomingMessages) {
-                                    xmppClientListener.onMessage(incomingMessage.getFrom(), incomingMessage.getMessage());
-                                    since = Math.max(since, incomingMessage.getTimestamp());
-                                    hasSomething = true;
+                                    if (incomingMessage != null && incomingMessage.getFrom() != null && incomingMessage.getMessage() != null) {
+                                        xmppClientListener.onMessage(incomingMessage.getFrom(), incomingMessage.getMessage());
+                                        since = Math.max(since, incomingMessage.getTimestamp());
+                                        hasSomething = true;
+                                    }
                                 }
                             }
                             ArrayList<ContactOnline> contactOnline = serverToClient.getContactOnline();
@@ -442,6 +472,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             }
                         }
                     }
+                } catch (Exception ex) {
+                    ACRA.getErrorReporter().handleException(new RuntimeException("While Ext.XMPP.Poll", ex));
                 } finally {
                     synchronized (JAXMPPClient.this) {
                         switch (syncState) {
@@ -498,7 +530,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }.start();
     }
 
-    public void onServerPingTime() {
+    public void onKeepAlive() {
         new Thread("Check WS") {
             @Override
             public void run() {
@@ -506,7 +538,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                     maybeStartWSClient();
                 } else {
                     try {
-                        if (!wsClient.send("ping")) {
+                        if (!wsClient.send(createClientPing())) {
                             wsClient.disconnect();
                             wsClient = null;
                             maybeStartWSClient();
