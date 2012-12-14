@@ -78,7 +78,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     Handler handler;
     private Object restoreData;
     boolean implicitlyCreated;
-    private MessageID topMessageId = null;
+    MessageID topMessageId = null;
     boolean allMessages = false;
 
     Utils.ServiceGetter<DatabaseService> databaseGetter;
@@ -243,121 +243,174 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     private void init() {
         if (implicitlyCreated) return;
-        final MessagesLoadNotification messagesLoadNotification = new MessagesLoadNotification(getActivity(), handler);
-        Thread thr = new Thread("Download messages (init)") {
-
-            public void run() {
-                final MessagesLoadNotification notification = messagesLoadNotification;
-                final Utils.Function<Void, RetainedData> then = new Utils.Function<Void, RetainedData>() {
-                    @Override
-                    public Void apply(final RetainedData mespos) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                notification.statusText.setText("Filter and format..");
-                            }
-                        });
-                        Log.w("com.juick.advanced", "getFirst: before filter");
-                        final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
-                        Log.w("com.juick.advanced","getFirst: after filter");
-                        if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
-                            for (JuickMessage juickMessage : messages) {
-                                juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
-                            }
-                        }
-                        final Parcelable listPosition = mespos.viewState;
-                        if (isAdded()) {
-                            if (messages.size() == 0) {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notification.statusText.setText("Error obtaining messages: " + notification.lastError);
-                                        notification.progressBar.setVisibility(View.GONE);
-                                    }
-                                });
-                            }
-                            final Activity activity = getActivity();
-                            if (activity != null) {
-                                final Parcelable finalListPosition = listPosition;
-                                activity.runOnUiThread(new Runnable() {
-
-                                    public void run() {
-                                        try {
-                                            if (isAdded()) {
-                                                if (messages.size() != 0) {
-                                                    Log.w("com.juick.advanced","getFirst: in ui thread!");
-                                                    listAdapter.clear();
-                                                    listAdapter.addAllMessages(messages);
-                                                    Log.w("com.juick.advanced","getFirst: added all");
-                                                    if (getListView().getFooterViewsCount() == 0) {
-                                                        getListView().addFooterView(viewLoading, null, false);
-                                                        Log.w("com.juick.advanced","getFirst: added footer");
-                                                    }
-                                                    topMessageId = messages.get(0).getMID();
-                                                } else {
-                                                    topMessageId = null;
-                                                }
-
-                                                if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
-                                                    getListView().addHeaderView(mRefreshView, null, false);
-                                                    mRefreshViewHeight = mRefreshView.getMeasuredHeight();
-                                                }
-
-                                                if (getListAdapter() != listAdapter) {
-                                                    setListAdapter(listAdapter);
-                                                    Log.w("com.juick.advanced","getFirst: adapter set");
-                                                }
-
-                                                loading = false;
-                                                resetHeader();
-                                                Log.w("com.juick.advanced","getFirst: header reset");
-                                                getListView().invalidateViews();
-                                                Log.w("com.juick.advanced","getFirst: invalidated views");
-                                                getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
-                                                    @Override
-                                                    public void onMovedToScrapHeap(View view) {
-                                                        listAdapter.recycleView(view);
-                                                    }
-                                                });
-                                                if (finalListPosition != null) {
-                                                    getListView().onRestoreInstanceState(finalListPosition);
-                                                } else {
-                                                    setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
-                                                }
-                                                Log.w("com.juick.advanced","getFirst: end.");
-                                            }
-                                        } catch (IllegalStateException e) {
-                                            Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                });
-                            }
-                        } else {
-                            Log.w("com.juick.advanced","getFirst: not added!");
-                        }
-                        return null;
+        final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList();
+        final ListView lv = getListView();
+        if (savedMainList != null) {
+            messagesSource = savedMainList.messagesSource;
+            initListWithMessages(savedMainList.messages);
+            int selectItem = 0;
+            ArrayList<JuickMessage> messages = savedMainList.messages;
+            ListAdapter wrappedAdapter = lv.getAdapter();
+            for(int i=0; i< wrappedAdapter.getCount(); i++) {
+                Object ai = wrappedAdapter.getItem(i);
+                if (ai != null && ai instanceof JuickMessage) {
+                    if (((JuickMessage) ai).getMID().equals(savedMainList.topMessageId)) {
+                        selectItem = i;
                     }
-                };
-                if (restoreData == null) {
-                    messagesSource.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
-                        @Override
-                        public Void apply(ArrayList<JuickMessage> juickMessages) {
-                            return then.apply(new RetainedData(juickMessages, null));
-                        }
-                    });
-                } else {
-                    then.apply((RetainedData)restoreData);
-                    restoreData = null;
                 }
             }
-        };
-        thr.start();
+            lv.setSelectionFromTop(selectItem, savedMainList.topMessageScrollPos);
+            JuickAdvancedApplication.instance.setSavedList(null);
+        } else {
+            final MessagesLoadNotification messagesLoadNotification = new MessagesLoadNotification(getActivity(), handler);
+            Thread thr = new Thread("Download messages (init)") {
+
+                public void run() {
+                    final MessagesLoadNotification notification = messagesLoadNotification;
+                    final Utils.Function<Void, RetainedData> then = new Utils.Function<Void, RetainedData>() {
+                        @Override
+                        public Void apply(final RetainedData mespos) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    notification.statusText.setText("Filter and format..");
+                                }
+                            });
+                            Log.w("com.juick.advanced", "getFirst: before filter");
+                            final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
+                            Log.w("com.juick.advanced","getFirst: after filter");
+                            if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
+                                for (JuickMessage juickMessage : messages) {
+                                    juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
+                                }
+                            }
+                            final Parcelable listPosition = mespos.viewState;
+                            if (isAdded()) {
+                                if (messages.size() == 0) {
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            notification.statusText.setText("Error obtaining messages: " + notification.lastError);
+                                            notification.progressBar.setVisibility(View.GONE);
+                                        }
+                                    });
+                                }
+                                final Activity activity = getActivity();
+                                if (activity != null) {
+                                    final Parcelable finalListPosition = listPosition;
+                                    activity.runOnUiThread(new Runnable() {
+
+                                        public void run() {
+                                            try {
+                                                if (isAdded()) {
+                                                    initListWithMessages(messages);
+                                                    if (finalListPosition != null) {
+                                                        lv.onRestoreInstanceState(finalListPosition);
+                                                    } else {
+                                                        setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                    }
+                                                    Log.w("com.juick.advanced","getFirst: end.");
+                                                }
+                                            } catch (IllegalStateException e) {
+                                                Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
+                                            }
+                                        }
+                                    });
+                                }
+                            } else {
+                                Log.w("com.juick.advanced","getFirst: not added!");
+                            }
+                            return null;
+                        }
+                    };
+                    if (restoreData == null) {
+                        messagesSource.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                            @Override
+                            public Void apply(ArrayList<JuickMessage> juickMessages) {
+                                return then.apply(new RetainedData(juickMessages, null));
+                            }
+                        });
+                    } else {
+                        then.apply((RetainedData)restoreData);
+                        restoreData = null;
+                    }
+                }
+            };
+            thr.start();
+        }
+    }
+
+    private void initListWithMessages(ArrayList<JuickMessage> messages) {
+        if (messages.size() != 0) {
+            Log.w("com.juick.advanced", "getFirst: in ui thread!");
+            listAdapter.clear();
+            listAdapter.addAllMessages(messages);
+            Log.w("com.juick.advanced","getFirst: added all");
+            if (getListView().getFooterViewsCount() == 0) {
+                getListView().addFooterView(viewLoading, null, false);
+                Log.w("com.juick.advanced","getFirst: added footer");
+            }
+            topMessageId = messages.get(0).getMID();
+        } else {
+            topMessageId = null;
+        }
+
+        if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
+            getListView().addHeaderView(mRefreshView, null, false);
+            mRefreshViewHeight = mRefreshView.getMeasuredHeight();
+        }
+
+        if (getListAdapter() != listAdapter) {
+            setListAdapter(listAdapter);
+            Log.w("com.juick.advanced","getFirst: adapter set");
+        }
+
+        loading = false;
+        resetHeader();
+        Log.w("com.juick.advanced","getFirst: header reset");
+        getListView().invalidateViews();
+        Log.w("com.juick.advanced","getFirst: invalidated views");
+        getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
+            @Override
+            public void onMovedToScrapHeap(View view) {
+                listAdapter.recycleView(view);
+            }
+        });
     }
 
     public void test() {
         JuickMessage item = listAdapter.getItem(2);
         listAdapter.remove(item);
 
+    }
+
+    public MessageListBackingData getMessageListBackingData() {
+        MessageListBackingData mlbd = new MessageListBackingData();
+        mlbd.messagesSource = messagesSource;
+        mlbd.topMessageId = topMessageId;
+        ListView lv = getListView();
+        try {
+            ListAdapter adapter = lv.getAdapter();
+            int firstVisiblePosition = lv.getFirstVisiblePosition();
+            JuickMessage jm = (JuickMessage) adapter.getItem(firstVisiblePosition);
+            mlbd.topMessageId = jm.getMID();
+            for(int i=0; i< lv.getChildCount(); i++) {
+                View thatView = lv.getChildAt(i);
+                int positionForView = lv.getPositionForView(thatView);
+                if (positionForView == firstVisiblePosition) {
+                    mlbd.topMessageScrollPos = thatView.getTop();
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // various conditions
+        }
+        int firstVisiblePosition = Math.max(0, lv.getFirstVisiblePosition() - 10);
+        mlbd.messages = new ArrayList<JuickMessage>();
+        for(int i=firstVisiblePosition; i<listAdapter.getCount(); i++) {
+            mlbd.messages.add(listAdapter.getItem(i));
+        }
+        return mlbd;
     }
 
     public static class RetainedData {

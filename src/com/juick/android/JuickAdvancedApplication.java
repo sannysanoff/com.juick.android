@@ -11,6 +11,8 @@ import com.juickadvanced.R;
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
+import java.io.*;
+
 import static org.acra.ReportField.*;
 
 /**
@@ -34,6 +36,7 @@ public class JuickAdvancedApplication extends Application {
 
     public static Handler foreverHandler;
     public static SharedPreferences sp;
+    private MessageListBackingData savedList;
 
     @Override
     public void onCreate() {
@@ -68,4 +71,42 @@ public class JuickAdvancedApplication extends Application {
 
     public static String registrationId;
 
+    public MessageListBackingData getSavedList() {
+        if (savedList == null) {
+            File savedListFile = getSavedListFile();
+            if (savedListFile.exists()) {
+                try {
+                    ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(savedListFile));
+                    savedList = (MessageListBackingData)objectInputStream.readObject();
+                    objectInputStream.close();
+                    if (savedList != null) {
+                        savedList.messagesSource.setContext(this);
+                    }
+                } catch (Exception e) {
+                    // bad luck!
+                }
+            }
+        }
+        return savedList;
+    }
+
+    public void setSavedList(MessageListBackingData o) {
+        savedList = o;
+        if (savedList == null) {
+            getSavedListFile().delete();
+        } else {
+            try {
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(getSavedListFile()));
+                objectOutputStream.writeObject(o);
+                objectOutputStream.close();
+            } catch (IOException e) {
+                System.out.println(e);
+                //
+            }
+        }
+    }
+
+    public File getSavedListFile() {
+        return new File(getCacheDir(),"savedMainList.ser");
+    }
 }

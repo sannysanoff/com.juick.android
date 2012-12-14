@@ -40,6 +40,7 @@ public class WhatsNew {
 
     public static final long REPORT_SEND_PERIOD = 2 * 24 * 60 * 60 * 1000L;
     public static String updateURL;
+    public static String updateDescription;
     static File updatesDir;
     public final static long UPDATE_CHECK_INTERVAL = 60 * 60 * 1000L;
 
@@ -91,7 +92,6 @@ public class WhatsNew {
                     //
                 }
                 if (json.getResult() != null) {
-                    // https://github.com/downloads/sannysanoff/com.juick.android/com.juickadvanced-2012120502.apk
                     Matcher matcher = Pattern.compile("com.juickadvanced-(\\d+).apk").matcher(json.getResult());
                     if (matcher.find()) {
                         String version = matcher.group(1);
@@ -102,6 +102,8 @@ public class WhatsNew {
                                     JsonObject jsonElement = (JsonObject)new Gson().fromJson(json.getResult(), JsonElement.class);
                                     JsonPrimitive url = (JsonPrimitive)jsonElement.get("url");
                                     updateURL = url.getAsString();
+                                    JsonPrimitive desc = (JsonPrimitive)jsonElement.get("description");
+                                    updateDescription = desc.getAsString();
                                     MainActivity.updateAvailable = version;
                                     activity.handler.post(new Runnable() {
                                         @Override
@@ -132,15 +134,17 @@ public class WhatsNew {
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 builder.setTitle("New Beta available");
                 View view = activity.getLayoutInflater().inflate(R.layout.update_dialog, null);
+                TextView changes = (TextView)view.findViewById(R.id.changes);
+                changes.setText(updateDescription);
                 TextView versionCode = (TextView)view.findViewById(R.id.versionCode);
                 versionCode.setText(MainActivity.updateAvailable);
 
                 builder.setView(view);
-                builder.setPositiveButton("Download and install", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton(activity.getString(R.string.DownloadAndInstall), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
-                        Toast.makeText(activity, "Download will start now.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(activity, activity.getString(R.string.DownloadWillStartNow), Toast.LENGTH_LONG).show();
                         new Thread() {
                             @Override
                             public void run() {
@@ -182,7 +186,7 @@ public class WhatsNew {
                         }.start();
                     }
                 });
-                builder.setNeutralButton("Ask later", new DialogInterface.OnClickListener() {
+                builder.setNeutralButton(activity.getString(R.string.AskLater), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         File last_check = new File(updatesDir, "last_check");
@@ -195,7 +199,7 @@ public class WhatsNew {
                         dialog.cancel();
                     }
                 });
-                builder.setNegativeButton("Skip", new DialogInterface.OnClickListener() {
+                builder.setNegativeButton(activity.getString(R.string.Skip), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         try {

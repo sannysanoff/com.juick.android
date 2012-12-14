@@ -59,33 +59,32 @@ public class JAMService extends Service {
                     }
                     String juickAccountName = JuickComAuthorizer.getJuickAccountName(JAMService.this);
                     String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
-                    String error = client.loginLocal(JAMService.this, handler, juickAccountName, authString);
-                    if (error == null) {
-                        if (client != null) {   // disconnected while login
-                            client.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
+                    client.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
+                        @Override
+                        public boolean onMessage(final String jid, final String message) {
+                            getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                                 @Override
-                                public boolean onMessage(final String jid, final String message) {
-                                    getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                        @Override
-                                        public void withService(XMPPService service) {
-                                            if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
-                                                service.handleJuickMessage(XMPPService.JUICK_ID, message);
-                                            }
-                                        }
-
-                                        @Override
-                                        public void withoutService() {
-                                        }
-                                    });
-                                    return false;
+                                public void withService(XMPPService service) {
+                                    if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
+                                        service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                                    }
                                 }
 
                                 @Override
-                                public boolean onPresence(String jid, boolean on) {
-                                    return false;
+                                public void withoutService() {
                                 }
                             });
+                            return false;
                         }
+
+                        @Override
+                        public boolean onPresence(String jid, boolean on) {
+                            return false;
+                        }
+                    });
+                    String error = client.loginLocal(JAMService.this, handler, juickAccountName, authString);
+                    if (error == null) {
+                        // ok
                     } else {
                         XMPPService.lastException = error;
                         XMPPService.lastExceptionTime = System.currentTimeMillis();

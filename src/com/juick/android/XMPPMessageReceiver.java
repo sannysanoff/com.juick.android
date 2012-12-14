@@ -67,6 +67,8 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
         }
     }
 
+    static long lastVibrate = 0;
+
     public static void updateInfo(Context context, int nMessages, boolean silent) {
         NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         String tickerText = "juick: new message";
@@ -74,15 +76,19 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int notification = 0;
         if (!silent) {
-            if (prefs.getBoolean("vibration_enabled", true)) notification |= Notification.DEFAULT_VIBRATE;
             if (prefs.getBoolean("led_enabled", true)) notification |= Notification.DEFAULT_LIGHTS;
-            if (prefs.getBoolean("ringtone_enabled", true)) {
-                String ringtone_uri = prefs.getString("ringtone_uri", "");
-                if (ringtone_uri.length() > 0) {
-                    notif.sound = Uri.parse(ringtone_uri);
+            if (System.currentTimeMillis() - lastVibrate > 5000) {
+                // add some sound
+                if (prefs.getBoolean("vibration_enabled", true)) notification |= Notification.DEFAULT_VIBRATE;
+                if (prefs.getBoolean("ringtone_enabled", true)) {
+                    String ringtone_uri = prefs.getString("ringtone_uri", "");
+                    if (ringtone_uri.length() > 0) {
+                        notif.sound = Uri.parse(ringtone_uri);
+                    }
+                    else
+                        notification |= Notification.DEFAULT_SOUND;
                 }
-                else
-                    notification |= Notification.DEFAULT_SOUND;
+                lastVibrate = System.currentTimeMillis();
             }
         }
         notif.defaults = silent ? 0 : notification;

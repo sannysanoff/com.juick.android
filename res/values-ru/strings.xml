@@ -393,6 +393,12 @@
     <string name="Unsubscribe">Отпис.</string>
     <string name="StartServiceAndTry">Запустить XMPP и продолжить</string>
     <string name="CannotSaveComments">Сохранять комментарии пока не умеем, извините</string>
+    <string name="NewVersionIsAvailable">Новая тестовая версия Juick Advanced доступна в β-канале.</string>
+    <string name="RecentChanges">Изменения в этой версии:</string>
+    <string name="DownloadAndInstall">Скачать,поставить</string>
+    <string name="DownloadWillStartNow">Щас скачаем...</string>
+    <string name="AskLater">Позже</string>
+    <string name="Skip">Пропустить</string>
 
 
 </resources>

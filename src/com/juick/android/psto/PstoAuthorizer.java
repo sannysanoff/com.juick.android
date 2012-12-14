@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.Utils;
@@ -112,13 +113,7 @@ public class PstoAuthorizer extends Utils.URLAuth {
                                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        new Thread() {
-                                            @Override
-                                            public void run() {
-                                                skipAskPassword = true;
-                                                cont.apply(null);
-                                            }
-                                        }.start();
+                                        doCancelButton();
                                     }
                                 }).create();
                         dlg.setOnShowListener(new DialogInterface.OnShowListener() {
@@ -127,7 +122,22 @@ public class PstoAuthorizer extends Utils.URLAuth {
                                 password.requestFocus();
                             }
                         });
-                        dlg.show();
+                        try {
+                            dlg.show();
+                        } catch (WindowManager.BadTokenException _) {
+                            // not running ;(
+                            doCancelButton();
+                        }
+                    }
+
+                    private void doCancelButton() {
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                skipAskPassword = true;
+                                cont.apply(null);
+                            }
+                        }.start();
                     }
 
                     private void tryLoginWithPassword(final String loginS, final String passwordS, final Utils.Function<Void, Utils.RESTResponse> safeCont) {

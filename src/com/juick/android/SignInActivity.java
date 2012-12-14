@@ -23,6 +23,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -84,6 +85,11 @@ public class SignInActivity extends Activity implements OnClickListener {
         }
     }
 
+    @Override
+    public void finish() {
+        super.finish();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
     public void onClick(View view) {
         if (view == bCancel) {
             setResult(RESULT_CANCELED);
@@ -137,12 +143,22 @@ public class SignInActivity extends Activity implements OnClickListener {
                         result.putString(AccountManager.KEY_ACCOUNT_TYPE, getString(R.string.com_juick));
                         response.onResult(result);
                     }
-
-                    SignInActivity.this.setResult(RESULT_OK);
-                    SignInActivity.this.finish();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            SignInActivity.this.finish();
+                            startActivity(new Intent(SignInActivity.this, MainActivity.class));
+                        }
+                    });
                 } else {
-                    Utils.verboseDebugString(SignInActivity.this, "auth: HTTP status: " + status);
-                    handlErrToast.sendEmptyMessage(0);
+                    final int finalStatus = status;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Utils.verboseDebugString(SignInActivity.this, "auth: HTTP status: " + finalStatus);
+                            handlErrToast.sendEmptyMessage(0);
+                        }
+                    });
                 }
             }
         });

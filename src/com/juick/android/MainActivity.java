@@ -137,6 +137,13 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onNewIntent(Intent intent) {
+        if (!Utils.hasAuth(getApplicationContext())) {
+            startActivity(new Intent(this, SignInActivity.class));
+            return;
+        }
+        if (navigationItems.size() == 0) {
+            initWithAuth();
+        }
         super.onNewIntent(intent);
         maybeLaunchIntent(intent, false);
     }
@@ -155,13 +162,17 @@ public class MainActivity extends FragmentActivity implements
         if (maybeLaunchIntent(getIntent(), true)) return;
 
         if (!Utils.hasAuth(getApplicationContext())) {
-            startActivityForResult(new Intent(this, SignInActivity.class), ACTIVITY_SIGNIN);
+            finish();
+            startActivity(new Intent(this, SignInActivity.class));
             return;
         }
 
+        initWithAuth();
+
+    }
+
+    private void initWithAuth() {
         startPreferencesStorage(this);
-
-
         sp.registerOnSharedPreferenceChangeListener(this);
         toggleXMPP(this);
         toggleJAMessaging();
@@ -169,9 +180,22 @@ public class MainActivity extends FragmentActivity implements
 
         clearObsoleteImagesInCache();
         updateNavigation();
+
+
+        MessageListBackingData mlbd = JuickAdvancedApplication.instance.getSavedList();
+        if (mlbd != null) {
+            for (int i = 0; i < navigationItems.size(); i++) {
+                NavigationItem navigationItem = navigationItems.get(i);
+                if (navigationItem.labelId == mlbd.navigationItemLabelId) {
+                    getSupportActionBar().setSelectedNavigationItem(i);
+                    break;
+                }
+            }
+        }
         maybeSendUsageReport();
 
         ActionBar bar = getSupportActionBar();
+        bar.setDisplayShowTitleEnabled(false);
         bar.setDisplayShowHomeEnabled(false);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 
@@ -232,6 +256,8 @@ public class MainActivity extends FragmentActivity implements
         args.putSerializable("messagesSource", ms);
         runDefaultFragmentWithBundle(args, subscriptionsItem);
     }
+
+
 
     NavigationItem subscriptionsItem;
     public void updateNavigation() {
@@ -390,6 +416,7 @@ public class MainActivity extends FragmentActivity implements
 
 
         ActionBar bar = getSupportActionBar();
+        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         bar.setListNavigationCallbacks(navigationAdapter, this);
 
 
@@ -466,9 +493,18 @@ public class MainActivity extends FragmentActivity implements
     @Override
     protected void onDestroy() {
         nActiveMainActivities--;
+        saveState();
         super.onDestroy();
         if (sp != null)
             sp.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    private void saveState() {
+        if (mf != null) {
+            MessageListBackingData messageListBackingData = mf.getMessageListBackingData();
+            messageListBackingData.navigationItemLabelId = lastNavigationItem.labelId;
+            JuickAdvancedApplication.instance.setSavedList(messageListBackingData);
+        }
     }
 
     public static void toggleXMPP(Context ctx) {
@@ -586,18 +622,16 @@ public class MainActivity extends FragmentActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == ACTIVITY_SIGNIN) {
             if (resultCode == RESULT_OK) {
-                Intent intent = getIntent();
-                finish();
-                startActivity(intent);
+                initWithAuth();
             } else {
                 finish();
             }
         } else if (requestCode == ACTIVITY_PREFERENCES) {
             if (resultCode == RESULT_OK) {
-                Intent intent = getIntent();
-                finish();
-                startActivity(intent);
-
+//                Intent intent = getIntent();
+//                finish();
+//                startActivity(intent);
+//
             }
         }
     }
@@ -855,7 +889,8 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);    //To change body of overridden methods use File | Settings | File Templates.
+        saveState();
+        super.onSaveInstanceState(outState);
     }
 
 }

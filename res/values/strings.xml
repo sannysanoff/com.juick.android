@@ -376,10 +376,6 @@
             Затем этим блеклистом фильтруются все сообщения! Можно посмотреть закачанные BL списки в настройках. Включать в настройках.
             </li>
             <li>
-            Переработано меню, появляющееся при нажатии на сообщение. Не нужно скроллить, всё на своих местах, больше команд.
-            Включить: <input type="checkbox" name="prefs.dialogMessageMenu" #prefs.checked.dialogMessageMenu#>
-            </li>
-            <li>
             Добавлен глобальный и локальный search provider, кнопка поиск работает и ищет глобально по сайту.
             </li>
             <li>
@@ -396,7 +392,7 @@
             Правильно показываются наклонный, жирный стили и подчеркивание в тексте мессаг. Выделять жирным итд в написуемых мессагах, понятно, надо как и раньше.
             </li>
             <li>
-            Входящие (jabber) сообщения: Клик на сообщение двумя пальцами раскроет его прямо на месте, не обрезая. Контекстное меню как надо.
+            Входящие (нотификации) сообщения: Клик на сообщение двумя пальцами раскроет его прямо на месте, не обрезая. Контекстное меню как надо.
             </li>
             <li>
             Переход к основному списку мессаг, чтобы не запускать из лаунчера, если вдруг Juick Advanced открыт по прямой ссылке на мессаг (из jabber клиента, например).
@@ -873,6 +869,12 @@
     <string name="Unsubscribe">Unsubscribe</string>
     <string name="StartServiceAndTry">Start service and try ask</string>
     <string name="CannotSaveComments">Cannot save comments, sorry</string>
+    <string name="NewVersionIsAvailable">New testing version of Juick Advanced is available in β-channel.</string>
+    <string name="RecentChanges">Recent changes:</string>
+    <string name="DownloadAndInstall">Download and install</string>
+    <string name="DownloadWillStartNow">Download will start now.</string>
+    <string name="AskLater">Ask later</string>
+    <string name="Skip">Skip</string>
 
 
 </resources>
