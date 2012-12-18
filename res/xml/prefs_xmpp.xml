@@ -1,33 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <Preference android:title="@string/XMPPLoginInfo">
-        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPPreferenceActivity"/>
+    <Preference android:summary="@string/NotificationsSummary">
     </Preference>
-    <CheckBoxPreference
-            android:key="useXMPP"
-            android:title="@string/XMPP_enabled"
-            android:summary="@string/Activate_when_finished"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="useXMPPOnlyForBL"
-            android:title="@string/OnlyUseToDownloadBL"
-            android:summary="@string/DisconnectAsSoonAsBLDownloaded"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <ListPreference
-            android:key="juickBotOn"
-            android:title="@string/Send_on_command"
-            android:defaultValue="skip"
-            android:entries="@array/juickBotOnLabels"
-            android:entryValues="@array/juickBotOnValues"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="xmpp_verbose"
-            android:title="@string/VerboseEventNotifications"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <Preference android:title="@string/XMPPControl">
-        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
-    </Preference>
+    <PreferenceCategory android:title="@string/NonJabberNotifications">
+        <CheckBoxPreference
+                android:key="enableJAMessaging"
+                android:title="@string/JAMessaging"
+                android:summary="@string/SubCommentsNotification___"
+                android:defaultValue="false"
+                android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="XMPP / Jabber">
+        <Preference android:title="@string/XMPPLoginInfo">
+            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPPreferenceActivity"/>
+        </Preference>
+        <CheckBoxPreference
+                android:key="useXMPP"
+                android:title="@string/XMPP_enabled"
+                android:summary="@string/Activate_when_finished"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="useXMPPOnlyForBL"
+                android:title="@string/OnlyUseToDownloadBL"
+                android:summary="@string/DisconnectAsSoonAsBLDownloaded"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <ListPreference
+                android:key="juickBotOn"
+                android:title="@string/Send_on_command"
+                android:defaultValue="skip"
+                android:entries="@array/juickBotOnLabels"
+                android:entryValues="@array/juickBotOnValues"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="xmpp_verbose"
+                android:title="@string/VerboseEventNotifications"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <Preference android:title="@string/XMPPControl">
+            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
+        </Preference>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/Notifications">
+        <RingtonePreference
+                android:key="ringtone_uri"
+                android:defaultValue=""
+                android:title="@string/ChooseSound"
+                android:ringtoneType="all"
+                android:persistent="true">
+        </RingtonePreference>
+        <CheckBoxPreference
+                android:key="ringtone_enabled"
+                android:title="@string/SoundEnabled"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="vibration_enabled"
+                android:title="@string/VibrationEnabled"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="led_enabled"
+                android:title="@string/LEDEnabled"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="current_vibration_enabled"
+                android:title="@string/VibrationInCurrentThread"
+                android:defaultValue="true"
+                android:persistent="true"/>
+    </PreferenceCategory>
 </PreferenceScreen>

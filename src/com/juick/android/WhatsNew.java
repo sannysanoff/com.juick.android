@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.view.View;
@@ -48,18 +49,21 @@ public class WhatsNew {
         return new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
     }
 
-    public static void checkForUpdates(final MainActivity activity) {
-        updatesDir = new File(activity.getFilesDir(), "updates");
-        updatesDir.mkdirs();
-        final File last_check = new File(updatesDir, "last_check");
+    public static void checkForUpdates(final IRunningActivity runningActivity, final Utils.Function<Void,String> notRunning, boolean force) {
+        final Activity activity = runningActivity.getActivity();
+        final File last_check = getLastCheck(activity);
         if (last_check.exists()) {
-            if (System.currentTimeMillis() - last_check.lastModified() < UPDATE_CHECK_INTERVAL) return;
+            if (System.currentTimeMillis() - last_check.lastModified() < UPDATE_CHECK_INTERVAL) {
+                if (notRunning != null) notRunning.apply("not checking: too often");
+                return;
+            }
         }
         final int currentVersionCode;
         try {
             currentVersionCode = activity.getApplicationContext().getPackageManager().getPackageInfo(activity.getApplicationContext().getPackageName(), 0).versionCode;
         } catch (Exception ex) {
             ACRA.getErrorReporter().handleException(ex, false);
+            if (notRunning != null) notRunning.apply(ex.toString());
             return;
         }
         final SharedPreferences sp = activity.getSharedPreferences("versions", Context.MODE_PRIVATE);
@@ -82,55 +86,87 @@ public class WhatsNew {
                 }
             }.start();
         }
-        new Thread() {
-            @Override
-            public void run() {
-                Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version", null);
-                try {
-                    last_check.createNewFile();
-                } catch (IOException e) {
-                    //
-                }
-                if (json.getResult() != null) {
-                    Matcher matcher = Pattern.compile("com.juickadvanced-(\\d+).apk").matcher(json.getResult());
-                    if (matcher.find()) {
-                        String version = matcher.group(1);
+        boolean enableBetaChannelCheck = sp.getBoolean("enableBetaChannelCheck", true);
+        if (enableBetaChannelCheck || force) {
+            new Thread() {
+                @Override
+                public void run() {
+                    boolean found = false;
+                    String reasonNotFound = "other reason";
+                    try {
+                        Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version", null);
                         try {
-                            int updateVersionCode = Integer.parseInt(version);
-                            if (updateVersionCode > currentVersionCode) {
-                                if (!new File(updatesDir, "ignore-"+version).exists()) {
-                                    JsonObject jsonElement = (JsonObject)new Gson().fromJson(json.getResult(), JsonElement.class);
-                                    JsonPrimitive url = (JsonPrimitive)jsonElement.get("url");
-                                    updateURL = url.getAsString();
-                                    JsonPrimitive desc = (JsonPrimitive)jsonElement.get("description");
-                                    updateDescription = desc.getAsString();
-                                    MainActivity.updateAvailable = version;
-                                    activity.handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            setUpdateVisible(activity);
+                            last_check.createNewFile();
+                        } catch (IOException e) {
+                            //
+                        }
+                        if (json.getResult() != null) {
+                            Matcher matcher = Pattern.compile("com.juickadvanced-(\\d+).apk").matcher(json.getResult());
+                            if (matcher.find()) {
+                                String version = matcher.group(1);
+                                try {
+                                    int updateVersionCode = Integer.parseInt(version);
+                                    if (updateVersionCode > currentVersionCode) {
+                                        if (!new File(updatesDir, "ignore-"+version).exists()) {
+                                            JsonObject jsonElement = (JsonObject)new Gson().fromJson(json.getResult(), JsonElement.class);
+                                            JsonPrimitive url = (JsonPrimitive)jsonElement.get("url");
+                                            updateURL = url.getAsString();
+                                            JsonPrimitive desc = (JsonPrimitive)jsonElement.get("description");
+                                            updateDescription = desc.getAsString();
+                                            MainActivity.updateAvailable = version;
+                                            found = true;
+                                            runningActivity.getHandler().post(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    setUpdateVisible(runningActivity);
+                                                }
+                                            });
                                         }
-                                    });
+                                    } else {
+                                        reasonNotFound = "server version: "+updateVersionCode+" current version: "+currentVersionCode;
+                                        File file = getUpdateAPK();
+                                        if (file.exists()) {
+                                            file.delete();
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    reasonNotFound = e.toString();
+                                    ACRA.getErrorReporter().handleException(e, false);
                                 }
                             } else {
-                                File file = getUpdateAPK();
-                                if (file.exists()) {
-                                    file.delete();
-                                }
+                                reasonNotFound = "bad response from server";
                             }
-                        } catch (Exception e) {
-                            ACRA.getErrorReporter().handleException(e, false);
+                        } else {
+                            reasonNotFound = json.getErrorText();
+                        }
+                    } finally {
+                        if (!found) {
+                            final String finalReasonNotFound = reasonNotFound;
+                            runningActivity.getHandler().post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (notRunning != null) notRunning.apply(finalReasonNotFound);
+                                }
+                            });
                         }
                     }
                 }
-                super.run();
-            }
-        }.start();
+            }.start();
+        } else {
+            notRunning.apply("beta check not enabled");
+        }
     }
 
-    public static void setUpdateVisible(final MainActivity activity) {
+    public static File getLastCheck(Activity activity) {
+        updatesDir = new File(activity.getFilesDir(), "updates");
+        updatesDir.mkdirs();
+        return new File(updatesDir, "last_check");
+    }
+
+    public static void setUpdateVisible(final IRunningActivity runningActivity) {
+        final Activity activity = runningActivity.getActivity();
         if (MainActivity.updateAvailable != null) {
-            if (activity.resumed) {
+            if (runningActivity.isRunning()) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 builder.setTitle("New Beta available");
                 View view = activity.getLayoutInflater().inflate(R.layout.update_dialog, null);
@@ -176,8 +212,8 @@ public class WhatsNew {
                                         }
                                     }
                                 };
-                                if (activity.resumed) {
-                                    activity.handler.post(afterDownload);
+                                if (runningActivity.isRunning()) {
+                                    runningActivity.getHandler().post(afterDownload);
                                 } else {
                                     MainActivity.installerOnResume = afterDownload;
                                 }

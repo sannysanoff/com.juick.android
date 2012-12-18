@@ -389,8 +389,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         MessageListBackingData mlbd = new MessageListBackingData();
         mlbd.messagesSource = messagesSource;
         mlbd.topMessageId = topMessageId;
-        ListView lv = getListView();
+        ListView lv = null;
         try {
+            lv = getListView();
             ListAdapter adapter = lv.getAdapter();
             int firstVisiblePosition = lv.getFirstVisiblePosition();
             JuickMessage jm = (JuickMessage) adapter.getItem(firstVisiblePosition);
@@ -405,6 +406,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         } catch (Exception e) {
             // various conditions
+        }
+        if (lv == null) {
+            return null;
         }
         int firstVisiblePosition = Math.max(0, lv.getFirstVisiblePosition() - 120);
         mlbd.messages = new ArrayList<JuickMessage>();

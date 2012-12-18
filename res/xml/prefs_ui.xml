@@ -7,35 +7,6 @@
             android:entryValues="@array/scaleFontSize"
             android:defaultValue="1.0"
             android:persistent="true"/>
-    <PreferenceCategory android:title="@string/Notifications">
-        <RingtonePreference
-                android:key="ringtone_uri"
-                android:defaultValue=""
-                android:title="@string/ChooseSound"
-                android:ringtoneType="all"
-                android:persistent="true">
-        </RingtonePreference>
-        <CheckBoxPreference
-            android:key="ringtone_enabled"
-            android:title="@string/SoundEnabled"
-            android:defaultValue="true"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="vibration_enabled"
-            android:title="@string/VibrationEnabled"
-            android:defaultValue="true"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="led_enabled"
-            android:title="@string/LEDEnabled"
-            android:defaultValue="true"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="current_vibration_enabled"
-            android:title="@string/VibrationInCurrentThread"
-            android:defaultValue="true"
-            android:persistent="true"/>
-    </PreferenceCategory>
     <PreferenceCategory android:title="Message Menu Mode">
         <CheckBoxPreference
                 android:key="dialogMessageMenu"

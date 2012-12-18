@@ -118,6 +118,7 @@
     <string name="Nickname">Ник</string>
     <string name="Password">Пароль</string>
     <string name="Notifications">Уведомления</string>
+    <string name="Notifications2">О подписках, комментариях итд</string>
     <string name="Refresh_interval">Интервал обновления</string>
     <string name="Compressed_Menu">Уплотненное меню сообщения</string>
     <string name="Compressed_Menu_Summary">На экран поместится больше пунктов меню</string>
@@ -334,6 +335,8 @@
     <string name="Sources2">JuBo, jugregator.org итд.</string>
     <string name="NetworkingAndStorage">Сеть и сохранение данных</string>
     <string name="NetworkingAndStorage2">Прокси, сжатие, кеш, БД, GPS</string>
+    <string name="Other">Прочее</string>
+    <string name="Other2">Всякое</string>
     <string name="WhatsNew">Что нового...</string>
     <string name="WhatsNew2">Изменения в вериях</string>
     <string name="Privacy_Policy2">Куда уходят какие персональные данные</string>
@@ -370,9 +373,9 @@
     <string name="navigationPSTORecent">psto.Подписки</string>
     <string name="navigationPSTOMy">psto.Блог</string>
     <string name="navigationPSTOPopular">psto.Популярные</string>
-    <string name="UnreadMessagesNotification">Нежабберные уведомления</string>
+    <string name="NonJabberNotifications">Нежабберные уведомления</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">не включено или сервис не работает</string>
-    <string name="SubCommentsNotification___">Уведомления о подписках и ответах через Juick Advanced server
+    <string name="SubCommentsNotification___">Уведомления обо всех подписках и ответах через Juick Advanced server
         (исключая приватные)
     </string>
     <string name="JAMNotEnabledEnable">У вас не включена подписка на не-XMPP Juick-нотификации. Включить и продолжить?</string>
@@ -399,6 +402,15 @@
     <string name="DownloadWillStartNow">Щас скачаем...</string>
     <string name="AskLater">Позже</string>
     <string name="Skip">Пропустить</string>
+    <string name="PrivateMessages">Приватные:</string>
+    <string name="SubscriptionsMessages">Подписки:</string>
+    <string name="OtherMessages">Прочие:</string>
+    <string name="ThreadComments">Комментарии:</string>
+    <string name="Total">всего</string>
+    <string name="JAMessaging">J.A.-уведомления</string>
+    <string name="NotificationsSummary">Можно включить или не-жабберные или жабберные нотификации, или всё сразу. Дублирующиеся нотификации в таком случае будут корректно учитываться.</string>
+    <string name="WillCheckForNewVersion">Проверяем на наличие...</string>
+    <string name="NewVersionNotFound">Новой версии не найдено: </string>
 
 
 </resources>

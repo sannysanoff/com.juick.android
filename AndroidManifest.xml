@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced"
-          android:versionCode="2012121405" android:versionName="18.17.7">
+          android:versionCode="2012121802" android:versionName="18.17.9">
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="15"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -99,9 +99,11 @@
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.JuickPreferencesActivity"
+        <activity android:name="com.juick.android.JuickPreferencesActivity" android:launchMode="singleTask"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.NewJuickPreferenceActivity"
+        <activity android:name="com.juick.android.NewJuickPreferenceActivity" android:launchMode="singleTask"
+                  android:configChanges="keyboard|keyboardHidden|orientation"/>
+        <activity android:name="com.juick.android.NewJuickPreferenceActivityMT"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.XMPPPreferenceActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>

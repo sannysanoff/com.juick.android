@@ -338,7 +338,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         l = System.currentTimeMillis();
         displayItems = new ArrayList<Object>();
         if (threadMessages.size() > 0) {
-            displayItems.add(new Header("Thread comments: " + nCommentsTotal+" total", new Runnable() {
+            displayItems.add(new Header(getString(R.string.ThreadComments) + nCommentsTotal+" " + getString(R.string.Total), new Runnable() {
                 @Override
                 public void run() {
                     deleteMessages(XMPPService.JuickThreadIncomingMessage.class);
@@ -354,7 +354,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             displayItems.addAll(sortee);
         }
         if (privateMessages.size() > 0) {
-            displayItems.add(new Header("Private messages: "+privateMessages.size(), new Runnable() {
+            displayItems.add(new Header(getString(R.string.PrivateMessages)+privateMessages.size(), new Runnable() {
                 @Override
                 public void run() {
                     deleteMessages(XMPPService.JuickPrivateIncomingMessage.class);
@@ -365,7 +365,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
         }
         if (subscriptions.size() > 0) {
-            displayItems.add(new Header("Subscriptions messages: "+subscriptions.size(), new Runnable() {
+            displayItems.add(new Header(getString(R.string.SubscriptionsMessages)+subscriptions.size(), new Runnable() {
                 @Override
                 public void run() {
                     deleteMessages(XMPPService.JuickSubscriptionIncomingMessage.class);
@@ -376,7 +376,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
         }
         if (jabberMessages.size() > 0) {
-            displayItems.add(new Header("Other messages: "+jabberMessages.size(), new Runnable() {
+            displayItems.add(new Header(getString(R.string.OtherMessages)+jabberMessages.size(), new Runnable() {
                 @Override
                 public void run() {
                     deleteMessages(XMPPService.JabberIncomingMessage.class);
@@ -778,7 +778,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 if (MainActivity.commandJAMService(this, item.getItemId() == R.id.listen_all ? "listen_all": "unlisten_all")) {
                     listeningAll = item.getItemId() == R.id.listen_all;
                 } else {
-                    Toast.makeText(this, "\""+getString(R.string.UnreadMessagesNotification)+"\" "+getString(R.string.IsNotEnabledOrServiceIsNotRunning), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "\""+getString(R.string.NonJabberNotifications)+"\" "+getString(R.string.IsNotEnabledOrServiceIsNotRunning), Toast.LENGTH_LONG).show();
                 }
                 return true;
             case R.id.editable_list:

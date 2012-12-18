@@ -109,21 +109,26 @@ public class PstoCompatibleMessagesSource extends MessagesSource {
             urlParser.setPath(urlParser.getPathPart()+"/"+page);
         }
         final String jsonStr = getJSONWithRetries(ctx, urlParser.getFullURL(), notification).getResult();
-        ArrayList<JuickMessage> messages = new PstoNetParser().parseWebMessageListPure(jsonStr, PstoNetParser.ParseMode.PARSE_MESSAGE_LIST);
-        if (messages.size() > 0) {
-            for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
-                JuickMessage message = iterator.next();
-                if (!loadedMessages.add(message.getMID().toString())) {
-                    iterator.remove();
+        if (jsonStr != null) {
+            ArrayList<JuickMessage> messages = new PstoNetParser().parseWebMessageListPure(jsonStr, PstoNetParser.ParseMode.PARSE_MESSAGE_LIST);
+            if (messages.size() > 0) {
+                for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
+                    JuickMessage message = iterator.next();
+                    if (!loadedMessages.add(message.getMID().toString())) {
+                        iterator.remove();
+                    }
+                }
+                if (loadedMessages.size() == 0) {
+                    page++;
+                    fetchURLAndProcess(notification, cont);
+                    return;
                 }
             }
-            if (loadedMessages.size() == 0) {
-                page++;
-                fetchURLAndProcess(notification, cont);
-                return;
-            }
+            cont.apply(messages);
+        } else {
+            // error (notified via Notification)
+            cont.apply(new ArrayList<JuickMessage>());
         }
-        cont.apply(messages);
     }
 
     @Override

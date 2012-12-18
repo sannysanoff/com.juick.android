@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
-            android:key="enableJAMessaging"
-            android:title="@string/UnreadMessagesNotification"
-            android:summary="@string/SubCommentsNotification___"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
             android:key="persistLastMessagesPosition"
             android:title="@string/Save_position"
             android:summary="@string/Position_can_be_reset"

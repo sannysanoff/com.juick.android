@@ -147,7 +147,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         etMessage.requestFocus();
         checkMessagesSource();
         if (messagesSource == null || messagesSource.getMicroBlog() == null) {
-            ACRA.getErrorReporter().handleException(new AssertionError("messagesSource == null || messagesSource.getMicroBlog() == null"), false);
+            ACRA.getErrorReporter().handleException(new AssertionError("messagesSource == null || messagesSource.getMicroBlog() == null, ms="+messagesSource), false);
             Toast.makeText(this, "Assertion error", Toast.LENGTH_SHORT).show();
             finish();
         }

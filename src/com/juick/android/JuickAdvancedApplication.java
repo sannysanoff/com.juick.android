@@ -114,7 +114,7 @@ public class JuickAdvancedApplication extends Application {
                             ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(getSavedListFile()));
                             objectOutputStream.writeObject(o);
                             objectOutputStream.close();
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             System.out.println(e);
                             //
                         }

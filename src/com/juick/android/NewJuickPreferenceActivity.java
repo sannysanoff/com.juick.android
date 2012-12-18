@@ -57,6 +57,12 @@ public class NewJuickPreferenceActivity extends Activity {
 
             }
         }));
+        menu.add(new MenuItem(R.string.Notifications, R.string.Notifications2, new Runnable() {
+            @Override
+            public void run() {
+                runPrefs(R.xml.prefs_xmpp);
+            }
+        }));
         menu.add(new MenuItem(R.string.ContentSettings, R.string.ContentSettings2, new Runnable() {
             @Override
             public void run() {
@@ -77,67 +83,20 @@ public class NewJuickPreferenceActivity extends Activity {
                 runPrefs(R.xml.prefs_netdb);
             }
         }));
-        menu.add(new MenuItem(R.string.XMPP_client, R.string.XMPP_client2, new Runnable() {
+        menu.add(new MenuItem(R.string.Other, R.string.Other2, new Runnable() {
             @Override
             public void run() {
-                runPrefs(R.xml.prefs_xmpp);
-            }
-        }));
-        menu.add(new MenuItem(R.string.WhatsNew, R.string.WhatsNew2, new Runnable() {
-            @Override
-            public void run() {
-                NewJuickPreferenceActivity context = NewJuickPreferenceActivity.this;
-                final WhatsNew whatsNew = new WhatsNew(context);
-                ListView lv = new ListView(context);
-                final ArrayList<String> lst = new ArrayList<String>();
-                for (WhatsNew.ReleaseFeatures feature : whatsNew.features) {
-                    lst.add(feature.sinceRelease);
-                }
-                lv.setAdapter(new ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, lst));
-                AlertDialog.Builder builder = new AlertDialog.Builder(context)
-                        .setTitle("Choose release")
-                        .setView(lv)
-                        .setCancelable(true)
-                        .setPositiveButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        });
-                final AlertDialog alertDialog = builder.create();
-                alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-                    @Override
-                    public void onShow(DialogInterface dialog) {
-                        MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
-                    }
-                });
-                alertDialog.show();
-                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        alertDialog.dismiss();
-                        whatsNew.reportFeatures(position, false, null);
-                    }
-                });
-            }
-        }));
-        menu.add(new MenuItem(R.string.Privacy_Policy, R.string.Privacy_Policy2, new Runnable() {
-            @Override
-            public void run() {
-                new WhatsNew(NewJuickPreferenceActivity.this).showPrivacyPolicy();
-            }
-        }));
-        menu.add(new MenuItem(R.string.VariousInfo, R.string.VariousInfo2, new Runnable() {
-            @Override
-            public void run() {
-                Intent prefsIntent = new Intent(NewJuickPreferenceActivity.this, NewJuickPreferenceActivity.class);
-                prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.REPORTS_CHARTS.name());
-                startActivity(prefsIntent);
+                runPrefs(R.xml.prefs_other);
             }
         }));
         allMenus.put(Menu.TOP_LEVEL.name(), menu);
         menu = new ArrayList<MenuItem>();
         allMenus.put(Menu.REPORTS_CHARTS.name(), menu);
+        initReportsMenu(menu);
+
+    }
+
+    private void initReportsMenu(ArrayList<MenuItem> menu) {
         menu.add(new MenuItem(R.string.UsageReportsPerWeek, R.string.UsageReportsPerWeek2, new Runnable() {
             @Override
             public void run() {
@@ -150,14 +109,6 @@ public class NewJuickPreferenceActivity extends Activity {
                 showChart("JUICK_UPM2");
             }
         }));
-
-        /**
-         * reports:
-         *
-         * user activity
-         *
-         *
-         */
     }
 
     private void showChart(String chart) {
@@ -226,4 +177,5 @@ public class NewJuickPreferenceActivity extends Activity {
             }
         });
     }
+
 }

@@ -12,7 +12,7 @@
         android:background="#cfcea0"
         android:text="New posts"
         android:layout_gravity="center"
-        android:textSize="23sp"
+        android:textSize="20sp"
         android:padding="3sp"
         />
     <TextView

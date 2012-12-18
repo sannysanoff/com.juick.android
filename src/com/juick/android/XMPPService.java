@@ -102,8 +102,6 @@ public class XMPPService extends Service {
         log("XMPP service startup()");
         botOnline = false;
         juboOnline = false;
-        if (sp == null)
-            sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
         boolean useXMPPOnlyForBL = sp.getBoolean("useXMPPOnlyForBL", false);
         if (useXMPP && useXMPPOnlyForBL && juboMessageFilter != null && juickBlacklist != null) {
@@ -894,6 +892,7 @@ public class XMPPService extends Service {
 
     @Override
     public void onCreate() {
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
         String cachedJubo = readFile(getCachedJuboFile());
         if (cachedJubo != null) {
             juboMessageFilter_tmp = new Gson().fromJson(cachedJubo, JuboMessageFilter.class);

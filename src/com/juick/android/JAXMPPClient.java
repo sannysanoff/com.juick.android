@@ -223,7 +223,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         } else {
             try {
                 result = new Gson().fromJson(restResponse.getResult(), ServerToClient.class);
-            } catch (JsonSyntaxException e) {
+            } catch (Exception e) {
                 result = null;
             }
             if (result == null || !sessionId.equals(result.getSessionId())) {

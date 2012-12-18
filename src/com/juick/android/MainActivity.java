@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -63,6 +64,7 @@ import java.util.*;
  */
 public class MainActivity extends FragmentActivity implements
         ActionBar.OnNavigationListener,
+        IRunningActivity,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final int ACTIVITY_SIGNIN = 2;
@@ -210,7 +212,7 @@ public class MainActivity extends FragmentActivity implements
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
 
-        WhatsNew.checkForUpdates(this);
+        WhatsNew.checkForUpdates(this, null, false);
 
     }
 
@@ -416,7 +418,6 @@ public class MainActivity extends FragmentActivity implements
             }
         };
 
-
         ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         bar.setListNavigationCallbacks(navigationAdapter, this);
@@ -504,9 +505,13 @@ public class MainActivity extends FragmentActivity implements
 
     private void saveState(boolean urgent) {
         if (mf != null) {
-            MessageListBackingData messageListBackingData = mf.getMessageListBackingData();
-            messageListBackingData.navigationItemLabelId = lastNavigationItem.labelId;
-            JuickAdvancedApplication.instance.setSavedList(messageListBackingData, urgent);
+            if (lastNavigationItem != null) {
+                MessageListBackingData messageListBackingData = mf.getMessageListBackingData();
+                if (messageListBackingData != null) {
+                    messageListBackingData.navigationItemLabelId = lastNavigationItem.labelId;
+                    JuickAdvancedApplication.instance.setSavedList(messageListBackingData, urgent);
+                }
+            }
         }
     }
 
@@ -909,4 +914,18 @@ public class MainActivity extends FragmentActivity implements
         super.onSaveInstanceState(outState);
     }
 
+    @Override
+    public Activity getActivity() {
+        return this;
+    }
+
+    @Override
+    public Handler getHandler() {
+        return handler;
+    }
+
+    @Override
+    public boolean isRunning() {
+        return resumed;
+    }
 }

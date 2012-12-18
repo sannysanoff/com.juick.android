@@ -1169,7 +1169,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     sb.append("_");
                 }
             }
-            return sb.toString();
+            String retval = sb.toString();
+            if (retval.length() > 120) {
+                String md5DigestForString = Utils.getMD5DigestForString(retval).replace("/","_");
+                int q = retval.lastIndexOf('.');
+                return "longname_"+md5DigestForString+retval.substring(q);
+            }
+            return retval;
         }
 
         public void setDestinationView(View destinationView) {

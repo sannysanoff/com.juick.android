@@ -121,6 +121,7 @@
     <string name="Nickname">Nickname</string>
     <string name="Password">Password</string>
     <string name="Notifications">Notifications</string>
+    <string name="Notifications2">...about new messages and comments</string>
     <string name="Refresh_interval">Refresh interval</string>
     <string name="Appearance">Appearance</string>
     <string name="Theme">Theme</string>
@@ -807,6 +808,8 @@
     <string name="Sources2">JuBo, jugregator.org etc</string>
     <string name="NetworkingAndStorage">Network and storage</string>
     <string name="NetworkingAndStorage2">Proxies, compression, cache, database, GPS</string>
+    <string name="Other">Other</string>
+    <string name="Other2">Various</string>
     <string name="WhatsNew">What\'s new...</string>
     <string name="WhatsNew2">See changelist</string>
     <string name="Privacy_Policy">Privacy Policy...</string>
@@ -847,10 +850,10 @@
     <string name="navigationPSTOMy">psto.Blog</string>
     <string name="navigationPSTOPopular">psto.Popular</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
-    <string name="UnreadMessagesNotification">Non-Jabber notification</string>
+    <string name="NonJabberNotifications">Non-Jabber notifications</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">is not enabled or service is not running</string>
-    <string name="SubCommentsNotification___">Subscriptions/Comments notification implemented on Juick Advanced server
-        (no private)
+    <string name="SubCommentsNotification___">All subscriptions/comments notification implemented on Juick Advanced server
+        (exc. private messages)
     </string>
     <string name="JAMNotEnabledEnable">You are NOT subscribed to NON-XMPP juick notifications, subscribe to proceed?</string>
     <string name="JuickAdvancedFunctionality">Juick Advanced functionality</string>
@@ -876,6 +879,15 @@
     <string name="DownloadWillStartNow">Download will start now.</string>
     <string name="AskLater">Ask later</string>
     <string name="Skip">Skip</string>
+    <string name="PrivateMessages">Private messages:</string>
+    <string name="SubscriptionsMessages">Subscriptions messages:</string>
+    <string name="OtherMessages">Other messages:</string>
+    <string name="ThreadComments">Thread comments:</string>
+    <string name="Total">total</string>
+    <string name="JAMessaging">J.A.-messaging</string>
+    <string name="NotificationsSummary">You can enable either Non-Jabber notifications or Jabber notifications or both to receive new Juick Items. If both transports are active, duplicate notifications will be filtered.</string>
+    <string name="WillCheckForNewVersion">Checking for new version...</string>
+    <string name="NewVersionNotFound">No new version found</string>
 
 
 </resources>
