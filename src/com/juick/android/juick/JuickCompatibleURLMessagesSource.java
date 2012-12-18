@@ -1,6 +1,8 @@
 package com.juick.android.juick;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import com.juick.android.DatabaseService;
 import com.juick.android.URLParser;
@@ -137,14 +139,34 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
         return messages;
     }
 
+
+    public class PureDownloader {
+        public ArrayList<JuickMessage> download(final MessageID mid, final Utils.Notification notifications, boolean messageDB) {
+            Utils.RESTResponse result = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + ((JuickMessageID) mid).getMid(), notifications);
+            final String jsonStr = result.getResult();
+            final ArrayList<JuickMessage> stuff = JuickCompatibleURLMessagesSource.parseJSONpure(jsonStr, messageDB);
+            return stuff;
+        }
+
+        public ArrayList<JuickMessage> parseJSONpure(String str) {
+            return JuickCompatibleURLMessagesSource.parseJSONpure(str, false);
+        }
+
+    }
+
     @Override
     public void getChildren(final MessageID mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+        getChildrenWithDBCache(ctx, new PureDownloader(), mid, notifications, cont);
+    }
+    
+    public static void getChildrenWithDBCache(Context context, final PureDownloader pureDownloader, final MessageID mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         final boolean retrieved[] = new boolean[1]; // concurrency indicator
 
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         boolean messageDB = sp.getBoolean("enableMessageDB", false);
         if (messageDB && notifications instanceof Utils.HasCachedCopyNotification) {
             // try to concurrently get from DB
-            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
+            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
             databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                 @Override
                 public void withService(DatabaseService service) {
@@ -170,7 +192,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                                 sb.setLength(sb.length()-1);        // last comma
                                 sb.append("]");
                                 // parse
-                                ArrayList<JuickMessage> alt = parseJSONpure(sb.toString());
+                                ArrayList<JuickMessage> alt = pureDownloader.parseJSONpure(sb.toString());
                                 if (retrieved[0]) return;
                                 // notify
                                 retrieved[0] = true;        // debug
@@ -182,13 +204,13 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
             });
         }
         // get from original location
-        Utils.RESTResponse result = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + ((JuickMessageID) mid).getMid(), notifications);
-        final String jsonStr = result.getResult();
+        final ArrayList<JuickMessage> stuff = pureDownloader.download(mid, notifications, messageDB);
         retrieved[0] = true;
-        final ArrayList<JuickMessage> stuff = parseJSONpure(jsonStr, messageDB);
+
+
         if (messageDB) {
             // save it for later use
-            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
+            Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
             databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                 @Override
                 public void withService(DatabaseService service) {

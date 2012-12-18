@@ -245,7 +245,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         if (implicitlyCreated) return;
         final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList();
         final ListView lv = getListView();
-        if (savedMainList != null) {
+        boolean canUseMainList = getActivity() instanceof MainActivity; //
+        if (savedMainList != null && canUseMainList) {
             messagesSource = savedMainList.messagesSource;
             initListWithMessages(savedMainList.messages);
             int selectItem = 0;
@@ -260,7 +261,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             }
             lv.setSelectionFromTop(selectItem, savedMainList.topMessageScrollPos);
-            JuickAdvancedApplication.instance.setSavedList(null);
+            JuickAdvancedApplication.instance.setSavedList(null, false);
         } else {
             final MessagesLoadNotification messagesLoadNotification = new MessagesLoadNotification(getActivity(), handler);
             Thread thr = new Thread("Download messages (init)") {
@@ -405,7 +406,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         } catch (Exception e) {
             // various conditions
         }
-        int firstVisiblePosition = Math.max(0, lv.getFirstVisiblePosition() - 10);
+        int firstVisiblePosition = Math.max(0, lv.getFirstVisiblePosition() - 120);
         mlbd.messages = new ArrayList<JuickMessage>();
         for(int i=firstVisiblePosition; i<listAdapter.getCount(); i++) {
             mlbd.messages.add(listAdapter.getItem(i));

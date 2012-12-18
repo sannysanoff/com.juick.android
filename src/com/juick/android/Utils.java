@@ -270,13 +270,6 @@ public class Utils {
     }
 
 
-    public static void updateTheme(Activity activity) {
-    }
-
-
-    public static void updateThemeHolo(Activity activity) {
-    }
-
     public static int doHttpGetRequest(String url) {
         try {
             HttpURLConnection conn = (HttpURLConnection) (new URL(url)).openConnection();

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -39,6 +38,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
     class Item {
         ArrayList<XMPPService.IncomingMessage> messages;
+        long lastTime;
+        int lastRid;
 
         Item(XMPPService.IncomingMessage message) {
             this();
@@ -320,6 +321,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     threadMessages.put(tim.getMID(), item);
                 }
                 item.messages.add(tim);
+                item.lastTime = Math.max(item.lastTime, tim.datetime.getTime());
+                item.lastRid = Math.max(item.lastRid, tim.getRID());
                 nCommentsTotal++;
             }
             if (message instanceof XMPPService.JabberIncomingMessage) {
@@ -345,9 +348,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             Collections.sort(sortee, new Comparator<Item>() {
                 @Override
                 public int compare(Item item, Item item1) {
-                    XMPPService.JuickThreadIncomingMessage im = (XMPPService.JuickThreadIncomingMessage)item.messages.get(0);
-                    XMPPService.JuickThreadIncomingMessage im1 = (XMPPService.JuickThreadIncomingMessage)item1.messages.get(0);
-                    return compareJuickMessages(im, im1); // sort by threads
+                    return (int)Math.signum(item1.lastTime - item.lastTime); // sort by last comment, descending
                 }
             });
             displayItems.addAll(sortee);
@@ -520,10 +521,33 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
                     makePressable(view);
                     XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
+                    XMPPService.JuickIncomingMessage originalMessage = commentMessage.getOriginalMessage();
                     TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
-                    fromTags.setText(commentMessage.getOriginalFrom());
+                    SpannableStringBuilder ssb = new SpannableStringBuilder();
                     TextView preview = (TextView)view.findViewById(R.id.preview);
-                    String originalBody = commentMessage.getOriginalBody() != null && commentMessage.getOriginalBody().length() > 0 ? commentMessage.getOriginalBody().toString() : "[ loading ... ]";
+
+                    if (originalMessage != null) {
+                        ssb.append(originalMessage.getFrom()+" ");
+                        int off = ssb.length();
+                        ArrayList<String> tags = originalMessage.getTags();
+                        for (int i1 = 0; i1 < tags.size(); i1++) {
+                            String tag = tags.get(i1);
+                            if (tag.length() == 0) continue;;
+                            if (tag.startsWith("*")) tag = tag.substring(1);
+                            ssb.append("*");
+                            ssb.append(tag);
+                            if (i1 != tags.size()-1)
+                                ssb.append(" ");
+                        }
+                        ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), off, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        int ix = ssb.length();
+                        ssb.append(" - " + toRelaviteDate(((Item) item).lastTime));
+                        ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        fromTags.setText(ssb);
+                    } else {
+                        fromTags.setText("");
+                    }
+                    String originalBody = originalMessage != null && originalMessage.getBody().length() > 0 ? originalMessage.getBody().toString() : "[ loading ... ]";
                     if (originalBody.startsWith("http://i.juick.com")) {
                         int ix = originalBody.indexOf(".jpg");
                         if (ix != -1) {
@@ -531,6 +555,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         }
                     }
                     preview.setText(originalBody);
+
                     TextView commentCounts = (TextView)view.findViewById(R.id.comment_counts);
                     String insertString;
                     if (totalCount == 1) {
@@ -540,7 +565,13 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     }
                     sb.insert(0, insertString);
                     sb.setSpan(new ForegroundColorSpan(0xFF008000), 0, insertString.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    int offset = insertString.length();
+                    int oldComments = ((Item) item).lastRid - totalCount;
+                    String moreInsert = "";
+                    if (oldComments != 0) {
+                        moreInsert += oldComments + "+";
+                        sb.insert(0, moreInsert);
+                    }
+                    int offset = insertString.length()+moreInsert.length();
                     if (toYouCount != 0) {
                         String toYou = " ("+toYouCount + " to you)  ";
                         sb.insert(offset, toYou);
@@ -575,9 +606,27 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     view = getLayoutInflater().inflate(R.layout.incoming_messages_subscription, null);
                     makePressable(view);
 
+                    SpannableStringBuilder ssb = new SpannableStringBuilder(subscriptionMessage.getFrom()+" ");
+                    int off = ssb.length();
                     TextView fromTags  = (TextView)view.findViewById(R.id.from_tags);
                     TextView preview = (TextView)view.findViewById(R.id.preview);
-                    fromTags.setText(subscriptionMessage.getFrom());
+                    ArrayList<String> tags = subscriptionMessage.getTags();
+                    for (int i1 = 0; i1 < tags.size(); i1++) {
+                        String tag = tags.get(i1);
+                        if (tag.length() == 0) continue;;
+                        if (tag.startsWith("*")) tag = tag.substring(1);
+                        ssb.append("*");
+                        ssb.append(tag);
+                        if (i1 != tags.size()-1)
+                            ssb.append(" ");
+                    }
+                    ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), off, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    int ix = ssb.length();
+                    ssb.append(" - " + toRelaviteDate(subscriptionMessage.datetime.getTime()));
+                    ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+
+                    fromTags.setText(ssb);
                     String body = subscriptionMessage.getBody();
                     while(body.endsWith("\n")) {
                         body = body.substring(0, body.length()-1);
@@ -598,6 +647,34 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 Log.i("XMPPIncomingMessages","get item ("+i+") time="+l);
             }
         }
+    }
+
+    final boolean russian = Locale.getDefault().getLanguage().equals("ru");
+
+    public String toRelaviteDate(long ts) {
+        ts = ((System.currentTimeMillis() - ts) / 1000) / 60;
+        long minutes = ts % 60;
+        ts /= 60;
+        long hours = ts % 24;
+        ts /= 24;
+        long days = ts;
+        StringBuilder sb = new StringBuilder();
+        if (days != 0) {
+            sb.append(days);
+            sb.append(russian?"д":"d ");
+        }
+        if (hours != 0) {
+            sb.append(hours);
+            sb.append(russian?"ч":"h ");
+        }
+        if (minutes != 0) {
+            sb.append(minutes);
+            sb.append(russian?"м":"m ");
+        }
+        if (sb.length() == 0) {
+            sb.append(russian ? "только что":"now");
+        }
+        return sb.toString();
     }
 
     private void makePressable(View view) {

@@ -46,9 +46,9 @@ import com.juick.android.psto.PstoCompatibleMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.bnw.BNWMicroBlog;
-import com.juick.android.bnw.BnwMessageID;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juick.android.juick.*;
-import com.juick.android.psto.PstoMessageID;
+import com.juickadvanced.data.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickMessageID;
@@ -150,8 +150,8 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        XMPPService.log("MainActivity.create()");
         nActiveMainActivities++;
-        Utils.updateThemeHolo(this);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();
 
@@ -182,16 +182,6 @@ public class MainActivity extends FragmentActivity implements
         updateNavigation();
 
 
-        MessageListBackingData mlbd = JuickAdvancedApplication.instance.getSavedList();
-        if (mlbd != null) {
-            for (int i = 0; i < navigationItems.size(); i++) {
-                NavigationItem navigationItem = navigationItems.get(i);
-                if (navigationItem.labelId == mlbd.navigationItemLabelId) {
-                    getSupportActionBar().setSelectedNavigationItem(i);
-                    break;
-                }
-            }
-        }
         maybeSendUsageReport();
 
         ActionBar bar = getSupportActionBar();
@@ -205,11 +195,23 @@ public class MainActivity extends FragmentActivity implements
 //            bar.selectTab(bar.getTabAt(lastNavigationPosition1));
 //        }
 
+        MessageListBackingData mlbd = JuickAdvancedApplication.instance.getSavedList();
+        if (mlbd != null) {
+            for (int i = 0; i < navigationItems.size(); i++) {
+                NavigationItem navigationItem = navigationItems.get(i);
+                if (navigationItem.labelId == mlbd.navigationItemLabelId) {
+                    getSupportActionBar().setSelectedNavigationItem(i);
+                    break;
+                }
+            }
+        }
+
         setContentView(R.layout.messages);
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
 
         WhatsNew.checkForUpdates(this);
+
     }
 
     public static String updateAvailable;
@@ -492,18 +494,19 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onDestroy() {
+        XMPPService.log("MainActivity.destroy()");
         nActiveMainActivities--;
-        saveState();
+        saveState(true);
         super.onDestroy();
         if (sp != null)
             sp.unregisterOnSharedPreferenceChangeListener(this);
     }
 
-    private void saveState() {
+    private void saveState(boolean urgent) {
         if (mf != null) {
             MessageListBackingData messageListBackingData = mf.getMessageListBackingData();
             messageListBackingData.navigationItemLabelId = lastNavigationItem.labelId;
-            JuickAdvancedApplication.instance.setSavedList(messageListBackingData);
+            JuickAdvancedApplication.instance.setSavedList(messageListBackingData, urgent);
         }
     }
 
@@ -542,11 +545,16 @@ public class MainActivity extends FragmentActivity implements
         }
     }
     public static void toggleJAMessaging(Context ctx, boolean useJAM) {
-        JuickAdvancedApplication.showXMPPToast("toggleJAMessaging: " + useJAM);
+        if (isJAMServiceRunning(ctx) && useJAM) {
+            return; // already
+        }
+        XMPPService.log("MainActivity.toggleJAMessaging("+useJAM+")");
         if (useJAM) {
+            JuickAdvancedApplication.showXMPPToast("toggleJAMessaging: " + useJAM);
             ctx.startService(new Intent(ctx, JAMService.class));
         } else {
             if (isJAMServiceRunning(ctx)) {
+                JuickAdvancedApplication.showXMPPToast("toggleJAMessaging: " + useJAM);
                 Intent service = new Intent(ctx, JAMService.class);
                 service.putExtra("terminate", true);
                 ctx.startService(service);
@@ -592,6 +600,12 @@ public class MainActivity extends FragmentActivity implements
         restyle();
         NavigationItem thisItem = navigationItems.get(itemPosition);
         if (lastNavigationItem == thisItem) return false;       // happens during screen rotate
+        MessageListBackingData savedList = JuickAdvancedApplication.instance.getSavedList();
+        if (savedList != null) {
+            if (thisItem.labelId != savedList.navigationItemLabelId) {
+                JuickAdvancedApplication.instance.setSavedList(null, false);
+            }
+        }
         thisItem.action();
         return true;
     }
@@ -676,6 +690,7 @@ public class MainActivity extends FragmentActivity implements
         if (System.currentTimeMillis() - lastReload < 1000) return;
         if (resumed) {
             if (lastNavigationItem != null) {
+                JuickAdvancedApplication.instance.setSavedList(null, false);
                 NavigationItem oldItem = lastNavigationItem;
                 lastNavigationItem.restoreReadMarker();
                 lastNavigationItem = null;
@@ -760,6 +775,7 @@ public class MainActivity extends FragmentActivity implements
         resumed = true;
         super.onResume();
         if (reloadOnResume) {
+            reloadOnResume = false;
             doReload();
         }
         if (installerOnResume != null) {
@@ -889,7 +905,7 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        saveState();
+        saveState(false);
         super.onSaveInstanceState(outState);
     }
 

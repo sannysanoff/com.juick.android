@@ -22,6 +22,7 @@ public class JAMService extends Service {
         instance = this;
         super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
         handler = new Handler();
+        XMPPService.log("JAM.onCreate()");
     }
 
     @Override
@@ -125,5 +126,6 @@ public class JAMService extends Service {
         instance = null;
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();    //To change body of overridden methods use File | Settings | File Templates.
+        XMPPService.log("JAM.onCreate()");
     }
 }

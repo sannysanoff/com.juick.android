@@ -31,6 +31,8 @@ import android.telephony.TelephonyManager;
 import com.google.gson.Gson;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -57,10 +59,12 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
         if (newConnectivity != connectivity) {
             connectivity = newConnectivity;
             if (connectivity) {
+                XMPPService.log("Connectivity: "+getCurrentConnectivityTypeKey(context));
                 context.startService(new Intent(context, XMPPService.class));
                 SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
                 MainActivity.toggleJAMessaging(context, sp.getBoolean("enableJAMessaging",false));
             } else {
+                XMPPService.log("No connectivity.");
                 Intent service = new Intent(context, XMPPService.class);
                 service.putExtra("terminate", true);
                 service.putExtra("terminateMessage", "connectivity lost");
@@ -115,8 +119,16 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
     public synchronized static HashMap<String, Long> getBestPeriods(Context context) {
         if (bestPeriods == null) {
             String savedStats = context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).getString("stats", null);
-            if (savedStats != null)
+            if (savedStats != null) {
                 bestPeriods = new Gson().fromJson(savedStats, HashMap.class);
+                Set entries = bestPeriods.entrySet();
+                for (Object oentry : entries) {
+                    Map.Entry entry = (Map.Entry)oentry;
+                    if (entry.getValue() instanceof Double) {
+                        bestPeriods.put((String)entry.getKey(), new Long(((Double)entry.getValue()).longValue()));
+                    }
+                }
+            }
             if (bestPeriods == null)
                 bestPeriods = new HashMap<String, Long>();
         }
@@ -126,5 +138,22 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
     public synchronized static void resetStatistics(Context context) {
         bestPeriods = new HashMap<String, Long>();
         context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).edit().remove("stats").commit();
+    }
+
+    // this stuff will potentially grow towards maximum sleep time set to the period network keeps socket connection in NAT alive.
+    // So, for busy NATs this will be reduced.
+    public static void adjustMaximumSleepInterval(Context context, int adjustSleepInterval) {
+        if (adjustSleepInterval < 3) {  // nonono, double check
+            return;
+        }
+        context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).edit().putInt("sleep_interval", adjustSleepInterval).commit();
+    }
+
+    public static int getMaximumSleepInterval(Context context) {
+        try {
+            return context.getSharedPreferences("network_socket_alive_periods", Context.MODE_PRIVATE).getInt("sleep_interval", 15);
+        } catch (Exception e) {
+            return 15;  // just in case.
+        }
     }
 }

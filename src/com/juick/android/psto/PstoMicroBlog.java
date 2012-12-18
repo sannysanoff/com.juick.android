@@ -15,6 +15,8 @@ import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.data.psto.PstoMessage;
+import com.juickadvanced.data.psto.PstoMessageID;
 
 import java.net.URLEncoder;
 import java.util.ArrayList;

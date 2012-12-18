@@ -3,15 +3,15 @@
     <item android:id="@+id/editable_list"
         android:icon="@drawable/ic_action_edit"
         android:title="@string/MessagesDeleteMode"
-        android:showAsAction="ifRoom"/>
+        android:showAsAction="never"/>
     <item android:id="@+id/listen_all"
         android:title="Listen All"
-        android:showAsAction="ifRoom"/>
+        android:showAsAction="never"/>
     <item android:id="@+id/unlisten_all"
         android:title="Stop Listen All"
-        android:showAsAction="ifRoom"/>
+        android:showAsAction="never"/>
     <item android:id="@+id/menuitem_preferences"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="@string/Settings"
-        android:showAsAction="ifRoom"/>
+        android:showAsAction="never"/>
 </menu>

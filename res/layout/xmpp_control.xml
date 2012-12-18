@@ -5,11 +5,40 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         >
+    <TextView
+        android:id="@+id/logview"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="false"
+        android:maxHeight="180sp"
+        android:scrollbars="vertical"
+        android:layout_alignParentTop="true"></TextView>
     <LinearLayout
             android:id="@+id/buttons"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
+            >
+        <Button
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:id="@+id/show_log"
+                android:text="Лог"
+                />
+        <Button
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:id="@+id/gc"
+                android:text="GC"
+                />
+    </LinearLayout>
+    <LinearLayout
+            android:id="@+id/buttons2"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/buttons"
             >
         <Button
                 android:layout_width="fill_parent"
@@ -25,18 +54,12 @@
                 android:id="@+id/show_messages"
                 android:text="Нотиф."
                 />
-        <Button
-                android:layout_width="fill_parent"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:id="@+id/gc"
-                android:text="GC"
-                />
     </LinearLayout>
     <ScrollView
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_above="@id/buttons"
+            android:layout_above="@id/buttons2"
+            android:layout_below="@id/logview"
             >
         <TableLayout
                 android:layout_width="fill_parent"

@@ -39,7 +39,6 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.explore);

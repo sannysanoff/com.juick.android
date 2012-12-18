@@ -34,7 +34,6 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
         int prefs = getIntent().getIntExtra("prefs", 0);
         addPreferencesFromResource(prefs);

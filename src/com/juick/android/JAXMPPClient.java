@@ -49,6 +49,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     Thread wsclientLoop;
     public boolean loggedIn;
     private boolean someMessages;
+    private String socketName;
 
     public JAXMPPClient() {
     }
@@ -58,6 +59,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         this.context = context;
         this.setup = setup;
         this.handler = handler;
+        socketName = "xmppSocket";
         String retval = performLogin(context, setup);
         if (retval == null) {
             loggedIn = true;
@@ -77,7 +79,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     private void maybeStartWSClient() {
         if (wsClient != null) return;
-        wsClient = new JASocketClient();
+        wsClient = new JASocketClient(socketName);
         boolean connected = wsClient.connect(jahost, jaSocketPort);
         if (!connected) {
             wsClient = null;
@@ -133,6 +135,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         this.context = context;
         this.handler = handler;
         this.username = username;
+        socketName = "jamSocket";
         String retval = performLoginLocal(context, username, cookie);
         if (retval == null) {
             JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal success");
@@ -305,6 +308,9 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                 PongFromServer pongFromServer = serverToClient.getPongFromServer();
                 if (pongFromServer.isShouldResetConnectionStatistics()) {
                     ConnectivityChangeReceiver.resetStatistics(context);
+                }
+                if (pongFromServer.getAdjustSleepInterval() != 0) {
+                    ConnectivityChangeReceiver.adjustMaximumSleepInterval(context, pongFromServer.getAdjustSleepInterval());
                 }
             }
         }

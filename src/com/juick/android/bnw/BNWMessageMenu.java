@@ -12,6 +12,7 @@ import com.juick.android.MessagesActivity;
 import com.juick.android.Utils;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;

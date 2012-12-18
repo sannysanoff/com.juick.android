@@ -58,7 +58,6 @@ public class SignInActivity extends Activity implements OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.signin);

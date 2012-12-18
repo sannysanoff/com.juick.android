@@ -35,7 +35,6 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 
         uid = getIntent().getIntExtra("uid", 0);

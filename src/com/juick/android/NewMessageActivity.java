@@ -92,7 +92,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);

@@ -37,6 +37,7 @@ public class JuickAdvancedApplication extends Application {
     public static Handler foreverHandler;
     public static SharedPreferences sp;
     private MessageListBackingData savedList;
+    final private Object savedListLock = new Object();
 
     @Override
     public void onCreate() {
@@ -53,7 +54,7 @@ public class JuickAdvancedApplication extends Application {
             supportsGCM = true;
         } catch (Throwable th) {
         }
-        GCMIntentService.rescheduleAlarm(this, 15*60);
+        GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
         startService(new Intent(this, XMPPService.class));
 
     }
@@ -81,6 +82,9 @@ public class JuickAdvancedApplication extends Application {
                     objectInputStream.close();
                     if (savedList != null) {
                         savedList.messagesSource.setContext(this);
+                        if (savedList.messages.size() == 0) {
+                            savedList = null;
+                        }
                     }
                 } catch (Exception e) {
                     // bad luck!
@@ -90,18 +94,37 @@ public class JuickAdvancedApplication extends Application {
         return savedList;
     }
 
-    public void setSavedList(MessageListBackingData o) {
+    public void setSavedList(final MessageListBackingData o, final boolean urgent) {
         savedList = o;
         if (savedList == null) {
             getSavedListFile().delete();
         } else {
-            try {
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(getSavedListFile()));
-                objectOutputStream.writeObject(o);
-                objectOutputStream.close();
-            } catch (IOException e) {
-                System.out.println(e);
-                //
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
+                    synchronized (savedListLock) {
+                        try {
+                            if (!urgent) {
+                                try {
+                                    Thread.sleep(2000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                }
+                            }
+                            ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(getSavedListFile()));
+                            objectOutputStream.writeObject(o);
+                            objectOutputStream.close();
+                        } catch (IOException e) {
+                            System.out.println(e);
+                            //
+                        }
+                    }
+                }
+            };
+            if (urgent) {
+                thread.run();
+            } else {
+                thread.start();
             }
         }
     }

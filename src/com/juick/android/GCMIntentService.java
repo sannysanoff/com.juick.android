@@ -37,7 +37,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
         if (intent != null && intent.getCategories() != null && intent.getCategories().contains(CATEGORY_HARDWARE_ALARM)) {
             XMPPService.lastAlarmFired = System.currentTimeMillis();
             keepAlive();
-            rescheduleAlarm(this, 15*60);
+            rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
             return 0;
         }
         if (intent != null && intent.getAction() == null) return START_NOT_STICKY;

@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
+import com.juickadvanced.data.bnw.BNWMessage;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
@@ -77,7 +79,7 @@ public class BNWMicroBlog implements MicroBlog {
             @Override
             public void run() {
                 BnwMessageID bmid = (BnwMessageID)mid;
-                String thrid = bmid.id;
+                String thrid = bmid.getId();
                 if (selectedReply != null) {
                     thrid += "/"+((BNWMessage)selectedReply).getRIDString();
                 }

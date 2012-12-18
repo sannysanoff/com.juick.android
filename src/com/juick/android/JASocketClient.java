@@ -35,6 +35,7 @@ public class JASocketClient {
     JASocketClientListener listener = null;
     public boolean shuttingDown = false;
     long lastSuccessfulActivity = 0;
+    private final String name;
 
     public boolean send(String str) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -62,7 +63,8 @@ public class JASocketClient {
         }
     }
 
-    public JASocketClient() {
+    public JASocketClient(String name) {
+        this.name = name;
     }
 
     public void setListener(JASocketClientListener listener) {
@@ -71,31 +73,25 @@ public class JASocketClient {
 
     public boolean connect(String host, int port) {
         try {
-
+            log("JASocketClient:"+name+": new");
             sock = new Socket();
             sock.connect(new InetSocketAddress(host, port));
             is = sock.getInputStream();
             os = sock.getOutputStream();
+            log("connected");
             return true;
         } catch (Exception e) {
+            log("connect:"+e.toString());
             System.err.println(e);
             //e.printStackTrace();
             return false;
         }
     }
 
-    public boolean isConnected() {
-        return sock.isConnected();
-    }
-
     public void readLoop() {
         try {
             int b;
             //StringBuilder buf = new StringBuilder();
-            ByteArrayBuffer buf = new ByteArrayBuffer(16);
-            boolean flagInside = false;
-            StringBuilder baad = new StringBuilder();
-            int lenToRead = -1;
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             while ((b = is.read()) != -1) {
                 markActivity();
@@ -108,11 +104,15 @@ public class JASocketClient {
                     baos.write(b);
                 }
             }
-            System.err.println("DISCONNECTED readLoop");
+            log("JAMSocket: DISCONNECTED readLoop");
             disconnect();
         } catch (Exception e) {
             System.err.println(e);
         }
+    }
+
+    private void log(String s) {
+        XMPPService.log("JASocketClient:"+name+":"+s);
     }
 
     public void disconnect() {
@@ -120,6 +120,7 @@ public class JASocketClient {
             if (is != null) is.close();
             if (os != null) os.close();
             if (sock != null) sock.close();
+            log("JASocketClient:"+name+": close()");
         } catch (Exception e) {
             System.err.println(e);
         }

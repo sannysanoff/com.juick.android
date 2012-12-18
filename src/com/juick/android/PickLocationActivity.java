@@ -40,7 +40,6 @@ public class PickLocationActivity extends MapActivity implements OnClickListener
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Utils.updateTheme(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.map);

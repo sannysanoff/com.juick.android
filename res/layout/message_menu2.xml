@@ -18,6 +18,7 @@
                     android:layout_weight="1"
                     android:layout_height="42sp"
                     android:id="@+id/single_url"
+                    android:textSize="12sp"
                     android:text="Goto URL"
                     >
             </Button>
@@ -44,6 +45,7 @@
                         android:gravity="left|center_vertical"
                         android:layout_height="42sp"
                         android:layout_weight="1"
+                        android:textSize="12sp"
                         android:id="@+id/open_message_in_browser"
                         android:text="@string/InBrowser"
                         >
@@ -67,6 +69,7 @@
                             android:gravity="left|center_vertical"
                             android:drawableLeft="@drawable/mm_recommend"
                             android:id="@+id/recommend_message"
+                            android:textSize="12sp"
                             android:text="@string/__Recommend"
                             >
                     </Button>
@@ -77,6 +80,7 @@
                             android:drawableLeft="@drawable/mm_delete"
                             android:layout_weight="1"
                             android:id="@+id/delete_message"
+                            android:textSize="12sp"
                             android:text="@string/Delete"
                             >
                     </Button>
@@ -87,6 +91,7 @@
                             android:gravity="left|center_vertical"
                             android:drawableLeft="@drawable/mm_watch"
                             android:id="@+id/subscribe_message"
+                            android:textSize="12sp"
                             android:text="@string/Subscribe"
                             >
                     </Button>
@@ -96,6 +101,7 @@
                             android:layout_weight="1"
                             android:gravity="left|center_vertical"
                             android:drawableLeft="@drawable/mm_unwatch"
+                            android:textSize="12sp"
                             android:id="@+id/unsubscribe_message"
                             android:text="@string/Unsubscribe"
                             >
@@ -106,6 +112,7 @@
                             android:gravity="left|center_vertical"
                             android:drawableLeft="@drawable/mm_share"
                             android:layout_weight="1"
+                            android:textSize="12sp"
                             android:id="@+id/share_message"
                             android:text="@string/Share"
                             >
@@ -123,6 +130,7 @@
                             android:gravity="left|center_vertical"
                             android:drawableLeft="@drawable/mm_save"
                             android:layout_weight="1"
+                            android:textSize="12sp"
                             android:id="@+id/save_message"
                             android:text="@string/Save"
                             >
@@ -133,6 +141,7 @@
                             android:gravity="left|center_vertical"
                             android:drawableLeft="@drawable/mm_unsave"
                             android:layout_weight="1"
+                            android:textSize="12sp"
                             android:id="@+id/unsave_message"
                             android:text="@string/Unsave"
                             >
@@ -143,6 +152,7 @@
                             android:layout_weight="1"
                             android:gravity="left|center_vertical"
                             android:id="@+id/open_message"
+                            android:textSize="12sp"
                             android:visibility="gone"
                             android:drawableLeft="@drawable/mm_open"
                             android:text="@string/Open"
@@ -154,6 +164,7 @@
                             android:layout_weight="1"
                             android:gravity="left|center_vertical"
                             android:visibility="gone"
+                            android:textSize="12sp"
                             android:drawableLeft="@drawable/mm_expand"
                             android:id="@+id/expand_message"
                             android:text="@string/Expand"
@@ -163,6 +174,7 @@
                             android:layout_width="fill_parent"
                             android:layout_height="42sp"
                             android:layout_weight="1"
+                            android:textSize="12sp"
                             android:gravity="left|center_vertical"
                             android:id="@+id/translate_message"
                             android:text="R -> Я"
@@ -181,6 +193,7 @@
                         android:layout_weight="1"
                         android:gravity="left|center_vertical"
                         android:drawableLeft="@drawable/mm_userpic"
+                        android:textSize="12sp"
                         android:id="@+id/user_center"
                         android:text="@string/UserCenter"
                         >

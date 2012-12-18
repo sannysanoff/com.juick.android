@@ -6,6 +6,8 @@ import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.URLParser;
 import com.juick.android.Utils;
+import com.juickadvanced.data.bnw.BNWMessage;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
