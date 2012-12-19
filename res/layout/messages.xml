@@ -11,7 +11,8 @@
             android:textColor="#b6813d"
             android:text="@string/Juick"
             android:background="#cfcea0"
-            android:textSize="20sp"
+            android:singleLine="true"
+            android:textSize="18sp"
             android:padding="3sp"
             />
     <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"

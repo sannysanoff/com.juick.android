@@ -26,6 +26,7 @@ import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.view.MenuInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
@@ -47,6 +48,7 @@ public class MessagesActivity extends FragmentActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         Intent i = getIntent();
         restoreData = getLastCustomNonConfigurationInstance();

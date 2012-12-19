@@ -186,6 +186,7 @@ public class MainActivity extends FragmentActivity implements
 
 
         maybeSendUsageReport();
+        maybeWarnXMPP();
 
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowTitleEnabled(false);
@@ -216,6 +217,15 @@ public class MainActivity extends FragmentActivity implements
 
         WhatsNew.checkForUpdates(this, null, false);
 
+    }
+
+    private void maybeWarnXMPP() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean shouldWarn = sp.getBoolean("xmpp_privacy_should_warn", false);
+        if (shouldWarn) {
+            JuickPreferencesActivity.launchXMPPPrivacyDialog(this, true);
+        }
+        //To change body of created methods use File | Settings | File Templates.
     }
 
     public static String updateAvailable;

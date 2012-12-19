@@ -36,6 +36,7 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
@@ -587,7 +588,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 }
             });
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(activity, R.style.Theme_Sherlock));
             View dialogView = activity.getLayoutInflater().inflate(R.layout.message_menu2, null);
             builder.setView(dialogView);
             builder.setCancelable(true);
@@ -598,7 +599,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
                 @Override
                 public void onShow(DialogInterface dialog) {
-                    MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
+                    //MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
                 }
             });
             TextView messageNo = (TextView)dialogView.findViewById(R.id.message_no);

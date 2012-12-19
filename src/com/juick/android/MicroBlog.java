@@ -2,6 +2,7 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.Handler;
 import android.widget.ListView;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -20,6 +21,8 @@ import java.util.ArrayList;
 public interface MicroBlog {
     void initialize();
     public String getCode();
+
+    public String getMicroblogName(Context context);
 
     UserpicStorage.AvatarID getAvatarID(JuickMessage jmsg);
 

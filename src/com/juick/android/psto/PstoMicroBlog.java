@@ -2,6 +2,7 @@ package com.juick.android.psto;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -154,6 +155,11 @@ public class PstoMicroBlog implements MicroBlog {
     }
 
     @Override
+    public String getMicroblogName(Context context) {
+        return context.getString(R.string.PstoMicroblog);
+    }
+
+    @Override
     public UserpicStorage.AvatarID getAvatarID(final JuickMessage jmsg) {
         return new UserpicStorage.AvatarID() {
             @Override
@@ -254,38 +260,30 @@ public class PstoMicroBlog implements MicroBlog {
                 throw new IllegalArgumentException("No PSTO authorization available");
             }
 
-            int start = 0;
-            int i = 0;
-            StringBuilder tags = new StringBuilder();
-            StringBuilder clubs = new StringBuilder();
-            String text = "";
-            boolean hastags = false;
-            boolean hasclubs = false;
-            while (start<txt.length()) {
-                i=txt.indexOf(" ",start);
-                if (i==-1)
-                    i=txt.length();
-                String word=txt.substring(start,i);
-                if (i!=start) {
-                    if (word.startsWith("*")) {
-                        if (hastags)
-                            tags.append(",");
-                        else
-                            hastags = true;
-                        tags.append(word.substring(1));
-                    } else {
-                        text = txt.substring(start);
-                        break;
+            StringBuilder tagsStr = new StringBuilder();
+            String s = txt = txt.trim();
+            if (s.startsWith("*")) {
+                String tagline = s.split("\n")[0];
+                String[] tags = tagline.split("\\*");
+                for (String tag : tags) {
+                    String thatTag = tag.trim();
+                    if (thatTag.length() > 0) {
+                        if (tagsStr.length() != 0) {
+                            tagsStr.append(",");
+                        }
+                        tagsStr.append(thatTag);
                     }
                 }
-                start=i+1;
+                int eol = txt.indexOf("\n");
+                if (eol != -1) {
+                    txt = txt.substring(eol+1);
+                }
             }
 
             StringBuilder data = new StringBuilder();
             data.append("text="+ URLEncoder.encode(txt, "utf-8"));
-            if (hastags)
-                data.append("&tags="+URLEncoder.encode(tags.toString(),"utf-8"));
-            data.append("&private=1");
+            if (tagsStr.length() > 0)
+                data.append("&tags="+URLEncoder.encode(tagsStr.toString(),"utf-8"));
             final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://"+webLogin+".psto.net/post?", data.toString());
             newMessageActivity.runOnUiThread(new Runnable() {
                 @Override

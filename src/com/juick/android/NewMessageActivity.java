@@ -92,6 +92,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -146,12 +147,10 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         progressDialogCancel.bool = false;
         etMessage.requestFocus();
         checkMessagesSource();
-        if (messagesSource == null || messagesSource.getMicroBlog() == null) {
-            ACRA.getErrorReporter().handleException(new AssertionError("messagesSource == null || messagesSource.getMicroBlog() == null, ms="+messagesSource), false);
-            Toast.makeText(this, "Assertion error", Toast.LENGTH_SHORT).show();
-            finish();
-        }
         messagesSource.getMicroBlog().decorateNewMessageActivity(this);
+        TextView oldTitle = (TextView)findViewById(R.id.old_title);
+        oldTitle.setText(messagesSource.getMicroBlog().getMicroblogName(this));
+
     }
 
     private void setFormEnabled(boolean state) {

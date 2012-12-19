@@ -9,6 +9,7 @@ import com.juick.android.Utils;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
 
 import java.util.ArrayList;
 
@@ -83,7 +84,7 @@ public class SavedMessagesSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return null;
+        return MainActivity.getMicroBlog(JuickMessageID.CODE);
     }
 
     @Override

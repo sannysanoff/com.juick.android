@@ -256,6 +256,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             getActivity().runOnUiThread(new Runnable() {
 
                 public void run() {
+                    try {
+                        getListView();
+                    } catch (Exception e) {
+                        handler.postDelayed(this, 50);  // bugs in fragment manager
+                        return;
+                    }
                     if (notification.lastError != null && !cached) {
                         notification.statusText.setText(notification.lastError);
                         notification.progressBar.setVisibility(View.GONE);

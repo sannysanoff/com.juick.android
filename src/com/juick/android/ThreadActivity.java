@@ -35,8 +35,10 @@ import android.support.v4.view.MenuItem;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
+import android.view.ContextThemeWrapper;
 import android.view.MenuInflater;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
@@ -86,6 +88,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         handler = new Handler();
 
@@ -288,7 +291,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     private void previewAndSendReply(final String msg) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         if (sp.getBoolean("previewReplies", false)) {
-            TextView tv = new TextView(this);
+            final TextView tv = new TextView(this);
             JuickMessage jm = new JuickMessage();
             jm.User = new JuickUser();;
             jm.User.UName = "You";
@@ -303,8 +306,9 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             }
             JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(this, jm, true);
             tv.setText(parsedMessage.textContent);
+            tv.setPadding(10, 10, 10, 10);
             MainActivity.restyleChildrenOrWidget(tv);
-            final AlertDialog dialog = new AlertDialog.Builder(this)
+            final AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.Theme_Sherlock_Light))
                     .setTitle("Post reply - preview")
                     .setView(tv)
                     .setCancelable(true)
@@ -323,8 +327,9 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                     }).create();
             dialog.setOnShowListener(new DialogInterface.OnShowListener() {
                 @Override
-                public void onShow(DialogInterface _) {
-                    MainActivity.restyleChildrenOrWidget(dialog.getWindow().getDecorView());
+                public void onShow(DialogInterface i) {
+                    tv.setBackgroundColor(JuickMessagesAdapter.getColorTheme(dialog.getContext()).getBackground());
+                    MainActivity.restyleChildrenOrWidget(tv);
                 }
             });
             dialog.show();
@@ -348,7 +353,8 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                         builder.setNeutralButton(R.string.OK, null);
                         builder.setIcon(android.R.drawable.ic_dialog_info);
                         builder.setMessage(R.string.Message_posted);
-                        builder.show();
+                        AlertDialog alertDialog = builder.create();
+                        alertDialog.show();
                     }
                 } else {
                     setFormEnabled(true);

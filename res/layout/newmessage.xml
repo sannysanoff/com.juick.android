@@ -33,6 +33,18 @@
             android:visibility="gone"/>
     </LinearLayout>
 
+    <TextView
+            android:id="@+id/old_title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#b6813d"
+            android:text="@string/JuickMicroblog"
+            android:background="#cfcea0"
+            android:singleLine="true"
+            android:textSize="18sp"
+            android:padding="3sp"
+            />
+
     <EditText
         android:id="@+id/editMessage"
         android:layout_width="fill_parent"

@@ -338,7 +338,7 @@
     <string name="Other">Прочее</string>
     <string name="Other2">Всякое</string>
     <string name="WhatsNew">Что нового...</string>
-    <string name="WhatsNew2">Изменения в вериях</string>
+    <string name="WhatsNew2">Изменения в верcиях</string>
     <string name="Privacy_Policy2">Куда уходят какие персональные данные</string>
     <string name="XMPPLoginInfo">XMPP аккаунт...</string>
     <string name="JuBoFilters">JuBo/Juick стоп-листы...</string>
@@ -411,6 +411,10 @@
     <string name="NotificationsSummary">Можно включить или не-жабберные или жабберные нотификации, или всё сразу. Дублирующиеся нотификации в таком случае будут корректно учитываться.</string>
     <string name="WillCheckForNewVersion">Проверяем на наличие...</string>
     <string name="NewVersionNotFound">Новой версии не найдено: </string>
+    <string name="NowUsesServerSideXMPPClient">Juick Advanced теперь подключает к Жабберу с использованием своего промежуточного сервера.
+        Читайте подробности.
+    </string>
+    <string name="WeTurnedOffXMPP">Мы сейчас выключили вашу галочку "подключать к XMPP", на всякий случай.</string>
 
 
 </resources>

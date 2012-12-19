@@ -45,6 +45,11 @@ public class JuickAdvancedApplication extends Application {
             ACRA.init(this);
         instance = this;
         sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean useXMPP = sp.getBoolean("useXMPP", false);
+        boolean privacy_warned = sp.getBoolean("xmpp_privacy_warned", false);
+        if (!privacy_warned && useXMPP) {
+            sp.edit().putBoolean("useXMPP", false).putBoolean("xmpp_privacy_should_warn", true).commit();
+        }
         super.onCreate();
         foreverHandler = new Handler();
         try {

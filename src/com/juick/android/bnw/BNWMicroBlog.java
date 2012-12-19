@@ -2,6 +2,7 @@ package com.juick.android.bnw;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,6 +47,11 @@ public class BNWMicroBlog implements MicroBlog {
     @Override
     public String getCode() {
         return BnwMessageID.CODE;
+    }
+
+    @Override
+    public String getMicroblogName(Context context) {
+        return context.getString(R.string.BNWMicroblog);
     }
 
     @Override

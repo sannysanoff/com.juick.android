@@ -178,6 +178,11 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     @Override
+    public String getMicroblogName(Context context) {
+        return context.getString(R.string.JuickMicroblog);
+    }
+
+    @Override
     public UserpicStorage.AvatarID getAvatarID(final JuickMessage jmsg) {
         if (jmsg.User == null || jmsg.User.UID == 0) return UserpicStorage.NO_AVATAR;
         return new UserpicStorage.AvatarID() {

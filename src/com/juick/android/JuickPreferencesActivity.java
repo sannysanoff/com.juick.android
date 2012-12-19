@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -31,7 +33,39 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         handler = new Handler();
+        int prefs = getIntent().getIntExtra("prefs", 0);
         super.onCreate(savedInstanceState);
+        if (prefs == R.xml.prefs_xmpp) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean privacy_warned = sp.getBoolean("xmpp_privacy_warned", false);
+            if (!privacy_warned) {
+                launchXMPPPrivacyDialog(this, false);
+            }
+        }
+    }
+
+    public static void launchXMPPPrivacyDialog(final Activity activity, boolean weDisabled) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+        sp.edit().putBoolean("xmpp_privacy_warned", true).putBoolean("xmpp_privacy_should_warn", false).commit();
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        final AlertDialog alerDialog;
+        alerDialog = builder
+                .setTitle(activity.getString(R.string.XMPP_client))
+                .setMessage(activity.getString(R.string.NowUsesServerSideXMPPClient)+" "+ (weDisabled ? activity.getString(R.string.WeTurnedOffXMPP) : ""))
+                .setCancelable(true)
+                .setNeutralButton(R.string.ReadPrivacyPolicy, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new WhatsNew(activity).showPrivacyPolicy();
+                    }
+                })
+                .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                }).create();
+        alerDialog.show();
     }
 
     @Override
