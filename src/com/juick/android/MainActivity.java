@@ -210,6 +210,7 @@ public class MainActivity extends FragmentActivity implements
         }
 
         setContentView(R.layout.messages);
+        findViewById(R.id.old_title).setVisibility(View.GONE);
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
 

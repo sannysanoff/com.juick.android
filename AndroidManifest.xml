@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced"
-          android:versionCode="2012121802" android:versionName="18.17.9">
+          android:versionCode="2012121901" android:versionName="18.17.10">
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="15"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -58,7 +58,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.juick.android.MessagesActivity"
-                  android:theme="@style/Theme.Sherlock.Light"
+                  android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -66,13 +66,13 @@
                 <data android:mimeType="vnd.android.cursor.item/vnd.com.juick.profile"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.UserCenterActivity" android:label="@string/UserCenter" android:theme="@style/Theme.Sherlock.Light"
+        <activity android:name="com.juick.android.UserCenterActivity" android:label="@string/UserCenter" android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation">
         </activity>
         <activity android:name="org.acra.CrashReportDialog"
                   android:configChanges="keyboard|keyboardHidden|orientation">
         </activity>
-        <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/New_message" android:theme="@style/Theme.Sherlock.Light"
+        <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/New_message" android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
@@ -83,9 +83,9 @@
                 <data android:mimeType="video/mp4"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.ExploreActivity" android:label="@string/Juick__Explore"
+        <activity android:name="com.juick.android.ExploreActivity" android:label="@string/Juick__Explore" android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
-        <activity android:name="com.juick.android.ThreadActivity" android:label="" android:theme="@style/Theme.Sherlock.Light"
+        <activity android:name="com.juick.android.ThreadActivity" android:label="" android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.PlacesActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
@@ -93,13 +93,13 @@
                   android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
         <activity android:name="com.juick.android.PlaceEditActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.SignInActivity" android:theme="@style/Theme.Sherlock.Light"
+        <activity android:name="com.juick.android.SignInActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.SignUpActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.PreferencesActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags"
+        <activity android:name="com.juick.android.TagsActivity" android:label="@string/Tags" android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.JuickPreferencesActivity" android:launchMode="singleTask"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>

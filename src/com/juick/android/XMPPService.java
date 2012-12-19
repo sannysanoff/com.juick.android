@@ -799,7 +799,7 @@ public class XMPPService extends Service {
 
     private void handleIncomingTopicStarter(JuickSubscriptionIncomingMessage subscriptionIncomingMessage) {
         cachedTopicStarters.put(subscriptionIncomingMessage.getMID(), subscriptionIncomingMessage);
-        for (IncomingMessage incomingMessage : incomingMessages) {
+        for (IncomingMessage incomingMessage : new ArrayList<IncomingMessage>(incomingMessages)) {
             if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getMID().equals(subscriptionIncomingMessage.getMID())) {
                 // details came!
                 JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;

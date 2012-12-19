@@ -25,6 +25,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.view.MenuInflater;
+import android.view.View;
+import android.widget.TextView;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
@@ -60,8 +62,9 @@ public class MessagesActivity extends FragmentActivity {
     }
 
     protected void initWithMessagesSource() {
-        setTitle(messagesSource.getTitle());
         setContentView(R.layout.messages);
+        TextView oldTitle = (TextView)findViewById(R.id.old_title);
+        oldTitle.setText(messagesSource.getTitle());
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         mf = new MessagesFragment(restoreData, this);
         Bundle args = new Bundle();

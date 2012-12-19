@@ -543,7 +543,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         }
                         ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), off, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         int ix = ssb.length();
-                        ssb.append(" - " + toRelaviteDate(((Item) item).lastTime));
+                        ssb.append(" - " + toRelaviteDate(((Item) item).lastTime, russian));
                         ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         fromTags.setText(ssb);
                     } else {
@@ -624,7 +624,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     }
                     ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), off, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                     int ix = ssb.length();
-                    ssb.append(" - " + toRelaviteDate(subscriptionMessage.datetime.getTime()));
+                    ssb.append(" - " + toRelaviteDate(subscriptionMessage.datetime.getTime(), russian));
                     ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
 
@@ -651,16 +651,23 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         }
     }
 
-    final boolean russian = Locale.getDefault().getLanguage().equals("ru");
+    final boolean russian = isRussian();
 
-    public String toRelaviteDate(long ts) {
+    public static boolean isRussian() {
+        return Locale.getDefault().getLanguage().equals("ru");
+    }
+
+    public static String toRelaviteDate(long ts, boolean russian) {
+        StringBuilder sb = new StringBuilder();
         ts = ((System.currentTimeMillis() - ts) / 1000) / 60;
+        if (ts < 0) {
+            return russian ? "в будущем" : "in future";
+        }
         long minutes = ts % 60;
         ts /= 60;
         long hours = ts % 24;
         ts /= 24;
         long days = ts;
-        StringBuilder sb = new StringBuilder();
         if (days != 0) {
             sb.append(days);
             sb.append(russian?"д":"d ");

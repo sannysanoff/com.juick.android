@@ -202,8 +202,10 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean showNumbers = sp.getBoolean("showNumbers", false);
         if (showNumbers)
-            title += " - "+message.getDisplayMessageNo();
-        setTitle(title);
+            title += " - "+message.getDisplayMessageNo()+" - "+
+                    XMPPIncomingMessagesActivity.toRelaviteDate(message.Timestamp.getTime(), XMPPIncomingMessagesActivity.isRussian());
+        TextView oldTitle = (TextView)findViewById(R.id.old_title);
+        oldTitle.setText(title);
         DatabaseService.rememberVisited(message);
     }
     

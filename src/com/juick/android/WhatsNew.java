@@ -49,7 +49,7 @@ public class WhatsNew {
         return new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
     }
 
-    public static void checkForUpdates(final IRunningActivity runningActivity, final Utils.Function<Void,String> notRunning, boolean force) {
+    public static void checkForUpdates(final IRunningActivity runningActivity, final Utils.Function<Void,String> notRunning, final boolean force) {
         final Activity activity = runningActivity.getActivity();
         final File last_check = getLastCheck(activity);
         if (last_check.exists()) {
@@ -94,7 +94,7 @@ public class WhatsNew {
                     boolean found = false;
                     String reasonNotFound = "other reason";
                     try {
-                        Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version", null);
+                        Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version?force=" + force, null);
                         try {
                             last_check.createNewFile();
                         } catch (IOException e) {

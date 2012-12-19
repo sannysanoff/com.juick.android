@@ -3,6 +3,16 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
+    <TextView
+            android:id="@+id/old_title"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#b6813d"
+            android:text="@string/Juick"
+            android:background="#cfcea0"
+            android:textSize="20sp"
+            android:padding="3sp"
+            />
     <Button
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

@@ -45,7 +45,7 @@ import java.util.Locale;
 
 /**
  */
-public class UserCenterActivity extends FragmentActivity {
+public class UserCenterActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
