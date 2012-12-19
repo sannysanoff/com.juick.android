@@ -282,6 +282,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         }
                         listAdapter.addAllMessages(messages);
                         setListAdapter(listAdapter);
+                        if (cached) {
+                            getListView().setSelection(getListView().getAdapter().getCount()-1);
+                        }
                         getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
 
                         initAdapterStageTwo(cached);
@@ -302,12 +305,14 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             Activity activity = getActivity();
                             if (activity != null) {
                                 Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
-                                xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                                    @Override
-                                    public void withService(XMPPService service) {
-                                        service.removeMessages(mid, false);
-                                    }
-                                });
+                                if (!XMPPIncomingMessagesActivity.editMode) {
+                                    xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                        @Override
+                                        public void withService(XMPPService service) {
+                                            service.removeMessages(mid, false);
+                                        }
+                                    });
+                                }
                                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                     @Override
                                     public void withService(DatabaseService service) {

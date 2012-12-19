@@ -50,7 +50,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         }
     }
 
-    static boolean editMode;
+    public static boolean editMode;
 
     class Header {
         String label;
@@ -478,18 +478,19 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     return view;
                 }
                 if (message instanceof XMPPService.JuickThreadIncomingMessage) {
-                    HashMap<String,Integer> counts = new HashMap<String, Integer>();
+                    HashMap<String,HashSet<String>> counts = new HashMap<String, HashSet<String>>();
                     int totalCount = 0;
                     MessageID topicMessageId = null;
                     int toYouCount = 0;
                     for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
                         XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
                         String from = commentMessage.getFrom();
-                        Integer oldCount = counts.get(from);
-                        if (oldCount == null) oldCount = 0;
-                        oldCount = oldCount + 1;
-                        counts.put(from, oldCount);
-                        totalCount++;
+                        HashSet oldCount = counts.get(from);
+                        if (oldCount == null) {
+                            oldCount = new HashSet();
+                            counts.put(from, oldCount);
+                        }
+                        oldCount.add(commentMessage.messageNoPlain);
                         String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
                         String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
                         int scan = 0;
@@ -510,9 +511,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         }
                     }
                     SpannableStringBuilder sb = new SpannableStringBuilder();
-                    for (Map.Entry<String, Integer> stringIntegerEntry : counts.entrySet()) {
+                    for (Map.Entry<String, HashSet<String>> stringIntegerEntry : counts.entrySet()) {
+                        Integer commentCount = stringIntegerEntry.getValue().size();
+                        totalCount+=commentCount;
                         sb.append(stringIntegerEntry.getKey());
-                        Integer commentCount = stringIntegerEntry.getValue();
                         if (commentCount != 1) {
                             sb.append("("+commentCount+")");
                         }

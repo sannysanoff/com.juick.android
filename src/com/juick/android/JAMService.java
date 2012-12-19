@@ -27,21 +27,29 @@ public class JAMService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        boolean handled = false;
+        if (intent != null && intent.getBooleanExtra("terminate", false)) {
+            stopSelf();
+            handled = true;
+        }
         if (client != null) {
-            if (intent != null && intent.getBooleanExtra("terminate", false)) {
-                stopSelf();
-            } else if (intent != null && intent.getBooleanExtra("listen_all", false)){
+            if (intent != null && intent.getBooleanExtra("listen_all", false)){
                 client.listenAll();
+                handled = true;
             } else if (intent != null && intent.getBooleanExtra("unlisten_all", false)){
                 client.unlistenAll();
+                handled = true;
             } else if (intent != null && intent.getStringExtra("unsubscribeMessage") != null){
                 client.unsubscribeMessage(intent.getStringExtra("unsubscribeMessage"));
+                handled = true;
             } else if (intent != null && intent.getStringExtra("subscribeMessage") != null){
                 client.subscribeMessage(intent.getStringExtra("subscribeMessage"));
-            } else {
-                if (startId != 2) {     // i don't know what is this, really
-                    startup();
-                }
+                handled = true;
+            }
+        }
+        if (!handled) {
+            if (startId != 2) {     // i don't know what is this, really
+                startup();
             }
         }
         return super.onStartCommand(intent, flags, startId);

@@ -41,6 +41,7 @@
                 android:name="android.app.default_searchable"
                 android:value="com.juick.android.SearchActivity"/>
         <activity android:name="com.juick.android.MainActivity"  android:launchMode="singleTask"
+                  android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -57,6 +58,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.juick.android.MessagesActivity"
+                  android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -64,13 +66,13 @@
                 <data android:mimeType="vnd.android.cursor.item/vnd.com.juick.profile"/>
             </intent-filter>
         </activity>
-        <activity android:name="com.juick.android.UserCenterActivity" android:label="@string/UserCenter"
+        <activity android:name="com.juick.android.UserCenterActivity" android:label="@string/UserCenter" android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation">
         </activity>
         <activity android:name="org.acra.CrashReportDialog"
                   android:configChanges="keyboard|keyboardHidden|orientation">
         </activity>
-        <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/New_message"
+        <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/New_message" android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
@@ -83,7 +85,7 @@
         </activity>
         <activity android:name="com.juick.android.ExploreActivity" android:label="@string/Juick__Explore"
                   android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
-        <activity android:name="com.juick.android.ThreadActivity" android:label=""
+        <activity android:name="com.juick.android.ThreadActivity" android:label="" android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.PlacesActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
@@ -91,7 +93,7 @@
                   android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
         <activity android:name="com.juick.android.PlaceEditActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.SignInActivity"
+        <activity android:name="com.juick.android.SignInActivity" android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.SignUpActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
