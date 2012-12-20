@@ -236,6 +236,9 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
 
     @Override
     public ReplyCode validateNon200Reply(HttpResponse o, String url) {
+        if (o.getStatusLine().getStatusCode() == 404 && url.indexOf("show=my") != -1) {
+            return ReplyCode.FORBIDDEN;
+        }
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
