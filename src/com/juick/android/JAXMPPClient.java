@@ -34,9 +34,9 @@ import java.util.HashSet;
  * To change this template use File | Settings | File Templates.
  */
 public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JASocketClientListener {
-    //String jahost = "ja.ip.rt.ru";
+    String jahost = "ja.ip.rt.ru";
     //String jahost = "192.168.1.77";
-    String jahost = "10.236.35.24";
+    //String jahost = "10.236.35.24";
     int jaSocketPort = 8228;
     String controlURL = "https://"+ jahost +":8222/xmpp/control";
     String sessionId;
