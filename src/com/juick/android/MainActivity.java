@@ -60,8 +60,6 @@ import java.util.*;
 
 /**
  * @author Ugnich Anton
- *         todo: http://juick.com/Umnik/1612234
- *
  */
 public class MainActivity extends FragmentActivity implements
         ActionBar.OnNavigationListener,

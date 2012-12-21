@@ -540,7 +540,11 @@ public class JuickMicroBlog implements MicroBlog {
 
                     public void run() {
                         if (progressDialog != null && progressDialog.isShowing()) {
-                            progressDialog.dismiss();
+                            try {
+                                progressDialog.dismiss();
+                            } catch (Exception e) {
+                                //
+                            }
                         }
                         then.apply(res.errorText);
                     }
