@@ -2,10 +2,13 @@ package com.juick.android;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.xmpp.ClientToServer;
+import com.juickadvanced.xmpp.ServerToClient;
 
 /**
  */
@@ -23,41 +26,53 @@ public class JAMService extends Service {
         super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
         handler = new Handler();
         XMPPService.log("JAM.onCreate()");
+        startup();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         boolean handled = false;
+        JAXMPPClient clientLocal = client;
         if (intent != null && intent.getBooleanExtra("terminate", false)) {
+            if (clientLocal != null) {
+                XMPPService.log("Sent client disconnect (JAM)");
+                clientLocal.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
+                    @Override
+                    public Void apply(ServerToClient serverToClient) {
+                        return null;  //To change body of implemented methods use File | Settings | File Templates.
+                    }
+                });
+            }
             stopSelf();
             handled = true;
         }
-        if (client != null) {
+        if (clientLocal != null) {
             if (intent != null && intent.getBooleanExtra("listen_all", false)){
-                client.listenAll();
+                clientLocal.listenAll();
                 handled = true;
             } else if (intent != null && intent.getBooleanExtra("unlisten_all", false)){
-                client.unlistenAll();
+                clientLocal.unlistenAll();
                 handled = true;
             } else if (intent != null && intent.getStringExtra("unsubscribeMessage") != null){
-                client.unsubscribeMessage(intent.getStringExtra("unsubscribeMessage"));
+                clientLocal.unsubscribeMessage(intent.getStringExtra("unsubscribeMessage"));
                 handled = true;
             } else if (intent != null && intent.getStringExtra("subscribeMessage") != null){
-                client.subscribeMessage(intent.getStringExtra("subscribeMessage"));
+                clientLocal.subscribeMessage(intent.getStringExtra("subscribeMessage"));
                 handled = true;
             }
         }
         if (!handled) {
-            if (startId != 2) {     // i don't know what is this, really
-                startup();
-            }
+            startup();
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
     private synchronized void startup() {
-        final Utils.ServiceGetter<XMPPService> getter = new Utils.ServiceGetter<XMPPService>(JAMService.this, XMPPService.class);
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean useJAM = sp.getBoolean("enableJAMessaging", false);
+        if (!useJAM) return;
         if (client == null) {
+            final Utils.ServiceGetter<XMPPService> getter = new Utils.ServiceGetter<XMPPService>(JAMService.this, XMPPService.class);
             new Thread("JAM.startup") {
                 @Override
                 public void run() {
@@ -76,8 +91,11 @@ public class JAMService extends Service {
                             getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                                 @Override
                                 public void withService(XMPPService service) {
-                                    if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
-                                        service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                                    boolean useJAM = sp.getBoolean("enableJAMessaging", false);
+                                    if (useJAM) {
+                                        if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
+                                            service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                                        }
                                     }
                                 }
 
@@ -112,13 +130,19 @@ public class JAMService extends Service {
     }
 
     private void cleanup() {
-        if (client != null) {
+        final JAXMPPClient clientLocal = client;
+        if (clientLocal != null) {
+            client = null;
             new Thread("JAM.cleanp") {
                 @Override
                 public void run() {
-                    if (client != null) {
-                        client.disconnect();
-                        client = null;
+                    try {
+                        Thread.sleep(3000);     // disconnect message must go.
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                    if (clientLocal != null) {
+                        clientLocal.disconnect();
                     }
                 }
             }.start();

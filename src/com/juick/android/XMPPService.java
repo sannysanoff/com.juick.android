@@ -13,6 +13,7 @@ import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.xmpp.ServerToClient;
 import com.juickadvanced.xmpp.XMPPConnectionSetup;
 
 import java.io.*;
@@ -60,6 +61,18 @@ public class XMPPService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
             if (intent != null && intent.getBooleanExtra("terminate", false)) {
+                if (currentThread instanceof ExternalXMPPThread) {
+                    ExternalXMPPThread th = (ExternalXMPPThread)currentThread;
+                    JAXMPPClient client = th.client;
+                    if (client != null) {
+                        client.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
+                            @Override
+                            public Void apply(ServerToClient serverToClient) {
+                                return null;
+                            }
+                        });
+                    }
+                }
                 handler.removeCallbacksAndMessages(null);
                 String message = intent.getStringExtra("terminateMessage");
                 if (message == null) message = "user terminated";
@@ -313,7 +326,18 @@ public class XMPPService extends Service {
 
     private void maybeTerminateXMPP() {
         if (juickBlacklist != null && juboMessageFilter != null && sp.getBoolean("useXMPPOnlyForBL", false)) {
-            cleanup("blacklists obtained OK");
+            ExternalXMPPThread th = (ExternalXMPPThread)currentThread;
+            JAXMPPClient client = th.client;
+            if (client != null) {
+                log("Sent client disconnect (XMPP)");
+                client.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
+                    @Override
+                    public Void apply(ServerToClient serverToClient) {
+                        cleanup("blacklists got ok");
+                        return null;
+                    }
+                });
+            }
         }
     }
 
@@ -463,6 +487,7 @@ public class XMPPService extends Service {
             et.nextListener = new JAXMPPClient.XMPPClientListener() {
                 @Override
                 public boolean onMessage(String jid, String message) {
+
                     if (jid.equals(JUBO_ID)) {
                         if (message.contains("rss start")) {              // issue 'rss start' to start
                             juboRSSError = "Response to 'rss start' did not come yet";
@@ -854,6 +879,7 @@ public class XMPPService extends Service {
 
 
     public void cleanup(final String reason) {
+        final boolean wasUp = up;
         up = false;
         if (currentThread != null) {
             currentThread.interrupt();
@@ -864,7 +890,9 @@ public class XMPPService extends Service {
                 @Override
                 public void run() {
                     if (verboseXMPP() || reason.startsWith("!"))
-                        Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
+                        if (wasUp) {
+                            Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
+                        }
                 }
             });
         }
@@ -969,8 +997,10 @@ public class XMPPService extends Service {
         @Override
         public void run() {
             final ExternalXMPPThread thiz = this;
-            client = new JAXMPPClient();
-            client.setXmppClientListener(thiz);
+            synchronized (this) {
+                client = new JAXMPPClient();
+                client.setXmppClientListener(thiz);
+            }
             HashSet<String> watchedJids = new HashSet<String>();
             watchedJids.add(JUBO_ID);
             watchedJids.add(JUICK_ID);
@@ -994,7 +1024,15 @@ public class XMPPService extends Service {
                     }
                 }
             } finally {
-                client.disconnect();
+                JAXMPPClient localClient = client;
+                synchronized (this) {
+                    client = null;
+                }
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                }
+                localClient.disconnect();
             }
         }
 
@@ -1002,6 +1040,8 @@ public class XMPPService extends Service {
 
         @Override
         public boolean onMessage(String jid, String message) {
+            boolean useXMPP = sp.getBoolean("useXMPP", false);
+            if (!useXMPP) return true;
             if (nextListener != null && nextListener.onMessage(jid, message)) return true;
             Log.i("JuickAdvanced", "ExtXMPP Message: " + jid + ": " + message);
             if (jid.equals(JUBO_ID)) {
@@ -1049,6 +1089,7 @@ public class XMPPService extends Service {
                             client.sendMessage(JUICK_ID, "OFF");
                         }
                         client.sendMessage(JUICK_ID, "BL");
+                        log("Sent BL command to juick");
                     }
                 }
             }

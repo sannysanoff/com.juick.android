@@ -124,7 +124,7 @@
     <string name="Nickname">Nickname</string>
     <string name="Password">Password</string>
     <string name="Notifications">Notifications</string>
-    <string name="Notifications2">...about new messages and comments</string>
+    <string name="Notifications2">...about new messages and comments (jabber, non-jabber)</string>
     <string name="Refresh_interval">Refresh interval</string>
     <string name="Appearance">Appearance</string>
     <string name="Theme">Theme</string>
@@ -821,7 +821,7 @@
         Set up your password here: http://juick.com/settings?page=password
     </string>
     <string name="UI_Settings">UI</string>
-    <string name="UsabilityEnhancements">Look and feel, notifications, font size etc</string>
+    <string name="UsabilityEnhancements">Look and feel: font size etc, colors, menu type</string>
     <string name="Behavior">Behavior</string>
     <string name="Behavior2">Confirmations, markers and other helpful stuff</string>
     <string name="ContentSettings">Content</string>

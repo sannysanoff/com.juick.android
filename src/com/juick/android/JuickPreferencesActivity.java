@@ -59,7 +59,7 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
                         new WhatsNew(activity).showPrivacyPolicy();
                     }
                 })
-                .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();

@@ -34,8 +34,9 @@ import java.util.HashSet;
  * To change this template use File | Settings | File Templates.
  */
 public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JASocketClientListener {
-    String jahost = "ja.ip.rt.ru";
+    //String jahost = "ja.ip.rt.ru";
     //String jahost = "192.168.1.77";
+    String jahost = "10.236.35.24";
     int jaSocketPort = 8228;
     String controlURL = "https://"+ jahost +":8222/xmpp/control";
     String sessionId;
@@ -142,7 +143,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             loggedIn = true;
             addListeners();
         } else {
-            JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal failure");
+            JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal failure: "+retval);
         }
         return retval;
     }
@@ -156,14 +157,12 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         login.setProofAccountType("juick");
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
-        if (serverToClient.haveMoreMessages) {
-            startSync(new Runnable() {
-                @Override
-                public void run() {
+        startSync(new Runnable() {
+            @Override
+            public void run() {
 
-                }
-            });
-        }
+            }
+        });
         return serverToClient.getErrorMessage();
     }
 
@@ -188,14 +187,12 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         login.setProofAccountType("juick");
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
-        if (serverToClient.haveMoreMessages) {
-            startSync(new Runnable() {
-                @Override
-                public void run() {
+        startSync(new Runnable() {
+            @Override
+            public void run() {
 
-                }
-            });
-        }
+            }
+        });
         return serverToClient.getErrorMessage();
     }
 
@@ -281,9 +278,6 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             wsClient.shuttingDown = true;
             wsClient.disconnect();
         }
-        ClientToServer c2s = new ClientToServer(sessionId);
-        c2s.setDisconnect(new Disconnect());
-        callXmppControl(context, c2s);
         GCMIntentService.listeners.remove(this);
         GCMIntentService.serverPingTimerListeners.remove(this);
     }
@@ -396,6 +390,16 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }, null);
     }
 
+    public void sendDisconnect(final Utils.Function<Void, ServerToClient> then) {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setDisconnect(new Disconnect());
+                return null;
+            }
+        }, then);
+    }
+
     enum SyncState {
         NOT_SYNCING,
         SYNC_IN_PROGRESS,
@@ -420,6 +424,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             public void run() {
                 try {
                     if (sessionId != null) {
+                        XMPPService.log("Poll: "+setup.getJid());
                         ClientToServer c2s = new ClientToServer(sessionId);
                         c2s.setPoll(new Poll(since));
                         final ServerToClient serverToClient = callXmppControl(context, c2s);

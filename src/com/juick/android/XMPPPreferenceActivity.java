@@ -12,6 +12,7 @@ import android.webkit.WebView;
 import android.widget.*;
 import com.google.gson.Gson;
 import com.juickadvanced.R;
+import com.juickadvanced.xmpp.ServerToClient;
 import com.juickadvanced.xmpp.XMPPConnectionSetup;
 
 import java.util.HashSet;
@@ -115,7 +116,7 @@ public class XMPPPreferenceActivity extends Activity {
                                 pd.setMessage("Logging in...");
                             }
                         });
-                        JAXMPPClient client = new JAXMPPClient();
+                        final JAXMPPClient client = new JAXMPPClient();
                         final String error = client.loginXMPP(XMPPPreferenceActivity.this, JuickAdvancedApplication.foreverHandler, testValue, new HashSet<String>());
                         if (error != null) {
                             runOnUiThread(new Runnable() {
@@ -128,12 +129,18 @@ public class XMPPPreferenceActivity extends Activity {
                                 }
                             });
                         } else {
-                            client.disconnect();
-                            runOnUiThread(new Runnable() {
+                            client.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
                                 @Override
-                                public void run() {
-                                    pd.hide();
-                                    Toast.makeText(XMPPPreferenceActivity.this, "SUCCESS !", Toast.LENGTH_SHORT).show();
+                                public Void apply(ServerToClient serverToClient) {
+                                    client.disconnect();
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            pd.hide();
+                                            Toast.makeText(XMPPPreferenceActivity.this, "SUCCESS !", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                    return null;
                                 }
                             });
                         }

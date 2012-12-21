@@ -30,6 +30,7 @@ public class XMPPControlActivity extends Activity {
         setContentView(R.layout.xmpp_control);
         final TextView xmppStatus = (TextView) findViewById(R.id.xmpp_status);
         final TextView logView = (TextView) findViewById(R.id.logview);
+        final View logViewScroll = findViewById(R.id.logview_scroll);
         final TextView jamStatus = (TextView) findViewById(R.id.jam_status);
         final TextView lastGCM = (TextView) findViewById(R.id.last_gcm);
         final TextView lastGCMId = (TextView) findViewById(R.id.last_gcm_id);
@@ -56,7 +57,7 @@ public class XMPPControlActivity extends Activity {
         final Button showMessages = (Button) findViewById(R.id.show_messages);
         final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        logView.setVisibility(View.GONE);
+        logViewScroll.setVisibility(View.GONE);
         findViewById(R.id.show_log).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -66,7 +67,7 @@ public class XMPPControlActivity extends Activity {
                     logs.insert(0, s);
                 }
                 logView.setText(logs);
-                logView.setVisibility(View.VISIBLE);
+                logViewScroll.setVisibility(View.VISIBLE);
             }
         });
         retry.setOnClickListener(new View.OnClickListener() {

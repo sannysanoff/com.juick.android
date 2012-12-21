@@ -118,7 +118,7 @@
     <string name="Nickname">Ник</string>
     <string name="Password">Пароль</string>
     <string name="Notifications">Уведомления</string>
-    <string name="Notifications2">О подписках, комментариях итд</string>
+    <string name="Notifications2">О подписках, комментариях итд (jabber и не-jabber)</string>
     <string name="Refresh_interval">Интервал обновления</string>
     <string name="Compressed_Menu">Уплотненное меню сообщения</string>
     <string name="Compressed_Menu_Summary">На экран поместится больше пунктов меню</string>
@@ -326,7 +326,7 @@
     <string name="OnlyNeededIfUsing">Нужен только если вы ее используете</string>
 
     <string name="UI_Settings">Интерфейс</string>
-    <string name="UsabilityEnhancements">Внешний вид, нотификации</string>
+    <string name="UsabilityEnhancements">Внешний вид: размеры шрифтов, цвета, тип меню</string>
     <string name="Behavior">Поведение</string>
     <string name="Behavior2">Подтверждения, маркеры и прочее полезное</string>
     <string name="ContentSettings">Содержание</string>
