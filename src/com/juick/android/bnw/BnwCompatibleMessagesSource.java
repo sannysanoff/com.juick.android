@@ -41,34 +41,38 @@ public class BnwCompatibleMessagesSource extends MessagesSource {
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         String midString = ((BnwMessageID)mid).getId();
         final String jsonStr = getJSONWithRetries(ctx, "http://ipv4.bnw.im/api/show?message=" + midString + "&replies=1", notifications).getResult();
-        try {
-            JSONObject fullThread = new JSONObject(jsonStr);
-            JSONObject root = fullThread.getJSONObject("message");
-            ArrayList<BNWMessage> msgs = new ArrayList<BNWMessage>();
-            msgs.add(initFromJSON(root));
-            JSONArray replies = fullThread.getJSONArray("replies");
-            HashMap<String,Integer> numbersRemap = new HashMap<String, Integer>();
-            int replyNo = 1;
-            for(int i = 0; i < replies.length(); i++) {
-                BNWMessage reply = initFromJSON(replies.getJSONObject(i));
-                msgs.add(reply);
-                reply.setRID(replyNo);
-                numbersRemap.put(reply.getRIDString(), replyNo);
-                replyNo++;
-            }
-            for (int i = 1; i < msgs.size(); i++) {
-                BNWMessage msg = msgs.get(i);
-                String replyToString = msg.getReplyToString();
-                if (replyToString == null) {
-                    msg.setReplyTo(0);
-                } else {
-                    Integer prevComment = numbersRemap.get(replyToString);
-                    if (prevComment == null) prevComment = 0;
-                    msg.setReplyTo(prevComment);
+        if (jsonStr != null) {
+            try {
+                JSONObject fullThread = new JSONObject(jsonStr);
+                JSONObject root = fullThread.getJSONObject("message");
+                ArrayList<BNWMessage> msgs = new ArrayList<BNWMessage>();
+                msgs.add(initFromJSON(root));
+                JSONArray replies = fullThread.getJSONArray("replies");
+                HashMap<String,Integer> numbersRemap = new HashMap<String, Integer>();
+                int replyNo = 1;
+                for(int i = 0; i < replies.length(); i++) {
+                    BNWMessage reply = initFromJSON(replies.getJSONObject(i));
+                    msgs.add(reply);
+                    reply.setRID(replyNo);
+                    numbersRemap.put(reply.getRIDString(), replyNo);
+                    replyNo++;
                 }
+                for (int i = 1; i < msgs.size(); i++) {
+                    BNWMessage msg = msgs.get(i);
+                    String replyToString = msg.getReplyToString();
+                    if (replyToString == null) {
+                        msg.setReplyTo(0);
+                    } else {
+                        Integer prevComment = numbersRemap.get(replyToString);
+                        if (prevComment == null) prevComment = 0;
+                        msg.setReplyTo(prevComment);
+                    }
+                }
+                cont.apply(new ArrayList<JuickMessage>(msgs));
+            } catch (JSONException e) {
+                cont.apply(new ArrayList<JuickMessage>());
             }
-            cont.apply(new ArrayList<JuickMessage>(msgs));
-        } catch (JSONException e) {
+        } else {
             cont.apply(new ArrayList<JuickMessage>());
         }
         System.out.println("oh");

@@ -135,6 +135,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         if (System.currentTimeMillis() - lastCachedShowUserpics > 3000) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
             _showUserpics = sp.getBoolean("showUserpics", true);
+            try {
+                Class.forName(LeadingMarginSpan.LeadingMarginSpan2.class.getName());
+            } catch (Throwable e) {
+                _showUserpics = false;
+            }
             lastCachedShowUserpics = System.currentTimeMillis();
         }
         return _showUserpics;

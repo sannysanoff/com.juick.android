@@ -40,6 +40,7 @@ import android.support.v4.view.MenuItem;
 import android.support.v4.view.Window;
 import android.text.TextUtils;
 import android.view.MenuInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
@@ -54,6 +55,7 @@ import com.juickadvanced.data.psto.PstoMessageID;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickMessageID;
+import org.acra.ACRA;
 
 import java.io.File;
 import java.util.*;
@@ -932,6 +934,16 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public Handler getHandler() {
         return handler;
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        try {
+            return super.dispatchTouchEvent(ev);
+        } catch (Exception e) {
+            ACRA.getErrorReporter().handleException(e, false);
+            return true;
+        }
     }
 
     @Override

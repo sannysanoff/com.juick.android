@@ -422,93 +422,98 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         new Thread("Ext.XMPP.Poll") {
             @Override
             public void run() {
-                try {
-                    if (sessionId != null) {
-                        XMPPService.log("Poll: "+setup.getJid());
-                        ClientToServer c2s = new ClientToServer(sessionId);
-                        c2s.setPoll(new Poll(since));
-                        final ServerToClient serverToClient = callXmppControl(context, c2s);
-                        if (serverToClient.getErrorMessage() == null) {
-                            XMPPService.lastSuccessfulConnect = System.currentTimeMillis();
-                            ArrayList<TimestampedMessage> incomingMessages = serverToClient.getIncomingMessages();
-                            boolean hasSomething = false;
-                            if (incomingMessages != null) {
-                                for (TimestampedMessage incomingMessage : incomingMessages) {
-                                    if (incomingMessage != null && incomingMessage.getFrom() != null && incomingMessage.getMessage() != null) {
-                                        xmppClientListener.onMessage(incomingMessage.getFrom(), incomingMessage.getMessage());
-                                        since = Math.max(since, incomingMessage.getTimestamp());
+                for(int cnt = 0; cnt < 20; cnt++) {
+                    try {
+                        if (sessionId != null) {
+                            XMPPService.log("Poll: "+setup.getJid());
+                            ClientToServer c2s = new ClientToServer(sessionId);
+                            c2s.setPoll(new Poll(since));
+                            final ServerToClient serverToClient = callXmppControl(context, c2s);
+                            if (serverToClient.getErrorMessage() == null) {
+                                XMPPService.lastSuccessfulConnect = System.currentTimeMillis();
+                                ArrayList<TimestampedMessage> incomingMessages = serverToClient.getIncomingMessages();
+                                boolean hasSomething = false;
+                                if (incomingMessages != null) {
+                                    for (TimestampedMessage incomingMessage : incomingMessages) {
+                                        if (incomingMessage != null && incomingMessage.getFrom() != null && incomingMessage.getMessage() != null) {
+                                            if (xmppClientListener != null)
+                                                xmppClientListener.onMessage(incomingMessage.getFrom(), incomingMessage.getMessage());
+                                            since = Math.max(since, incomingMessage.getTimestamp());
+                                            hasSomething = true;
+                                        }
+                                    }
+                                }
+                                ArrayList<ContactOnline> contactOnline = serverToClient.getContactOnline();
+                                if (contactOnline != null) {
+                                    for (ContactOnline online : contactOnline) {
+                                        presence(online.getJid(), true);
                                         hasSomething = true;
                                     }
                                 }
-                            }
-                            ArrayList<ContactOnline> contactOnline = serverToClient.getContactOnline();
-                            if (contactOnline != null) {
-                                for (ContactOnline online : contactOnline) {
-                                    presence(online.getJid(), true);
-                                    hasSomething = true;
-                                }
-                            }
-                            ArrayList<ContactOffline> contactOffline = serverToClient.getContactOffline();
-                            if (contactOffline != null) {
-                                for (ContactOffline offline : contactOffline) {
-                                    presence(offline.getJid(), false);
-                                    hasSomething = true;
-                                }
-                            }
-                            if (hasSomething) {
-                                c2s = new ClientToServer(sessionId);
-                                c2s.setConfirmPoll(new ConfirmPoll(since));
-                                ServerToClient confirmResult = callXmppControl(context, c2s);
-                                if (confirmResult.haveMoreMessages)
-                                    run();
-                            }
-                        } else {
-                            String error = serverToClient.getErrorMessage();
-                            if (error.equals(ServerToClient.NO_SUCH_SESSION)) {
-                                error = performLogin(context, setup);
-                            }
-                            if (error != null && error.startsWith(ServerToClient.NETWORK_CONNECT_ERROR)) {
-                                error = null;   // silently ignore connection errors.
-                            }
-                            if (error != null) {
-                                XMPPService.lastException = error;
-                                XMPPService.lastExceptionTime = System.currentTimeMillis();
-                                final String finalError = error;
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(context, finalError, Toast.LENGTH_LONG).show();
+                                ArrayList<ContactOffline> contactOffline = serverToClient.getContactOffline();
+                                if (contactOffline != null) {
+                                    for (ContactOffline offline : contactOffline) {
+                                        presence(offline.getJid(), false);
+                                        hasSomething = true;
                                     }
-                                });
+                                }
+                                if (hasSomething) {
+                                    c2s = new ClientToServer(sessionId);
+                                    c2s.setConfirmPoll(new ConfirmPoll(since));
+                                    ServerToClient confirmResult = callXmppControl(context, c2s);
+                                    if (confirmResult.haveMoreMessages) {
+                                        continue;
+                                    }
+                                }
+                            } else {
+                                String error = serverToClient.getErrorMessage();
+                                if (error.equals(ServerToClient.NO_SUCH_SESSION)) {
+                                    error = performLogin(context, setup);
+                                }
+                                if (error != null && error.startsWith(ServerToClient.NETWORK_CONNECT_ERROR)) {
+                                    error = null;   // silently ignore connection errors.
+                                }
+                                if (error != null) {
+                                    XMPPService.lastException = error;
+                                    XMPPService.lastExceptionTime = System.currentTimeMillis();
+                                    final String finalError = error;
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(context, finalError, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    } catch (Exception ex) {
+                        ACRA.getErrorReporter().handleException(new RuntimeException("While Ext.XMPP.Poll", ex));
+                    } finally {
+                        synchronized (JAXMPPClient.this) {
+                            switch (syncState) {
+                                case SYNC_IN_PROGRESS:
+                                    syncState = SyncState.NOT_SYNCING;
+                                    then.run();
+                                    break;
+                                case NOT_SYNCING:
+                                    // bad ;-(
+                                    then.run();
+                                    break;
+                                case SYNC_IN_PROGRESS_AND_ANOTHER_PENDING:
+                                    syncState = SyncState.SYNC_IN_PROGRESS;
+                                    continue;
                             }
                         }
                     }
-                } catch (Exception ex) {
-                    ACRA.getErrorReporter().handleException(new RuntimeException("While Ext.XMPP.Poll", ex));
-                } finally {
-                    synchronized (JAXMPPClient.this) {
-                        switch (syncState) {
-                            case SYNC_IN_PROGRESS:
-                                syncState = SyncState.NOT_SYNCING;
-                                then.run();
-                                break;
-                            case NOT_SYNCING:
-                                // bad ;-(
-                                then.run();
-                                break;
-                            case SYNC_IN_PROGRESS_AND_ANOTHER_PENDING:
-                                syncState = SyncState.SYNC_IN_PROGRESS;
-                                run();
-                                return;
-                        }
-                    }
+                    break;
                 }
             }
         }.start();
     }
 
     private void presence(String jid, boolean b) {
-        xmppClientListener.onPresence(jid, b);
+        if (xmppClientListener != null)
+            xmppClientListener.onPresence(jid, b);
     }
 
     interface XMPPClientListener {

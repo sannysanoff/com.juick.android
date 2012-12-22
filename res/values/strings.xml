@@ -914,6 +914,8 @@
         its usage.
     </string>
     <string name="WeTurnedOffXMPP">We have disabled your XMPP connection, please re-enable it manually</string>
+    <string name="ShowUserpics">Show Userpics</string>
+    <string name="UserIconsWillBeShown">User icons will be shown in messages (Android 2.2+)</string>
 
 
 </resources>

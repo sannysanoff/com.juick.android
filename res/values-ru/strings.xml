@@ -415,6 +415,8 @@
         Читайте подробности.
     </string>
     <string name="WeTurnedOffXMPP">Мы сейчас выключили вашу галочку "подключать к XMPP", на всякий случай.</string>
+    <string name="ShowUserpics">Показывать аватарки</string>
+    <string name="UserIconsWillBeShown">Пользовательские иконки в начале сообщения (андроид 2.2+)</string>
 
 
 </resources>

@@ -8,8 +8,8 @@
             android:persistent="true"/>
     <CheckBoxPreference
             android:key="showUserpics"
-            android:title="Show Userpics"
-            android:summary="User icons will be shown"
+            android:title="@string/ShowUserpics"
+            android:summary="@string/UserIconsWillBeShown"
             android:defaultValue="true"
             android:persistent="true"/>
     <PreferenceCategory android:title="@string/LoadImages">
