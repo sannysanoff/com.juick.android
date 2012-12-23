@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.webkit.WebView;
@@ -24,8 +25,11 @@ public class XMPPPreferenceActivity extends Activity {
     XMPPConnectionSetup value;
     SharedPreferences sp;
     Gson gson = new Gson();
+    Handler handler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        handler = new Handler();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xmpp_setup);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -117,7 +121,7 @@ public class XMPPPreferenceActivity extends Activity {
                             }
                         });
                         final JAXMPPClient client = new JAXMPPClient();
-                        final String error = client.loginXMPP(XMPPPreferenceActivity.this, JuickAdvancedApplication.foreverHandler, testValue, new HashSet<String>());
+                        final String error = client.loginXMPP(XMPPPreferenceActivity.this, handler, testValue, new HashSet<String>());
                         if (error != null) {
                             runOnUiThread(new Runnable() {
                                 @Override

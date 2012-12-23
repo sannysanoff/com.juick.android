@@ -920,6 +920,7 @@ public class XMPPService extends Service {
 
     @Override
     public void onCreate() {
+        handler = new Handler();
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         String cachedJubo = readFile(getCachedJuboFile());
         if (cachedJubo != null) {
@@ -935,7 +936,6 @@ public class XMPPService extends Service {
                 juickBlacklist_tmp = null;
             }
         }
-        handler = new Handler();
         super.onCreate();
 
         new Thread() {
@@ -1067,29 +1067,32 @@ public class XMPPService extends Service {
         @Override
         public boolean onPresence(String jid, boolean on) {
             if (nextListener != null && nextListener.onPresence(jid, on)) return true;
+            JAXMPPClient localClient = client;
             Log.i("JuickAdvanced", "ExtXMPP Presence: " + jid + ": " + on);
             juboOnline = jid.equals(JUBO_ID) ? on : juboOnline;
             botOnline = jid.equals(JUICK_ID) ? on : juboOnline;
-            if (on) {
-                if (jid.equals(JUBO_ID)) {
-                    if (!talkedToJubo) {
-                        talkedToJubo = true;
-                        client.sendMessage(jid, "ls");
-                        client.sendMessage(jid, "ping");
+            if (localClient != null) {
+                if (on) {
+                    if (jid.equals(JUBO_ID)) {
+                        if (!talkedToJubo) {
+                            talkedToJubo = true;
+                            localClient.sendMessage(jid, "ls");
+                            localClient.sendMessage(jid, "ping");
+                        }
                     }
-                }
-                if (jid.equals(JUICK_ID)) {
-                    if (!talkedToJuick) {
-                        talkedToJuick = true;
-                        String sendOn = sp.getString("juickBotOn", "skip");
-                        if (sendOn.equals("on")) {
-                            client.sendMessage(JUICK_ID, "ON");
+                    if (jid.equals(JUICK_ID)) {
+                        if (!talkedToJuick) {
+                            talkedToJuick = true;
+                            String sendOn = sp.getString("juickBotOn", "skip");
+                            if (sendOn.equals("on")) {
+                                localClient.sendMessage(JUICK_ID, "ON");
+                            }
+                            if (sendOn.equals("off")) {
+                                localClient.sendMessage(JUICK_ID, "OFF");
+                            }
+                            localClient.sendMessage(JUICK_ID, "BL");
+                            log("Sent BL command to juick");
                         }
-                        if (sendOn.equals("off")) {
-                            client.sendMessage(JUICK_ID, "OFF");
-                        }
-                        client.sendMessage(JUICK_ID, "BL");
-                        log("Sent BL command to juick");
                     }
                 }
             }

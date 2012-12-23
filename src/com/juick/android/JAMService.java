@@ -23,8 +23,8 @@ public class JAMService extends Service {
     @Override
     public void onCreate() {
         instance = this;
-        super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
         handler = new Handler();
+        super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
         XMPPService.log("JAM.onCreate()");
         startup();
     }

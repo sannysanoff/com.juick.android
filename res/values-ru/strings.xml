@@ -357,6 +357,8 @@
     <string name="UsageReportsPerWeek2">Количество анонимной статистики по неделям</string>
     <string name="JuickUsersPerMonth">Количество жуйко-юзеров</string>
     <string name="JuickUsersPerMonth2">Пишущих, комментящих, регистрирующихся</string>
+    <string name="VersionInstalls">Инсталляции версий</string>
+    <string name="VersionInstalls2">Количество инсталляций каждой версии после выхода</string>
     <string name="ClickToSelectURL">Нажмите для выбора URL</string>
     <string name="TagsFormatError">Теги должны начинаться со звездочки</string>
     <string name="InvalidLoginPassword">Неверный логин/пароль</string>

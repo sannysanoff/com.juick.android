@@ -42,6 +42,13 @@
             android:text="@string/Search"
             android:layout_toRightOf="@id/show_blog"
             android:layout_below="@id/userpic"/>
+    <Button
+            android:id="@+id/stats"
+            android:layout_width="wrap_content"
+            android:layout_height="42sp"
+            android:text="Stats.."
+            android:layout_toRightOf="@id/search"
+            android:layout_below="@id/userpic"/>
     <LinearLayout
             android:id="@+id/bottom_row"
             android:layout_width="fill_parent"

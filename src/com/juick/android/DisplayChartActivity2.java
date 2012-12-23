@@ -59,7 +59,13 @@ public class DisplayChartActivity2 extends Activity implements Utils.Notificatio
                     @Override
                     public void run() {
                         try {
-                            String url = data.toString() + "?w=" + width + "&h=" + height;
+                            String url = data.toString();
+                            if (url.contains("?")) {
+                                url += '&';
+                            } else {
+                                url += '?';
+                            }
+                            url += "w=" + width + "&h=" + height;
                             Utils.BINResponse json = Utils.getBinary(DisplayChartActivity2.this, url, DisplayChartActivity2.this, 0);
                             if (json.errorText != null)
                                 throw new IOException(json.errorText);
@@ -74,7 +80,11 @@ public class DisplayChartActivity2 extends Activity implements Utils.Notificatio
                                     View loading = findViewById(R.id.loading);
                                     loading.setVisibility(View.GONE);
                                     ImageView viewById = (ImageView) findViewById(R.id.imgview);
-                                    viewById.setImageURI(Uri.fromFile(file));
+                                    try {
+                                        viewById.setImageURI(Uri.fromFile(file));
+                                    } catch (Exception e) {
+                                        Toast.makeText(DisplayChartActivity2.this, e.toString(), Toast.LENGTH_LONG).show();
+                                    }
                                 }
                             });
                         } catch (final IOException e) {

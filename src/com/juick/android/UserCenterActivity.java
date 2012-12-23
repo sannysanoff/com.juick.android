@@ -21,12 +21,14 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
@@ -42,6 +44,7 @@ import com.juickadvanced.data.juick.JuickUser;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  */
@@ -51,11 +54,13 @@ public class UserCenterActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_center);
+        final ListView list = (ListView) findViewById(R.id.list);
         final View listWait = findViewById(R.id.list_wait);
         final TextView userRealName = (TextView)findViewById(R.id.user_realname);
         final ImageView userPic = (ImageView)findViewById(R.id.userpic);
         final TextView userName = (TextView)findViewById(R.id.username);
         final View search = findViewById(R.id.search);
+        final View stats = findViewById(R.id.stats);
         userRealName.setText("...");
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
@@ -75,7 +80,8 @@ public class UserCenterActivity extends Activity {
         final int userpicSize = height <= 320 ? 32 : 96;
         float scaledDensity = getResources().getDisplayMetrics().scaledDensity;
         userPic.setMinimumHeight((int)(scaledDensity * userpicSize));
-        userPic.setMinimumWidth((int)(scaledDensity * userpicSize));
+        userPic.setMinimumWidth((int) (scaledDensity * userpicSize));
+        stats.setEnabled(false);
         userName.setText("@"+uname);
         final boolean russian = Locale.getDefault().getLanguage().equals("ru");
         new Thread() {
@@ -86,6 +92,7 @@ public class UserCenterActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        stats.setEnabled(true);
                         if (json.getErrorText() != null) {
                             Toast.makeText(UserCenterActivity.this, "JA server: "+json.getErrorText(), Toast.LENGTH_LONG).show();
                             listWait.setVisibility(View.GONE);
@@ -96,7 +103,6 @@ public class UserCenterActivity extends Activity {
                                 listWait.setVisibility(View.GONE);
                             } else {
                                 userRealName.setText(userInfo.fullName);
-                                ListView list = (ListView) findViewById(R.id.list);
                                 listWait.setVisibility(View.GONE);
                                 list.setVisibility(View.VISIBLE);
                                 list.setAdapter(new BaseAdapter() {
@@ -217,6 +223,60 @@ public class UserCenterActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Toast.makeText(UserCenterActivity.this, "Coming soon", Toast.LENGTH_LONG).show();
+            }
+        });
+        stats.setOnClickListener(new View.OnClickListener() {
+
+            NewJuickPreferenceActivity.MenuItem[] items = new NewJuickPreferenceActivity.MenuItem[] {
+                    new NewJuickPreferenceActivity.MenuItem(R.string.UserAllTimeActivityReport, R.string.UserAllTimeActivityReport2, new Runnable() {
+                        @Override
+                        public void run() {
+                            NewJuickPreferenceActivity.showChart(UserCenterActivity.this, "USER_ACTIVITY_VOLUME", "uid="+uid);
+                        }
+                    }),
+                    new NewJuickPreferenceActivity.MenuItem(R.string.UserHoursReport, R.string.UserHoursReport2, new Runnable() {
+                        @Override
+                        public void run() {
+                            NewJuickPreferenceActivity.showChart(UserCenterActivity.this, "USER_HOURS_ACTIVITY", "uid="+uid+"&tzoffset="+ TimeZone.getDefault().getRawOffset()/1000/60/60);
+                        }
+                    })
+            };
+
+            @Override
+            public void onClick(View v) {
+                list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        items[position].action.run();
+                    }
+                });
+                list.setAdapter(new BaseAdapter() {
+                    @Override
+                    public int getCount() {
+                        return items.length;
+                    }
+
+                    @Override
+                    public Object getItem(int position) {
+                        return items[position];
+                    }
+
+                    @Override
+                    public long getItemId(int position) {
+                        return position;
+                    }
+
+                    @Override
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        LayoutInflater layoutInflater = getLayoutInflater();
+                        View listItem = layoutInflater.inflate(android.R.layout.simple_list_item_2, null);
+                        TextView text = (TextView)listItem.findViewById(android.R.id.text1);
+                        text.setText(items[position].labelId);
+                        TextView text2 = (TextView)listItem.findViewById(android.R.id.text2);
+                        text2.setText(items[position].label2Id);
+                        return listItem;
+                    }
+                });
             }
         });
         blacklist_user.setOnClickListener(new View.OnClickListener() {

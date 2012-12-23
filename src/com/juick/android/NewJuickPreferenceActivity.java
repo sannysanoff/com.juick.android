@@ -109,14 +109,28 @@ public class NewJuickPreferenceActivity extends Activity {
                 showChart("JUICK_UPM2");
             }
         }));
+        menu.add(new MenuItem(R.string.VersionInstalls, R.string.VersionInstalls2, new Runnable() {
+            @Override
+            public void run() {
+                showChart("VERSION_INSTALLS");
+            }
+        }));
     }
 
     private void showChart(String chart) {
-        Intent intent = new Intent(this, DisplayChartActivity2.class);
+        showChart(this, chart, "");
+    }
+
+    public static void showChart(Activity context, String chart, String args) {
+        Intent intent = new Intent(context, DisplayChartActivity2.class);
         //String host = "192.168.1.77:8080";
         String host = "ja.ip.rt.ru:8080";
-        intent.setData(Uri.parse("http://"+host+"/charts/JuickCharts2/"+chart+".jsp"));
-        startActivity(intent);
+        String url = "http://" + host + "/charts/JuickCharts2/" + chart + ".jsp";
+        if (args != null && args.length() > 0) {
+            url += "?"+args;
+        }
+        intent.setData(Uri.parse(url));
+        context.startActivity(intent);
     }
 
     private void runPrefs(int prefsid) {

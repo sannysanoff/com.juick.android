@@ -855,6 +855,8 @@
     <string name="UsageReportsPerWeek2">Number of usage reports posted per week</string>
     <string name="JuickUsersPerMonth">Number of Juick users</string>
     <string name="JuickUsersPerMonth2">Posting, commenting, new</string>
+    <string name="VersionInstalls">Version installs</string>
+    <string name="VersionInstalls2">Number of installations of each versions after release</string>
     <string name="ClickToSelectURL">Click to select URL</string>
     <string name="TagsFormatError">Tags format error (must start with \'*\')</string>
     <string name="InvalidLoginPassword">Invalid login/password</string>
@@ -916,6 +918,10 @@
     <string name="WeTurnedOffXMPP">We have disabled your XMPP connection, please re-enable it manually</string>
     <string name="ShowUserpics">Show Userpics</string>
     <string name="UserIconsWillBeShown">User icons will be shown in messages (Android 2.2+)</string>
+    <string name="UserAllTimeActivityReport">User All Time Activity</string>
+    <string name="UserAllTimeActivityReport2"></string>
+    <string name="UserHoursReport">Activity hours distribution</string>
+    <string name="UserHoursReport2">Workdays, last 3 months</string>
 
 
 </resources>
