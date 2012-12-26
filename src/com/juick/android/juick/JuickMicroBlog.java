@@ -245,11 +245,8 @@ public class JuickMicroBlog implements MicroBlog {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    MainActivity activity;  // for getstring
-
     @Override
     public void addNavigationSources(final ArrayList<MainActivity.NavigationItem> navigationItems, final MainActivity activity) {
-        this.activity = activity;
         final SharedPreferences sp = activity.sp;
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(activity, XMPPService.class);
         navigationItems.add(new MainActivity.NavigationItem(R.string.navigationAll) {
@@ -381,7 +378,7 @@ public class JuickMicroBlog implements MicroBlog {
                                         .setNeutralButton(getString(R.string.EnterJuboRSSURLManually), new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                enterJuboURLManually(myIndex);
+                                                enterJuboURLManually(myIndex, activity);
                                             }
                                         })
                                         .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -395,7 +392,7 @@ public class JuickMicroBlog implements MicroBlog {
                                     builder.setPositiveButton(service.getString(R.string.StartServiceAndTry), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            askJuboFirst(myIndex, true);
+                                            askJuboFirst(myIndex, true, activity);
                                         }
                                     });
                                 }
@@ -403,7 +400,7 @@ public class JuickMicroBlog implements MicroBlog {
                                     builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            askJuboFirst(myIndex, false);
+                                            askJuboFirst(myIndex, false, activity);
                                         }
                                     });
                                 }
@@ -411,7 +408,7 @@ public class JuickMicroBlog implements MicroBlog {
                             }
                         });
                     } else {
-                        openJuboMessages(myIndex);
+                        openJuboMessages(myIndex, activity);
                     }
                 }
 
@@ -482,7 +479,7 @@ public class JuickMicroBlog implements MicroBlog {
 
 
     private String getString(int id) {
-        return activity.getString(id);
+        return JuickAdvancedApplication.instance.getString(id);
     }
 
     public void postText(final Activity context, final String body, final Utils.Function<Void, String> then) {
@@ -640,7 +637,7 @@ public class JuickMicroBlog implements MicroBlog {
         }.start();
     }
 
-    private void askJuboFirst(final int juboIndex, final boolean startServiceFromTemporary) {
+    private void askJuboFirst(final int juboIndex, final boolean startServiceFromTemporary, final MainActivity activity) {
         final ProgressDialog pd = new ProgressDialog(activity);
         pd.setIndeterminate(true);
         pd.setMessage(getString(R.string.TalkingToJuBo));
@@ -655,7 +652,7 @@ public class JuickMicroBlog implements MicroBlog {
                         activity.handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                checkJuboReturnedRSS(juboIndex, pd);
+                                checkJuboReturnedRSS(juboIndex, pd, activity);
                                 if (startServiceFromTemporary) {
                                     activity.sp.edit().putBoolean("useXMPPOnlyForBL", true).commit();
                                 }
@@ -674,14 +671,14 @@ public class JuickMicroBlog implements MicroBlog {
         }
     }
 
-    private void checkJuboReturnedRSS(final int juboIndex, final ProgressDialog pd) {
+    private void checkJuboReturnedRSS(final int juboIndex, final ProgressDialog pd, final MainActivity activity) {
         xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
             @Override
             public void withService(XMPPService service) {
                 pd.hide();
                 if (service.juboRSS != null) {
                     activity.sp.edit().putString("juboRssURL", service.juboRSS).commit();
-                    openJuboMessages(juboIndex);
+                    openJuboMessages(juboIndex, activity);
                 } else {
                     new AlertDialog.Builder(activity)
                             .setTitle(R.string.navigationJuboRSS)
@@ -705,7 +702,7 @@ public class JuickMicroBlog implements MicroBlog {
         });
     }
 
-    private void enterJuboURLManually(final int myIndex) {
+    private void enterJuboURLManually(final int myIndex, final MainActivity activity) {
         final EditText et = new EditText(activity);
         et.setSingleLine(true);
         et.setInputType(EditorInfo.TYPE_TEXT_VARIATION_URI);
@@ -717,7 +714,7 @@ public class JuickMicroBlog implements MicroBlog {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         activity.sp.edit().putString("juboRssURL", "" + et.getText()).commit();
-                        openJuboMessages(myIndex);
+                        openJuboMessages(myIndex, activity);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -729,7 +726,7 @@ public class JuickMicroBlog implements MicroBlog {
                 }).show();
     }
 
-    private void openJuboMessages(int myIndex) {
+    private void openJuboMessages(int myIndex, final MainActivity activity) {
         final Bundle args = new Bundle();
         args.putSerializable("messagesSource", new JuboMessagesSource(activity));
         activity.runDefaultFragmentWithBundle(args, activity.navigationItems.get(myIndex));

@@ -179,10 +179,20 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     static class ListRowRuntime {
         int pictureSize;
         JuickMessage jmsg;
+        UserpicStorage.AvatarID avatarID;
         UserpicStorage.Listener userpicListener;
 
-        ListRowRuntime(JuickMessage jmsg) {
+        ListRowRuntime(JuickMessage jmsg, UserpicStorage.AvatarID avatarID, int pictureSize) {
             this.jmsg = jmsg;
+            this.avatarID = avatarID;
+            this.pictureSize = pictureSize;
+        }
+
+        public void removeListenerIfExists() {
+            if (userpicListener != null) {
+                UserpicStorage.instance.removeListener(avatarID, pictureSize, userpicListener);
+                userpicListener = null;
+            }
         }
     }
 
@@ -219,7 +229,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
             final LinearLayout ll = (LinearLayout)v;
             final TextView t = (TextView) v.findViewById(R.id.text);
-            final ListRowRuntime lrr = new ListRowRuntime(jmsg);
+            final ListRowRuntime lrr = new ListRowRuntime(jmsg, null, 0);
+            ListRowRuntime oldlrr = (ListRowRuntime)t.getTag();
+            if (oldlrr != null) {
+                oldlrr.removeListenerIfExists();
+            }
             t.setTag(lrr);
             t.setTextSize(neededTextSize);
 
@@ -238,11 +252,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
                 userPic.setPadding(padding, padding, padding, padding);
                 final UserpicStorage.AvatarID avatarId = getAvatarId(jmsg);
+                lrr.avatarID = avatarId;
 
                 lrr.userpicListener = new UserpicStorage.Listener() {
                     @Override
                     public void onUserpicReady(UserpicStorage.AvatarID id, int size) {
-                        UserpicStorage.instance.removeListener(avatarId, lrr.pictureSize, this);
+                        lrr.removeListenerIfExists();
                         final Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
                         if (userpic != null) {
                             ((Activity)getContext()).runOnUiThread(new Runnable() {
@@ -523,7 +538,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ListRowRuntime lrr = (ListRowRuntime)view.getTag();
             if (lrr != null) {
                 if (lrr.userpicListener != null) {
-                    UserpicStorage.instance.removeListener(getAvatarId(lrr.jmsg), lrr.pictureSize, lrr.userpicListener);
+                    lrr.removeListenerIfExists();
                 }
             }
             ViewGroup vg = (ViewGroup)view;

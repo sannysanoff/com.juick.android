@@ -372,30 +372,13 @@
                 <TextView
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:text="WebViews:"
+                        android:text="Inst count:"
                         android:textStyle="bold"
                         >
 
                 </TextView>
                 <TextView
-                        android:id="@+id/webview_count"
-                        android:layout_height="wrap_content"
-                        android:paddingLeft="5sp"
-                        android:text=""
-                        >
-                </TextView>
-            </TableRow>
-            <TableRow>
-                <TextView
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="right"
-                        android:text="JMA count:"
-                        android:textStyle="bold"
-                        >
-
-                </TextView>
-                <TextView
-                        android:id="@+id/jma_count"
+                        android:id="@+id/inst_count"
                         android:layout_height="wrap_content"
                         android:paddingLeft="5sp"
                         android:text=""

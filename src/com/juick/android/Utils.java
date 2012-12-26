@@ -357,11 +357,10 @@ public class Utils {
                     if (compression)
                         initCompressionSupport(client);
                     HttpGet httpGet = new HttpGet(authorizer.authorizeURL(url, myCookie));
-                    if (timeout > 0) {
-                        client.getParams().setParameter("http.connection.timeout", new Integer(timeout));
-                        httpGet.getParams().setParameter("http.socket.timeout", new Integer(timeout));
-                        httpGet.getParams().setParameter("http.protocol.head-body-timeout", new Integer(timeout));
-                    }
+                    Integer timeoutForConnection = timeout > 0 ? timeout : 2222000;
+                    client.getParams().setParameter("http.connection.timeout", timeoutForConnection);
+                    httpGet.getParams().setParameter("http.socket.timeout", timeoutForConnection);
+                    httpGet.getParams().setParameter("http.protocol.head-body-timeout", timeoutForConnection);
 
                     finalAuthorizer.authorizeRequest(httpGet, myCookie);
 

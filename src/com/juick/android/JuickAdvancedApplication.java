@@ -32,11 +32,10 @@ import static org.acra.ReportField.*;
 public class JuickAdvancedApplication extends Application {
 
     static boolean supportsGCM = false;
-    static JuickAdvancedApplication instance;
+    public static JuickAdvancedApplication instance;
 
     public static Handler foreverHandler;
     public static SharedPreferences sp;
-    private MessageListBackingData savedList;
     final private Object savedListLock = new Object();
 
     @Override
@@ -78,30 +77,28 @@ public class JuickAdvancedApplication extends Application {
     public static String registrationId;
 
     public MessageListBackingData getSavedList() {
-        if (savedList == null) {
-            File savedListFile = getSavedListFile();
-            if (savedListFile.exists()) {
-                try {
-                    ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(savedListFile));
-                    savedList = (MessageListBackingData)objectInputStream.readObject();
-                    objectInputStream.close();
-                    if (savedList != null) {
-                        savedList.messagesSource.setContext(this);
-                        if (savedList.messages.size() == 0) {
-                            savedList = null;
-                        }
+        MessageListBackingData savedList = null;
+        File savedListFile = getSavedListFile();
+        if (savedListFile.exists()) {
+            try {
+                ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(savedListFile));
+                savedList = (MessageListBackingData) objectInputStream.readObject();
+                objectInputStream.close();
+                if (savedList != null) {
+                    savedList.messagesSource.setContext(this);
+                    if (savedList.messages.size() == 0) {
+                        savedList = null;
                     }
-                } catch (Exception e) {
-                    // bad luck!
                 }
+            } catch (Exception e) {
+                // bad luck!
             }
         }
         return savedList;
     }
 
     public void setSavedList(final MessageListBackingData o, final boolean urgent) {
-        savedList = o;
-        if (savedList == null) {
+        if (o == null) {
             getSavedListFile().delete();
         } else {
             Thread thread = new Thread() {

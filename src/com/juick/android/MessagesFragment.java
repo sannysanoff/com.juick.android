@@ -43,13 +43,21 @@ import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Ugnich Anton
  */
 public class MessagesFragment extends ListFragment implements AdapterView.OnItemClickListener, AbsListView.OnScrollListener, View.OnTouchListener, View.OnClickListener {
+
+    public static int instanceCount;
+    {
+        instanceCount++;
+    }
 
     private JuickMessagesAdapter listAdapter;
     private View viewLoading;
@@ -542,8 +550,23 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         Log.w("com.juickadvanced","MessagesFragment: "+str);
     }
 
+    static BitSet russians = new BitSet();
+    static {
+        String russian = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+        russian = russian + russian.toLowerCase();
+        for(int i=0; i<russian.length(); i++) {
+            int code = (int)russian.charAt(i);
+            russians.set(code);
+        }
+    }
+
+    static Pattern httpURL = Pattern.compile("http(\\S*)");
+
+
     private ArrayList<JuickMessage> filterMessages(ArrayList<JuickMessage> messages) {
         log("filterMessages start");
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(JuickAdvancedApplication.instance.getApplicationContext());
+        boolean filterNonRussian = sp.getBoolean("filterNonRussian", false);
         Set<String> filteredOutUsers1 = JuickMessagesAdapter.getFilteredOutUsers(parent);
         log("filterMessages got filtered out users");
         for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
@@ -562,6 +585,37 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
                 if (XMPPService.getAnyJuickBlacklist() != null) {
                     if (!XMPPService.getAnyJuickBlacklist().allowMessage(message)) {
+                        iterator.remove();
+                        continue;
+                    }
+                }
+            }
+            if (filterNonRussian) {
+                String text = message.Text;
+                int nRussian = 0;
+                while(true) {
+                    boolean replaced = false;
+                    Matcher matcher = httpURL.matcher(text);
+                    if (matcher.find()) {
+                        try {
+                            text = matcher.replaceAll("");
+                            replaced = true;
+                        } catch (Exception e) {
+                            //
+                        }
+                    }
+                    if (!replaced) break;
+                }
+                final int limit = text.length();
+                for(int i=0; i< limit; i++) {
+                    int charCode = (int) text.charAt(i);
+                    if (russians.get(charCode)) {
+                        nRussian++;
+                        break;
+                    }
+                }
+                if (!text.contains("No description")) {
+                    if (nRussian == 0 && limit > 30) {
                         iterator.remove();
                         continue;
                     }
@@ -670,7 +724,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             } else if (mCurrentScrollState == SCROLL_STATE_FLING
                     && firstVisibleItem == 0
                     && mRefreshState != REFRESHING) {
-                setSelection(1);
+                try {
+                    setSelection(1);
+                } catch (Exception e) {
+                    // Content view is not yet created
+                }
                 mBounceHack = true;
             } else if (mBounceHack && mCurrentScrollState == SCROLL_STATE_FLING) {
                 setSelection(1);
@@ -817,5 +875,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
     }
 
-
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        instanceCount--;
+    }
 }

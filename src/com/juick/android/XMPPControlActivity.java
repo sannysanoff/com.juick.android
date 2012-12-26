@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import com.juickadvanced.R;
 
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -48,8 +47,7 @@ public class XMPPControlActivity extends Activity {
         final TextView lastConnect = (TextView) findViewById(R.id.jam_last_connect);
         final TextView memoryTotal = (TextView) findViewById(R.id.memory_total);
         final TextView memoryUsed = (TextView) findViewById(R.id.memory_used);
-        final TextView webviewCount = (TextView) findViewById(R.id.webview_count);
-        final TextView jmaCount = (TextView) findViewById(R.id.jma_count);
+        final TextView instCount = (TextView) findViewById(R.id.inst_count);
         final TextView infoDate = (TextView) findViewById(R.id.info_date);
         final Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final Utils.ServiceGetter<JAMService> jamServiceServiceGetter = new Utils.ServiceGetter<JAMService>(this, JAMService.class);
@@ -167,8 +165,7 @@ public class XMPPControlActivity extends Activity {
                         lastConnect.setText(XMPPService.lastSuccessfulConnect == 0 ? "never" : sdf.format(new Date(XMPPService.lastSuccessfulConnect)));
                         memoryTotal.setText("" + (Runtime.getRuntime().totalMemory() / 1024) + " KB");
                         memoryUsed.setText("" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024) + " KB");
-                        webviewCount.setText("" + MyWebView.instanceCount + " instances");
-                        jmaCount.setText("" + JuickMessagesAdapter.instanceCount + " instances");
+                        instCount.setText("WV:"+MyWebView.instanceCount+" JMA:" + JuickMessagesAdapter.instanceCount + " MF:"+MessagesFragment.instanceCount+" TF:"+ThreadFragment.instanceCount+" TA:"+ThreadFragment.instanceCount+" WS:"+WsClient.instanceCount);
                         infoDate.setText("" + sdf.format(new Date()));
                         lastGCM.setText("" + (XMPPService.lastGCMMessage != null ? sdf.format(XMPPService.lastGCMMessage) : " --- "));
                         lastWS.setText("" + (XMPPService.lastWSMessage != null ? sdf.format(XMPPService.lastWSMessage) : " --- "));

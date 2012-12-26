@@ -45,7 +45,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     }
 
     public static void keepAlive() {
-        for (ServerPingTimerListener serverPingTimerListener : serverPingTimerListeners) {
+        for (ServerPingTimerListener serverPingTimerListener : new ArrayList<ServerPingTimerListener>(serverPingTimerListeners)) {
             serverPingTimerListener.onKeepAlive();
         }
     }

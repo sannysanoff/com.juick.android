@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.util.Log;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.juick.JuickMessageID;
@@ -35,6 +37,11 @@ import org.apache.http.util.ByteArrayBuffer;
  */
 public class WsClient implements ThreadFragment.ThreadExternalUpdater {
 
+    public static int instanceCount;
+    {
+        instanceCount++;
+    }
+
     static final byte keepAlive[] = {(byte) 0x00, (byte) 0x20, (byte) 0xFF};
     Socket sock;
     InputStream is;
@@ -43,10 +50,16 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
     Context ctx;
     JuickMessageID mid;
     boolean terminated;
+    private final Thread wsthr;
+    private int beforePausedCounter;
 
     @Override
     public void terminate() {
         terminated = true;
+        setPaused(false);   // these are various means to terminate socket
+        listener = null;        // these are measures to unreference gui if sockets stuck anyway
+        ctx = null;
+        Log.w("UgnichWS", "inst="+toString()+": terminated="+terminated);
     }
 
     @Override
@@ -54,9 +67,14 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
         this.listener = listener;
     }
 
+    @Override
+    public void setPaused(boolean paused) {
+        beforePausedCounter = paused ? 3 : 0;
+    }
+
     public WsClient(Context context, final JuickMessageID mid) {
         this.ctx = context;
-        Thread wsthr = new Thread(new Runnable() {
+        wsthr = new Thread(new Runnable() {
 
             public void run() {
                 while (!terminated) {
@@ -65,13 +83,14 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                     }
                 }
             }
-        },"Websocket thread: mid="+mid);
+        }, "Websocket thread: mid=" + mid);
         wsthr.start();
     }
 
     public boolean connect(String host, int port, String location, String headers) {
         try {
             sock = new Socket(host, port);
+            sock.setSoTimeout(1000);
             is = sock.getInputStream();
             os = sock.getOutputStream();
 
@@ -126,7 +145,18 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
             //StringBuilder buf = new StringBuilder();
             ByteArrayBuffer buf = new ByteArrayBuffer(16);
             boolean flagInside = false;
-            while ((b = is.read()) != -1) {
+            while (!terminated) {
+                try {
+                    b = is.read();
+                    if (b == -1) break;
+                    if (terminated) break;
+                } catch (SocketTimeoutException e) {
+                    if (beforePausedCounter-- == 0) {
+                        sock.setSoTimeout(15*60*1000);
+                    }
+                    Log.w("UgnichWS", "inst="+toString()+": sotimeout, terminated="+terminated);
+                    continue;
+                }
                 if (b == 0x00 && !flagInside) {
                     //buf = new StringBuilder();
                     buf.clear();
@@ -143,9 +173,11 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                     buf.append((char) b);
                 }
             }
-            System.err.println("DISCONNECTED readLoop");
         } catch (Exception e) {
-            System.err.println(e);
+            Log.e("UgnichWS", "inst="+toString(), e);
+
+        } finally {
+            Log.w("UgnichWS", "inst="+toString()+" DISCONNECTED readLoop");
         }
     }
 
@@ -157,5 +189,11 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
         } catch (Exception e) {
             System.err.println(e);
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        instanceCount--;
     }
 }

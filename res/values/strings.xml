@@ -922,6 +922,8 @@
     <string name="UserAllTimeActivityReport2"></string>
     <string name="UserHoursReport">Activity hours distribution</string>
     <string name="UserHoursReport2">Workdays, last 3 months</string>
+    <string name="FilterNonRussianMessages">Filter non-russian messages</string>
+    <string name="FilterNonRussianMessages2">Will filter messages without at least one russian character</string>
 
 
 </resources>

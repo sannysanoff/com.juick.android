@@ -38,6 +38,13 @@ import java.util.ArrayList;
  */
 public class ThreadFragment extends ListFragment implements AdapterView.OnItemClickListener, View.OnTouchListener, XMPPMessageReceiver.MessageReceiverListener {
 
+    public static int instanceCount;
+    {
+        instanceCount++;
+    }
+
+    private boolean paused;
+
     public interface ThreadExternalUpdater {
 
         void terminate();
@@ -47,6 +54,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
 
         public void setListener(Listener listener);
+        public void setPaused(boolean paused);
 
     }
 
@@ -89,7 +97,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
         parentMessagesSource = (MessagesSource) getArguments().getSerializable("messagesSource");
-        parentMessagesSource.setContext(getActivity());
+        if (parentMessagesSource != null)
+            parentMessagesSource.setContext(getActivity());
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
         if (Build.VERSION.SDK_INT >= 8) {
@@ -209,7 +218,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Object itemAtPosition = parent.getItemAtPosition(position);
-                if (itemAtPosition instanceof JuickMessage) {
+                if (itemAtPosition instanceof JuickMessage && parentMessagesSource != null) {
                     JuickMessage msg = (JuickMessage)itemAtPosition;
                     MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
                     messageMenu.onItemLongClick(parent, view, position, id);
@@ -230,13 +239,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     }
                 };
                 if (restoreData == null) {
-                    parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
-                        @Override
-                        public Void apply(ArrayList<JuickMessage> messages) {
-                            then.apply(new MessagesFragment.RetainedData(messages, null));
-                            return null;
-                        }
-                    });
+                    if (parentMessagesSource != null) {
+                        parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                            @Override
+                            public Void apply(ArrayList<JuickMessage> messages) {
+                                then.apply(new MessagesFragment.RetainedData(messages, null));
+                                return null;
+                            }
+                        });
+                    }
                 } else {
                     then.apply((MessagesFragment.RetainedData)restoreData);
                     restoreData = null;
@@ -381,6 +392,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     @Override
     public void onResume() {
+        paused = false;
         super.onResume();
         XMPPMessageReceiver.listeners.add(this);
         doneWebSocket();
@@ -397,6 +409,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     @Override
     public void onPause() {
+        paused = true;
+        if (ws != null)
+            ws.setPaused(true);
         XMPPMessageReceiver.listeners.remove(this);
         handler.removeCallbacksAndMessages(null);
         super.onPause();
@@ -423,8 +438,11 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
                 getListView().setStackFromBottom(false);
                 //
-                if (sp.getBoolean("current_vibration_enabled", true))
-                    ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
+                if (sp.getBoolean("current_vibration_enabled", true)) {
+                    if (!paused) {
+                        ((Vibrator) getActivity().getSystemService(Activity.VIBRATOR_SERVICE)).vibrate(250);
+                    }
+                }
                 if (listAdapter.getCount() > 0) {
                     listAdapter.addAllMessages(messages);
                 }
@@ -539,4 +557,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        instanceCount--;
+    }
 }

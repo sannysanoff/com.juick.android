@@ -419,6 +419,8 @@
     <string name="WeTurnedOffXMPP">Мы сейчас выключили вашу галочку "подключать к XMPP", на всякий случай.</string>
     <string name="ShowUserpics">Показывать аватарки</string>
     <string name="UserIconsWillBeShown">Пользовательские иконки в начале сообщения (андроид 2.2+)</string>
+    <string name="FilterNonRussianMessages">Скрывать нерусские сообщения</string>
+    <string name="FilterNonRussianMessages2">Будут отфильтровываться сообщения не содержащие ни одной русской буквы</string>
 
 
 </resources>

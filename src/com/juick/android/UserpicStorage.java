@@ -52,7 +52,7 @@ public class UserpicStorage {
     }
 
     public void removeListener(AvatarID id, int size, Listener listener) {
-        final String key = "" + id + "|" + size;
+        final String key = "" + id.toString(size) + "|" + size;
         synchronized (loadingImages) {
             ArrayList<Listener> listeners1 = listeners.get(key);
             if (listeners1 == null) return;

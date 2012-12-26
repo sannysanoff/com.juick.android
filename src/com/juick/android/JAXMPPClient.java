@@ -197,16 +197,25 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public void callXmppControlSafe(final Context context, final ClientToServer c2s, final Utils.Function<Void, ServerToClient> then) {
+        if (!loggedIn) {
+            then.apply(new ServerToClient("","JAXMPPClient: not logged in (yet)"));
+            return;
+        }
+        final Exception ex = new Exception("callXmppControlSafe: handler==null");
         new Thread("callXmppControlInThread") {
             @Override
             public void run() {
                 final ServerToClient serverToClient = callXmppControl(context, c2s);
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        then.apply(serverToClient);
-                    }
-                });
+                if (handler == null) {
+                    ACRA.getErrorReporter().handleException(ex, false);
+                } else {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (then != null) then.apply(serverToClient);
+                        }
+                    });
+                }
             }
         }.start();
     }
@@ -228,6 +237,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             }
         }
         return result;
+    }
+
+    public boolean isLoggedIn() {
+        return loggedIn;
     }
 
     public boolean sendMessage(final String jid, final String message) {
@@ -425,6 +438,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                 for(int cnt = 0; cnt < 20; cnt++) {
                     try {
                         if (sessionId != null) {
+                            JASocketClient localWSClient = wsClient;
+                            if (localWSClient != null) {
+                                localWSClient.send(createClientPing());
+                            }
                             XMPPService.log("Poll: "+setup.getJid());
                             ClientToServer c2s = new ClientToServer(sessionId);
                             c2s.setPoll(new Poll(since));

@@ -56,7 +56,12 @@ import java.util.Vector;
  * @author Ugnich Anton
  */
 public class ThreadActivity extends FragmentActivity implements View.OnClickListener, DialogInterface.OnClickListener, ThreadFragment.ThreadFragmentListener {
-    
+
+    public static int instanceCount;
+    {
+        instanceCount++;
+    }
+
     public static final int ACTIVITY_ATTACHMENT_IMAGE = 2;
     public static final int ACTIVITY_ATTACHMENT_VIDEO = 3;
     private TextView tvReplyTo;
@@ -466,5 +471,11 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        instanceCount--;
     }
 }
