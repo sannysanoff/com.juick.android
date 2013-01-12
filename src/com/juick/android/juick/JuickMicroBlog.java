@@ -599,7 +599,7 @@ public class JuickMicroBlog implements MicroBlog {
                         throw new IOException(response.getErrorText());
                     } else {
                         String retval = response.getResult();
-                        String SEARCH_MARKER = "http://i.juick.com/a/";
+                        String SEARCH_MARKER = "//i.juick.com/a/";
                         int ix = retval.indexOf(SEARCH_MARKER);
                         if (ix < 0) {
                             throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));

@@ -244,6 +244,10 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
 
     @Override
     public void clearCookie(Context context, Runnable then) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().remove("web_cookie").commit();
+        then.run();
+        myCookie = null;
+
     }
 }

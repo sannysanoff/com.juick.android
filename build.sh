@@ -14,3 +14,4 @@ rm -rf tmp
 find .. -name 'R.java' | xargs rm
 ant release
 rm -rf libs/common.jar
+jar cvf ../src-`date +%Y%m%d`XX.jar src

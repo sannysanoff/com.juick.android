@@ -80,6 +80,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 startActivity(new Intent(XMPPIncomingMessagesActivity.this, MainActivity.class));
             }
         });
+        SharedPreferences sp = getSharedPrefs();
+        editMode = sp.getBoolean("editMode", false);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final MyListView lv = (MyListView)findViewById(R.id.list);
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -88,6 +90,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 new MessageMenu(XMPPIncomingMessagesActivity.this, null, null, null) {
                     XMPPService.IncomingMessage incomingMessage;
                     View view;
+
                     @Override
                     public boolean onItemLongClick(AdapterView parent, final View view, int position, long id) {
                         Object o = displayItems.get(position);
@@ -96,7 +99,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                             this.view = view;
                             incomingMessage = item.messages.get(0);
                             if (incomingMessage instanceof XMPPService.JuickIncomingMessage) {
-                                final XMPPService.JuickIncomingMessage jim = (XMPPService.JuickIncomingMessage)incomingMessage;
+                                final XMPPService.JuickIncomingMessage jim = (XMPPService.JuickIncomingMessage) incomingMessage;
                                 final String fromUser = jim.getFrom();
                                 final MessageID thread = jim.getMID();
                                 JuickMessage msg = new JuickMessage();
@@ -198,7 +201,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
         });
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         listeningAll = sp.getBoolean("extxmpp.local.listeningAll", false);
     }
 
@@ -452,6 +454,14 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     view = getLayoutInflater().inflate(R.layout.incoming_messages_section, null);
                     TextView tv = (TextView)view.findViewById(R.id.value);
                     TextView btn = (TextView)view.findViewById(R.id.button);
+                    if (editMode) {
+                        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)btn.getLayoutParams();
+                        layoutParams.getRules()[RelativeLayout.ALIGN_PARENT_RIGHT] = 0;
+                        layoutParams.getRules()[RelativeLayout.ALIGN_PARENT_LEFT] = RelativeLayout.TRUE;
+                        layoutParams = (RelativeLayout.LayoutParams)tv.getLayoutParams();
+                        layoutParams.getRules()[RelativeLayout.LEFT_OF] = 0;
+                        layoutParams.getRules()[RelativeLayout.RIGHT_OF] = R.id.button;
+                    }
                     final Header header = (Header) item;
                     tv.setText(header.label);
                     btn.setOnClickListener(new View.OnClickListener() {
@@ -482,6 +492,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     int totalCount = 0;
                     MessageID topicMessageId = null;
                     int toYouCount = 0;
+                    String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext());
                     for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
                         XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
                         String from = commentMessage.getFrom();
@@ -491,20 +502,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                             counts.put(from, oldCount);
                         }
                         oldCount.add(commentMessage.messageNoPlain);
-                        String nickScanArea = commentMessage.getBody().toString().toLowerCase()+" ";
-                        String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext()).toLowerCase();
-                        int scan = 0;
-                        while(true) {
-                            int myNick = nickScanArea.indexOf("@" + accountName, scan);
-                            if (myNick != -1) {
-                                if (!JuickMessagesAdapter.isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
-                                    toYouCount++;
-                                    break;
-                                }
-                                scan = myNick + 1;
-                            } else {
-                                break;
-                            }
+                        String body = commentMessage.getBody();
+                        boolean found = hasMyNickAnywhereInBody(accountName, body);
+                        if (found) {
+                            toYouCount++;
                         }
                         if (topicMessageId == null) {
                             topicMessageId = commentMessage.getMID();
@@ -575,7 +576,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     }
                     int offset = insertString.length()+moreInsert.length();
                     if (toYouCount != 0) {
-                        String toYou = " ("+toYouCount + " to you)  ";
+                        String toYou = " ("+toYouCount + " "+getString(R.string._to_you_)+")  ";
                         sb.insert(offset, toYou);
                         sb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), offset, offset + toYou.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         offset += toYou.length();
@@ -651,6 +652,26 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         }
     }
 
+    public static boolean hasMyNickAnywhereInBody(String accountName, String body) {
+        String nickScanArea = body.toLowerCase()+" ";
+        int scan = 0;
+        String accountNameL = accountName.toLowerCase();
+        boolean found = false;
+        while(true) {
+            int myNick = nickScanArea.indexOf("@" + accountNameL, scan);
+            if (myNick != -1) {
+                if (!JuickMessagesAdapter.isNickPart(nickScanArea.charAt(myNick + accountNameL.length() + 1))) {
+                    found = true;
+                    break;
+                }
+                scan = myNick + 1;
+            } else {
+                break;
+            }
+        }
+        return found;
+    }
+
     final boolean russian = isRussian();
 
     public static boolean isRussian() {
@@ -710,7 +731,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             deleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    deleteOneMessage(message);
+                    if (message instanceof XMPPService.JuickThreadIncomingMessage) {
+                        deleteThreadMessages(((XMPPService.JuickThreadIncomingMessage) message).getMID().getMid());
+                    } else {
+                        deleteOneMessage(message);
+                    }
 
                 }
             });
@@ -727,6 +752,21 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             @Override
             public void withService(XMPPService service) {
                 service.removeMessage(message);
+                refreshListWithAllMessages(service, service.incomingMessages);
+                service.maybeCancelNotification();
+            }
+        });
+    }
+
+    private void deleteThreadMessages(final int juickMid) {
+        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+            @Override
+            public void withoutService() {
+            }
+
+            @Override
+            public void withService(XMPPService service) {
+                service.removeMessages(new JuickMessageID(juickMid), false);
                 refreshListWithAllMessages(service, service.incomingMessages);
                 service.maybeCancelNotification();
             }
@@ -759,8 +799,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        sp.edit().putBoolean("extxmpp.local.listeningAll", listeningAll).commit();
+        SharedPreferences sp = getSharedPrefs();
+        sp.edit()
+                .putBoolean("extxmpp.local.listeningAll", listeningAll)
+                .putBoolean("editMode", editMode)
+                .commit();
     }
 
     static boolean listeningAll;
@@ -799,6 +842,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private SharedPreferences getSharedPrefs() {
+        return getSharedPreferences("xmpp_incoming_messages_activity", MODE_PRIVATE);
     }
 
     @Override

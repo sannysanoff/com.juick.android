@@ -32,6 +32,10 @@ public abstract  class MessagesSource implements Serializable {
         sp = PreferenceManager.getDefaultSharedPreferences(ctx);
     }
 
+    public Context getContext() {
+        return ctx;
+    }
+
     public abstract boolean supportsBackwardRefresh();
 
     public void rememberSavedPosition(MessageID mid) {

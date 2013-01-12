@@ -406,6 +406,10 @@ public class MainActivity extends FragmentActivity implements
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                if (position == -1) {
+                    // NOOK is funny
+                    return convertView;
+                }
                 final int screenHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
                 View retval = convertView;
                 if (retval == null) {
@@ -676,6 +680,7 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (item == null) return true;
         switch (item.getItemId()) {
             case R.id.menuitem_preferences:
                 Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
@@ -683,10 +688,12 @@ public class MainActivity extends FragmentActivity implements
                 startActivityForResult(prefsIntent, ACTIVITY_PREFERENCES);
                 return true;
             case R.id.menuitem_newmessage:
-                Intent intent1 = new Intent(this, NewMessageActivity.class);
-                intent1.putExtra("messagesSource", mf.messagesSource);
-                startActivity(intent1);
-                return true;
+                if (mf != null) {
+                    Intent intent1 = new Intent(this, NewMessageActivity.class);
+                    intent1.putExtra("messagesSource", mf.messagesSource);
+                    startActivity(intent1);
+                    return true;
+                }
             case R.id.menuitem_search:
                 if (mf != null) {
                     Intent intent = new Intent(this, ExploreActivity.class);
@@ -941,7 +948,7 @@ public class MainActivity extends FragmentActivity implements
         try {
             return super.dispatchTouchEvent(ev);
         } catch (Exception e) {
-            ACRA.getErrorReporter().handleException(e, false);
+            ACRA.getErrorReporter().handleException(new RuntimeException("Handled NPE in alcatel", e), false);
             return true;
         }
     }
@@ -950,4 +957,6 @@ public class MainActivity extends FragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
+
+
 }

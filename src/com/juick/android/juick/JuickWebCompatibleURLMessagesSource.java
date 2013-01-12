@@ -49,7 +49,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
             errorNotification = (Utils.DownloadErrorNotification)notification;
         if (jsonStr == null) {
             if (errorNotification != null)
-                errorNotification.notifyDownloadError("Page download error.");
+                errorNotification.notifyDownloadError(result.getErrorText());
             cont.apply(new ArrayList<JuickMessage>());
         } else {
             ArrayList<JuickMessage> messages = new DevJuickComMessages().parseWebPage(jsonStr);

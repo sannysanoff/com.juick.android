@@ -236,14 +236,14 @@ public class DatabaseService extends Service {
         }
     }
 
-    public void appendToThread(final MessageID mid, final ArrayList<String> raw) {
+    public void appendToStoredThread(final MessageID mid, final String raw) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
                 public Boolean apply(Void aVoid) {
                     ArrayList<String> storedThread = getStoredThread(mid);
                     if (storedThread == null) return true;
-                    storedThread.addAll(raw);
+                    storedThread.add(raw);
                     try {
                         insertOrUpdateThread(true, storedThread, mid);
                     } catch (IOException e) {
@@ -256,7 +256,6 @@ public class DatabaseService extends Service {
             });
             writeJobs.notify();
         }
-        //To change body of created methods use File | Settings | File Templates.
     }
 
 
@@ -284,6 +283,7 @@ public class DatabaseService extends Service {
             cursor.close();
         }
     }
+
 
     public static class DB extends SQLiteOpenHelper {
 

@@ -680,7 +680,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
         ArrayList<String> urls = new ArrayList<String>();
         for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            try {
+                ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } catch (IndexOutOfBoundsException e) {
+                // out of bounds errors.
+            }
             urls.add(foundURL.getUrl());
         }
         // bold italic underline
@@ -940,7 +944,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     progressBarText.setVisibility(View.VISIBLE);
                     final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
                     webView.setVisibility(View.GONE);
-                    new Thread("Image downloader") {
+                    new Thread("Image downloadhttpGeter") {
                         @Override
                         public void run() {
                             try {

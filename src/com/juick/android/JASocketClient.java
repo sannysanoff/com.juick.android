@@ -38,6 +38,7 @@ public class JASocketClient {
     private final String name;
 
     public boolean send(String str) {
+        if (os == null) return false;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
             byte[] bytes = str.getBytes("utf-8");
@@ -94,6 +95,7 @@ public class JASocketClient {
             //StringBuilder buf = new StringBuilder();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             while ((b = is.read()) != -1) {
+                if (shuttingDown) break;
                 markActivity();
                 if (b == '\n') {
                     if (listener != null) {
@@ -117,6 +119,7 @@ public class JASocketClient {
 
     public void disconnect() {
         try {
+
             if (is != null) is.close();
             if (os != null) os.close();
             if (sock != null) sock.close();

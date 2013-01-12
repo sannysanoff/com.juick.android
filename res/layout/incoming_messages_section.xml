@@ -1,9 +1,22 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="30sp"
     android:orientation="horizontal"
     android:background="#cfcea0"
     >
+    <TextView
+            android:id="@+id/button"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:gravity="center_vertical"
+            android:textSize="23sp"
+            android:paddingRight="10sp"
+            android:paddingLeft="10sp"
+            android:background="#FFA0A0A0"
+            android:textColor="#FFFFFFFF"
+            android:layout_alignParentRight="true"
+            android:text="X"
+            />
     <TextView
         android:id="@+id/value"
         android:layout_width="fill_parent"
@@ -11,28 +24,11 @@
         android:textColor="#b6813d"
         android:background="#cfcea0"
         android:text="New posts"
-        android:layout_gravity="center"
+        android:layout_toLeftOf="@id/button"
+        android:layout_centerVertical="true"
         android:textSize="20sp"
-        android:padding="3sp"
+        android:paddingLeft="3sp"
+        android:paddingRight="0sp"
         />
-    <TextView
-        android:id="@+id/dummy"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/value"
-        />
-    <TextView
-            android:id="@+id/button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="23sp"
-            android:paddingRight="10sp"
-            android:paddingLeft="10sp"
-            android:background="#A0A0A0"
-            android:layout_marginRight="2sp"
-            android:layout_alignBaseline="@id/value"
-            android:layout_toLeftOf="@id/dummy"
-            android:text="X"
-            />
 
 </RelativeLayout>

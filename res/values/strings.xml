@@ -924,6 +924,11 @@
     <string name="UserHoursReport2">Workdays, last 3 months</string>
     <string name="FilterNonRussianMessages">Filter non-russian messages</string>
     <string name="FilterNonRussianMessages2">Will filter messages without at least one russian character</string>
+    <string name="NotifyOnlyPersonal">Notify only personal</string>
+    <string name="ReceiveOnlyPersonal">Receive only personal</string>
+    <string name="WillNotifyOnlyPersonal">Will notify only replies to you or comments to your posts</string>
+    <string name="WillReceiveOnlyPersonal">Will show only replies to you or comments to your posts in the list</string>
+    <string name="_to_you_">to you</string>
 
 
 </resources>

@@ -151,18 +151,13 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     private String performLogin(Context context, XMPPConnectionSetup setup) {
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
-        Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId);
+        Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
         login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
         login.setProofAccountToken(JuickComAuthorizer.getBasicAuthString(context));
         login.setProofAccountType("juick");
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
-        startSync(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        });
+        onKeepAlive();
         return serverToClient.getErrorMessage();
     }
 
@@ -175,24 +170,29 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         return value;
     }
 
+    String relogin() {
+        if (setup.jid.endsWith("@local")) {
+            int lastLocal = setup.jid.lastIndexOf("@local");
+            String uname = setup.jid.substring(0, lastLocal);
+            return performLoginLocal(context, uname, setup.password);
+        } else {
+            return performLogin(context, setup);
+        }
+    }
+
     private String performLoginLocal(Context context, String username, String cookie) {
         setup = new XMPPConnectionSetup();
         setup.jid = username+"@local";
         setup.password = cookie;
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
-        Login login = new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId);
+        Login login = new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
         login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
         login.setProofAccountToken(JuickComAuthorizer.getBasicAuthString(context));
         login.setProofAccountType("juick");
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
-        startSync(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        });
+        onKeepAlive();
         return serverToClient.getErrorMessage();
     }
 
@@ -485,7 +485,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             } else {
                                 String error = serverToClient.getErrorMessage();
                                 if (error.equals(ServerToClient.NO_SUCH_SESSION)) {
-                                    error = performLogin(context, setup);
+                                    error = relogin();
                                 }
                                 if (error != null && error.startsWith(ServerToClient.NETWORK_CONNECT_ERROR)) {
                                     error = null;   // silently ignore connection errors.
@@ -551,13 +551,15 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     @Override
     public void onRegistration(final String regid) {
+        Log.i("JA.SendGCMReg", "should send reg reg, sessionId="+sessionId);
         new Thread("SendGCMReg") {
             @Override
             public void run() {
+                Log.i("JA.SendGCMReg", "sending reg, sessionId="+sessionId);
                 if (sessionId != null) {
                     ClientToServer c2s = new ClientToServer(sessionId);
                     c2s.setSendGCMRegistration(new SendGCMRegistration(regid));
-                    final ServerToClient serverToClient = callXmppControl(context, c2s);
+                    callXmppControl(context, c2s);
                 }
             }
         }.start();
@@ -588,8 +590,6 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             }
         });
     }
-
-
 
 
 }

@@ -421,6 +421,11 @@
     <string name="UserIconsWillBeShown">Пользовательские иконки в начале сообщения (андроид 2.2+)</string>
     <string name="FilterNonRussianMessages">Скрывать нерусские сообщения</string>
     <string name="FilterNonRussianMessages2">Будут отфильтровываться сообщения не содержащие ни одной русской буквы</string>
+    <string name="NotifyOnlyPersonal">Нотиф. только личные</string>
+    <string name="ReceiveOnlyPersonal">Получать только личные</string>
+    <string name="WillNotifyOnlyPersonal">Будет индикация только ответов вам или комментариев на ваши посты</string>
+    <string name="WillReceiveOnlyPersonal">Будут показываться в списке только ответы вам или комментарии на ваши посты</string>
+    <string name="_to_you_">тебе</string>
 
 
 </resources>

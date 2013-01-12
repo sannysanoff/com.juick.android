@@ -175,21 +175,25 @@ public class NewJuickPreferenceActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(android.R.layout.list_content);
         ListView list = (ListView)findViewById(android.R.id.list);
-        list.setAdapter(new Adapter());
-        String menu = getIntent().getStringExtra("menu");
-        if (menu != null) {
-            items = allMenus.get(menu);
-        }
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                try {
-                    items.get(position).action.run();
-                } catch (Exception e) {
-                    Toast.makeText(NewJuickPreferenceActivity.this, e.toString(), Toast.LENGTH_SHORT);
-                }
+        if (list != null) {
+            list.setAdapter(new Adapter());
+            String menu = getIntent().getStringExtra("menu");
+            if (menu != null) {
+                items = allMenus.get(menu);
             }
-        });
+            list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    try {
+                        items.get(position).action.run();
+                    } catch (Exception e) {
+                        Toast.makeText(NewJuickPreferenceActivity.this, e.toString(), Toast.LENGTH_SHORT);
+                    }
+                }
+            });
+        } else {
+            Toast.makeText(getApplication(), "Sorry, your device does not provide needed built-in layout", Toast.LENGTH_LONG).show();
+        }
     }
 
 }

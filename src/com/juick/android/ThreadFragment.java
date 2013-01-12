@@ -220,8 +220,10 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage && parentMessagesSource != null) {
                     JuickMessage msg = (JuickMessage)itemAtPosition;
-                    MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
-                    messageMenu.onItemLongClick(parent, view, position, id);
+                    if (msg.getMID() != null) {
+                        MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
+                        messageMenu.onItemLongClick(parent, view, position, id);
+                    }
 
                 }
                 return true;
@@ -435,8 +437,15 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 // don't scroll
-                getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
-                getListView().setStackFromBottom(false);
+                ListView listView = null;
+                try {
+                    listView = getListView();
+                } catch (Exception e) {
+                    // view not yet created
+                    return;
+                }
+                listView.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+                listView.setStackFromBottom(false);
                 //
                 if (sp.getBoolean("current_vibration_enabled", true)) {
                     if (!paused) {

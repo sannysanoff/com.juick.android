@@ -122,8 +122,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         if (messagesSource == null)
             messagesSource = new JuickCompatibleURLMessagesSource(getActivity());
-        messagesSource.setContext(getActivity());
-
+        if (messagesSource.getContext() == null)
+            messagesSource.setContext(JuickAdvancedApplication.instance);
         mFlipAnimation = new RotateAnimation(0, -180,
                 RotateAnimation.RELATIVE_TO_SELF, 0.5f,
                 RotateAnimation.RELATIVE_TO_SELF, 0.5f);
@@ -437,12 +437,18 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     public Object saveState() {
-        RetainedData rd = new RetainedData(new ArrayList<JuickMessage>(), getListView().onSaveInstanceState());
-        int count = listAdapter.getCount();
-        for (int i = 0; i < count; i++) {
-            rd.messages.add(listAdapter.getItem(i));
+        try {
+            ListView listView = getListView();
+            RetainedData rd = new RetainedData(new ArrayList<JuickMessage>(), listView.onSaveInstanceState());
+            int count = listAdapter.getCount();
+            for (int i = 0; i < count; i++) {
+                rd.messages.add(listAdapter.getItem(i));
+            }
+            return rd;
+        } catch (IllegalStateException e) {
+            // view not yet created
+            return null;
         }
-        return rd;
     }
 
     public class MoreMessagesLoadNotification implements Utils.DownloadProgressNotification, Utils.RetryNotification, Utils.DownloadErrorNotification {

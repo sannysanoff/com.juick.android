@@ -37,6 +37,7 @@ public class JuickAdvancedApplication extends Application {
     public static Handler foreverHandler;
     public static SharedPreferences sp;
     final private Object savedListLock = new Object();
+    public static String version = "unknown";
 
     @Override
     public void onCreate() {
@@ -58,6 +59,11 @@ public class JuickAdvancedApplication extends Application {
             supportsGCM = true;
         } catch (Throwable th) {
         }
+        try {
+            version = ""+getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode;
+        } catch (Exception ex) {
+        }
+
         GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
         startService(new Intent(this, XMPPService.class));
 
