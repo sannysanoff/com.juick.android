@@ -92,6 +92,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
 

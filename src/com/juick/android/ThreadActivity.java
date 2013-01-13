@@ -93,6 +93,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         handler = new Handler();

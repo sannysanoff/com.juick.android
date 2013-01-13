@@ -1,5 +1,6 @@
 package com.juick.android;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +13,7 @@ import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
 import java.io.*;
+import java.util.HashMap;
 
 import static org.acra.ReportField.*;
 
@@ -38,6 +40,24 @@ public class JuickAdvancedApplication extends Application {
     public static SharedPreferences sp;
     final private Object savedListLock = new Object();
     public static String version = "unknown";
+
+    static HashMap<String, Integer> themesMap = new HashMap<String, Integer>() {{
+        put("Theme_Sherlock_Light",R.style.Theme_Sherlock_Light);
+        put("Theme_Black",android.R.style.Theme_Black);
+        put("Theme_Holo",android.R.style.Theme_Holo);
+        put("Theme_Holo_Light",android.R.style.Theme_Holo_Light);
+        put("Theme_Light",android.R.style.Theme_Light);
+        put("Theme_Translucent",android.R.style.Theme_Translucent);
+    }};
+
+    public static void setupTheme(Activity activity) {
+        String nativeTheme = sp.getString("nativeTheme", "Theme_Sherlock_Light");
+        Integer themeId = themesMap.get(nativeTheme);
+        if (themeId != null) {
+            activity.setTheme(themeId);
+        }
+    }
+
 
     @Override
     public void onCreate() {

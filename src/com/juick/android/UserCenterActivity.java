@@ -52,6 +52,7 @@ public class UserCenterActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.setupTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_center);
         final ListView list = (ListView) findViewById(R.id.list);

@@ -153,6 +153,7 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.setupTheme(this);
         XMPPService.log("MainActivity.create()");
         nActiveMainActivities++;
         sp = PreferenceManager.getDefaultSharedPreferences(this);

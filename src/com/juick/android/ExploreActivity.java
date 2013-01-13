@@ -39,6 +39,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.setupTheme(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.explore);

@@ -35,6 +35,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.setupTheme(this);
         super.onCreate(savedInstanceState);
 
         uid = getIntent().getIntExtra("uid", 0);

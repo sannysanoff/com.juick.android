@@ -147,4 +147,12 @@
         <item>Send over wireless only</item>
         <item>Do not send</item>
     </string-array>
+    <string-array name="themes">
+        <item>SherlockLight</item>
+        <item>Theme_Black</item>
+        <item>Theme_Holo</item>
+        <item>Theme_Holo_Light</item>
+        <item>Theme_Light</item>
+        <item>Theme_Translucent</item>
+    </string-array>
 </resources>
