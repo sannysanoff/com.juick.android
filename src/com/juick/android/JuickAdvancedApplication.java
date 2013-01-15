@@ -94,7 +94,7 @@ public class JuickAdvancedApplication extends Application {
             foreverHandler.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(instance, msg, Toast.LENGTH_LONG).show();
+                Toast.makeText(instance, msg, Toast.LENGTH_SHORT).show();
             }
         });
         }
