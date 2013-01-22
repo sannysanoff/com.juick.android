@@ -493,22 +493,24 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     MessageID topicMessageId = null;
                     int toYouCount = 0;
                     String accountName = JuickComAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext());
-                    for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
-                        XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
-                        String from = commentMessage.getFrom();
-                        HashSet oldCount = counts.get(from);
-                        if (oldCount == null) {
-                            oldCount = new HashSet();
-                            counts.put(from, oldCount);
-                        }
-                        oldCount.add(commentMessage.messageNoPlain);
-                        String body = commentMessage.getBody();
-                        boolean found = hasMyNickAnywhereInBody(accountName, body);
-                        if (found) {
-                            toYouCount++;
-                        }
-                        if (topicMessageId == null) {
-                            topicMessageId = commentMessage.getMID();
+                    if (accountName != null) {
+                        for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
+                            XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;
+                            String from = commentMessage.getFrom();
+                            HashSet oldCount = counts.get(from);
+                            if (oldCount == null) {
+                                oldCount = new HashSet();
+                                counts.put(from, oldCount);
+                            }
+                            oldCount.add(commentMessage.messageNoPlain);
+                            String body = commentMessage.getBody();
+                            boolean found = hasMyNickAnywhereInBody(accountName, body);
+                            if (found) {
+                                toYouCount++;
+                            }
+                            if (topicMessageId == null) {
+                                topicMessageId = commentMessage.getMID();
+                            }
                         }
                     }
                     SpannableStringBuilder sb = new SpannableStringBuilder();

@@ -328,16 +328,18 @@ public class XMPPService extends Service {
     private void maybeTerminateXMPP() {
         if (juickBlacklist != null && juboMessageFilter != null && sp.getBoolean("useXMPPOnlyForBL", false)) {
             ExternalXMPPThread th = (ExternalXMPPThread) currentThread;
-            JAXMPPClient client = th.client;
-            if (client != null) {
-                log("Sent client disconnect (XMPP)");
-                client.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
-                    @Override
-                    public Void apply(ServerToClient serverToClient) {
-                        cleanup("blacklists got ok");
-                        return null;
-                    }
-                });
+            if (th != null) {
+                JAXMPPClient client = th.client;
+                if (client != null) {
+                    log("Sent client disconnect (XMPP)");
+                    client.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
+                        @Override
+                        public Void apply(ServerToClient serverToClient) {
+                            cleanup("blacklists got ok");
+                            return null;
+                        }
+                    });
+                }
             }
         }
     }
@@ -932,18 +934,22 @@ public class XMPPService extends Service {
         } else if (handled instanceof JuickThreadIncomingMessage) {
             JuickThreadIncomingMessage jtim = (JuickThreadIncomingMessage) handled;
             String accountName = JuickComAuthorizer.getJuickAccountName(getBaseContext()).toLowerCase();
-            if (!jtim.getBody().startsWith("@")) {  // if not, message is to /0
-                if (jtim.originalMessage != null && !jtim.originalMessage.from.contains("???")) {
-                    String starterFrom = jtim.originalMessage.getFrom();
-                    if (starterFrom.startsWith("@")) starterFrom = starterFrom.substring(1);
-                    messageToMe = starterFrom.toLowerCase().equals(accountName); // topic starter author is me? then this reply is to me!
+            if (accountName != null) {
+                if (!jtim.getBody().startsWith("@")) {  // if not, message is to /0
+                    if (jtim.originalMessage != null && !jtim.originalMessage.from.contains("???")) {
+                        String starterFrom = jtim.originalMessage.getFrom();
+                        if (starterFrom.startsWith("@")) starterFrom = starterFrom.substring(1);
+                        messageToMe = starterFrom.toLowerCase().equals(accountName); // topic starter author is me? then this reply is to me!
+                    } else {
+                        handled.delayedNotificationResolution = true;
+                        saveMessage(jtim);
+                        messageToMe = false;
+                    }
                 } else {
-                    handled.delayedNotificationResolution = true;
-                    saveMessage(jtim);
-                    messageToMe = false;
+                    messageToMe = XMPPIncomingMessagesActivity.hasMyNickAnywhereInBody(accountName, handled.getBody());
                 }
             } else {
-                messageToMe = XMPPIncomingMessagesActivity.hasMyNickAnywhereInBody(accountName, handled.getBody());
+                messageToMe = false;
             }
         } else if (handled instanceof JuickIncomingMessage) {
             messageToMe = true;

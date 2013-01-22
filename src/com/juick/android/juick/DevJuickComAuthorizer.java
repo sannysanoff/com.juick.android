@@ -112,7 +112,11 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
                                 password.requestFocus();
                             }
                         });
-                        dlg.show();
+                        try {
+                            dlg.show();
+                        } catch (Exception e) {
+                            cont.apply(null);
+                        }
                     }
 
                     private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {

@@ -680,11 +680,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
         ArrayList<String> urls = new ArrayList<String>();
         for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
-            try {
-                ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            } catch (IndexOutOfBoundsException e) {
-                // out of bounds errors.
-            }
+            setSSBSpan(ssb, new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             urls.add(foundURL.getUrl());
         }
         // bold italic underline
@@ -704,7 +700,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 int myNick = nickScanArea.indexOf("@" + accountName, scan);
                 if (myNick != -1) {
                     if (!isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
-                        ssb.setSpan(new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick-1, myNick + accountName.length()+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        setSSBSpan(ssb, new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick - 1, myNick + accountName.length() + 2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                     }
                     scan = myNick + 1;
                 } else {
@@ -782,6 +778,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         parsedMessage.messageNumberStart = messageNumberStart;
         parsedMessage.messageNumberEnd = messageNumberEnd;
         return parsedMessage;
+    }
+
+    private static void setSSBSpan(SpannableStringBuilder ssb, Object span, int start, int end, int flags) {
+        if (end > ssb.length()) {
+            end = ssb.length();
+        }
+        if (start > ssb.length()) return;
+        if (start >= end) return;
+        ssb.setSpan(span, start, end, flags);
     }
 
     private static void setStyleSpans(SpannableStringBuilder ssb, int ssbOffset, Object what, String styleChar) {

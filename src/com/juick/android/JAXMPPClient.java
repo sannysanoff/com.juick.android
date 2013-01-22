@@ -504,7 +504,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             }
                         }
                     } catch (Exception ex) {
-                        ACRA.getErrorReporter().handleException(new RuntimeException("While Ext.XMPP.Poll", ex));
+                        ACRA.getErrorReporter().handleException(new RuntimeException("While Ext.XMPP.Poll (not fatal)", ex));
                     } finally {
                         synchronized (JAXMPPClient.this) {
                             switch (syncState) {

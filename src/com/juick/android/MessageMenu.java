@@ -282,7 +282,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 if (listAdapter != null) {
                     for (int i = 0; i < listAdapter.getCount(); i++) {
                         JuickMessage jm = listAdapter.getItem(i);
-                        if (jm != null && jm.User.UName.equals(UName)) {
+                        if (jm != null && jm.User != null && jm.User.UName != null && jm.User.UName.equals(UName)) {
                             listAdapter.remove(jm);
                             i--;
                         }

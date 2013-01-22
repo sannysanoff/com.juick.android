@@ -45,6 +45,7 @@ import android.widget.Toast;
 import com.juickadvanced.data.juick.JuickPlace;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
+import org.acra.ACRA;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -255,13 +256,18 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == MENUITEM_SPECIFYLOCATION) {
-            Intent i = new Intent(Intent.ACTION_PICK);
-            i.setClass(this, PickLocationActivity.class);
-            if (location != null) {
-                i.putExtra("lat", location.getLatitude());
-                i.putExtra("lon", location.getLongitude());
+            try {
+                Intent i = new Intent(Intent.ACTION_PICK);
+                i.setClass(this, PickLocationActivity.class);
+                if (location != null) {
+                    i.putExtra("lat", location.getLatitude());
+                    i.putExtra("lon", location.getLongitude());
+                }
+                startActivityForResult(i, ACTIVITY_PICKLOCATION);
+            } catch (Exception e) {
+                ACRA.getErrorReporter().handleException(new RuntimeException("While opening PickLocationActivity.class (not fatal)", e));
+                Toast.makeText(getApplicationContext(), "Trouble with Location UI on this device: "+Utils.getRootException(e, 10).toString(), Toast.LENGTH_LONG);
             }
-            startActivityForResult(i, ACTIVITY_PICKLOCATION);
             return true;
         } else {
             return super.onOptionsItemSelected(item);

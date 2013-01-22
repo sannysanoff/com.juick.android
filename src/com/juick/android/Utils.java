@@ -76,6 +76,14 @@ public class Utils {
 
     public static ArrayList<URLAuth> authorizers = new ArrayList<URLAuth>();
 
+    public static Throwable getRootException(Throwable e, int maxLoop) {
+        if (e.getCause() == e) return e;
+        if (e.getCause() == null) return e;
+        if (maxLoop == 0) return e;
+        return getRootException(e.getCause(), maxLoop-1);
+
+    }
+
     public static abstract class URLAuth {
 
 
