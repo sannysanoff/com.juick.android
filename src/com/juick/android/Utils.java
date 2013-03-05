@@ -246,6 +246,7 @@ public class Utils {
         }
 
         public void getService(final Receiver<T> receive) {
+            final Exception where = new Exception("This is the stack trace of call");
             ServiceConnection mConnection = new ServiceConnection() {
 
                 @Override
@@ -260,7 +261,7 @@ public class Utils {
                             context.unbindService(this);
                         }
                     } else {
-                        throw new RuntimeException("getService: bad binder: " + ibinder);
+                        throw new RuntimeException("getService: bad binder: " + ibinder, where);
                     }
                 }
 

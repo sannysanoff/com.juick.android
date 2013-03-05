@@ -42,7 +42,7 @@
                 android:title="Theme for UI elemnents"
                 android:entries="@array/themes"
                 android:entryValues="@array/themes"
-                android:defaultValue="SherlockLight"
+                android:defaultValue="default"
                 android:persistent="true"/>
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.COMMON_BACKGROUND"

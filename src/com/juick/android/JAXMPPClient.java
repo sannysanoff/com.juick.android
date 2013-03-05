@@ -88,8 +88,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             return;
         }
         wsClient.send(createClientPing());
+        final JASocketClient myClient = wsClient;
         (wsclientLoop = new Thread() {
-            JASocketClient myClient = wsClient;
             long connectTime = System.currentTimeMillis();
             @Override
             public void run() {

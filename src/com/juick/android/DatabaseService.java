@@ -69,12 +69,12 @@ public class DatabaseService extends Service {
         }
     }
 
-    GsonBuilder gsonBuilder = new GsonBuilder();
+    static GsonBuilder gsonBuilder = new GsonBuilder();
     {
         gsonBuilder.registerTypeAdapter(MessageID.class, new MessageIDAdapter());
     }
 
-    private Gson getGson() {
+    public static Gson getGson() {
         return gsonBuilder.create();
     }
 

@@ -264,7 +264,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                     i.putExtra("lon", location.getLongitude());
                 }
                 startActivityForResult(i, ACTIVITY_PICKLOCATION);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 ACRA.getErrorReporter().handleException(new RuntimeException("While opening PickLocationActivity.class (not fatal)", e));
                 Toast.makeText(getApplicationContext(), "Trouble with Location UI on this device: "+Utils.getRootException(e, 10).toString(), Toast.LENGTH_LONG);
             }

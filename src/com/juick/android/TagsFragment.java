@@ -208,20 +208,23 @@ public class TagsFragment extends Fragment  {
                             ssb.append("Error: "+ex.toString());
                         }
                     }
-                    getActivity().runOnUiThread(new Runnable() {
+                    if (getActivity() != null) {
+                        // maybe already closed?
+                        getActivity().runOnUiThread(new Runnable() {
 
-                        public void run() {
-                            TextView tv = (TextView)myView.findViewById(R.id.tags);
-                            progressAll.setVisibility(View.GONE);
-                            if (multi)
-                                selectedContainer.setVisibility(View.VISIBLE);
-                            tv.setText(ssb, TextView.BufferType.SPANNABLE);
-                            tv.setMovementMethod(LinkMovementMethod.getInstance());
-                            MainActivity.restyleChildrenOrWidget(view);
-                            final TextView selected = (TextView)myView.findViewById(R.id.selected);
-                            selected.setVisibility(View.VISIBLE);
-                        }
-                    });
+                            public void run() {
+                                TextView tv = (TextView)myView.findViewById(R.id.tags);
+                                progressAll.setVisibility(View.GONE);
+                                if (multi)
+                                    selectedContainer.setVisibility(View.VISIBLE);
+                                tv.setText(ssb, TextView.BufferType.SPANNABLE);
+                                tv.setMovementMethod(LinkMovementMethod.getInstance());
+                                MainActivity.restyleChildrenOrWidget(view);
+                                final TextView selected = (TextView)myView.findViewById(R.id.selected);
+                                selected.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
                 }
             }
         });

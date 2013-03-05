@@ -153,6 +153,12 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        try {
+            getWindow().requestFeature((int)Window.FEATURE_ACTION_BAR);
+        } catch (Exception e) {
+            ACRA.getErrorReporter().handleException(e, false);
+            //
+        }
         JuickAdvancedApplication.setupTheme(this);
         XMPPService.log("MainActivity.create()");
         nActiveMainActivities++;
@@ -434,7 +440,6 @@ public class MainActivity extends FragmentActivity implements
                 return retval;
             }
         };
-
         ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
         bar.setListNavigationCallbacks(navigationAdapter, this);

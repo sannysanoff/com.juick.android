@@ -122,7 +122,7 @@ public class XMPPService extends Service {
             // we have everything.
             useXMPP = false;
         }
-        Gson gson = new Gson();
+        Gson gson = DatabaseService.getGson();
         final XMPPConnectionSetup connectionArgs = gson.fromJson(sp.getString("xmpp_config", ""), XMPPConnectionSetup.class);
         if (useXMPP && connectionArgs != null) {
             (currentThread = new ExternalXMPPThread(connectionArgs)).start();
@@ -933,8 +933,9 @@ public class XMPPService extends Service {
             messageToMe = false;
         } else if (handled instanceof JuickThreadIncomingMessage) {
             JuickThreadIncomingMessage jtim = (JuickThreadIncomingMessage) handled;
-            String accountName = JuickComAuthorizer.getJuickAccountName(getBaseContext()).toLowerCase();
+            String accountName = JuickComAuthorizer.getJuickAccountName(this);
             if (accountName != null) {
+                accountName = accountName.toLowerCase();
                 if (!jtim.getBody().startsWith("@")) {  // if not, message is to /0
                     if (jtim.originalMessage != null && !jtim.originalMessage.from.contains("???")) {
                         String starterFrom = jtim.originalMessage.getFrom();
@@ -1149,6 +1150,10 @@ public class XMPPService extends Service {
                             try {
                                 IncomingMessage o = (IncomingMessage) ois.readObject();
                                 readMessages.add(o);
+                            } catch (OutOfMemoryError ex) {
+                                // maybe broken file, maybe not.
+                                file.delete();
+                                break;
                             } catch (Exception ex) {
                                 file.delete();
                             } finally {

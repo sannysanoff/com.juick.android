@@ -655,6 +655,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     public static boolean hasMyNickAnywhereInBody(String accountName, String body) {
+        if (body == null || accountName == null) return false;
         String nickScanArea = body.toLowerCase()+" ";
         int scan = 0;
         String accountNameL = accountName.toLowerCase();

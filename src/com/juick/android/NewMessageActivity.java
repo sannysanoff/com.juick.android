@@ -201,9 +201,16 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     });
                 }
             } else {
+                String errorMessage = null;
+                try {
+                    errorMessage = String.format(getString(R.string.JuickBadMimetype)+" - "+extras.get(Intent.EXTRA_STREAM), mime);
+                } catch (Exception ex) {
+                    /// java.util.MissingFormatArgumentException: Format specifier: 20i  (???)
+                    errorMessage = "Use JPEG/3GP/MP4 only";
+                }
                 new AlertDialog.Builder(this)
                         .setTitle(getString(R.string.ForcedAttachment))
-                        .setMessage(String.format(getString(R.string.JuickBadMimetype)+" - "+extras.get(Intent.EXTRA_STREAM), mime))
+                        .setMessage(errorMessage)
                         .setPositiveButton(getString(R.string.AsJPEG), new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -425,6 +432,10 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     }
 
     public static void maybeResizePicture(final Activity parent, final String attachmentUri, final Utils.Function<Void, String> function) {
+        if (attachmentUri == null) {
+            Toast.makeText(parent, "Missing attachment URI ;(", Toast.LENGTH_LONG).show();
+            return;
+        }
         boolean askForResize = PreferenceManager.getDefaultSharedPreferences(parent).getBoolean("askForResize", false);
         if (askForResize) {
             File deleteFile = null;

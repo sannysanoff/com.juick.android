@@ -148,6 +148,7 @@
         <item>Do not send</item>
     </string-array>
     <string-array name="themes">
+        <item>default</item>
         <item>SherlockLight</item>
         <item>Theme_Black</item>
         <item>Theme_Holo</item>

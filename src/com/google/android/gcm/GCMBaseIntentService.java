@@ -250,7 +250,11 @@ public abstract class GCMBaseIntentService extends IntentService {
                 // sanity check for null as this is a public method
                 if (sWakeLock != null) {
                     Log.v(TAG, "Releasing wakelock");
-                    sWakeLock.release();
+                    try {
+                        sWakeLock.release();
+                    } catch (Exception e) {
+                        // various underlocking bugs!
+                    }
                 } else {
                     // should never happen during normal workflow
                     Log.e(TAG, "Wakelock reference is null");
