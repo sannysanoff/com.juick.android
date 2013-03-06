@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
@@ -13,31 +13,54 @@
             android:singleLine="true"
             android:textSize="18sp"
             android:padding="3sp"
+            android:layout_alignParentTop="true"
             />
     <Button
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:id="@+id/gotoMain"
             android:text="@string/AllMessages"
-            android:visibility="gone"
+            android:visibility="visible"
+            android:layout_below="@id/old_title"
             />
 
-    <FrameLayout
-        android:id="@+id/threadfragment"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="1"/>
-    <ImageView
-        android:layout_width="fill_parent"
-        android:layout_height="1dip"
-        android:scaleType="fitXY"
-        android:gravity="fill_horizontal"
-        android:src="@android:drawable/divider_horizontal_bright"/>
     <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        style="@android:style/ButtonBar">
+            android:id="@+id/buttons"
+            android:layout_width="fill_parent"
+            android:layout_height="0px"
+            android:gravity="right"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            >
+        <Button
+                android:id="@+id/buttonCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:text="@android:string/cancel"/>
+        <Button
+                android:id="@+id/buttonSend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="30sp"
+                android:paddingRight="30sp"
+                android:layout_alignParentRight="true"
+                android:text="@string/Send"/>
+        <ImageButton
+                android:id="@+id/buttonAttachment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/buttonSend"
+                android:src="@drawable/ic_button_attachment_small"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/buttons"
+            android:id="@+id/editor"
+            style="@android:style/ButtonBar">
         <RelativeLayout
                 android:id="@+id/replyToContainer"
                 android:visibility="visible"
@@ -52,59 +75,48 @@
                     android:text="Thread"
                     />
             <TextView
-                android:id="@+id/textReplyTo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@id/showThread"
-                android:singleLine="false"
-                android:maxLines="2"
-                android:text="Here here sdjaldj alj aldsj alsdjalkdj alksdj alksdjal ksdjalsdj qq j ldvjsldvj lsdvjk lsdvjk lskdvj lsdvjslk vjlskvjd lskvj lskdvj sldvj  lkvj ldvkj sldkvjl skdvjlskvjd sldvkj slvjk"
-                android:paddingBottom="2dip"
-                android:textColor="#000"/>
+                    android:id="@+id/textReplyTo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@id/showThread"
+                    android:singleLine="false"
+                    android:maxLines="2"
+                    android:text="Here here sdjaldj alj aldsj alsdjalkdj alksdj alksdjal ksdjalsdj qq j ldvjsldvj lsdvjk lsdvjk lskdvj lsdvjslk vjlskvjd lskvj lskdvj sldvj  lkvj ldvkj sldkvjl skdvjlskvjd sldvkj slvjk"
+                    android:paddingBottom="2dip"
+                    android:textColor="#000"/>
         </RelativeLayout>
         <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/replyToContainer"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:orientation="vertical">
-            <EditText
-                android:id="@+id/editMessage"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/ClickToReply"
-                android:layout_weight="1"/>
-            <RelativeLayout
-                    android:id="@+id/buttons"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:visibility="gone"
-                    android:orientation="horizontal"
-                    >
-                <Button
-                    android:id="@+id/buttonCancel"
+                android:layout_below="@id/replyToContainer"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:orientation="vertical">
+            <EditText
+                    android:id="@+id/editMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:text="@android:string/cancel"/>
-                <Button
-                    android:id="@+id/buttonSend"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="30sp"
-                    android:paddingRight="30sp"
-                    android:layout_alignParentRight="true"
-                    android:text="@string/Send"/>
-                <ImageButton
-                        android:id="@+id/buttonAttachment"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_toLeftOf="@id/buttonSend"
-                        android:src="@drawable/ic_button_attachment_small"/>
-
-            </RelativeLayout>
+                    android:hint="@string/ClickToReply"
+                    />
         </LinearLayout>
     </RelativeLayout>
-</LinearLayout>
+
+    <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:scaleType="fitXY"
+            android:layout_above="@id/editor"
+            android:gravity="fill_horizontal"
+            android:id="@+id/separator"
+            android:src="@android:drawable/divider_horizontal_bright"/>
+
+
+    <FrameLayout
+            android:id="@+id/threadfragment"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_below="@id/gotoMain"
+            android:layout_above="@id/separator"
+            />
+
+</RelativeLayout>

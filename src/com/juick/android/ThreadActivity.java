@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -131,17 +132,17 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
         tvReplyTo = (TextView) findViewById(R.id.textReplyTo);
         replyToContainer = (RelativeLayout) findViewById(R.id.replyToContainer);
-        replyToContainer.setVisibility(View.GONE);
+        setHeight(replyToContainer, 0);
         showThread = (Button) findViewById(R.id.showThread);
         etMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
                     etMessage.setHint("");
-                    buttons.setVisibility(View.VISIBLE);
+                    setHeight(buttons, ActionBar.LayoutParams.WRAP_CONTENT);
                 } else {
                     etMessage.setHint(R.string.ClickToReply);
-                    buttons.setVisibility(View.GONE);
+                    setHeight(buttons, 0);
                 }
                 //To change body of implemented methods use File | Settings | File Templates.
             }
@@ -168,7 +169,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
+                setHeight(findViewById(R.id.gotoMain), MainActivity.nActiveMainActivities == 0 ? ActionBar.LayoutParams.WRAP_CONTENT : 0);
                 if (resumed)
                     handler.postDelayed(this, 1000);
             }
@@ -177,7 +178,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
     private void resetForm() {
         rid = 0;
-        replyToContainer.setVisibility(View.GONE);
+        setHeight(replyToContainer, 0);
         etMessage.setText("");
         attachmentMime = null;
         attachmentUri = null;
@@ -227,7 +228,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             ssb.append(inreplyto + msg.Text);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, inreplyto.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             tvReplyTo.setText(ssb);
-            replyToContainer.setVisibility(View.VISIBLE);
+            setHeight(replyToContainer, ActionBar.LayoutParams.WRAP_CONTENT);
             showThread.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -235,8 +236,13 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 }
             });
         } else {
-            replyToContainer.setVisibility(View.GONE);
+            setHeight(replyToContainer, 0);
         }
+    }
+
+    private void setHeight(View view, int heightHint) {
+        view.getLayoutParams().height = heightHint;
+        view.setLayoutParams(view.getLayoutParams());
     }
 
     @Override
