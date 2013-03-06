@@ -588,9 +588,12 @@ public class JuickMicroBlog implements MicroBlog {
         new Thread("UserID obtainer") {
             @Override
             public void run() {
-                String fullName = userName;
-                if (fullName.startsWith("@")) fullName = fullName.substring(1);
                 try {
+                    String fullName = userName;
+                    if (fullName == null) {
+                        Toast.makeText(activity, activity.getString(R.string.UnableToDetectNick) + activity.getString(R.string.NoUserAccount), Toast.LENGTH_LONG).show();
+                    }
+                    if (fullName.startsWith("@")) fullName = fullName.substring(1);
                     URL u = new URL("http://juick.com/" + fullName.trim() + "/");
                     HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
                     urlConnection.setInstanceFollowRedirects(true);

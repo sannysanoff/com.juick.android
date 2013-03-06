@@ -723,10 +723,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             //
             int rightPartOffset = spanOffset = ssb.length();
 
-            DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
-            df.setTimeZone(TimeZone.getDefault());
-            String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
-            ssb.append("\n" + date + " ");
+            try {
+                DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
+//            df.setTimeZone(TimeZone.getDefault());
+                String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
+                ssb.append("\n" + date + " ");
+            } catch (Exception e) {
+                ssb.append("\n[fmt err] ");
+            }
 
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
