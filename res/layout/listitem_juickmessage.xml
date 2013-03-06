@@ -10,18 +10,18 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             >
-        <ImageView
-            android:id="@+id/userpic"
-            android:layout_width="32px"
-            android:layout_height="32px"
-            android:gravity="top"/>
-        <TextView
+        <com.juick.android.MyTextView
             android:id="@+id/text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="xxxxxx"
             android:gravity="top"/>
+        <ImageView
+                android:id="@+id/userpic"
+                android:layout_width="32px"
+                android:layout_height="32px"
+                android:gravity="top"/>
     </RelativeLayout>
 
 </com.juick.android.PressableLinearLayout>

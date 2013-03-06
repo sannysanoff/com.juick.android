@@ -67,6 +67,7 @@ public class PressableLinearLayout extends LinearLayout {
         try {
             return super.drawChild(canvas, child, drawingTime);    //
         } catch (Exception e) {
+            System.out.println("E="+e);
             return false;
         }
     }

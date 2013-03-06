@@ -884,7 +884,7 @@ public class MainActivity extends FragmentActivity implements
         parent.setBackgroundColor(background);
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            System.out.println(child);
+            //System.out.println(child);
             restyleChildrenOrWidget(child);
         }
     }
