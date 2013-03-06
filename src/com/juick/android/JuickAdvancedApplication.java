@@ -51,7 +51,8 @@ public class JuickAdvancedApplication extends Application {
     }};
 
     public static void setupTheme(Activity activity) {
-        String nativeTheme = sp.getString("nativeTheme", "default");
+        // String nativeTheme = sp.getString("nativeTheme", "default");
+        String nativeTheme = "Theme_Sherlock_Light";
         Integer themeId = themesMap.get(nativeTheme);
         if (themeId != null) {
             activity.setTheme(themeId);

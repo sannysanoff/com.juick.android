@@ -153,18 +153,11 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        try {
-            getWindow().requestFeature((int)Window.FEATURE_ACTION_BAR);
-        } catch (Exception e) {
-            ACRA.getErrorReporter().handleException(e, false);
-            //
-        }
         JuickAdvancedApplication.setupTheme(this);
         XMPPService.log("MainActivity.create()");
         nActiveMainActivities++;
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();
-
         super.onCreate(savedInstanceState);
         displayWidth = getWindow().getWindowManager().getDefaultDisplay().getWidth();
         displayHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();

@@ -37,6 +37,7 @@
                 android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/Colors">
+<!--
         <ListPreference
                 android:key="nativeTheme"
                 android:title="Theme for UI elemnents"
@@ -44,6 +45,7 @@
                 android:entryValues="@array/themes"
                 android:defaultValue="default"
                 android:persistent="true"/>
+-->
         <yuku.ambilwarna.widget.AmbilWarnaPreference
             android:key="Colors.COMMON_BACKGROUND"
             android:title="@string/CommonBackground"
