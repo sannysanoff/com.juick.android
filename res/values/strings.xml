@@ -930,6 +930,9 @@
     <string name="WillNotifyOnlyPersonal">Will notify only replies to you or comments to your posts</string>
     <string name="WillReceiveOnlyPersonal">Will show only replies to you or comments to your posts in the list</string>
     <string name="_to_you_">to you</string>
+    <string name="CheckForNewVersionNow">Check β-channel for new version</string>
+    <string name="MonitorBetaChannel">Monitor β-channel for updates</string>
+    <string name="CheckToEnableBetaNotifications">Check to enable new beta version notifications</string>
 
 
 </resources>

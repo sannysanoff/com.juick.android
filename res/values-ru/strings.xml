@@ -427,6 +427,9 @@
     <string name="WillNotifyOnlyPersonal">Будет индикация только ответов вам или комментариев на ваши посты</string>
     <string name="WillReceiveOnlyPersonal">Будут показываться в списке только ответы вам или комментарии на ваши посты</string>
     <string name="_to_you_">тебе</string>
+    <string name="CheckForNewVersionNow">Проверить β-канал на новую версию</string>
+    <string name="MonitorBetaChannel">Мониторить β-канал (обновления)</string>
+    <string name="CheckToEnableBetaNotifications">Включите для уведомления о новой версии</string>
 
 
 </resources>

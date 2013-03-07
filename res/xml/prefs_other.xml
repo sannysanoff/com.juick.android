@@ -2,11 +2,11 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
             android:key="enableBetaChannelCheck"
-            android:title="Monitor β-channel for updates"
-            android:summary="Check to enable new beta version notifications"
+            android:title="@string/MonitorBetaChannel"
+            android:summary="@string/CheckToEnableBetaNotifications"
             android:defaultValue="true"
             android:persistent="true"/>
-    <Preference android:title="Check for new version now">
+    <Preference android:title="@string/CheckForNewVersionNow">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="check_new_version"/>
     </Preference>
     <Preference android:title="@string/WhatsNew" android:summary="@string/WhatsNew2">
