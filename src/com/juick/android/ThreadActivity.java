@@ -140,6 +140,8 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 if (hasFocus) {
                     etMessage.setHint("");
                     setHeight(buttons, ActionBar.LayoutParams.WRAP_CONTENT);
+                    InputMethodManager inputMgr = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    inputMgr.toggleSoftInput(0, 0);
                 } else {
                     etMessage.setHint(R.string.ClickToReply);
                     setHeight(buttons, 0);
