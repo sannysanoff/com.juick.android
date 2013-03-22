@@ -11,12 +11,16 @@ import android.util.Log;
 import android.widget.Toast;
 import com.juick.android.Base64;
 import com.juick.android.Utils;
+import com.juick.android.ja.Network;
 import com.juickadvanced.R;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.message.BasicHeader;
 
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,7 +37,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
             AccountManager am = AccountManager.get(context);
             Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
             if (accs.length > 0) {
-                accountName = accs[0].name;
+                accountName = accs[0].name.trim();
             }
         }
         return accountName;
@@ -54,15 +58,40 @@ public class JuickComAuthorizer extends Utils.URLAuth {
         if (cookie.length() > 0) {
             request.addHeader(new BasicHeader("Authorization", cookie));
         }
+        if (cachedIPAddress != null && cachedIPAddress.length() > 0) {
+            if (request.getURI().toString().contains(cachedIPAddress)) {
+                request.addHeader("Host","api.juick.com");
+            }
+        }
     }
 
     @Override
     public void authorizeRequest(Context context, HttpURLConnection conn, String cookie, String url) {
+        if (cachedIPAddress != null && cachedIPAddress.length() > 0) {
+            if (url.contains(cachedIPAddress)) {
+                conn.addRequestProperty("Host","api.juick.com");
+            }
+        }
         conn.setRequestProperty("Authorization", cookie);
     }
 
+    public String cachedIPAddress = null;
+
     @Override
     public String authorizeURL(String url, String cookie) {
+        if (url.startsWith("http://api.juick.com/")) {
+            if (cachedIPAddress == null) {
+                try {
+                    InetAddress byName = Inet4Address.getByName("api.juick.com");
+                    cachedIPAddress = byName.getHostAddress();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+            if (cachedIPAddress != null && cachedIPAddress.length() > 0) {
+                url = url.replace("api.juick.com", cachedIPAddress);
+            }
+        }
         return url;
     }
 

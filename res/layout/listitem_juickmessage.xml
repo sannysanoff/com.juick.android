@@ -4,6 +4,7 @@
     android:id="@+id/juick_message_row"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:drawingCacheQuality="low"
     android:padding="2dip">
 
     <RelativeLayout

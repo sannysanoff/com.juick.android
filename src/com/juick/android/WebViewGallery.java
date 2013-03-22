@@ -115,7 +115,7 @@ public class WebViewGallery extends Gallery {
     }
 
     ArrayList<MyWebView> views = new ArrayList<MyWebView>();
-    public void addInitializedWebView(MyWebView wv) {
+    public void addInitializedNonWebView(MyImageView wv) {
         views.add(wv);
     }
 }

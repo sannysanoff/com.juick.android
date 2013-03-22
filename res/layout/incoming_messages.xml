@@ -3,13 +3,34 @@
     android:layout_width="fill_parent"
     android:orientation="vertical"
     android:layout_height="fill_parent">
-    <Button
+    <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/gotoMain"
-            android:text="@string/AllMessages"
-            android:visibility="gone"
-            />
+            >
+        <TextView
+                android:id="@+id/gotoMain"
+                android:text="@string/AllMessages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:background="#E0E0E0"
+                android:textSize="18sp"
+                android:padding="3sp"
+                android:layout_alignParentRight="true"
+                />
+        <TextView
+                android:id="@+id/old_title"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#b6813d"
+                android:text="@string/Juick"
+                android:background="#cfcea0"
+                android:singleLine="true"
+                android:textSize="18sp"
+                android:padding="3sp"
+                android:layout_toLeftOf="@id/gotoMain"
+                />
+    </RelativeLayout>
     <com.juick.android.MyListView
         android:id="@+id/list"
         android:layout_width="fill_parent"

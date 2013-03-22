@@ -39,10 +39,7 @@ import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.support.v4.view.Window;
 import android.text.TextUtils;
-import android.view.MenuInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.psto.PstoCompatibleMessagesSource;
@@ -177,6 +174,10 @@ public class MainActivity extends FragmentActivity implements
     private void initWithAuth() {
         startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
+        if (sp.getBoolean("fullScreenMessages", false)) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
         toggleXMPP(this);
         toggleJAMessaging();
         startService(new Intent(this, DatabaseService.class));
@@ -214,6 +215,7 @@ public class MainActivity extends FragmentActivity implements
         findViewById(R.id.old_title).setVisibility(View.GONE);
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
 
         WhatsNew.checkForUpdates(this, null, false);
 
@@ -823,6 +825,10 @@ public class MainActivity extends FragmentActivity implements
 
 
     public static void restyleChildrenOrWidget(View view) {
+        restyleChildrenOrWidget(view, false);
+    }
+
+    public static void restyleChildrenOrWidget(View view, boolean dontBackground) {
         if (view == null) return;
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         boolean pressed = view.isPressed();
@@ -853,7 +859,7 @@ public class MainActivity extends FragmentActivity implements
                 }
             }
             if (shouldRecolor)
-                restyleViewGroup((Spinner) view, colorTheme, pressed, selected);
+                restyleViewGroup((Spinner) view, colorTheme, pressed, selected, dontBackground);
         } else if (view instanceof Button) {
 //            Button btn = (Button) view;
 //            btn.setTextColor(colorTheme.getForeground(pressed));
@@ -862,23 +868,43 @@ public class MainActivity extends FragmentActivity implements
             TextView text = (TextView) view;
             text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
-            restyleViewGroup((ViewGroup) view, colorTheme, pressed, selected);
+            restyleViewGroup((ViewGroup) view, colorTheme, pressed, selected, dontBackground);
         }
     }
 
-    private static void restyleViewGroup(ViewGroup view, ColorsTheme.ColorTheme colorTheme, boolean pressed, boolean selected) {
-        ViewGroup parent = (ViewGroup) view;
+    private static void restyleViewGroup(ViewGroup view, ColorsTheme.ColorTheme colorTheme, boolean pressed, boolean selected, boolean dontBackground) {
+        ViewGroup parent = view;
         int childCount = parent.getChildCount();
         int background = colorTheme.getBackground(pressed);
         int foreground = colorTheme.getForeground(pressed);
         if (selected) {
             background  = calculatePressedBackground(background, foreground);
         }
-        parent.setBackgroundColor(background);
+        if (!dontBackground) {
+            boolean skipDraw = false;
+            if ((view instanceof LinearLayout || view instanceof FrameLayout || view instanceof RelativeLayout)) {
+                Context context = view.getContext();
+                if (context instanceof MainActivity || context instanceof MessagesActivity || context instanceof ThreadActivity) {
+                    // no unneeded background in given scrolling activities
+                    skipDraw = true;
+                    if (view.getBackground() != null) {
+                        // but enable for layouts that with color
+                        skipDraw = false;
+                    }
+                    if (!skipDraw && view.getClass().getName().toLowerCase().contains("decorview")) {
+                        // given activities manage themselves
+                        skipDraw = true;
+                    }
+                }
+            }
+            if (!skipDraw)
+                parent.setBackgroundColor(background);
+        }
+        if (view instanceof ListView)
+            dontBackground = true;
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            //System.out.println(child);
-            restyleChildrenOrWidget(child);
+            restyleChildrenOrWidget(child, dontBackground);
         }
     }
 

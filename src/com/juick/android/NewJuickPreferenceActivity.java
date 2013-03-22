@@ -115,6 +115,12 @@ public class NewJuickPreferenceActivity extends Activity {
                 showChart("VERSION_INSTALLS");
             }
         }));
+        menu.add(new MenuItem(R.string.ClassicUsers, R.string.ClassicUsers2, new Runnable() {
+            @Override
+            public void run() {
+                showChart("CLASSIC_USERS");
+            }
+        }));
     }
 
     private void showChart(String chart) {

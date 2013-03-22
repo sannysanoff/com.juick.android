@@ -813,7 +813,7 @@
     <string name="AddThisSourceToTheList">Add this source to the navigation list</string>
     <string name="FixJuboJuickKeyword">Fix JuBo \'juick\' keyword</string>
     <string name="ExcludeJuickImageMessages">Exclude messages with image attachment and subscribed juick keyword appearing only in image URL</string>
-    <string name="AllMessages">All messages</string>
+    <string name="AllMessages"><u>All messages</u></string>
     <string name="MessagesDeleteMode">Delete mode</string>
     <string name="LoginPasswordExplanation">
         You must use login and password obtained on juick.com site, NOT the jabber/xmpp password.
@@ -858,6 +858,8 @@
     <string name="JuickUsersPerMonth2">Posting, commenting, new</string>
     <string name="VersionInstalls">Version installs</string>
     <string name="VersionInstalls2">Number of installations of each versions after release</string>
+    <string name="ClassicUsers">\'Juick Classic\' users</string>
+    <string name="ClassicUsers2">Number of \'juick classic\' browser addon daily users</string>
     <string name="ClickToSelectURL">Click to select URL</string>
     <string name="TagsFormatError">Tags format error (must start with \'*\')</string>
     <string name="InvalidLoginPassword">Invalid login/password</string>

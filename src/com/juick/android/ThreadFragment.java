@@ -17,12 +17,16 @@
  */
 package com.juick.android;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
+import android.util.DisplayMetrics;
 import android.view.*;
+import android.view.animation.*;
 import android.widget.*;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.support.v4.app.ListFragment;
@@ -33,17 +37,20 @@ import com.juickadvanced.R;
 import java.util.ArrayList;
 
 /**
- *
  * @author Ugnich Anton
  */
 public class ThreadFragment extends ListFragment implements AdapterView.OnItemClickListener, View.OnTouchListener, XMPPMessageReceiver.MessageReceiverListener {
 
     public static int instanceCount;
+
     {
         instanceCount++;
     }
 
     private boolean paused;
+    private Runnable doOnClick;
+    private long doOnClickActualTime;
+    private MyImageView navMenu;
 
     public interface ThreadExternalUpdater {
 
@@ -54,6 +61,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
 
         public void setListener(Listener listener);
+
         public void setPaused(boolean paused);
 
     }
@@ -117,12 +125,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         implicitlyCreated = true;
     }
 
-
-
+    FlyingItem[] flyingItems;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_view, null);
+        View inflate = inflater.inflate(R.layout.fragment_view, null);
+        return inflate;
     }
 
     @Override
@@ -130,6 +138,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         super.onAttach(activity);
         try {
             parentActivity = (ThreadFragmentListener) activity;
+            navMenu = (MyImageView) activity.findViewById(R.id.navmenu);
+            navMenu.setVisibility(View.GONE);
+            initNavMenuTranslationX = navMenu.initialTranslationX;
+            FlyingItem top = new FlyingItem(activity.getWindow().getDecorView(), R.id.navbar_top);
+            FlyingItem bottom = new FlyingItem(activity.getWindow().getDecorView(), R.id.navbar_bottom);
+            flyingItems = new FlyingItem[] {top, bottom};
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString() + " must implement ThreadFragmentListener");
         }
@@ -146,12 +160,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         MainActivity.restyleChildrenOrWidget(view);
         Bundle args = getArguments();
         if (args != null) {
-            mid = (MessageID)args.getSerializable("mid");
+            mid = (MessageID) args.getSerializable("mid");
         }
         if (mid == null) {
             return;
         }
-        large = (ProgressBar)view.findViewById(R.id.progress_bar);
+        large = (ProgressBar) view.findViewById(R.id.progress_bar);
         small = (ProgressBar) view.findViewById(R.id.progress_bar_small);
         cached_copy_label = view.findViewById(R.id.cached_copy_label);
 
@@ -197,7 +211,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     public Object saveState() {
         MessagesFragment.RetainedData rd = new MessagesFragment.RetainedData(new ArrayList<JuickMessage>(), getListView().onSaveInstanceState());
         int count = listAdapter.getCount();
-        for(int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             JuickMessage item = listAdapter.getItem(i);
             if (item.User != null)
                 rd.messages.add(item);
@@ -216,20 +230,28 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         getListView().setOnItemClickListener(this);
         getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
                 Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage && parentMessagesSource != null) {
-                    JuickMessage msg = (JuickMessage)itemAtPosition;
+                    final JuickMessage msg = (JuickMessage) itemAtPosition;
                     if (msg.getMID() != null) {
-                        MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
-                        messageMenu.onItemLongClick(parent, view, position, id);
+                        getListView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                        doOnClickActualTime = System.currentTimeMillis();
+                        doOnClick = new Runnable() {
+                            @Override
+                            public void run() {
+                                MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
+                                messageMenu.onItemLongClick(parent, view, position, id);
+                            }
+                        };
                     }
 
                 }
-                return true;
+                return false;
             }
         });
         notification = new ThreadMessagesLoadNotification(getActivity(), handler);
+        navMenu.setVisibility(View.GONE);
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
@@ -251,12 +273,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         });
                     }
                 } else {
-                    then.apply((MessagesFragment.RetainedData)restoreData);
+                    then.apply((MessagesFragment.RetainedData) restoreData);
                     restoreData = null;
                 }
 
             }
-        },"Init adapter, mid="+mid);
+        }, "Init adapter, mid=" + mid);
         thr.start();
     }
 
@@ -302,7 +324,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         listAdapter.addAllMessages(messages);
                         setListAdapter(listAdapter);
                         if (cached) {
-                            getListView().setSelection(getListView().getAdapter().getCount()-1);
+                            getListView().setSelection(getListView().getAdapter().getCount() - 1);
                         }
                         getView().findViewById(android.R.id.list).setVisibility(View.VISIBLE);
 
@@ -343,7 +365,10 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                     }
                                 });
                             }
-
+                            if (listAdapter.getCount() > 14) {
+                                resetMainMenuButton(true);
+                                navMenu.setVisibility(View.VISIBLE);
+                            }
                         }
                         if (cached) {
                             large.setVisibility(View.GONE);
@@ -473,12 +498,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     public JuickMessage findReply(AdapterView<?> parent, int replyNo) {
-        for(int q=0; q<parent.getCount(); q++) {
+        for (int q = 0; q < parent.getCount(); q++) {
             Object itemAtPosition = parent.getItemAtPosition(q);
             if (itemAtPosition instanceof JuickMessage) {
                 JuickMessage maybeReplied = (JuickMessage) itemAtPosition;
                 if (maybeReplied.getRID() == replyNo) {
-                    return  maybeReplied;
+                    return maybeReplied;
                 }
             }
         }
@@ -486,15 +511,245 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        if (doOnClick != null) {
+            if (System.currentTimeMillis() < doOnClickActualTime + 1000) {
+                doOnClick.run();
+            }
+            doOnClick = null;
+            return;
+        }
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
         parentActivity.onReplySelected(jmsg);
     }
 
+    boolean touchOnNavMenu = false;
+    boolean ignoreMove = false;
+    float touchOriginX = -1;
+    float touchOriginY = -1;
+    float initNavMenuTranslationX;
+
     public boolean onTouch(View view, MotionEvent event) {
+        MotionEvent.PointerCoords pc = new MotionEvent.PointerCoords();
+        event.getPointerCoords(0, pc);
         if (mScaleDetector != null) {
             mScaleDetector.onTouchEvent(event);
         }
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (navMenu.getVisibility() == View.VISIBLE) {
+                    int[] listViewLocation = new int[2];
+                    int[] imageLocation = new int[2];
+                    getListView().getLocationOnScreen(listViewLocation);
+                    navMenu.getLocationOnScreen(imageLocation);
+                    imageLocation[0] += navMenu.initialTranslationX;
+                    float touchX = pc.x + listViewLocation[0] - imageLocation[0];
+                    float touchY = pc.y + listViewLocation[1] - imageLocation[1];
+                    System.out.println("TOUCH: ACTION_DOWN: x=" + pc.x + " y=" + pc.y);
+                    if (touchX > 0 && touchX < navMenu.getWidth() && touchY > 0 && touchY < navMenu.getHeight()) {
+                        touchOriginX = pc.x;
+                        touchOriginY = pc.y;
+                        System.out.println("TOUCH: OK TOUCH NAVMENU");
+                        return true;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (!ignoreMove && !isNavigationMenuShown())
+                    resetMainMenuButton(false);
+                if (touchOriginX > 0 || ignoreMove) {
+                    touchOriginX = -1;
+                    ignoreMove = false;
+                    return true;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (ignoreMove)
+                    return true;
+                event.getPointerCoords(0, pc);
+                double travelledDistance = Math.sqrt(Math.pow(touchOriginX - pc.x, 2) + Math.pow(touchOriginY - pc.y, 2));
+                boolean inZone = false;
+                if (!isNavigationMenuShown()) {
+                    if (touchOriginX >= 0) {
+                        // detect angle where finger moves
+                        if (travelledDistance < 10) {   // grace period
+                            inZone = true;
+                        } else {
+                            float dx = Math.abs(touchOriginX - pc.x);
+                            float dy = Math.abs(touchOriginY - pc.y);
+                            if (dx > dy) {
+                                // movement in 45 degree zone
+                                if (touchOriginX > pc.x) {
+                                    // towards left
+                                    inZone = true;
+                                    double neededDistance = 3.0 / 2.54 * getResources().getDisplayMetrics().xdpi;
+                                    if (travelledDistance > neededDistance) {
+                                        // moved 3 centimeters
+                                        touchOriginX = -1;
+                                        System.out.println("TOUCH: OPEN MENU");
+                                        ignoreMove = true;
+                                        openNavigationMenu(pc.x-touchOriginX);
+                                    }
+                                }
+                            } else {
+                                System.out.println("TOUCH: LEAVING ZONE: dx=" + dx + " dy=" + dy);
+                            }
+                        }
+                        if (inZone && !ignoreMove) {
+                            TranslateAnimation immediate = new TranslateAnimation(
+                                    Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX, Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX,
+                                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+                            immediate.setDuration(5);
+                            immediate.setFillAfter(true);
+                            immediate.setFillBefore(true);
+                            immediate.setFillEnabled(true);
+                            navMenu.startAnimation(immediate);
+                        }
+                    }
+                    if (!inZone) {
+                        resetMainMenuButton(false);
+                        if (touchOriginX >= 0) {
+                            System.out.println("TOUCH: ACTION_MOVE: x=" + pc.x + " y=" + pc.y);
+                            System.out.println("TOUCH: LEFT ZONE");
+                            touchOriginX = -1;
+                        }
+                    }
+                    if (inZone) {
+                        return true;
+                    }
+                    if (doOnClick != null || ignoreMove) {
+                        return true;
+                    }
+                }
+                break;
+        }
         return false;
+    }
+
+    private void resetMainMenuButton(boolean animate) {
+        TranslateAnimation immediate = new TranslateAnimation(
+                Animation.ABSOLUTE, animate ? initNavMenuTranslationX + 100 : initNavMenuTranslationX, Animation.ABSOLUTE, initNavMenuTranslationX,
+                Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+        immediate.setDuration(500);
+        immediate.setFillEnabled(true);
+        immediate.setFillBefore(true);
+        immediate.setFillAfter(true);
+        navMenu.startAnimation(immediate);
+        //navMenu.startAnimation(immediate);
+    }
+
+    class FlyingItem implements View.OnClickListener {
+        MyImageView widget;
+        float designedX;
+        float designedY;
+        TranslateAnimation ani;
+        final int id;
+        FlyingItem(View view, final int id) {
+            this.id = id;
+            widget = (MyImageView) view.findViewById(id);
+            designedX = widget.initialTranslationX;
+            designedY = widget.initialTranslationY;
+            setVisibility(View.GONE);
+            updateListener();
+        }
+
+        private void setVisibility(int gone) {
+            widget.setVisibility(gone);
+            updateListener();
+        }
+
+
+        private void updateListener() {
+            if (widget.getVisibility() == View.GONE) {
+                widget.setOnClickListener(this);
+            } else {
+                widget.setOnClickListener(null);
+
+            }
+        }
+        public void onClick(View v) {
+            onNavigationMenuItemPressed(id);
+        }
+    }
+
+    private void onNavigationMenuItemPressed(int id) {
+        if (id == R.id.navbar_top) {
+            getListView().setSelection(0);
+        }
+        if (id == R.id.navbar_bottom) {
+            getListView().setSelection(getListView().getAdapter().getCount() - 1);
+        }
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                closeNavigationMenu();
+            }
+        }, 200);
+    }
+
+    private void closeNavigationMenu() {
+        for (int i = 0; i < flyingItems.length; i++) {
+            final FlyingItem item = flyingItems[i];
+            item.setVisibility(View.VISIBLE);
+            item.ani = new TranslateAnimation(
+                    Animation.ABSOLUTE, item.widget.initialTranslationX, Animation.ABSOLUTE, item.widget.getWidth(),
+                    Animation.ABSOLUTE, item.widget.initialTranslationY, Animation.ABSOLUTE, 100f);
+            item.ani.setDuration(500);
+
+            item.ani.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    item.setVisibility(View.GONE);
+                    if (item == flyingItems[0]) {
+                        TranslateAnimation aniIn = new TranslateAnimation(
+                                Animation.ABSOLUTE, 600, Animation.ABSOLUTE, initNavMenuTranslationX,
+                                Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+                        aniIn.setInterpolator(new DecelerateInterpolator(1));
+                        item.ani.setDuration(500);
+                        aniIn.setFillAfter(true);
+                        navMenu.startAnimation(aniIn);
+                    }
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+            });
+            item.ani.setFillAfter(true);
+            item.widget.startAnimation(item.ani);
+        }
+    }
+
+    private void openNavigationMenu(float currentTranslation) {
+        try {
+            for (FlyingItem item : flyingItems) {
+                item.setVisibility(View.VISIBLE);
+                item.ani = new TranslateAnimation(
+                        Animation.ABSOLUTE, 300, Animation.ABSOLUTE, item.designedX,
+                        Animation.ABSOLUTE, 0, Animation.ABSOLUTE, item.designedY);
+
+                item.ani.setInterpolator(new OvershootInterpolator(2));
+                item.ani.setDuration(500);
+                item.ani.setFillAfter(true);
+                item.widget.startAnimation(item.ani);
+            }
+            TranslateAnimation aniOut = new TranslateAnimation(
+                    Animation.ABSOLUTE, currentTranslation, Animation.ABSOLUTE, -1.2f * getActivity().getWindowManager().getDefaultDisplay().getWidth(),
+                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+            aniOut.setInterpolator(new DecelerateInterpolator(1));
+            aniOut.setDuration(300);
+            aniOut.setFillAfter(true);
+            navMenu.startAnimation(aniOut);
+
+            getListView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        } catch (Throwable e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
     }
 
     public interface ThreadFragmentListener {
@@ -517,7 +772,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     @Override
     public boolean onMessageReceived(XMPPService.IncomingMessage message) {
         if (message instanceof XMPPService.JuickThreadIncomingMessage) {
-            XMPPService.JuickThreadIncomingMessage jtim = (XMPPService.JuickThreadIncomingMessage)message;
+            XMPPService.JuickThreadIncomingMessage jtim = (XMPPService.JuickThreadIncomingMessage) message;
             if (jtim.getMID() == mid) {
                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
@@ -538,7 +793,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             LinearLayout ll = new LinearLayout(getActivity());
             ll.setOrientation(LinearLayout.VERTICAL);
             int totalCount = 0;
-            while(reply != null) {
+            while (reply != null) {
                 totalCount += reply.Text.length();
                 if (totalCount > 500 || ll.getChildCount() > 10) break;
                 JuickMessagesAdapter.ParsedMessage parsedMessage = JuickMessagesAdapter.formatMessageText(getActivity(), reply, true);
@@ -558,7 +813,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 MainActivity.restyleChildrenOrWidget(ll);
                 Toast result = new Toast(getActivity());
                 result.setView(ll);
-                result.setGravity(Gravity.BOTTOM|Gravity.LEFT, 0, bottomSize);
+                result.setGravity(Gravity.BOTTOM | Gravity.LEFT, 0, bottomSize);
                 result.setDuration(Toast.LENGTH_LONG);
                 result.show();
             }
@@ -571,4 +826,18 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         super.finalize();
         instanceCount--;
     }
+
+    public boolean onBackPressed() {
+        if (isNavigationMenuShown()) {
+            closeNavigationMenu();
+            return true;
+        }
+        return false;  //To change body of created methods use File | Settings | File Templates.
+    }
+
+    private boolean isNavigationMenuShown() {
+        return flyingItems[0].widget.getVisibility() == View.VISIBLE;
+    }
+
+
 }

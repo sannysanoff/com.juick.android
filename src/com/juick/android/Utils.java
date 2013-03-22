@@ -111,6 +111,10 @@ public class Utils {
     }
 
     static class DummyAuthorizer extends URLAuth {
+
+
+        String jaiprtruCache = null;
+
         @Override
         public boolean acceptsURL(String url) {
             return true;  //To change body of implemented methods use File | Settings | File Templates.
@@ -123,6 +127,11 @@ public class Utils {
 
         @Override
         public void authorizeRequest(HttpRequestBase request, String cookie) {
+            if (jaiprtruCache != null && jaiprtruCache.length() > 0) {
+                if (request.getURI().toString().contains(jaiprtruCache)) {
+                    request.addHeader("Host","ja.ip.rt.ru");
+                }
+            }
 
         }
 
@@ -133,6 +142,19 @@ public class Utils {
 
         @Override
         public String authorizeURL(String url, String cookie) {
+            if (url.startsWith("http://ja.ip.rt.ru")) {
+                if (jaiprtruCache == null) {
+                    try {
+                        InetAddress byName = Inet4Address.getByName("ja.ip.rt.ru");
+                        jaiprtruCache = byName.getHostAddress();
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                }
+                if (jaiprtruCache != null && jaiprtruCache.length() > 0) {
+                    url = url.replace("ja.ip.rt.ru", jaiprtruCache);
+                }
+            }
             return url;
         }
 
@@ -701,10 +723,11 @@ public class Utils {
                 HttpURLConnection conn = null;
                 try {
 
-                    URL jsonURL = new URL(authorizer.authorizeURL(url, myCookie));
+                    String nurl = authorizer.authorizeURL(url, myCookie);
+                    URL jsonURL = new URL(nurl);
                     conn = (HttpURLConnection) jsonURL.openConnection();
 
-                    authorizer.authorizeRequest(context, conn, myCookie, url);
+                    authorizer.authorizeRequest(context, conn, myCookie, nurl);
 
                     conn.setUseCaches(false);
                     conn.setDoInput(true);

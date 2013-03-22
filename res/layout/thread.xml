@@ -2,27 +2,38 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="#FFFFFF"
     android:orientation="vertical">
-    <TextView
-            android:id="@+id/old_title"
+    <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textColor="#b6813d"
-            android:text="@string/Juick"
-            android:background="#cfcea0"
-            android:singleLine="true"
-            android:textSize="18sp"
-            android:padding="3sp"
             android:layout_alignParentTop="true"
-            />
-    <Button
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/gotoMain"
-            android:text="@string/AllMessages"
-            android:visibility="visible"
-            android:layout_below="@id/old_title"
-            />
+            android:id="@+id/titleContainer"
+            >
+        <TextView
+                android:id="@+id/gotoMain"
+                android:text="@string/AllMessages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:background="#E0E0E0"
+                android:textSize="18sp"
+                android:padding="3sp"
+                android:layout_alignParentRight="true"
+                />
+        <TextView
+                android:id="@+id/old_title"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#b6813d"
+                android:text="@string/Juick"
+                android:background="#cfcea0"
+                android:singleLine="true"
+                android:textSize="18sp"
+                android:padding="3sp"
+                android:layout_toLeftOf="@id/gotoMain"
+                />
+    </RelativeLayout>
 
     <RelativeLayout
             android:id="@+id/buttons"
@@ -94,7 +105,7 @@
                 android:orientation="vertical">
             <EditText
                     android:id="@+id/editMessage"
-                    android:layout_width="wrap_content"
+                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/ClickToReply"
                     />
@@ -115,8 +126,41 @@
             android:id="@+id/threadfragment"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_below="@id/gotoMain"
+            android:layout_below="@id/titleContainer"
             android:layout_above="@id/separator"
             />
+
+    <com.juick.android.MyImageView
+            android:layout_width="200dip"
+            android:layout_height="150dip"
+            android:layout_above="@id/separator"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="46dip"
+            android:id="@+id/navmenu"
+            android:translationX="170dip"
+            android:src="@drawable/navmenu"/>
+
+    <com.juick.android.MyImageView
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_above="@id/separator"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="46dip"
+            android:id="@+id/navbar_bottom"
+            android:translationX="-150dip"
+            android:src="@drawable/navbar_bottom"/>
+
+    <com.juick.android.MyImageView
+            android:layout_width="100dip"
+            android:layout_height="100dip"
+            android:layout_above="@id/separator"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="46dip"
+            android:id="@+id/navbar_top"
+            android:translationX="-70dip"
+            android:translationY="-130dip"
+            android:src="@drawable/navbar_top"/>
+
+
 
 </RelativeLayout>

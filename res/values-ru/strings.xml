@@ -313,7 +313,7 @@
     <string name="FixJuboJuickKeyword">Фикс JuBo \'juick\' слова</string>
     <string name="ExcludeJuickImageMessages">Если есть подписка на слово juick, исключать посты с картинками, на которые JuBo реагирует, потому что там слово juick есть в их URL.
     </string>
-    <string name="AllMessages">К сообщениям</string>
+    <string name="AllMessages"><u>К сообщениям</u></string>
     <string name="MessagesDeleteMode">Режим удаления</string>
     <string name="SubscribeAndOpen">Подписаться и открыть</string>
     <string name="ExpandMessage">Распахнуть мессаг</string>
@@ -360,6 +360,8 @@
     <string name="JuickUsersPerMonth2">Пишущих, комментящих, регистрирующихся</string>
     <string name="VersionInstalls">Инсталляции версий</string>
     <string name="VersionInstalls2">Количество инсталляций каждой версии после выхода</string>
+    <string name="ClassicUsers">Пользователи \'Juick Classic\'</string>
+    <string name="ClassicUsers2">Количество пользователей плагина для бровзера \'juick classic\'</string>
     <string name="ClickToSelectURL">Нажмите для выбора URL</string>
     <string name="TagsFormatError">Теги должны начинаться со звездочки</string>
     <string name="InvalidLoginPassword">Неверный логин/пароль</string>

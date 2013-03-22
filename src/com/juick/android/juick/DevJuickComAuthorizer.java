@@ -138,7 +138,12 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
                                                                     .putString("web_login", loginS)
                                                                     .putString("web_password", passwordS)
                                                                     .commit();
-                                                            cont.apply(s.result);
+                                                            new Thread() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cont.apply(s.result);
+                                                                }
+                                                            }.start();
                                                         }
                                                     });
                                                 } else {

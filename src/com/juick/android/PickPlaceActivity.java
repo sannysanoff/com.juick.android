@@ -168,7 +168,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
             tv.setText(jplace.name);
             tv.setSingleLine(false);
             tv.setLines(5);
-            MainActivity.restyleChildrenOrWidget(tv);
+            MainActivity.restyleChildrenOrWidget(tv, true);
             new AlertDialog.Builder(this)
                     .setTitle("Edit location before save")
                     .setView(tv)

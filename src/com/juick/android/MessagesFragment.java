@@ -92,6 +92,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     Utils.ServiceGetter<DatabaseService> databaseGetter;
     boolean trackLastRead = false;
     private Activity parent;
+    private Runnable doOnClick;
+    private long doOnClickActualTime;
 
 
     public MessagesFragment(Object restoreData, Activity parent) {
@@ -177,7 +179,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_view, null);
+        View inflate = inflater.inflate(R.layout.fragment_view, null);
+        MainActivity.restyleChildrenOrWidget(inflate);
+        return inflate;
     }
 
     @Override
@@ -204,7 +208,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mRefreshState = TAP_TO_REFRESH;
 
         final ListView listView = getListView();
+        listView.setBackgroundDrawable(null);
+        listView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
         installDividerColor(listView);
+        MainActivity.restyleChildrenOrWidget(listView);
 
 
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
@@ -213,15 +220,21 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listView.setOnItemClickListener(this);
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Object itemAtPosition = parent.getItemAtPosition(position);
+            public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                final Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage) {
-                    JuickMessage msg = (JuickMessage)itemAtPosition;
-                    MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
-                    messageMenu.onItemLongClick(parent, view, position, id);
-
+                    doOnClickActualTime = System.currentTimeMillis();
+                    doOnClick = new Runnable() {
+                        @Override
+                        public void run() {
+                            JuickMessage msg = (JuickMessage)itemAtPosition;
+                            MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
+                            messageMenu.onItemLongClick(parent, view, position, id);
+                        }
+                    };
+                    listView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                 }
-                return true;
+                return false;
             }
         });
         listView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -633,6 +646,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        if (doOnClick != null) {
+            if (System.currentTimeMillis() < doOnClickActualTime + 1000) {
+                doOnClick.run();
+            }
+            doOnClick = null;
+            return;
+        }
         JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
         Intent i = new Intent(getActivity(), ThreadActivity.class);
         i.putExtra("mid", jmsg.getMID());
@@ -775,6 +795,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 mLastMotionY = y;
                 break;
             case MotionEvent.ACTION_MOVE:
+                if (doOnClick != null) {
+                    return true;
+                }
                 applyHeaderPadding(event);
                 break;
         }
@@ -862,7 +885,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         clearSavedPosition(getActivity());
 
-        MainActivity.restyleChildrenOrWidget(mRefreshView);
+        MainActivity.restyleChildrenOrWidget(mRefreshView, true);
     }
 
     public void clearSavedPosition(Context context) {

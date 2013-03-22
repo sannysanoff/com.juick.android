@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
 import com.juickadvanced.R;
@@ -88,6 +90,8 @@ public class JuickAdvancedApplication extends Application {
         GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
         startService(new Intent(this, XMPPService.class));
 
+
+
     }
 
     public static void showXMPPToast(final String msg) {
@@ -161,4 +165,5 @@ public class JuickAdvancedApplication extends Application {
     public File getSavedListFile() {
         return new File(getCacheDir(),"savedMainList.ser");
     }
+
 }

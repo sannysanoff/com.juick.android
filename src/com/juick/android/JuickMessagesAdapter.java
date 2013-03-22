@@ -206,16 +206,17 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (v == null || !(v instanceof LinearLayout)) {
                 LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 v = vi.inflate(R.layout.listitem_juickmessage, null);
+//                v.setWillNotCacheDrawing(true);       78 msec/iter with cache turned off (40 msec with on)
                 final PressableLinearLayout sll = (PressableLinearLayout)v;
                 sll.setPressedListener(new PressableLinearLayout.PressedListener() {
                     @Override
                     public void onPressStateChanged(boolean selected) {
-                        MainActivity.restyleChildrenOrWidget(sll);
+                        MainActivity.restyleChildrenOrWidget(sll, true);
                     }
 
                     @Override
                     public void onSelectStateChanged(boolean selected) {
-                        MainActivity.restyleChildrenOrWidget(sll);
+                        MainActivity.restyleChildrenOrWidget(sll, true);
                     }
                 });
 //                TextView tv = (TextView) v.findViewById(R.id.text);
@@ -393,8 +394,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     public View getView(int i, View view, ViewGroup viewGroup) {
                         if (view == null) {
                             view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
-                            MyWebView wv = (MyWebView) view.findViewById(R.id.webview);
-                            gallery.addInitializedWebView(wv);
+                            ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
+                            gallery.addInitializedNonWebView(wv);
                         }
                         view.setMinimumHeight(HEIGHT);
                         ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
@@ -411,7 +412,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             System.out.println("oh");
                         }
                         //view.measure(2000, 2000);
-                        MainActivity.restyleChildrenOrWidget(view);
+                        MainActivity.restyleChildrenOrWidget(view, true);
                         return view;
                     }
                 });
@@ -441,7 +442,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 ((TextView) v).setText("");
             }
         }
-        MainActivity.restyleChildrenOrWidget(v);
+        MainActivity.restyleChildrenOrWidget(v, true);
 
         return v;
     }

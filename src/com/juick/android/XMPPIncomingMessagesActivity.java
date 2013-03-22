@@ -70,7 +70,9 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
+
         overridePendingTransition(R.anim.enter_slide_to_bottom, android.R.anim.fade_out);
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
@@ -80,6 +82,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 startActivity(new Intent(XMPPIncomingMessagesActivity.this, MainActivity.class));
             }
         });
+        TextView oldTitle = (TextView)findViewById(R.id.old_title);
+        oldTitle.setText(R.string.Incoming_Events);
         SharedPreferences sp = getSharedPrefs();
         editMode = sp.getBoolean("editMode", false);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
@@ -484,7 +488,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     fromTags.setText(privmsg.getFrom());
                     preview.setText(privmsg.getBody());
                     enableInternalButtons(view, message);
-                    MainActivity.restyleChildrenOrWidget(view);
+                    MainActivity.restyleChildrenOrWidget(view, true);
                     return view;
                 }
                 if (message instanceof XMPPService.JuickThreadIncomingMessage) {
@@ -591,7 +595,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     sb.setSpan(new ForegroundColorSpan(0xFFC8934E), offset, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                     commentCounts.setText(sb);
                     enableInternalButtons(view, message);
-                    MainActivity.restyleChildrenOrWidget(view);
+                    MainActivity.restyleChildrenOrWidget(view, true);
                     return view;
                 }
                 if (message instanceof XMPPService.JabberIncomingMessage) {
@@ -603,7 +607,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     from.setText(jabberIncomingMessage.getFrom());
                     preview.setText(jabberIncomingMessage.getBody());
                     enableInternalButtons(view, message);
-                    MainActivity.restyleChildrenOrWidget(view);
+                    MainActivity.restyleChildrenOrWidget(view, true);
                     return view;
                 }
                 if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
@@ -638,7 +642,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     }
                     preview.setText(body);
                     enableInternalButtons(view, message);
-                    MainActivity.restyleChildrenOrWidget(view);
+                    MainActivity.restyleChildrenOrWidget(view, true);
                     return view;
                 }
                 return null;
@@ -716,12 +720,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             sll.setPressedListener(new PressableLinearLayout.PressedListener() {
                 @Override
                 public void onPressStateChanged(boolean selected) {
-                    MainActivity.restyleChildrenOrWidget(sll);
+                    MainActivity.restyleChildrenOrWidget(sll, true);
                 }
 
                 @Override
                 public void onSelectStateChanged(boolean selected) {
-                    MainActivity.restyleChildrenOrWidget(sll);
+                    MainActivity.restyleChildrenOrWidget(sll, true);
                 }
             });
         }
@@ -862,4 +866,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
     }
+
+
 }

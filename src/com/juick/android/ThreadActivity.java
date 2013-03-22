@@ -36,10 +36,7 @@ import android.support.v4.view.MenuItem;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
-import android.view.ContextThemeWrapper;
-import android.view.MenuInflater;
-import android.view.View;
-import android.view.Window;
+import android.view.*;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
@@ -96,6 +93,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         super.onCreate(savedInstanceState);
         handler = new Handler();
 
@@ -106,6 +104,10 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         }
 
         messagesSource = (MessagesSource) i.getSerializableExtra("messagesSource");
+        if (sp.getBoolean("fullScreenThread", false)) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
         setContentView(R.layout.thread);
         findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,10 +125,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                etMessage.clearFocus();
-                InputMethodManager imm = (InputMethodManager)getSystemService(
-                      Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(etMessage.getWindowToken(), 0);
+                doCancel();
             }
         });
 
@@ -149,7 +148,6 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         });
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         if (sp.getBoolean("capitalizeReplies", false)) {
             etMessage.setInputType(etMessage.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
         }
@@ -167,11 +165,18 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
+    private void doCancel() {
+        etMessage.clearFocus();
+        InputMethodManager imm = (InputMethodManager)getSystemService(
+              Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(etMessage.getWindowToken(), 0);
+    }
+
     private void launchMainMessagesEnabler() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                setHeight(findViewById(R.id.gotoMain), MainActivity.nActiveMainActivities == 0 ? ActionBar.LayoutParams.WRAP_CONTENT : 0);
+                findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
                 if (resumed)
                     handler.postDelayed(this, 1000);
             }
@@ -370,6 +375,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                         AlertDialog alertDialog = builder.create();
                         alertDialog.show();
                     }
+                    doCancel();
                 } else {
                     setFormEnabled(true);
                     if (attachmentUri != null) {
@@ -383,7 +389,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
                             // activity must be dead already
                         }
                     } else {
-
+                        Toast.makeText(ThreadActivity.this, error, Toast.LENGTH_LONG).show();
                     }
                 }
                 return null;
@@ -486,5 +492,18 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     protected void finalize() throws Throwable {
         super.finalize();
         instanceCount--;
+    }
+
+    @Override
+    public boolean requestWindowFeature(long featureId) {
+        // actionbar sherlock deducing flag from theme id.
+        if (featureId == android.support.v4.view.Window.FEATURE_ACTION_BAR) return false;
+        return super.requestWindowFeature(featureId);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (tf.onBackPressed()) return;
+        super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

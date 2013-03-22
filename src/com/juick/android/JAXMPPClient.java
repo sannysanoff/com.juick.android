@@ -182,7 +182,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     private String performLoginLocal(Context context, String username, String cookie) {
         setup = new XMPPConnectionSetup();
-        setup.jid = username+"@local";
+        setup.jid = username.trim()+"@local";
         setup.password = cookie;
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
