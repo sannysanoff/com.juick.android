@@ -81,7 +81,7 @@ public class JASocketClient {
             os = sock.getOutputStream();
             log("connected");
             return true;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log("connect:"+e.toString());
             System.err.println(e);
             //e.printStackTrace();

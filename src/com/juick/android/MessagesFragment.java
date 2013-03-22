@@ -94,6 +94,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private Activity parent;
     private Runnable doOnClick;
     private long doOnClickActualTime;
+    ImagePreviewHelper imagePreviewHelper;
 
 
     public MessagesFragment(Object restoreData, Activity parent) {
@@ -140,9 +141,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         mReverseFlipAnimation.setFillAfter(true);
 
         if (Build.VERSION.SDK_INT >= 8) {
-            if (sp.getBoolean("enableScaleByGesture", true)) {
-                mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
-            }
+            mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
         }
     }
 
@@ -218,9 +217,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listView.setOnTouchListener(this);
         listView.setOnScrollListener(this);
         listView.setOnItemClickListener(this);
+
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
+                if (view instanceof WebViewGallery) {
+                    return false;   // no need that! (possibly, make this condition work only if not scrolled meanwhile)
+                }
                 final Object itemAtPosition = parent.getItemAtPosition(position);
                 if (itemAtPosition instanceof JuickMessage) {
                     doOnClickActualTime = System.currentTimeMillis();
@@ -264,6 +267,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     private void init() {
         if (implicitlyCreated) return;
+
+        imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container));
+        listAdapter.imagePreviewHelper = imagePreviewHelper;
+
         final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList();
         final ListView lv = getListView();
         boolean canUseMainList = getActivity() instanceof MainActivity; //
@@ -524,10 +531,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     private void loadMore() {
+
+        if (getView() == null) {
+            // not ready yet (or finished)
+            return;
+        }
         loading = true;
         restoreData = null;
         page++;
-        final JuickMessage jmsg = listAdapter.getItem(listAdapter.getCount() - 1);
 
         final MoreMessagesLoadNotification progressNotification = new MoreMessagesLoadNotification();
         Thread thr = new Thread("Download messages (more)") {
@@ -552,7 +563,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                     if (messages.size() == 0) {
                                         progressNotification.progress.setText(progressNotification.lastError);
                                     }
-                                    listAdapter.addAllMessages(messagesFiltered);
+                                    if (getView() == null) return;  // already closed?
+                                    MyListView parent = (MyListView)getListView();
+                                    if (getListView().getAdapter().getCount() - (recentFirstVisibleItem + recentVisibleItemCount) > 3) {
+                                        parent.blockLayoutRequests = true;  // a nafig nam layout, at least 3 items below?
+                                    }
+                                    try {
+                                        listAdapter.addAllMessages(messagesFiltered);
+                                    } finally {
+                                        parent.blockLayoutRequests = false;
+                                    }
                                     loading = false;
                                 }
                             });
@@ -677,8 +697,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     int lastItemReported = 0;
 
+    int recentFirstVisibleItem;
+    int recentVisibleItemCount;
+
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        recentFirstVisibleItem = firstVisibleItem;
+        recentVisibleItemCount = visibleItemCount;
         int prefetchMessagesSize = prefetchMessages ? 20:0;
         if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && loading == false) {
             if (messagesSource.canNext()) {
@@ -711,11 +736,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     }
                 }
             } else {
-                jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem);
-                if (topMessageId instanceof JuickMessageID) {
-                    ((JuickMessageID)topMessageId).getNextMid(); // open/closed interval
-                } else {
-                    topMessageId = jm.getMID(); // dunno here
+                if (getListAdapter() != null) {
+                    jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem);
+                    if (topMessageId instanceof JuickMessageID) {
+                        ((JuickMessageID)topMessageId).getNextMid(); // open/closed interval
+                    } else {
+                        topMessageId = jm.getMID(); // dunno here
+                    }
                 }
             }
         } catch (Exception ex) {}
@@ -898,7 +925,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            listAdapter.setScale(detector.getScaleFactor());
+            listAdapter.setScale(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY(), getListView());
             listAdapter.notifyDataSetChanged();
             return true;
         }

@@ -16,7 +16,6 @@
         <CheckBoxPreference
                 android:key="fullScreenThread"
                 android:title="In Thread view"
-                android:summary="..instead of legacy menu"
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>

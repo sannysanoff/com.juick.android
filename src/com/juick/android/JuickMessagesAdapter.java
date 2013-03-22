@@ -22,7 +22,11 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.*;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -30,16 +34,13 @@ import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.style.*;
 import android.util.Log;
-import android.view.MotionEvent;
+import android.view.*;
 import android.webkit.WebView;
 import android.widget.*;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 
@@ -91,6 +92,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private final boolean indirectImages;
     private final boolean otherImages;
     Handler handler;
+    boolean enableScaleByGesture;
+    ImagePreviewHelper imagePreviewHelper;
+
 
     public static int instanceCount;
 
@@ -163,6 +167,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         indirectImages = sp.getBoolean("image.indirect", true);
+        enableScaleByGesture = sp.getBoolean("enableScaleByGesture", true);
         otherImages = sp.getBoolean("image.other", true);
         textScale = 1;
         try {
@@ -252,6 +257,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 userPic.getLayoutParams().height = lrr.pictureSize;
                 int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
                 userPic.setPadding(padding, padding, padding, padding);
+
                 final UserpicStorage.AvatarID avatarId = getAvatarId(jmsg);
                 lrr.avatarID = avatarId;
 
@@ -275,6 +281,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     }
                 };
                 Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
+                if (userpic == null) {
+                    // until it loads, we will put proper size placeholder (later re-layout minimization)
+                    userpic = UserpicStorage.instance.getUserpic(getContext(), UserpicStorage.NO_AVATAR, lrr.pictureSize, null);
+                }
                 userPic.setImageBitmap(userpic);    // can be null
             } else {
                 userPic.setImageBitmap(null);
@@ -334,6 +344,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             if (imageLoader != null && imageLoader.loader != null) {
                                 Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
                                 if (System.currentTimeMillis() - lastClick < 500) {
+                                    if (imagePreviewHelper != null) {
+                                        MyImageView myImageView = (MyImageView)gallery.getSelectedView().findViewById(R.id.non_webview);
+                                        imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url);
+                                    }
+                                    /*
                                     if (!imageLoader.useOriginal) {
                                         new AlertDialog.Builder(getContext())
                                                 .setTitle(R.string.DownloadOriginal)
@@ -363,6 +378,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                     }
                                                 }).show();
                                     }
+                                    */
                                 }
                                 lastClick = System.currentTimeMillis();
                             }
@@ -375,6 +391,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
                 gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, HEIGHT + 20));
                 gallery.setAdapter(new BaseAdapter() {
+
+                    View[] views = new View[images.size()];
+
                     @Override
                     public int getCount() {
                         return images.size();
@@ -392,18 +411,20 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
                     @Override
                     public View getView(int i, View view, ViewGroup viewGroup) {
+                        if (views[i] != null) return views[i];
                         if (view == null) {
                             view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
+                            views[i] = view;
                             ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
                             gallery.addInitializedNonWebView(wv);
                         }
                         view.setMinimumHeight(HEIGHT);
                         ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
                         if (imageLoader == null) {
-                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(images.get(i), view, HEIGHT, ll, false, images.size() > 1), false);
+                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(gallery, images.get(i), view, HEIGHT, ll, false, images.size() > 1), false);
                             imageLoaders.put(i, imageLoader);
                         } else if (imageLoader.loader == null) {
-                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(images.get(i), view, HEIGHT, ll, imageLoader.useOriginal, images.size() > 1), imageLoader.useOriginal);
+                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(gallery, images.get(i), view, HEIGHT, ll, imageLoader.useOriginal, images.size() > 1), imageLoader.useOriginal);
                             imageLoaders.put(i, imageLoader);
                         } else {
                             imageLoader.loader.setDestinationView(view);
@@ -448,6 +469,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public static UserpicStorage.AvatarID getAvatarId(JuickMessage jmsg) {
+        if (jmsg == null)
+            return UserpicStorage.NO_AVATAR;
         MicroBlog microBlog = MainActivity.getMicroBlog(jmsg);
         if (microBlog == null)
             return UserpicStorage.NO_AVATAR;
@@ -586,10 +609,36 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
     }
 
-    public void setScale(float scale) {
-        textScale *= scale;
-        textScale = Math.max(0.5f, Math.min(textScale, 2.0f));
-        sp.edit().putString(PREFERENCES_SCALE, ""+textScale).commit();
+    public void setScale(float scale, float x, float y, ListView listView) {
+//        View v = findViewForCoordinates(listView, x, y);
+//        if (v instanceof MyImageView) {
+//            System.out.println("OK");
+//        }
+        if (enableScaleByGesture) {
+            textScale *= scale;
+            textScale = Math.max(0.5f, Math.min(textScale, 2.0f));
+            sp.edit().putString(PREFERENCES_SCALE, ""+textScale).commit();
+        }
+    }
+
+    Rect hitRect = new Rect();
+
+    private View findViewForCoordinates(ViewGroup listView, float x, float y) {
+        int childCount = listView.getChildCount();
+        for(int i=childCount-1; i>=0; i--) {
+            View child = listView.getChildAt(i);
+            child.getHitRect(hitRect);
+            if (hitRect.top < y && hitRect.top + hitRect.bottom > y && hitRect.left < x && hitRect.right > x) {
+                View retval = null;
+                if (child instanceof ViewGroup) {
+                    retval = findViewForCoordinates((ViewGroup)child, x - hitRect.left, y - hitRect.top);
+                }
+                if (retval == null)
+                    retval = child;
+                return retval;
+            }
+        }
+        return null;
     }
 
     public static ColorsTheme.ColorTheme colorTheme = null;
@@ -922,10 +971,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         DefaultHttpClient httpClient;
         HttpGet httpGet;
         boolean notOnlyImage;
+        WebViewGallery gallery;
 
         String suffix;
 
-        public ImageLoader(final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
+        public ImageLoader(WebViewGallery gallery, final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
+            this.gallery = gallery;
             this.url = url;
             this.listRow = listRow;
             this.destHeight = destHeight;
@@ -936,7 +987,18 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             final File destFile = getDestFile();
             suffix = getSuffix(destFile);
             if (destFile.exists()) {
-                updateWebView(destFile);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        final Bitmap bitmap = maybeDecodeImage(destFile);
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateWebView(destFile, bitmap);
+                            }
+                        });
+                    }
+                }.start();
             } else {
                 progressBarText.setText("Connect..");
                 httpClient = new DefaultHttpClient();
@@ -952,8 +1014,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     progressBar.setVisibility(View.VISIBLE);
                     TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
                     progressBarText.setVisibility(View.VISIBLE);
-                    final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
-                    webView.setVisibility(View.GONE);
+                    final ImageView webView = (ImageView) imageHolder.findViewById(R.id.non_webview);
+                    webView.setVisibility(View.INVISIBLE);
                     new Thread("Image downloadhttpGeter") {
                         @Override
                         public void run() {
@@ -1031,10 +1093,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             }
                                             loading = false;
                                             if (!terminated) {
+                                                Bitmap bmp = maybeDecodeImage(destFile);
+                                                final Bitmap finalBmp = bmp;
                                                 handler.post(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        updateWebView(destFile);
+                                                        updateWebView(destFile, finalBmp);
                                                     }
                                                 });
                                             }
@@ -1099,8 +1163,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             return new File(cacheDir, urlToFileName(url));
         }
 
-        private void updateWebView(final File destFile) {
-            final WebView webView = (WebView) imageHolder.findViewById(R.id.webview);
+        private void updateWebView(final File destFile, Bitmap bitmap) {
+            final ImageView webView = (ImageView) imageHolder.findViewById(R.id.non_webview);
             if (webView != null) {      // concurrent remove
                 if (destFile.getPath().equals(webView.getTag())) return;    // already there
                 webView.setTag(destFile.getPath());
@@ -1130,48 +1194,36 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     View content = imageHolder.findViewById(R.id.content);
                     content.getLayoutParams().width = scaledW;
                     content.getLayoutParams().height = scaledH;
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (webView.getTag(MyWebView.DESTROYED_TAG) == null) {
-                                View progressBar = imageHolder.findViewById(R.id.progressbar);
-                                progressBar.setVisibility(View.GONE);
-                                TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
-                                progressBarText.setVisibility(View.GONE);
-                                webView.setVisibility(View.VISIBLE);
-                                webView.getLayoutParams().height = destHeight;
-                                webView.setInitialScale(100);
+                    if (webView.getTag(MyWebView.DESTROYED_TAG) == null) {
+                        View progressBar = imageHolder.findViewById(R.id.progressbar);
+                        progressBar.setVisibility(View.INVISIBLE);
+                        TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
+                        progressBarText.setVisibility(View.INVISIBLE);
+                        webView.setVisibility(View.VISIBLE);
+                        webView.getLayoutParams().height = destHeight;
 
-                                StringBuilder content = new StringBuilder();
-                                content.append(String.format("<html><head>"));
-                                //content.append(String.format("<meta name=\"viewport\" content=\"initial-scale=%f; maximum-scale=%f; user-scalable=0;\" />", scaleFactor, scaleFactor));
-                                content.append(String.format("</head><body style='padding: 0px; margin: 0px'>"));
-                                content.append(String.format("<img src='%s' width=%d height=%d/>",
-                                        CachedImageContentProvider.constructUri(destFile.getName()),
-                                        scaledW, scaledH
-                                ));
-                                content.append(String.format("</body></html>"));
-                                try {
-                                    webView.loadData(content.toString(), "text/html", "UTF-8");
-                                    webView.setOnTouchListener(new View.OnTouchListener() {
-                                        @Override
-                                        public boolean onTouch(View view, MotionEvent motionEvent) {
-                                            return true;
-                                        }
-                                    });
-                                    if (!sameThread) {
-                                        resetAdapter();
-            //                            imageHolder.invalidate();
-            //                            gallery.invalidate();
-            //                            imageHolder.requestLayout();
-                                    }
-                                } catch (Exception e) {
-                                    Log.e("JuickAdvanced","Exception in MyWebView.loaddata:  "+e.toString());
-                                    // that webview is probably destroyed some way
-                                }
+                        try {
+                            gallery.blockLayoutRequest = true;
+                            if (bitmap != null) {
+                                BitmapCounts.retainBitmap(bitmap);
+                                webView.setImageDrawable(new BitmapDrawable(bitmap));
+                            } else {
+                                webView.setImageURI(Uri.parse(CachedImageContentProvider.constructUri(destFile.getName())));
                             }
+                            gallery.blockLayoutRequest = false;
+                            Rect rect = new Rect();
+                            gallery.getHitRect(rect);
+                            gallery.forceLayout();
+                            gallery.measure(rect.right - rect.left, rect.bottom - rect.top);
+                            gallery.layout(rect.left,  rect.top, rect.right, rect.bottom);
+                            if (!sameThread) {
+                                resetAdapter();
+                            }
+                        } catch (Exception e) {
+                            Log.e("JuickAdvanced","Exception in MyWebView.loaddata:  "+e.toString());
+                            // that webview is probably destroyed some way
                         }
-                    });
+                    }
                 }
             }
         }
@@ -1215,9 +1267,20 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         public void setDestinationView(View destinationView) {
             this.imageHolder = destinationView;
             updateUIBindings();
-            File destFile = getDestFile();
+            final File destFile = getDestFile();
             if (destFile.exists() && !loading) {
-                updateWebView(destFile);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        final Bitmap bitmap = maybeDecodeImage(destFile);
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateWebView(destFile, bitmap);
+                            }
+                        });
+                    }
+                }.start();
             }
             if (status != null)
                 updateStatus(status);
@@ -1257,6 +1320,28 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
             return suffix;
         }
+    }
+
+    /**
+     * decode it if it is not too big
+     * @param imgPath
+     * @return
+     */
+    private Bitmap maybeDecodeImage(File imgPath) {
+        Display defaultDisplay = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay();
+        int screenWidth = defaultDisplay.getWidth();
+        int screenHeight = defaultDisplay.getWidth();
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(imgPath.getPath(), opts);
+        if (opts.outHeight != 0 && opts.outWidth != 0 && opts.outHeight < screenHeight * 1.5 && opts.outWidth < screenWidth * 1.5) {
+            try {
+                return BitmapFactory.decodeFile(imgPath.getPath());
+            } catch (OutOfMemoryError e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     @Override

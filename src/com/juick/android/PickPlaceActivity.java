@@ -306,7 +306,11 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                     public void run() {
                         if (jsonStr != null) {
                             listAdapter.parseJSON(jsonStr);
-                            progressDialog.dismiss();
+                            try {
+                                progressDialog.dismiss();
+                            } catch (Exception e) {
+                                // already gone
+                            }
                         }
                     }
                 });

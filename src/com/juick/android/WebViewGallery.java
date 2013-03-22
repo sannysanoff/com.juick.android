@@ -1,12 +1,11 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewConfiguration;
+import android.view.*;
 import android.widget.Gallery;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 
@@ -23,19 +22,29 @@ public class WebViewGallery extends Gallery {
     private float initialX;
     private float initialY;
 
+    private ScaleGestureDetector mScaleDetector;
+
     public WebViewGallery(Context context) {
         super(context);
         slop = ViewConfiguration.get(context).getScaledTouchSlop();
+        init();
     }
 
     public WebViewGallery(Context context, AttributeSet attrs) {
         super(context, attrs);
         slop = ViewConfiguration.get(context).getScaledTouchSlop();
+        init();
     }
 
     public WebViewGallery(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         slop = ViewConfiguration.get(context).getScaledTouchSlop();
+        init();
+    }
+
+    void init() {
+        if (Build.VERSION.SDK_INT >= 8 && mScaleDetector == null) {
+        }
     }
 
     @Override
@@ -43,7 +52,23 @@ public class WebViewGallery extends Gallery {
         return false;
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return super.onTouchEvent(event);
+    }
+
     public void recycled() {
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+        // nothing here
+    }
+
+    public boolean showContextMenuForChild(View originalView) {
+        // long press/scroll on gallery inside outer list
+        // default gallery implementation passes it upper, to list
+        return false;
     }
 
     protected void detachAllViewsFromParent() {
@@ -58,8 +83,8 @@ public class WebViewGallery extends Gallery {
         }
     }
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//    @Override
+    public boolean z_onInterceptTouchEvent(MotionEvent ev) {
         if (getAdapter().getCount() == 1) {
             return true; // dont pass horizontal scrolls to single item
         }
@@ -100,22 +125,29 @@ public class WebViewGallery extends Gallery {
         return false;
     }
 
+
+    public boolean blockLayoutRequest = false;
+
+    @Override
+    public void requestLayout() {
+        if (blockLayoutRequest) return;
+        super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
     public void cleanup() {
-        for (MyWebView view : views) {
+        for (ImageView view : views) {
             view.setOnTouchListener(null);
-            LinearLayout ll = (LinearLayout)view.getParent();
-            if (ll != null) {
-                ll.removeView(view);
+            if (view instanceof MyImageView) {
+                ((MyImageView)view).destroy();
             }
-            view.destroy();
             view.setTag(MyWebView.DESTROYED_TAG, Boolean.FALSE);
         }
         views.clear();
-        removeAllViewsInLayout();
+        //removeAllViewsInLayout();
     }
 
-    ArrayList<MyWebView> views = new ArrayList<MyWebView>();
-    public void addInitializedNonWebView(MyImageView wv) {
+    ArrayList<ImageView> views = new ArrayList<ImageView>();
+    public void addInitializedNonWebView(ImageView wv) {
         views.add(wv);
     }
 }

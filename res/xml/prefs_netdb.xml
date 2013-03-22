@@ -24,6 +24,12 @@
             android:title="@string/DaysToKeepStoredMessages"
             android:defaultValue="30"
             android:persistent="false"/>
+    <CheckBoxPreference
+            android:key="downloadImagesOverMobile"
+            android:title="@string/FullsizeDownloadOverMobile"
+            android:summary="@string/WhenDownloading___"
+            android:defaultValue="false"
+            android:persistent="true"/>
     <ListPreference
             android:key="locationAccuracy"
             android:title="@string/AccuracyOfLocation"

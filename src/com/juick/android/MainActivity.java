@@ -866,7 +866,8 @@ public class MainActivity extends FragmentActivity implements
 //            btn.setBackgroundColor(colorTheme.getButtonBackground());
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
-            text.setTextColor(colorTheme.getForeground(pressed));
+            if (text.getId() != R.id.old_title) // keep it authentic
+                text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
             restyleViewGroup((ViewGroup) view, colorTheme, pressed, selected, dontBackground);
         }
@@ -966,6 +967,12 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public Handler getHandler() {
         return handler;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mf != null && mf.imagePreviewHelper != null && mf.imagePreviewHelper.handleBack()) return;
+        super.onBackPressed();
     }
 
     @Override

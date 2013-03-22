@@ -35,7 +35,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     public static String getJuickAccountName(Context context) {
         if (accountName == null) {
             AccountManager am = AccountManager.get(context);
-            Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
+            Account accs[] = am.getAccountsByType("com.juickadvanced");
             if (accs.length > 0) {
                 accountName = accs[0].name.trim();
             }

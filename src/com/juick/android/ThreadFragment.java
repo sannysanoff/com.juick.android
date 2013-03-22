@@ -51,6 +51,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private Runnable doOnClick;
     private long doOnClickActualTime;
     private MyImageView navMenu;
+    ImagePreviewHelper imagePreviewHelper;
 
     public interface ThreadExternalUpdater {
 
@@ -110,9 +111,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
         if (Build.VERSION.SDK_INT >= 8) {
-            if (sp.getBoolean("enableScaleByGesture", true)) {
-                mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
-            }
+            mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
         }
     }
 
@@ -173,6 +172,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
         initAdapter();
         MessagesFragment.installDividerColor(getListView());
+
+        imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container));
+        listAdapter.imagePreviewHelper = imagePreviewHelper;
     }
 
 
@@ -763,7 +765,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            listAdapter.setScale(detector.getScaleFactor());
+            listAdapter.setScale(detector.getScaleFactor(), detector.getFocusX(), detector.getFocusY(), getListView());
             listAdapter.notifyDataSetChanged();
             return true;
         }

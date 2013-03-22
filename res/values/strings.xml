@@ -301,6 +301,148 @@
                 ]]>
     </string>
 
+    <string name="rf_2013032201"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style>
+                input {
+                    -webkit-transform: scale(1.4,1.4);
+                }
+            </style>
+            </head>
+            <body>
+
+            <form>
+            <b>Март 2013, зимний билд</b>
+            <ul>
+            <li>
+
+            <input type="checkbox" name="prefs.enableJAMessaging" #prefs.checked.enableJAMessaging#> .
+            </li>
+            <li>
+            Подписка на комментарии пользователя. Используется описанный механизм. Доступна через новое меню (см ниже).
+            </li>
+            <li>
+            Удалена XMPP подсистема (smack) из android-клиента. Но XMPP функциональность жива и работает по принципу opera mini:
+            XMPP-клиент вынесен с телефона на сервер, и если вы залогинены, то он постоянно онлайн,
+            даже пока вы едете в метро. Протокол связи телефона с сервером прост и батарейко-оптимизирован.
+            Технические подробности <a href=\"http://sanny2android.wordpress.com/2012/12/05/extxmpp-details/\">читать здесь</a>.
+            </li>
+            <li>
+            Новое меню при нажатии на сообщение (переработано, landscape added): <br><img border=1 src=\"http://sanny2android.files.wordpress.com/2012/12/message_menu.jpg\"/><br>
+            Если еще не включили, включаем: <input type=\"checkbox\" name=\"prefs.dialogMessageMenu\" #prefs.checked.dialogMessageMenu#">.
+            Новый экран информации о пользователе, доступен из нового меню:<br><img border=1 src=\"http://sanny2android.files.wordpress.com/2012/12/about_user.jpg\"/><br>
+            </li>
+            <li>
+            Отправление сообщений об ошибках теперь делается с помощью ACRA, без подтверждения. Уходит больше данных об устройстве.
+            </li>
+            <li>
+            Поддержка BnW (Включаем галочки: Feed:<input type="checkbox" name="prefs.msrcBNWFeed" #prefs.checked.msrcBNWFeed#>, All:<input type="checkbox" name="prefs.msrcBNWAll" #prefs.checked.msrcBNWAll#>, Hot:<input type="checkbox" name="prefs.msrcBNWHot" #prefs.checked.msrcBNWHot#> )
+              и psto (Subs:<input type="checkbox" name="prefs.msrcPSTOSubs" #prefs.checked.msrcPSTOSubs#>, Recent:<input type="checkbox" name="prefs.msrcPSTORecent" #prefs.checked.msrcPSTORecent#>, My:<input type="checkbox" name="prefs.msrcPSTOMy" #prefs.checked.msrcPSTOMy#>, Popular:<input type="checkbox" name="prefs.msrcPSTOPopular" #prefs.checked.msrcPSTOPopular#> ),
+              c возможностью постинга и комментирования, и еще несколько функций.
+            </li>
+            <li>
+            Приватные сообщения. Парсятся с нового сайта (dev.juick.com). Спросит логин и пароль для сайта (1 раз). Включить в список навигации?
+            <input type="checkbox" name="prefs.msrcPrivate" #prefs.checked.msrcPrivate#>
+            Дискуссии (тоже раздел с сайта). Включить в список? <input type="checkbox" name="prefs.msrcDiscuss" #prefs.checked.msrcDiscuss#>
+            </li>
+            <li>
+            Также, и лента подписок может браться не c глючными старыми сообщениями с json api, а с сайта. Если на сайте нет глюка с датами, то значит нет глюка и в Juick Advanced.
+            Кушает немного больше трафика.
+            Включить? <input type="checkbox" name="prefs.web_for_subscriptions" #prefs.checked.web_for_subscriptions#>
+            </li>
+            <li>
+            Userpics. То есть аватарки. <input type="checkbox" name="prefs.showUserpics!" #prefs.checked.showUserpics!#>
+            </li>
+            <li>
+            Подсветка собственного ника среди комментариев и в Jabber сообщениях, для быстрого определения ответов именно вам.
+            </li>
+            <li>
+            Кеширование тредов. Если тред уже был посещен, и в настройках стоит галочка \"сохранять мессаги локально\", то второй раз тред будет
+            открываться моментально, пока грузится обновленная версия. И если постараться, даже можно заметить маркер, с которого начинаются новые ответы.
+            Включить: <input type="checkbox" name="prefs.enableMessageDB" #prefs.checked.enableMessageDB#>
+            </li>
+            <li>
+            Кеширование списка тегов, переработанная страница тегов: во время создания сообщения можно выбирать несколько тегов. Тег можно ввести руками в поиске (со звездочкой)
+            </li>
+            <li>
+            Загрузка блеклиста из JuBo и Juick (загружается через Jabber).
+            Для тех, кто не хочет постоянно иметь Jabber включенным, появилась опция: включить Jabber только для того, чтобы скачать блеклисты, затем отсоединиться.
+            Затем этим блеклистом фильтруются все сообщения! Можно посмотреть закачанные BL списки в настройках. Включать в настройках.
+            </li>
+            <li>
+            Добавлен глобальный и локальный search provider, кнопка поиск работает и ищет глобально по сайту.
+            </li>
+            <li>
+            Отправление фотографий: пофикшен баг с ориентацией фотографии во время изменения размера. Теперь поворачивается правильно.
+            Также можно изменять размер фотографий, отправляемых из галереи или другого места.
+            </li>
+            <li>
+            Окно комментария передизайнено, с целью сделать более широким ввод текста.
+            </li>
+            <li>
+            Окно настроек теперь с категориями.
+            </li>
+            <li>
+            Правильно показываются наклонный, жирный стили и подчеркивание в тексте мессаг. Выделять жирным итд в написуемых мессагах, понятно, надо как и раньше.
+            </li>
+            <li>
+            Входящие (нотификации) сообщения: Клик на сообщение двумя пальцами раскроет его прямо на месте, не обрезая. Контекстное меню как надо.
+            </li>
+            <li>
+            Переход к основному списку мессаг, чтобы не запускать из лаунчера, если вдруг Juick Advanced открыт по прямой ссылке на мессаг (из jabber клиента, например).
+            Появляется кнопка \"Все сообщения\", которая открывает окно по умолчанию. Если GC собрал главное окно, она тоже появляется.
+            </li>
+            <li>
+            Более правильное позиционирование всплывающей подсказки с цепочкой ответов во перед написанием коммента.
+            </li>
+            <li>
+            Команда удаления своего сообщения или коммента.
+            </li>
+            <li>
+            Еще больше оптимизирован рендеринг и плавность, т.к. больше процессинга вынесено из UI thread.
+            Пофикшены гигантские меморилики связанные с WebView/картинками,
+            и добавлена строка с размером заюзанной кучи в окошко с XMPP Info.
+            </li>
+            <li>
+            Зависимость на google maps сделана опциональной, для некоторых голых прошивок.
+            </li>
+            <li>
+            Окно настроек Jabber немного переработано и упрощено. Ya.ru добавлен в шаблоны подключения Jabber.
+            </li>
+            <li>
+            Объяснение в окошке логина о том, как получить на сайте login/password.
+            </li>
+            <li>
+            Создана инфраструктура графиков, и добавлено несколько графиков: активность сайта целиком, активность конкретного пользователя.
+            Дальше будет больше.
+            </li>
+            </ul>
+            <hr>
+            <u>Подробности про нежабберные нотификации</u>:<br>
+            На juick advanced сервере (не путать с официальным juick сервером) трекаются
+            все комментарии и новые мессаги, приходящие с официального juick сервера. Затем по известным правилам уведомления
+            рассылаются всем заинтересованным устройствам.<br>
+            Исключение составляют приватные сообщения, т.к. всё работает только по публичным.<br>
+            Важно понять, что подписка на произвольный тред, сделанная <u>не</u> через juick advanced,
+            <u>не будет приходить</u>, т.к. не существует способа для сторонних серверов узнавать таковые подробности с
+            официального сервера для включения в свои уведомления.
+            В связи с тем, что ваши подписки на треды (и не только), сделанные через juick advanced,
+            тоже хранятся на juick advanced сервере, требуется какая-то авторизация, что ли. Для этих целей
+            вместе с вашим логином отправляется ваш авторизационный токен, который проверяется на сервере жуйка
+            во время логина на juick advanced сервер, и затем выбрасывается.
+            Всё ходит через HTTPS.
+
+            <hr>
+            Все фичи Juick Advanced можно посмотреть в настройках, пункт \"Что Нового\".
+
+
+            #script#
+
+            ]]>
+    </string>
+
     <string name="rf_2012121903"><![CDATA[
             <html>
             <head>
@@ -935,6 +1077,11 @@
     <string name="CheckForNewVersionNow">Check β-channel for new version</string>
     <string name="MonitorBetaChannel">Monitor β-channel for updates</string>
     <string name="CheckToEnableBetaNotifications">Check to enable new beta version notifications</string>
+    <string name="ReallyDownload">Really download?</string>
+    <string name="FullsizeDownloadOverMobile">Fullsize downloads over mobile</string>
+    <string name="WhenDownloading___">When downloading full size images, use wifi or mobile, otherwise queue until wifi
+        available
+    </string>
 
 
 </resources>

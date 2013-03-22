@@ -15,9 +15,8 @@ import com.juickadvanced.R;
  */
 public class MyWebView extends WebView {
 
-    public static int instanceCount = 0;
     public static final int DESTROYED_TAG = R.id.juick_message_row;
-
+    public static int instanceCount = 0;
     {
         instanceCount++;
     }

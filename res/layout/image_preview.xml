@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+ <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:background="#FFFFFF"
+         >
+
+    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/imagepreview_info"
+              android:layout_alignParentTop="true" android:text="id/info"
+            />
+    <LinearLayout
+            android:id="@+id/imagepreview_buttons"
+            android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            >
+        <Button android:text="@string/Cancel" android:id="@+id/imagepreview_close" android:layout_weight="0.5"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Button android:text="@string/DownloadOriginal" android:id="@+id/imagepreview_download" android:layout_weight="0.5"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <com.juick.android.MyScrollImageView android:layout_width="fill_parent" android:layout_height="fill_parent"
+                       android:layout_below="@id/imagepreview_info"
+                       android:layout_above="@+id/imagepreview_buttons"
+               android:layout_gravity="center"
+               android:id="@+id/imagepreview_image"  />
+
+ </RelativeLayout>

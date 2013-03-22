@@ -80,15 +80,14 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     private void maybeStartWSClient() {
         if (wsClient != null) return;
-        wsClient = new JASocketClient(socketName);
+        final JASocketClient myClient = wsClient = new JASocketClient(socketName);
         boolean connected = wsClient.connect(jahost, jaSocketPort);
         if (!connected) {
             wsClient = null;
             scheduleRetryConnection();
             return;
         }
-        wsClient.send(createClientPing());
-        final JASocketClient myClient = wsClient;
+        myClient.send(createClientPing());
         (wsclientLoop = new Thread() {
             long connectTime = System.currentTimeMillis();
             @Override

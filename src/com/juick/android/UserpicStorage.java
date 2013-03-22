@@ -69,7 +69,10 @@ public class UserpicStorage {
         if (bitmap != null) {
             return bitmap;
         }
-
+        if (id == NO_AVATAR) {
+            scaleAndPutToCache(ctx, null, size, id, key);
+            return cache.get(key);
+        }
         synchronized (loadingImages) {
             if (loadingImages.contains(key)) {
                 return null;

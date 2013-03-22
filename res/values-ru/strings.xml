@@ -432,6 +432,9 @@
     <string name="CheckForNewVersionNow">Проверить β-канал на новую версию</string>
     <string name="MonitorBetaChannel">Мониторить β-канал (обновления)</string>
     <string name="CheckToEnableBetaNotifications">Включите для уведомления о новой версии</string>
+    <string name="ReallyDownload">Таки скачать оригинал?</string>
+    <string name="FullsizeDownloadOverMobile">Большие файлы по моб.сети</string>
+    <string name="WhenDownloading___">Разрешать использование мобильной сети для скачивания оригиналов изображений? Если нет, то только через Wi-Fi.</string>
 
 
 </resources>

@@ -412,10 +412,10 @@ public class Utils {
                             } else {
                                 if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
                                     cookieCleared[0] = true;    // don't enter loop
-                                    authorizer.clearCookie((Activity) context, new Runnable() {
+                                    authorizer.clearCookie(context, new Runnable() {
                                         @Override
                                         public void run() {
-                                            authorizer.authorize((Activity) context, true, url, thiz);
+                                            authorizer.authorize(context, true, url, thiz);
                                         }
                                     });
                                     return null;

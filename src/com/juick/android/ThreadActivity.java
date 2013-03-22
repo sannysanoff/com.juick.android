@@ -501,9 +501,13 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         return super.requestWindowFeature(featureId);
     }
 
+
+
     @Override
     public void onBackPressed() {
         if (tf.onBackPressed()) return;
+        if (tf != null && tf.imagePreviewHelper != null && tf.imagePreviewHelper.handleBack())
+            return;
         super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

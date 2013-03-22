@@ -25,6 +25,18 @@ import android.widget.*;
 
 public class PressableLinearLayout extends LinearLayout {
 
+    public static int instanceCount = 0;
+    {
+        instanceCount++;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        instanceCount--;
+    }
+
+
     interface PressedListener {
         public void onPressStateChanged(boolean selected);
         public void onSelectStateChanged(boolean selected);

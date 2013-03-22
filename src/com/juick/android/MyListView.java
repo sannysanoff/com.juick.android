@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ListView;
@@ -56,5 +57,23 @@ public class MyListView extends ListView {
                 break;
         }
         return super.onTouchEvent(ev);
+    }
+
+    @Override
+    public void invalidate() {
+        super.invalidate();
+    }
+
+    public boolean blockLayoutRequests;
+
+    @Override
+    public void requestLayout() {
+        if (blockLayoutRequests) return;
+        super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void invalidate(Rect dirty) {
+        super.invalidate(dirty);    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

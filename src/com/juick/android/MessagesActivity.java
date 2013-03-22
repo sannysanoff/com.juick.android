@@ -20,6 +20,7 @@ package com.juick.android;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.v4.app.ActionBar;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
@@ -50,6 +51,8 @@ public class MessagesActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
         super.onCreate(savedInstanceState);
+        ActionBar supportActionBar = getSupportActionBar();
+        if (supportActionBar != null) supportActionBar.hide();
         Intent i = getIntent();
         restoreData = getLastCustomNonConfigurationInstance();
         if (!shouldDelayLaunch() || restoreData != null) {
@@ -113,6 +116,20 @@ public class MessagesActivity extends FragmentActivity {
     public boolean onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.menuitem_search).setVisible(getUserId() > 0);
         return super.onPrepareOptionsMenu(menu);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean requestWindowFeature(long featureId) {
+        // actionbar sherlock deducing flag from theme id.
+        if (featureId == android.support.v4.view.Window.FEATURE_ACTION_BAR) return false;
+        return super.requestWindowFeature(featureId);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mf != null && mf.imagePreviewHelper != null && mf.imagePreviewHelper.handleBack())
+            return;
+        super.onBackPressed();
     }
 
     @Override
