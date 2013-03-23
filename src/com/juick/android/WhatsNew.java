@@ -39,6 +39,16 @@ import java.util.regex.Pattern;
  */
 public class WhatsNew {
 
+    ReleaseFeatures[] features = new ReleaseFeatures[]{
+            new ReleaseFeatures("2013032301", R.string.rf_2013032301),
+            new ReleaseFeatures("2012121903", R.string.rf_2012121903),
+            new ReleaseFeatures("2012092002", R.string.rf_2012092001),
+            new ReleaseFeatures("2012091402", R.string.rf_2012091402),
+            new ReleaseFeatures("2012082601", R.string.rf_2012082601),
+            new ReleaseFeatures("2012081901", R.string.rf_2012081901),
+            new ReleaseFeatures("2012081701", R.string.rf_2012081701),
+    };
+
     public static final long REPORT_SEND_PERIOD = 2 * 24 * 60 * 60 * 1000L;
     public static String updateURL;
     public static String updateDescription;
@@ -262,16 +272,6 @@ public class WhatsNew {
             this.textId = textId;
         }
     }
-
-    ReleaseFeatures[] features = new ReleaseFeatures[]{
-            new ReleaseFeatures("2013032201", R.string.rf_2013032201),
-            new ReleaseFeatures("2012121903", R.string.rf_2012121903),
-            new ReleaseFeatures("2012092002", R.string.rf_2012092001),
-            new ReleaseFeatures("2012091402", R.string.rf_2012091402),
-            new ReleaseFeatures("2012082601", R.string.rf_2012082601),
-            new ReleaseFeatures("2012081901", R.string.rf_2012081901),
-            new ReleaseFeatures("2012081701", R.string.rf_2012081701),
-    };
 
     Activity context;
 
