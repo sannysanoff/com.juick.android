@@ -342,12 +342,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
                             final ImageLoaderConfiguration imageLoader = loaders.get(i);
                             if (imageLoader != null && imageLoader.loader != null) {
-                                Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
+                                // Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
                                 if (System.currentTimeMillis() - lastClick < 500) {
                                     if (imagePreviewHelper != null) {
                                         MyImageView myImageView = (MyImageView)gallery.getSelectedView().findViewById(R.id.non_webview);
                                         imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url);
                                     }
+                                    lastClick = 0;  // triple click prevention
+                                    return;
                                     /*
                                     if (!imageLoader.useOriginal) {
                                         new AlertDialog.Builder(getContext())

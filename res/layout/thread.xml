@@ -2,12 +2,12 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#FFFFFF"
     android:orientation="vertical">
     <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
+            android:background="#FFFFFF"
             android:id="@+id/titleContainer"
             >
         <TextView
@@ -41,14 +41,9 @@
             android:layout_height="0px"
             android:gravity="right"
             android:orientation="horizontal"
+            android:background="#FFFFFF"
             android:layout_alignParentBottom="true"
             >
-        <Button
-                android:id="@+id/buttonCancel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:text="@android:string/cancel"/>
         <Button
                 android:id="@+id/buttonSend"
                 android:layout_width="wrap_content"
@@ -63,6 +58,12 @@
                 android:layout_height="wrap_content"
                 android:layout_toLeftOf="@id/buttonSend"
                 android:src="@drawable/ic_button_attachment_small"/>
+        <Button
+                android:id="@+id/buttonCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/buttonAttachment"
+                android:text="@android:string/cancel"/>
 
     </RelativeLayout>
 
@@ -71,12 +72,13 @@
             android:layout_height="wrap_content"
             android:layout_above="@id/buttons"
             android:id="@+id/editor"
-            style="@android:style/ButtonBar">
+            >
         <RelativeLayout
                 android:id="@+id/replyToContainer"
                 android:visibility="visible"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:background="#FFFFFF"
                 >
             <Button
                     android:id="@+id/showThread"
@@ -107,6 +109,8 @@
                     android:id="@+id/editMessage"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:textCursorDrawable="@null"
+                    android:maxHeight="260dip"
                     android:hint="@string/ClickToReply"
                     />
         </LinearLayout>
@@ -131,13 +135,13 @@
             />
 
     <com.juick.android.MyImageView
-            android:layout_width="200dip"
-            android:layout_height="150dip"
+            android:layout_width="240dip"
+            android:layout_height="72dip"
             android:layout_above="@id/separator"
             android:layout_alignParentRight="true"
             android:layout_marginBottom="46dip"
             android:id="@+id/navmenu"
-            android:translationX="170dip"
+            android:translationX="220dip"
             android:src="@drawable/navmenu"/>
 
     <com.juick.android.MyImageView

@@ -17,14 +17,12 @@
  */
 package com.juick.android;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
-import android.util.DisplayMetrics;
 import android.view.*;
 import android.view.animation.*;
 import android.widget.*;
@@ -138,11 +136,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         try {
             parentActivity = (ThreadFragmentListener) activity;
             navMenu = (MyImageView) activity.findViewById(R.id.navmenu);
-            navMenu.setVisibility(View.GONE);
-            initNavMenuTranslationX = navMenu.initialTranslationX;
-            FlyingItem top = new FlyingItem(activity.getWindow().getDecorView(), R.id.navbar_top);
-            FlyingItem bottom = new FlyingItem(activity.getWindow().getDecorView(), R.id.navbar_bottom);
-            flyingItems = new FlyingItem[] {top, bottom};
+            if (navMenu != null) {
+                navMenu.setVisibility(View.GONE);
+                initNavMenuTranslationX = navMenu.initialTranslationX;
+                FlyingItem top = new FlyingItem(activity.getWindow().getDecorView(), R.id.navbar_top);
+                FlyingItem bottom = new FlyingItem(activity.getWindow().getDecorView(), R.id.navbar_bottom);
+                flyingItems = new FlyingItem[] {top, bottom};
+            }
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString() + " must implement ThreadFragmentListener");
         }
@@ -538,7 +538,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (navMenu.getVisibility() == View.VISIBLE) {
+                if (navMenu != null && navMenu.getVisibility() == View.VISIBLE) {
                     int[] listViewLocation = new int[2];
                     int[] imageLocation = new int[2];
                     getListView().getLocationOnScreen(listViewLocation);
@@ -547,7 +547,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     float touchX = pc.x + listViewLocation[0] - imageLocation[0];
                     float touchY = pc.y + listViewLocation[1] - imageLocation[1];
                     System.out.println("TOUCH: ACTION_DOWN: x=" + pc.x + " y=" + pc.y);
-                    if (touchX > 0 && touchX < navMenu.getWidth() && touchY > 0 && touchY < navMenu.getHeight()) {
+                    if (touchX > -20 && touchX < navMenu.getWidth()
+                            && touchY > 0 && touchY < navMenu.getHeight()*1.5) {  // extra Y pixels due to picture not balanced
                         touchOriginX = pc.x;
                         touchOriginY = pc.y;
                         System.out.println("TOUCH: OK TOUCH NAVMENU");
@@ -565,7 +566,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (ignoreMove)
+                if (ignoreMove || navMenu == null)
                     return true;
                 event.getPointerCoords(0, pc);
                 double travelledDistance = Math.sqrt(Math.pow(touchOriginX - pc.x, 2) + Math.pow(touchOriginY - pc.y, 2));
@@ -583,13 +584,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                 if (touchOriginX > pc.x) {
                                     // towards left
                                     inZone = true;
-                                    double neededDistance = 3.0 / 2.54 * getResources().getDisplayMetrics().xdpi;
+                                    double neededDistance = 1.5 / 2.54 * getResources().getDisplayMetrics().xdpi;
                                     if (travelledDistance > neededDistance) {
-                                        // moved 3 centimeters
-                                        touchOriginX = -1;
+                                        // moved 1.5 centimeters
                                         System.out.println("TOUCH: OPEN MENU");
                                         ignoreMove = true;
-                                        openNavigationMenu(pc.x-touchOriginX);
+                                        openNavigationMenu(pc.x-touchOriginX+initNavMenuTranslationX);
+                                        touchOriginX = -1;
                                     }
                                 }
                             } else {
@@ -628,14 +629,16 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private void resetMainMenuButton(boolean animate) {
-        TranslateAnimation immediate = new TranslateAnimation(
-                Animation.ABSOLUTE, animate ? initNavMenuTranslationX + 100 : initNavMenuTranslationX, Animation.ABSOLUTE, initNavMenuTranslationX,
-                Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
-        immediate.setDuration(500);
-        immediate.setFillEnabled(true);
-        immediate.setFillBefore(true);
-        immediate.setFillAfter(true);
-        navMenu.startAnimation(immediate);
+        if (navMenu != null) {
+            TranslateAnimation immediate = new TranslateAnimation(
+                    Animation.ABSOLUTE, animate ? initNavMenuTranslationX + 100 : initNavMenuTranslationX, Animation.ABSOLUTE, initNavMenuTranslationX,
+                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+            immediate.setDuration(500);
+            immediate.setFillEnabled(true);
+            immediate.setFillBefore(true);
+            immediate.setFillAfter(true);
+            navMenu.startAnimation(immediate);
+        }
         //navMenu.startAnimation(immediate);
     }
 
@@ -645,29 +648,22 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         float designedY;
         TranslateAnimation ani;
         final int id;
+        public Rect originalHitRect = new Rect();
+
         FlyingItem(View view, final int id) {
             this.id = id;
             widget = (MyImageView) view.findViewById(id);
             designedX = widget.initialTranslationX;
             designedY = widget.initialTranslationY;
             setVisibility(View.GONE);
-            updateListener();
+            widget.setOnClickListener(this);
         }
 
         private void setVisibility(int gone) {
             widget.setVisibility(gone);
-            updateListener();
         }
 
 
-        private void updateListener() {
-            if (widget.getVisibility() == View.GONE) {
-                widget.setOnClickListener(this);
-            } else {
-                widget.setOnClickListener(null);
-
-            }
-        }
         public void onClick(View v) {
             onNavigationMenuItemPressed(id);
         }
@@ -693,9 +689,10 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             final FlyingItem item = flyingItems[i];
             item.setVisibility(View.VISIBLE);
             item.ani = new TranslateAnimation(
-                    Animation.ABSOLUTE, item.widget.initialTranslationX, Animation.ABSOLUTE, item.widget.getWidth(),
-                    Animation.ABSOLUTE, item.widget.initialTranslationY, Animation.ABSOLUTE, 100f);
+                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, -item.designedX + item.widget.getWidth()*1.5f,
+                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, -item.designedY);
             item.ani.setDuration(500);
+            item.ani.setInterpolator(new AccelerateInterpolator(1));
 
             item.ani.setAnimationListener(new Animation.AnimationListener() {
                 @Override
@@ -706,6 +703,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 @Override
                 public void onAnimationEnd(Animation animation) {
                     item.setVisibility(View.GONE);
+                    item.widget.clearAnimation();
+                    item.widget.disableReposition = false;
+                    item.widget.layout(
+                            item.originalHitRect.left,
+                            item.originalHitRect.top,
+                            item.originalHitRect.right,
+                            item.originalHitRect.bottom);
                     if (item == flyingItems[0]) {
                         TranslateAnimation aniIn = new TranslateAnimation(
                                 Animation.ABSOLUTE, 600, Animation.ABSOLUTE, initNavMenuTranslationX,
@@ -729,7 +733,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     private void openNavigationMenu(float currentTranslation) {
         try {
-            for (FlyingItem item : flyingItems) {
+            for (final FlyingItem item : flyingItems) {
                 item.setVisibility(View.VISIBLE);
                 item.ani = new TranslateAnimation(
                         Animation.ABSOLUTE, 300, Animation.ABSOLUTE, item.designedX,
@@ -738,13 +742,37 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 item.ani.setInterpolator(new OvershootInterpolator(2));
                 item.ani.setDuration(500);
                 item.ani.setFillAfter(true);
+                item.ani.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        //To change body of implemented methods use File | Settings | File Templates.
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        // this code is very ugly because it's all android 2.3 animations.
+                        item.widget.getHitRect(item.originalHitRect);
+                        item.widget.clearAnimation();
+                        item.widget.layout(
+                                item.originalHitRect.left + (int)item.widget.initialTranslationX,
+                                item.originalHitRect.top + (int)item.widget.initialTranslationY,
+                                item.originalHitRect.right + (int)item.widget.initialTranslationX,
+                                item.originalHitRect.bottom + (int)item.widget.initialTranslationY);
+                        item.widget.disableReposition = true;
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                        //To change body of implemented methods use File | Settings | File Templates.
+                    }
+                });
                 item.widget.startAnimation(item.ani);
             }
             TranslateAnimation aniOut = new TranslateAnimation(
                     Animation.ABSOLUTE, currentTranslation, Animation.ABSOLUTE, -1.2f * getActivity().getWindowManager().getDefaultDisplay().getWidth(),
                     Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
             aniOut.setInterpolator(new DecelerateInterpolator(1));
-            aniOut.setDuration(300);
+            aniOut.setDuration(700);
             aniOut.setFillAfter(true);
             navMenu.startAnimation(aniOut);
 
@@ -838,7 +866,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private boolean isNavigationMenuShown() {
-        return flyingItems[0].widget.getVisibility() == View.VISIBLE;
+        return flyingItems != null && flyingItems[0].widget.getVisibility() == View.VISIBLE;
     }
 
 

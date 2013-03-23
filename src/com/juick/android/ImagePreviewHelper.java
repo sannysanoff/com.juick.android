@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.*;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.juickadvanced.R;
@@ -79,6 +80,15 @@ public class ImagePreviewHelper {
             BitmapCounts.retainBitmap(bitmap);
         }
         view.setVisibility(View.VISIBLE);
+        AnimationSet as = new AnimationSet(false);
+        AlphaAnimation aa = new AlphaAnimation(0, 1);
+        aa.setDuration(400);
+        as.addAnimation(aa);
+        TranslateAnimation ta = new TranslateAnimation(0, 0, 50, 0);
+        ta.setInterpolator(new OvershootInterpolator(3));
+        ta.setDuration(400);
+        as.addAnimation(ta);
+        view.startAnimation(as);
         ImageView iv = (ImageView)view.findViewById(R.id.imagepreview_image);
         TextView infotv = (TextView)view.findViewById(R.id.imagepreview_info);
         infotv.setText(info);
@@ -87,11 +97,37 @@ public class ImagePreviewHelper {
     }
 
     public void hide(){
-        view.setVisibility(View.GONE);
-        if (bitmap != null) {
-            BitmapCounts.releaseBitmap(bitmap);
-            bitmap = null;
-        }
+        view.clearAnimation();
+        AnimationSet as = new AnimationSet(false);
+        AlphaAnimation aa = new AlphaAnimation(1, 0);
+        aa.setDuration(400);
+        aa.setInterpolator(new DecelerateInterpolator(1));
+        as.addAnimation(aa);
+        TranslateAnimation ta = new TranslateAnimation(0, 0, 0, 300);
+        ta.setInterpolator(new AccelerateInterpolator(1));
+        ta.setDuration(400);
+        ta.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.GONE);
+                if (bitmap != null) {
+                    BitmapCounts.releaseBitmap(bitmap);
+                    bitmap = null;
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+        as.addAnimation(ta);
+        view.startAnimation(as);
     }
 
     public boolean handleBack() {

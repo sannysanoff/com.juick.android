@@ -1,23 +1,13 @@
 package com.juick.android;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
-import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ImageView;
-import com.juickadvanced.R;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,6 +32,8 @@ public class MyImageView extends ImageView  {
     public float initialTranslationX = -1;
     public float initialTranslationY = -1;
 
+    static boolean IS_HONEYCOMB = Build.VERSION.SDK_INT >= 11;
+
     public MyImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initFromAttrs(attrs);
@@ -62,6 +54,16 @@ public class MyImageView extends ImageView  {
                 initialTranslationY = getDimension(attrs.getAttributeValue(i));
             }
         }
+        if (IS_HONEYCOMB) {
+            HoneyCombInvokes.clearTranslations(this);
+        }
+    }
+
+    boolean disableReposition = false;
+
+    public boolean setFrame(int l, int t, int r, int b) {
+        if (disableReposition) return false;
+        return super.setFrame(l, t, r, b);
     }
 
     private float getDimension(String attributeValue) {
@@ -74,6 +76,7 @@ public class MyImageView extends ImageView  {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (getVisibility() != VISIBLE) return false;
         return super.onTouchEvent(event);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
