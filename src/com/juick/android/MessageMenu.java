@@ -96,6 +96,10 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     public boolean onItemLongClick(final AdapterView parent, View view, final int position, long id) {
         menuActions.clear();
         listSelectedItem = (JuickMessage) parent.getAdapter().getItem(position);
+        JuickMessage secondaryItem = null;
+        if (listSelectedItem.contextPost != null) {
+            secondaryItem = listSelectedItem.contextPost;
+        }
 
         urls = new ArrayList<String>();
         if (listSelectedItem.Photo != null) {
@@ -106,6 +110,9 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         }
 
         collectURLs(listSelectedItem.Text);
+        if (secondaryItem != null) {
+            collectURLs(secondaryItem.Text);
+        }
 
         if (urls.size() > 0) {
             for (final String url : urls) {

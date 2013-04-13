@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -68,12 +69,21 @@ public class MyListView extends ListView {
 
     @Override
     public void requestLayout() {
-        if (blockLayoutRequests) return;
+        // if (blockLayoutRequests) return;
         super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override
     public void invalidate(Rect dirty) {
         super.invalidate(dirty);    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        try {
+            super.draw(canvas);    //To change body of overridden methods use File | Settings | File Templates.
+        } catch (Exception e) {
+            // shit happens
+        }
     }
 }

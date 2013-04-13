@@ -1,13 +1,18 @@
 package com.juick.android.ja;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
+import android.util.Pair;
 import com.juick.android.Utils;
+import com.juick.android.juick.JuickComAuthorizer;
+import com.juick.android.juick.JuickMicroBlog;
 
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,6 +22,7 @@ import java.net.URL;
  * To change this template use File | Settings | File Templates.
  */
 public class Network {
+
     public static Utils.RESTResponse postJSONHome(Context context, String path, String data) {
         Utils.RESTResponse ret = null;
         try {
@@ -47,5 +53,29 @@ public class Network {
             Log.e("getJSONHome", e.toString());
             return new Utils.RESTResponse(e.toString(), false, null);
         }
+    }
+
+    public static void executeJAHTTPS(final Context ctx, final Utils.Notification notifications, final String url, final Utils.Function<Void, Utils.RESTResponse> then) {
+        final String password = URLEncoder.encode(JuickComAuthorizer.getPassword(ctx));
+        final Activity activity = (Activity) ctx;
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                JuickMicroBlog.withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
+                    @Override
+                    public Void apply(final Pair<Integer, String> integerStringPair) {
+                        new Thread("JAHTTPS API fetch") {
+                            @Override
+                            public void run() {
+                                final Utils.RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
+                                        + "&password=" + password, notifications);
+                                then.apply(response);
+                            }
+                        }.start();
+                        return null;
+                    }
+                });
+            }
+        });
     }
 }

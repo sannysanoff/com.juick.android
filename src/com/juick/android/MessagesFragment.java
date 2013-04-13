@@ -19,6 +19,8 @@
 package com.juick.android;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
@@ -26,15 +28,16 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.*;
+import android.view.animation.*;
 import android.widget.*;
+import com.juick.android.ja.JAUnansweredMessagesSource;
+import com.juick.android.ja.Network;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.juick.JuickMessageID;
@@ -42,6 +45,7 @@ import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -81,6 +85,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private int mLastMotionY;
     private boolean mBounceHack;
     private ScaleGestureDetector mScaleDetector = null;
+    private GestureDetector gestureDetector = null;
     SharedPreferences sp;
 
     Handler handler;
@@ -97,6 +102,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     ImagePreviewHelper imagePreviewHelper;
 
 
+    /**
+     * this mode launches long click menu upon touch_up (it must happen inside proper time frame).
+     * this was required to fix some strange problem (which is gone now) when dlg that appeared got clicked immediately under same finger
+     */
+    private boolean alternativeLongClick;
+    private JuickMessage preventClickOn;
+
+
     public MessagesFragment(Object restoreData, Activity parent) {
         this.restoreData = restoreData;
         implicitlyCreated = false;
@@ -107,6 +120,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         implicitlyCreated = true;
     }
 
+
+
     MessagesSource messagesSource;
 
     @Override
@@ -116,6 +131,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         handler = new Handler();
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         trackLastRead = sp.getBoolean("lastReadMessages", false);
+        alternativeLongClick = sp.getBoolean("alternativeLongClick", false);
 
         Bundle args = getArguments();
 
@@ -142,7 +158,108 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         if (Build.VERSION.SDK_INT >= 8) {
             mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
+            gestureDetector = new GestureDetector(getActivity(), new GestureDetector.OnGestureListener() {
+                @Override
+                public boolean onDown(MotionEvent e) {
+                    return false;  //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public void onShowPress(MotionEvent e) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public boolean onSingleTapUp(MotionEvent e) {
+                    return false;  //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                    return false;  //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                    double velox = (e2.getX() - e1.getX()) / (e2.getEventTime() - e1.getEventTime());
+                    if (velocityX > velocityY && velox > 0.4) {
+                        final int motionRow = findMotionRow((int) e1.getY());
+                        if (motionRow != -1) {
+                            final ListView listView = getListView();
+                            final int itemIndex = listView.getFirstVisiblePosition() + motionRow;
+                            final Object item = listView.getAdapter().getItem(itemIndex);
+                            if (item instanceof JuickMessage) {
+                                final JuickMessage jm = (JuickMessage) item;
+                                if (jm.contextPost != null) {
+                                    preventClickOn = jm;
+                                    final View view = listView.getChildAt(motionRow);
+                                    TranslateAnimation ta = new TranslateAnimation(0, view.getWidth(), 0, 0);
+                                    // v = s/t   t=s/v
+                                    ta.setDuration((int)(view.getWidth()/(velox)));
+                                    ta.setAnimationListener(new Animation.AnimationListener() {
+                                        @Override
+                                        public void onAnimationStart(Animation animation) {
+                                            //To change body of implemented methods use File | Settings | File Templates.
+                                        }
+
+                                        @Override
+                                        public void onAnimationEnd(Animation animation) {
+                                            listAdapter.remove((JuickMessage)item);
+                                            new Thread() {
+                                                @Override
+                                                public void run() {
+                                                    Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID)jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
+                                                        @Override
+                                                        public Void apply(final Utils.RESTResponse response) {
+                                                            if (response.getErrorText() != null) {
+                                                                getActivity().runOnUiThread(new Runnable() {
+                                                                    @Override
+                                                                    public void run() {
+                                                                        Toast.makeText(getActivity(), response.getErrorText(), Toast.LENGTH_SHORT).show();
+                                                                    }
+                                                                });
+                                                            }
+                                                            return null;
+                                                        }
+                                                    });
+                                                }
+                                            }.start();
+                                        }
+
+                                        @Override
+                                        public void onAnimationRepeat(Animation animation) {
+                                            //To change body of implemented methods use File | Settings | File Templates.
+                                        }
+                                    });
+                                    view.startAnimation(ta);
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                }
+
+                int findMotionRow(int y) {
+                    final ListView listView = getListView();
+                    int childCount = listView.getChildCount();
+                    if (childCount > 0) {
+                        for (int i = 0; i < childCount; i++) {
+                            View v = listView.getChildAt(i);
+                            if (y <= v.getBottom()) {
+                                return i;
+                            }
+                        }
+                    }
+                    return -1;
+                }
+            });
         }
+
     }
 
     boolean prefetchMessages = false;
@@ -221,7 +338,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                if (view instanceof WebViewGallery) {
+                if (view instanceof ImageGallery) {
                     return false;   // no need that! (possibly, make this condition work only if not scrolled meanwhile)
                 }
                 final Object itemAtPosition = parent.getItemAtPosition(position);
@@ -235,7 +352,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             messageMenu.onItemLongClick(parent, view, position, id);
                         }
                     };
-                    listView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    if (alternativeLongClick) {
+                        listView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    } else {
+                        doOnClick.run();
+                        doOnClick = null;
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -254,10 +377,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         init();
     }
 
-    private MessageMenu openMessageMenu(ListView listView) {
-        return messagesSource.getMicroBlog().getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
-    }
-
+//    private MessageMenu openMessageMenu(ListView listView) {
+//        return messagesSource.getMicroBlog().getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
+//    }
+//
     public static void installDividerColor(ListView listView) {
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(listView.getContext());
         ColorDrawable divider = new ColorDrawable(colorTheme.getColor(ColorsTheme.ColorKey.DIVIDER, 0xFF808080));
@@ -271,14 +394,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container));
         listAdapter.imagePreviewHelper = imagePreviewHelper;
 
-        final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList();
+        final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList(getActivity());
         final ListView lv = getListView();
         boolean canUseMainList = getActivity() instanceof MainActivity; //
         if (savedMainList != null && canUseMainList) {
             messagesSource = savedMainList.messagesSource;
             initListWithMessages(savedMainList.messages);
             int selectItem = 0;
-            ArrayList<JuickMessage> messages = savedMainList.messages;
             ListAdapter wrappedAdapter = lv.getAdapter();
             for(int i=0; i< wrappedAdapter.getCount(); i++) {
                 Object ai = wrappedAdapter.getItem(i);
@@ -339,6 +461,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                                         setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
                                                     }
                                                     Log.w("com.juick.advanced","getFirst: end.");
+                                                    handler.postDelayed(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            onListLoaded();
+                                                        }
+                                                    }, 10);
                                                 }
                                             } catch (IllegalStateException e) {
                                                 Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
@@ -353,6 +481,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         }
                     };
                     if (restoreData == null) {
+                        if (getActivity() != null)
+                            messagesSource.setContext(getActivity());
                         messagesSource.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                             @Override
                             public Void apply(ArrayList<JuickMessage> juickMessages) {
@@ -366,6 +496,22 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             };
             thr.start();
+        }
+    }
+
+    protected void onListLoaded() {
+        if (messagesSource instanceof JAUnansweredMessagesSource && !sp.getBoolean("MessagesFragmentSlideInfoDisplayed", false)) {
+            sp.edit().putBoolean("MessagesFragmentSlideInfoDisplayed", true).commit();
+            new AlertDialog.Builder(getActivity())
+                    .setTitle(getActivity().getString(R.string.SlideToDeleteItems))
+                    .setMessage(getActivity().getString(R.string.UnneededItems_))
+                    .setIcon(R.drawable.mobile_gesture)
+                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            //To change body of implemented methods use File | Settings | File Templates.
+                        }
+                    }).show();
         }
     }
 
@@ -666,6 +812,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
+        if (jmsg == preventClickOn)
+            return;
         if (doOnClick != null) {
             if (System.currentTimeMillis() < doOnClickActualTime + 1000) {
                 doOnClick.run();
@@ -673,10 +822,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             doOnClick = null;
             return;
         }
-        JuickMessage jmsg = (JuickMessage) parent.getItemAtPosition(position);
         Intent i = new Intent(getActivity(), ThreadActivity.class);
         i.putExtra("mid", jmsg.getMID());
         i.putExtra("messagesSource", messagesSource);
+        if (jmsg.contextPost != null) {
+            i.putExtra("prefetched", jmsg);
+        }
         startActivity(i);
     }
 
@@ -792,6 +943,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public boolean onTouch(View view, MotionEvent event) {
         if (mScaleDetector != null) {
             mScaleDetector.onTouchEvent(event);
+        }
+        if (gestureDetector != null) {
+            gestureDetector.onTouchEvent(event);
         }
 
         final int y = (int) event.getY();

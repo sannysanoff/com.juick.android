@@ -28,6 +28,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -207,12 +208,12 @@ public class UserCenterActivity extends Activity {
             @Override
             public void onClick(View v) {
                 if (mm.listSelectedItem.User.UID == 0) {
-                    JuickMicroBlog.obtainUserIdByName(UserCenterActivity.this, mm.listSelectedItem.User.UName, "Getting Juick User Id", new Utils.Function<Void, String>() {
+                    JuickMicroBlog.obtainProperUserIdByName(UserCenterActivity.this, mm.listSelectedItem.User.UName, "Getting Juick User Id", new Utils.Function<Void, Pair<String, String>>() {
                         @Override
-                        public Void apply(String s) {
-                            mm.listSelectedItem.User.UID = Integer.parseInt(s);
+                        public Void apply(Pair<String, String> cred) {
+                            mm.listSelectedItem.User.UID = Integer.parseInt(cred.first);
                             mm.actionUserBlog();
-                            return null;  //To change body of implemented methods use File | Settings | File Templates.
+                            return null;
                         }
                     });
                 } else {

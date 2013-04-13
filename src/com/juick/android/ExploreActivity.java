@@ -22,11 +22,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
 
 /**
  *
@@ -77,7 +80,28 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
             }
             i.putExtra("messagesSource", jms);
             startActivity(i);
-
+        } else if (search.startsWith("#")) {
+            final String maybeJuickMessageIdStr = search.substring(1).trim();
+            try {
+                final int mid = Integer.parseInt(maybeJuickMessageIdStr);
+                Intent i = new Intent(this, ThreadActivity.class);
+                i.putExtra("mid", JuickMessageID.fromString(""+mid));
+                i.putExtra("messagesSource", getIntent().getSerializableExtra("messagesSource"));
+                startActivity(i);
+            } catch (Exception ex) {
+                Toast.makeText(getApplicationContext(), ex.toString(), Toast.LENGTH_SHORT).show();
+            }
+        } else if (search.startsWith("@")) {
+            final String maybeJuickUserId = search.substring(1).trim();
+            JuickMicroBlog.obtainProperUserIdByName(this, maybeJuickUserId, "Getting Juick User Id", new Utils.Function<Void, Pair<String, String>>() {
+                @Override
+                public Void apply(Pair<String,String> cred) {
+                    Intent i = new Intent(ExploreActivity.this, MessagesActivity.class);
+                    i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + maybeJuickUserId, ExploreActivity.this).putArg("user_id", cred.first));
+                    startActivity(i);
+                    return null;  //To change body of implemented methods use File | Settings | File Templates.
+                }
+            });
         } else {
             Intent i = new Intent(this, MessagesActivity.class);
             JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Search) + ": " + search, this);

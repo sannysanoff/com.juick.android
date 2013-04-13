@@ -110,6 +110,9 @@ public class JuickComAuthorizer extends Utils.URLAuth {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    /**
+     * must call on secondary thread
+     */
     public static String getBasicAuthString(Context context) {
         AccountManager am = AccountManager.get(context);
         Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
@@ -141,6 +144,26 @@ public class JuickComAuthorizer extends Utils.URLAuth {
             }
         }
         return "";
+    }
+
+    /**
+     * must call on secondary thread
+     */
+    public static String getPassword(Context context) {
+        AccountManager am = AccountManager.get(context);
+        Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
+        if (accs.length > 0) {
+            Bundle b = null;
+            try {
+                b = am.getAuthToken(accs[0], "", false, null, null).getResult();
+            } catch (Exception e) {
+                Log.e("getBasicAuthString", Log.getStackTraceString(e));
+            }
+            if (b != null) {
+                return b.getString(AccountManager.KEY_AUTHTOKEN);
+            }
+        }
+        return null;
     }
 
 }

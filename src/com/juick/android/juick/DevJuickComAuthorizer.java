@@ -40,7 +40,7 @@ import java.util.List;
 public class DevJuickComAuthorizer extends Utils.URLAuth {
     @Override
     public boolean acceptsURL(String url) {
-        return url.indexOf("//dev.juick.com/") != -1;
+        return url.indexOf("//juick.com/") != -1;
     }
 
     @Override
@@ -174,17 +174,17 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
     static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
-            HttpPost httpPost = new HttpPost("http://dev.juick.com/login");
+            HttpPost httpPost = new HttpPost("http://juick.com/login");
             ArrayList<NameValuePair> formData = new ArrayList<NameValuePair>();
             formData.add(new BasicNameValuePair("username", login));
             formData.add(new BasicNameValuePair("password", password));
             httpPost.setEntity(new UrlEncodedFormEntity(formData));
-            httpPost.setHeader("Referer", "http://dev.juick.com/login");
+            httpPost.setHeader("Referer", "http://juick.com/login");
             httpPost.setHeader("Accept-Charset", "UTF-8,*;q=0.5");
             httpPost.setHeader("Connection", "keep-alive");
             //httpPost.setHeader("Accept-Encoding", "gzip,deflate,sdch");
             httpPost.setHeader("Accept-Language", "en-US,en;q=0.8");
-            httpPost.setHeader("Origin", "http://dev.juick.com");
+            httpPost.setHeader("Origin", "http://juick.com");
             httpPost.setHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Ubuntu/12.04 Chromium/20.0.1132.47 Chrome/20.0.1132.47 Safari/536.11");
             httpPost.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             client.execute(httpPost, new ResponseHandler<Object>() {

@@ -165,7 +165,7 @@ public class XMPPControlActivity extends Activity {
                         lastConnect.setText(XMPPService.lastSuccessfulConnect == 0 ? "never" : sdf.format(new Date(XMPPService.lastSuccessfulConnect)));
                         memoryTotal.setText("" + (Runtime.getRuntime().totalMemory() / 1024) + " KB");
                         memoryUsed.setText("" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024) + " KB");
-                        instCount.setText("PLL:"+PressableLinearLayout.instanceCount+" MIV:"+MyImageView.instanceCount+" JMA:" + JuickMessagesAdapter.instanceCount + " MF:"+MessagesFragment.instanceCount+" TF:"+ThreadFragment.instanceCount+" TA:"+ThreadFragment.instanceCount+" WS:"+WsClient.instanceCount);
+                        instCount.setText("PLL:"+PressableLinearLayout.instanceCount+" MIV:"+MyImageView.instanceCount+" JMA:" + JuickMessagesAdapter.instanceCount + " BC:"+BitmapCounts.counts.size()+" TF:"+ThreadFragment.instanceCount+" TA:"+ThreadFragment.instanceCount+" WS:"+WsClient.instanceCount);
                         infoDate.setText("" + sdf.format(new Date()));
                         lastGCM.setText("" + (XMPPService.lastGCMMessage != null ? sdf.format(XMPPService.lastGCMMessage) : " --- "));
                         lastWS.setText("" + (XMPPService.lastWSMessage != null ? sdf.format(XMPPService.lastWSMessage) : " --- "));

@@ -34,6 +34,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.util.Pair;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -247,12 +248,12 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     public void onClick(View v) {
         if (v == bTags) {
-            JuickMicroBlog.withUserId(this, new Utils.Function<Void, Integer>() {
+            JuickMicroBlog.withUserId(this, new Utils.Function<Void, Pair<Integer,String>>() {
                 @Override
-                public Void apply(Integer uid) {
+                public Void apply(Pair<Integer, String> cred) {
                     Intent i = new Intent(NewMessageActivity.this, TagsActivity.class);
                     i.setAction(Intent.ACTION_PICK);
-                    i.putExtra("uid", uid.intValue());
+                    i.putExtra("uid", cred.first.intValue());
                     i.putExtra("multi", true);
                     startActivityForResult(i, ACTIVITY_TAGS);
                     return null;

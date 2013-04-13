@@ -44,28 +44,35 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
         }
     }
 
-    public static void launchXMPPPrivacyDialog(final Activity activity, boolean weDisabled) {
+    public static void launchXMPPPrivacyDialog(final Activity activity, final boolean weDisabled) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         sp.edit().putBoolean("xmpp_privacy_warned", true).putBoolean("xmpp_privacy_should_warn", false).commit();
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final AlertDialog alerDialog;
-        alerDialog = builder
-                .setTitle(activity.getString(R.string.XMPP_client))
-                .setMessage(activity.getString(R.string.NowUsesServerSideXMPPClient)+" "+ (weDisabled ? activity.getString(R.string.WeTurnedOffXMPP) : ""))
-                .setCancelable(true)
-                .setNeutralButton(R.string.ReadPrivacyPolicy, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        new WhatsNew(activity).showPrivacyPolicy();
-                    }
-                })
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                }).create();
-        alerDialog.show();
+        Runnable loop = new Runnable() {
+            Runnable thiz = this;
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                final AlertDialog alerDialog;
+                alerDialog = builder
+                        .setTitle(activity.getString(R.string.XMPP_client))
+                        .setMessage(activity.getString(R.string.NowUsesServerSideXMPPClient)+" "+ (weDisabled ? activity.getString(R.string.WeTurnedOffXMPP) : ""))
+                        .setCancelable(true)
+                        .setNeutralButton(R.string.ReadPrivacyPolicy, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new WhatsNew(activity).showPrivacyPolicy(thiz);
+                            }
+                        })
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        }).create();
+                alerDialog.show();
+            }
+        };
+        loop.run();
     }
 
     @Override
@@ -134,7 +141,7 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
             });
         }
         if (intent.getAction().equals("privacy")) {
-            new WhatsNew(this).showPrivacyPolicy();
+            new WhatsNew(this).showPrivacyPolicy(null);
         }
         if (intent.getAction().equals("various_info")) {
             Intent prefsIntent = new Intent(this, NewJuickPreferenceActivityMT.class);

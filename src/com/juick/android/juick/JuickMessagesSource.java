@@ -33,7 +33,8 @@ public abstract class JuickMessagesSource extends MessagesSource {
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
         JuickMessage jmsg = new JuickMessage();
         jmsg.source = json.toString();
-        jmsg.setMID(new JuickMessageID(json.getInt("mid")));
+        final int mid = json.has("mid") ? json.getInt("mid") : json.getInt("parent_mid");   // for replies unprocessed
+        jmsg.setMID(new JuickMessageID(mid));
         if (json.has("rid")) {
             jmsg.setRID(json.getInt("rid"));
         }

@@ -50,6 +50,11 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private long doOnClickActualTime;
     private MyImageView navMenu;
     ImagePreviewHelper imagePreviewHelper;
+    /**
+     * @see MessagesFragment#alternativeLongClick
+     */
+    private boolean alternativeLongClick;
+    private JuickMessage prefetched;    // this is partially obtained thread originating in 'pending' replies screen
 
     public interface ThreadExternalUpdater {
 
@@ -104,6 +109,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
         parentMessagesSource = (MessagesSource) getArguments().getSerializable("messagesSource");
+        prefetched = (JuickMessage) getArguments().getSerializable("prefetched");
         if (parentMessagesSource != null)
             parentMessagesSource.setContext(getActivity());
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -237,7 +243,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 if (itemAtPosition instanceof JuickMessage && parentMessagesSource != null) {
                     final JuickMessage msg = (JuickMessage) itemAtPosition;
                     if (msg.getMID() != null) {
-                        getListView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                         doOnClickActualTime = System.currentTimeMillis();
                         doOnClick = new Runnable() {
                             @Override
@@ -246,6 +251,14 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                 messageMenu.onItemLongClick(parent, view, position, id);
                             }
                         };
+                        if (alternativeLongClick) {
+                            getListView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                        } else {
+                            doOnClick.run();
+                            doOnClick = null;
+                            return true;
+                        }
+
                     }
 
                 }
@@ -266,13 +279,26 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 };
                 if (restoreData == null) {
                     if (parentMessagesSource != null) {
-                        parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
-                            @Override
-                            public Void apply(ArrayList<JuickMessage> messages) {
-                                then.apply(new MessagesFragment.RetainedData(messages, null));
-                                return null;
+                        if (prefetched != null) {
+                            ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
+                            messages.add(prefetched.contextPost);
+                            if (prefetched.contextReply != null) {
+                                messages.add(prefetched.contextReply);
                             }
-                        });
+                            messages.add(prefetched);
+                            prefetched.contextPost = null;      // don't confuse later
+                            prefetched.contextReply = null;
+                            prefetched = null;      // to enable proper reload
+                            then.apply(new MessagesFragment.RetainedData(messages, null));
+                        } else {
+                            parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                                @Override
+                                public Void apply(ArrayList<JuickMessage> messages) {
+                                    then.apply(new MessagesFragment.RetainedData(messages, null));
+                                    return null;
+                                }
+                            });
+                        }
                     }
                 } else {
                     then.apply((MessagesFragment.RetainedData) restoreData);

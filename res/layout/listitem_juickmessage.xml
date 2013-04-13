@@ -7,22 +7,41 @@
     android:drawingCacheQuality="low"
     android:padding="2dip">
 
-    <RelativeLayout
+    <com.juick.android.MyRelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             >
+        <ImageView
+                android:id="@+id/preuserpic"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="48px"
+                android:layout_width="32px"
+                android:visibility="gone"
+                android:layout_height="32px"
+                android:gravity="top"/>
+        <com.juick.android.MyTextView
+            android:id="@+id/pretext"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:minLines="2"
+            android:alpha="0.85"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="48px"
+            android:visibility="gone"
+            android:gravity="top"/>
         <com.juick.android.MyTextView
             android:id="@+id/text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_below="@id/pretext"
             android:text="xxxxxx"
             android:gravity="top"/>
         <ImageView
                 android:id="@+id/userpic"
                 android:layout_width="32px"
+                android:layout_below="@id/pretext"
                 android:layout_height="32px"
                 android:gravity="top"/>
-    </RelativeLayout>
+    </com.juick.android.MyRelativeLayout>
 
 </com.juick.android.PressableLinearLayout>

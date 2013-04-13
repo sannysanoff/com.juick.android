@@ -238,6 +238,7 @@ public class BNWMicroBlog implements MicroBlog {
                 public void action() {
                     final Bundle args = new Bundle();
                     BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/today");
+                    ms.setCanNext(false);
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }

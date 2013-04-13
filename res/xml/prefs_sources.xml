@@ -78,6 +78,11 @@
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
+            android:key="msrcUnanswered"
+            android:title="@string/navigationUnanswered"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
             android:key="msrcSaved"
             android:title="@string/navigationSaved"
             android:defaultValue="false"

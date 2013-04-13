@@ -200,7 +200,7 @@ public class MainActivity extends FragmentActivity implements
 //            bar.selectTab(bar.getTabAt(lastNavigationPosition1));
 //        }
 
-        MessageListBackingData mlbd = JuickAdvancedApplication.instance.getSavedList();
+        MessageListBackingData mlbd = JuickAdvancedApplication.instance.getSavedList(getActivity());
         if (mlbd != null) {
             for (int i = 0; i < navigationItems.size(); i++) {
                 NavigationItem navigationItem = navigationItems.get(i);
@@ -445,7 +445,7 @@ public class MainActivity extends FragmentActivity implements
 
     private JuickMessagesSource getSubscriptionsMessagesSource(int labelId) {
         if (sp.getBoolean("web_for_subscriptions", false)) {
-            return new JuickWebCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://dev.juick.com/?show=my");
+            return new JuickWebCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://juick.com/?show=my");
         } else {
             return new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home");
         }
@@ -622,7 +622,7 @@ public class MainActivity extends FragmentActivity implements
         restyle();
         NavigationItem thisItem = navigationItems.get(itemPosition);
         if (lastNavigationItem == thisItem) return false;       // happens during screen rotate
-        MessageListBackingData savedList = JuickAdvancedApplication.instance.getSavedList();
+        MessageListBackingData savedList = JuickAdvancedApplication.instance.getSavedList(this);
         if (savedList != null) {
             if (thisItem.labelId != savedList.navigationItemLabelId) {
                 JuickAdvancedApplication.instance.setSavedList(null, false);

@@ -158,6 +158,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         Bundle args = new Bundle();
         args.putSerializable("mid", mid);
         args.putSerializable("messagesSource", messagesSource);
+        args.putSerializable("prefetched", i.getSerializableExtra("prefetched"));
         args.putBoolean("scrollToBottom", i.getBooleanExtra("scrollToBottom", false));
         tf.setArguments(args);
         ft.add(R.id.threadfragment, tf);
@@ -213,7 +214,8 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         etMessage.setEnabled(state);
         bSend.setEnabled(state);
     }
-    
+
+    boolean focusedOnceOnPrefetched = false;
     public void onThreadLoaded(JuickMessage message) {
         String title = "@" + message.User.UName;
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -224,6 +226,13 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
         TextView oldTitle = (TextView)findViewById(R.id.old_title);
         oldTitle.setText(title);
         DatabaseService.rememberVisited(message);
+        final Intent i = getIntent();
+        if (i.getSerializableExtra("prefetched") != null && !focusedOnceOnPrefetched) {
+            focusedOnceOnPrefetched = true;
+            final JuickMessage lastReply = (JuickMessage) tf.getListView().getAdapter().getItem(tf.getListView().getAdapter().getCount() - 1);
+            onReplySelected(lastReply);
+            etMessage.requestFocus();
+        }
     }
     
     public void onReplySelected(final JuickMessage msg) {

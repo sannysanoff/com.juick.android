@@ -84,4 +84,14 @@ public class PressableLinearLayout extends LinearLayout {
         }
     }
 
+    public boolean blockLayoutRequests;
+
+    @Override
+    public void requestLayout() {
+        if (blockLayoutRequests) return;
+        super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+
+
 }

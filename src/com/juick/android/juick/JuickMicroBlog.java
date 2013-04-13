@@ -15,12 +15,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
+import com.juick.android.ja.JAUnansweredMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
@@ -262,6 +264,33 @@ public class JuickMicroBlog implements MicroBlog {
                 activity.mf.clearSavedPosition(activity);
             }
         });
+        if (sp.getBoolean("msrcUnanswered", false)) {
+            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationUnanswered) {
+                MainActivity.NavigationItem thiz = this;
+
+                @Override
+                public void action() {
+                    JuickAdvancedApplication.confirmAdvancedPrivacy(
+                            activity,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    final Bundle args = new Bundle();
+                                    JAUnansweredMessagesSource ms = new JAUnansweredMessagesSource(activity);
+                                    args.putSerializable("messagesSource", ms);
+                                    activity.runDefaultFragmentWithBundle(args, thiz);
+                                }
+
+                            }, new Runnable() {
+                                @Override
+                                public void run() {
+                                    activity.restoreLastNavigationPosition();
+                                }
+                            }
+                    );
+                }
+            });
+        }
         if (sp.getBoolean("msrcTopMessages", true)) {
             navigationItems.add(new MainActivity.NavigationItem(R.string.navigationTop) {
                 @Override
@@ -291,11 +320,11 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final MainActivity.NavigationItem thiz = this;
-                    withUserId(activity, new Utils.Function<Void, Integer>() {
+                    withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
                         @Override
-                        public Void apply(Integer uid) {
+                        public Void apply(Pair<Integer, String> cred) {
                             final Bundle args = new Bundle();
-                            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity).putArg("user_id", "" + uid);
+                            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity).putArg("user_id", "" + cred.first);
                             ms.setKind("my_home");
                             args.putSerializable("messagesSource", ms);
                             activity.runDefaultFragmentWithBundle(args, thiz);
@@ -311,7 +340,7 @@ public class JuickMicroBlog implements MicroBlog {
                 public void action() {
                     final Bundle args = new Bundle();
                     JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://s.jugregator.org/api");
-                    ms.canNext = false;
+                    ms.setCanNext(false);
                     ms.setKind("srachiki");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
@@ -323,7 +352,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://dev.juick.com/?show=private");
+                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://juick.com/?show=private");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -334,7 +363,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://dev.juick.com/?show=discuss");
+                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://juick.com/?show=discuss");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -551,34 +580,36 @@ public class JuickMicroBlog implements MicroBlog {
         thr.start();
     }
 
-    public static void withUserId(final Activity activity, final Utils.Function<Void,Integer> action) {
+    public static void withUserId(final Activity activity, final Utils.Function<Void,Pair<Integer, String>> action) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         String myUserId = sp.getString("myUserId", "");
+        String myUserName = sp.getString("myUserName", "");
         try {
             Integer.parseInt(myUserId);
         } catch (Exception ex) {
             myUserId = "";
         }
-        if (myUserId.equals("")) {
+        if (myUserId.equals("") || myUserName.equals("")) {
             final String userName = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
             String titleOfDialog = activity.getString(R.string.GettingYourId);
 
-            final Utils.Function<Void, String> withUserId = new Utils.Function<Void, String>() {
+            final Utils.Function<Void, Pair<String, String>> withUserId = new Utils.Function<Void, Pair<String, String>>() {
                 @Override
-                public Void apply(String uidS) {
-                    sp.edit().putString("myUserId", uidS).commit();
-                    action.apply(Integer.parseInt(uidS));
+                public Void apply(Pair<String, String> cred) {
+                    sp.edit().putString("myUserId", cred.first).commit();
+                    sp.edit().putString("myUserName", cred.second).commit();
+                    action.apply(new Pair<Integer, String>(Integer.parseInt(cred.first), cred.second));
                     return null;
                 }
             };
 
-            obtainUserIdByName(activity, userName, titleOfDialog, withUserId);
+            obtainProperUserIdByName(activity, userName, titleOfDialog, withUserId);
         } else {
-            action.apply(Integer.parseInt(myUserId));
+            action.apply(new Pair<Integer, String>(Integer.parseInt(myUserId), myUserName));
         }
     }
 
-    public static void obtainUserIdByName(final Activity activity, final String userName, String titleOfDialog, final Utils.Function<Void, String> withUserId) {
+    public static void obtainProperUserIdByName(final Activity activity, final String userName, String titleOfDialog, final Utils.Function<Void, Pair<String,String>> withUserId) {
         final ProgressDialog pd = new ProgressDialog(activity);
         pd.setTitle(titleOfDialog);
         pd.setMessage(activity.getString(R.string.ConnectingToWwwJuick));
@@ -612,10 +643,20 @@ public class JuickMicroBlog implements MicroBlog {
                             throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
                         }
                         final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
+
+                        int ix3 = retval.indexOf("alt=\"", ix);
+                        if (ix3 == -1) {
+                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
+                        }
+                        int ix4 = retval.indexOf("\"", ix3+5);
+                        if (ix4 == -1 || ix4 - ix3 > 25) {
+                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
+                        }
+                        final String uname = retval.substring(ix3+5, ix4);
                         activity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                withUserId.apply(uidS);
+                                withUserId.apply(new Pair<String, String>(uidS, uname));
                             }
                         });
                     }

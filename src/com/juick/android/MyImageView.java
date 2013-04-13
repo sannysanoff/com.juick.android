@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -8,6 +9,7 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.widget.ImageView;
+import com.juickadvanced.R;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,6 +20,7 @@ import android.widget.ImageView;
  */
 public class MyImageView extends ImageView  {
 
+    public static final int DESTROYED_TAG = R.id.juick_message_row;
     public static int instanceCount = 0;
     {
         instanceCount++;
@@ -85,7 +88,16 @@ public class MyImageView extends ImageView  {
         if (drawable instanceof BitmapDrawable) {
             BitmapDrawable bd = (BitmapDrawable)drawable;
             BitmapCounts.releaseBitmap(bd.getBitmap());
+            setImageDrawable(null);
         }
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        try {
+            super.onDraw(canvas);
+        } catch (Exception ex) {
+            // racing conditions/recycling bitmap
+        }
+    }
 }

@@ -65,6 +65,7 @@ public class PstoMicroBlog implements MicroBlog {
                 public void action() {
                     final Bundle args = new Bundle();
                     PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "http://psto.net/top");
+                    ms.setCanNext(false);
                     args.putSerializable("messagesSource", ms);
                     mainActivity.runDefaultFragmentWithBundle(args, this);
                 }

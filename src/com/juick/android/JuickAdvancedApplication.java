@@ -1,7 +1,9 @@
 package com.juick.android;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Application;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -107,7 +109,7 @@ public class JuickAdvancedApplication extends Application {
 
     public static String registrationId;
 
-    public MessageListBackingData getSavedList() {
+    public MessageListBackingData getSavedList(Activity context) {
         MessageListBackingData savedList = null;
         File savedListFile = getSavedListFile();
         if (savedListFile.exists()) {
@@ -116,7 +118,7 @@ public class JuickAdvancedApplication extends Application {
                 savedList = (MessageListBackingData) objectInputStream.readObject();
                 objectInputStream.close();
                 if (savedList != null) {
-                    savedList.messagesSource.setContext(this);
+                    savedList.messagesSource.setContext(context);
                     if (savedList.messages.size() == 0) {
                         savedList = null;
                     }
@@ -166,4 +168,41 @@ public class JuickAdvancedApplication extends Application {
         return new File(getCacheDir(),"savedMainList.ser");
     }
 
+    public static void confirmAdvancedPrivacy(final MainActivity activity, final Runnable success, final Runnable refuse) {
+        final boolean confirmed = sp.getBoolean("advanced_privacy_confirmed", false);
+        if (!confirmed) {
+            new AlertDialog.Builder(activity)
+                    .setTitle(activity.getString(R.string.PrivacyWarning))
+                    .setMessage(activity.getString(R.string.PressOkToTrust))
+                    .setNeutralButton(R.string.ReadPrivacyPolicy, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            new WhatsNew(activity).showPrivacyPolicy(new Runnable() {
+                                @Override
+                                public void run() {
+                                    confirmAdvancedPrivacy(activity, success, refuse);
+                                }
+                            });
+                        }
+                    })
+                    .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            sp.edit().putBoolean("advanced_privacy_confirmed", true).commit();
+                            success.run();
+                        }
+                    })
+                    .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (refuse != null) {
+                                refuse.run();
+                            }
+                        }
+                    }).show();
+        } else {
+            success.run();
+        }
+    }
 }

@@ -12,6 +12,7 @@ package com.juick.android;
  *
  */
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
@@ -243,5 +244,14 @@ public class MyScrollImageView extends ImageView {
         setImageMatrix(matrix);
         saveScale = 1;
         fixTrans();
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        try {
+            super.onDraw(canvas);
+        } catch (Exception ex) {
+            // racing conditions/recycling bitmap
+        }
     }
 }

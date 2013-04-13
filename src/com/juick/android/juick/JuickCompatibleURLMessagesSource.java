@@ -32,7 +32,6 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     int page = 0;
     int useBackupServer = -1;
     String title;
-    public boolean canNext = true;
 
 
 
@@ -291,13 +290,4 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
         return false;
     }
 
-
-    @Override
-    public boolean canNext() {
-        return canNext;
-    }
-
-    public void setCanNext(boolean canNext) {
-        this.canNext = canNext;
-    }
 }

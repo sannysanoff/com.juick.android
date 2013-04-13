@@ -18,6 +18,7 @@
             android:id="@+id/editSearch"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:textCursorDrawable="@null"
             android:layout_toLeftOf="@id/buttonFind"
             android:hint="@string/Search"/>
     </RelativeLayout>

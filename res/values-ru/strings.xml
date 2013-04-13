@@ -150,6 +150,7 @@
     <string name="navigationPrivate">Приват(веб)</string>
     <string name="navigationDiscuss">Дискусс.(веб)</string>
     <string name="navigationUnread">Все нечитанные</string>
+    <string name="navigationUnanswered">Неотвеченные</string>
     <string name="navigationSaved">Сохраненные</string>
     <string name="XMPP_client">XMPP/Jabber клиент</string>
     <string name="XMPPControl">XMPP статус</string>
@@ -435,6 +436,11 @@
     <string name="ReallyDownload">Таки скачать оригинал?</string>
     <string name="FullsizeDownloadOverMobile">Большие файлы по моб.сети</string>
     <string name="WhenDownloading___">Разрешать использование мобильной сети для скачивания оригиналов изображений? Если нет, то только через Wi-Fi.</string>
+    <string name="SlideToDeleteItems">Пальцем направо выкидывать</string>
+    <string name="UnneededItems_">(ненужные нотификации)</string>
+    <string name="PrivacyWarning">Требуется подтверждение</string>
+    <string name="PressOkToTrust">Нажмите OK если вы доверяете Juick Advanced проверить ваш аккаунт Juick на сервере juick advanced. Ваш пароль отправляется
+        туда при необходимости (по https), но не сохраняется в файлах или БД. См. пункт 8.1 политики конфиденциальности.</string>
 
 
 </resources>

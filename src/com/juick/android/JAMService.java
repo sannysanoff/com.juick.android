@@ -86,7 +86,7 @@ public class JAMService extends Service {
                     }
                     String juickAccountName = JuickComAuthorizer.getJuickAccountName(JAMService.this);
                     String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
-                    if (localClient == client) {
+                    if (localClient == client && juickAccountName != null) {
                         // [race condition here]
                         localClient.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
                             @Override

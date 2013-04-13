@@ -18,15 +18,11 @@
 package com.juick.android;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
@@ -35,7 +31,6 @@ import android.text.Layout.Alignment;
 import android.text.style.*;
 import android.util.Log;
 import android.view.*;
-import android.webkit.WebView;
 import android.widget.*;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
@@ -205,6 +200,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public View getView(int position, View convertView, ViewGroup parent) {
         final JuickMessage jmsg = getItem(position);
         View v = convertView;
+        if (v != null) {
+            v.requestLayout();
+        }
 
         float neededTextSize = getDefaultTextSize(getContext()) * textScale;
         if (jmsg.User != null && jmsg.Text != null) {
@@ -234,62 +232,42 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 //                }
             }
             final LinearLayout ll = (LinearLayout)v;
-            final TextView t = (TextView) v.findViewById(R.id.text);
+            final MyTextView t = (MyTextView) v.findViewById(R.id.text);
+            final MyTextView pret = (MyTextView) v.findViewById(R.id.pretext);
             final ListRowRuntime lrr = new ListRowRuntime(jmsg, null, 0);
+            final ListRowRuntime prelrr = jmsg.contextPost != null ? new ListRowRuntime(jmsg.contextPost, null, 0) : null;
             ListRowRuntime oldlrr = (ListRowRuntime)t.getTag();
             if (oldlrr != null) {
                 oldlrr.removeListenerIfExists();
             }
             t.setTag(lrr);
             t.setTextSize(neededTextSize);
+            pret.setTag(prelrr);
+            pret.setTextSize(neededTextSize);
 
             final ParsedMessage parsedMessage;
+            ParsedMessage parsedPreMessage = null;
             if (type == TYPE_THREAD && jmsg.getRID() == 0) {
                 parsedMessage = formatFirstMessageText(jmsg);
             } else {
                 parsedMessage = formatMessageText(getContext(), jmsg, false);
             }
+            if (jmsg.contextPost != null) {
+                String savedText = jmsg.contextPost.Text;
+                if (savedText.length() > 200) {
+                    jmsg.contextPost.Text = savedText.substring(0, 200)+".......";
+                }
+                parsedPreMessage = formatMessageText(getContext(), jmsg.contextPost, false);
+                jmsg.contextPost.Text = savedText;
+            }
 
             final ImageView userPic = (ImageView) v.findViewById(R.id.userpic);
-            if (parsedMessage.userpicSpan != null) {
-                lrr.pictureSize = (int)(parsedMessage.userpicSpan.getLeadingMargin(true) * 0.9);
-                userPic.getLayoutParams().width = lrr.pictureSize;
-                userPic.getLayoutParams().height = lrr.pictureSize;
-                int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
-                userPic.setPadding(padding, padding, padding, padding);
-
-                final UserpicStorage.AvatarID avatarId = getAvatarId(jmsg);
-                lrr.avatarID = avatarId;
-
-                lrr.userpicListener = new UserpicStorage.Listener() {
-                    @Override
-                    public void onUserpicReady(UserpicStorage.AvatarID id, int size) {
-                        lrr.removeListenerIfExists();
-                        final Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
-                        if (userpic != null) {
-                            ((Activity)getContext()).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ListRowRuntime tag = (ListRowRuntime)t.getTag();
-                                    if (tag.jmsg.getMID() == jmsg.getMID()) {
-                                        userPic.setImageBitmap(userpic);
-                                    }
-                                    //To change body of implemented methods use File | Settings | File Templates.
-                                }
-                            });
-                        }
-                    }
-                };
-                Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
-                if (userpic == null) {
-                    // until it loads, we will put proper size placeholder (later re-layout minimization)
-                    userpic = UserpicStorage.instance.getUserpic(getContext(), UserpicStorage.NO_AVATAR, lrr.pictureSize, null);
-                }
-                userPic.setImageBitmap(userpic);    // can be null
-            } else {
-                userPic.setImageBitmap(null);
+            final ImageView preuserPic = (ImageView) v.findViewById(R.id.preuserpic);
+            startLoadUserPic(jmsg, t, lrr, parsedMessage, userPic);
+            if (parsedPreMessage != null) {
+                startLoadUserPic(jmsg.contextPost, pret, prelrr, parsedPreMessage, preuserPic);
             }
-            if (type != TYPE_THREAD && trackLastRead) {
+            if (type != TYPE_THREAD && trackLastRead && jmsg.getRID() < 1) {
                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                     @Override
                     public void withService(DatabaseService service) {
@@ -304,7 +282,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             if (tag.jmsg.getMID() == jmsg.getMID()) {
                                                 // still valid
                                                 parsedMessage.markAsRead(getContext());
+//                                                t.blockLayoutRequests = true;
                                                 t.setText(parsedMessage.textContent);
+//                                                t.layout(t.getLeft(), t.getTop(), t.getRight(), t.getBottom());
+//                                                t.blockLayoutRequests = false;
                                             }
                                         }
                                     });
@@ -325,9 +306,17 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             if (!parsedMessage.read) {  // could be set synchronously by the getMessageReadStatus, above
                 t.setText(parsedMessage.textContent);
             }
+            if (parsedPreMessage != null) {
+                pret.setText(parsedPreMessage.textContent);
+                pret.setVisibility(View.VISIBLE);
+                preuserPic.setVisibility(View.VISIBLE);
+            } else {
+                pret.setVisibility(View.GONE);
+                preuserPic.setVisibility(View.GONE);
+            }
             final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
             if (images.size() > 0 && !imageLoadMode.equals("off")) {
-                final WebViewGallery gallery = new WebViewGallery(getContext());
+                final ImageGallery gallery = new ImageGallery(getContext());
                 gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 gallery.setSpacing(20);
                 gallery.setVisibility(View.VISIBLE);
@@ -350,37 +339,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     }
                                     lastClick = 0;  // triple click prevention
                                     return;
-                                    /*
-                                    if (!imageLoader.useOriginal) {
-                                        new AlertDialog.Builder(getContext())
-                                                .setTitle(R.string.DownloadOriginal)
-                                                .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        imageLoader.useOriginal = true;
-                                                        imageLoader.loader.getDestFile().delete();
-                                                        ImageLoader oldLoader = imageLoader.loader;
-                                                        imageLoader.loader = null;
-                                                        oldLoader.resetAdapter();
-                                                    }
-                                                })
-                                                .setNeutralButton(R.string.JustSame, new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        imageLoader.loader.getDestFile().delete();
-                                                        ImageLoader oldLoader = imageLoader.loader;
-                                                        imageLoader.loader = null;
-                                                        oldLoader.resetAdapter();
-                                                    }
-                                                })
-                                                .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        dialog.dismiss();
-                                                    }
-                                                }).show();
-                                    }
-                                    */
                                 }
                                 lastClick = System.currentTimeMillis();
                             }
@@ -394,7 +352,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, HEIGHT + 20));
                 gallery.setAdapter(new BaseAdapter() {
 
-                    View[] views = new View[images.size()];
+                    LRUCache<Integer, View> views = new LRUCache<Integer, View>(5, gallery) {
+
+                        @Override
+                        void cleanupValue(View view) {
+                            cleanupRow(view);
+                        }
+
+                    };
 
                     @Override
                     public int getCount() {
@@ -413,12 +378,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
                     @Override
                     public View getView(int i, View view, ViewGroup viewGroup) {
-                        if (views[i] != null) return views[i];
+                        final View cached = views.get(i);
+                        if (cached != null) return cached;
                         if (view == null) {
                             view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
-                            views[i] = view;
+                            views.put(i, view);
                             ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
                             gallery.addInitializedNonWebView(wv);
+                        } else {
+                            cleanupRow(view);
                         }
                         view.setMinimumHeight(HEIGHT);
                         ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
@@ -438,18 +406,22 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         MainActivity.restyleChildrenOrWidget(view, true);
                         return view;
                     }
+
+                    private void cleanupRow(View view) {
+                        ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
+                        if (wv != null) {
+                            final Drawable drawable = wv.getDrawable();
+                            if (drawable instanceof BitmapDrawable) {
+                                BitmapDrawable bd = (BitmapDrawable)drawable;
+                                BitmapCounts.releaseBitmap(bd.getBitmap());
+                                wv.setImageDrawable(null);
+                            }
+
+                        }
+                    }
                 });
             }
 
-
-            /*
-            ImageView i = (ImageView) v.findViewById(R.id.icon);
-            if (jmsg.User != null && jmsg.User.Avatar != null) {
-            i.setImageDrawable((Drawable) jmsg.User.Avatar);
-            } else {
-            i.setImageResource(R.drawable.ic_user_32);
-            }
-             */
 
         } else {
             if (v == null || !(v instanceof TextView)) {
@@ -468,6 +440,47 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         MainActivity.restyleChildrenOrWidget(v, true);
 
         return v;
+    }
+
+    private void startLoadUserPic(final JuickMessage jmsg, final MyTextView t, final ListRowRuntime lrr, ParsedMessage parsedMessage, final ImageView userPic) {
+        if (parsedMessage.userpicSpan != null) {
+            lrr.pictureSize = (int)(parsedMessage.userpicSpan.getLeadingMargin(true) * 0.9);
+            userPic.getLayoutParams().width = lrr.pictureSize;
+            userPic.getLayoutParams().height = lrr.pictureSize;
+            int padding = ((parsedMessage.userpicSpan.getLeadingMargin(true)) - lrr.pictureSize)/2;
+            userPic.setPadding(padding, padding, padding, padding);
+
+            final UserpicStorage.AvatarID avatarId = getAvatarId(jmsg);
+            lrr.avatarID = avatarId;
+
+            lrr.userpicListener = new UserpicStorage.Listener() {
+                @Override
+                public void onUserpicReady(UserpicStorage.AvatarID id, int size) {
+                    lrr.removeListenerIfExists();
+                    final Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
+                    if (userpic != null) {
+                        ((Activity)getContext()).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ListRowRuntime tag = (ListRowRuntime)t.getTag();
+                                if (tag.jmsg.getMID() == jmsg.getMID()) {
+                                    userPic.setImageBitmap(userpic);
+                                }
+                                //To change body of implemented methods use File | Settings | File Templates.
+                            }
+                        });
+                    }
+                }
+            };
+            Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
+            if (userpic == null) {
+                // until it loads, we will put proper size placeholder (later re-layout minimization)
+                userpic = UserpicStorage.instance.getUserpic(getContext(), UserpicStorage.NO_AVATAR, lrr.pictureSize, null);
+            }
+            userPic.setImageBitmap(userpic);    // can be null
+        } else {
+            userPic.setImageBitmap(null);
+        }
     }
 
     public static UserpicStorage.AvatarID getAvatarId(JuickMessage jmsg) {
@@ -568,9 +581,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 }
             }
             ViewGroup vg = (ViewGroup)view;
-            if (vg.getChildCount() > 1 && vg.getChildAt(1) instanceof WebViewGallery) {
+            if (vg.getChildCount() > 1 && vg.getChildAt(1) instanceof ImageGallery && vg instanceof PressableLinearLayout) {
+                PressableLinearLayout pll = (PressableLinearLayout)vg;
                 // our view
-                WebViewGallery gallery = (WebViewGallery)vg.getChildAt(1);
+                ImageGallery gallery = (ImageGallery)vg.getChildAt(1);
                 Object tag = gallery.getTag();
                 if (tag instanceof HashMap) {
                     HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
@@ -578,9 +592,16 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         imageLoader.loader.terminate();
                     }
                 }
+                pll.blockLayoutRequests = true;
                 gallery.cleanup();
                 gallery.setTag(null);
                 vg.removeViewAt(1);
+                vg.measure(
+                        View.MeasureSpec.makeMeasureSpec(vg.getRight()- vg.getLeft(), View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                        );
+                vg.layout(vg.getLeft(), vg.getTop(), vg.getRight(), vg.getTop() + vg.getMeasuredHeight());
+                pll.blockLayoutRequests = false;
             }
         }
     }
@@ -927,6 +948,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public void addAllMessages(ArrayList<JuickMessage> messages) {
+        ArrayList<JuickMessage> toAdd = new ArrayList<JuickMessage>();
         for (JuickMessage message : messages) {
             boolean canAdd = true;
             if (message.getRID() > 0) {
@@ -942,9 +964,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 }
             }
             if (canAdd) {
-                add(message);
+                toAdd.add(message);
             }
         }
+        addAll(toAdd);
     }
 
     public static class ImageLoaderConfiguration {
@@ -973,11 +996,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         DefaultHttpClient httpClient;
         HttpGet httpGet;
         boolean notOnlyImage;
-        WebViewGallery gallery;
+        ImageGallery gallery;
 
         String suffix;
 
-        public ImageLoader(WebViewGallery gallery, final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
+        public ImageLoader(ImageGallery gallery, final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
             this.gallery = gallery;
             this.url = url;
             this.listRow = listRow;
@@ -1069,7 +1092,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             }
                                             content.close();
                                             outContent.close();
-                                            updateStatus("Done.." + (totalRead / 1024) + "K");
+                                            updateStatus("Done.." + (totalRead / 1024) + "K" + (terminated ? " (t)":""));
                                             if (terminated) {
                                                 destFile.delete();
                                             } else {
@@ -1090,6 +1113,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                         return null;
                                                     } else {
                                                         updateStatus("Invalid HTML");
+                                                        terminated = true;
                                                     }
                                                 }
                                             }
@@ -1171,18 +1195,23 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 if (destFile.getPath().equals(webView.getTag())) return;    // already there
                 webView.setTag(destFile.getPath());
                 BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(destFile.getPath(), opts);
-                imageW = opts.outWidth;
-                imageH = opts.outHeight;
+                if (bitmap != null) {
+                    imageW = bitmap.getWidth();
+                    imageH = bitmap.getHeight();
+                } else {
+                    opts.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(destFile.getPath(), opts);
+                    imageW = opts.outWidth;
+                    imageH = opts.outHeight;
+                }
                 int screenWidth = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth();
                 double scaleFactor = (((double)destHeight) / imageH);
                 double screenWidthLimiter = notOnlyImage ? 0.8 : 0.96;   // gallery scrolls poorly if image width = screen width
                 if (scaleFactor * imageW > (screenWidth * screenWidthLimiter)) {
                     // image does not fit by width, gallery will crop it. Preventing this:
-                    scaleFactor = (((double)(screenWidth * screenWidthLimiter)) / imageW);
+                    scaleFactor = ((screenWidth * screenWidthLimiter)) / imageW;
                     final Gallery gallery = (Gallery) listRow.getChildAt(1);        // gallery is here, maybe
-                    if (gallery.getAdapter().getCount() == 1) { // no other children
+                    if (gallery != null && gallery.getAdapter() != null && gallery.getAdapter().getCount() == 1) { // no other children
                         //final LinearLayout content = (LinearLayout)listRow.findViewById(R.id.content);
                         // happened to be smaller than user requested height
                         int newHeiht = (int) (imageH * scaleFactor);
@@ -1196,7 +1225,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     View content = imageHolder.findViewById(R.id.content);
                     content.getLayoutParams().width = scaledW;
                     content.getLayoutParams().height = scaledH;
-                    if (webView.getTag(MyWebView.DESTROYED_TAG) == null) {
+                    if (webView.getTag(MyImageView.DESTROYED_TAG) == null) {
                         View progressBar = imageHolder.findViewById(R.id.progressbar);
                         progressBar.setVisibility(View.INVISIBLE);
                         TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);

@@ -22,6 +22,7 @@ public abstract  class MessagesSource implements Serializable {
 
     protected transient Context ctx;
     protected transient SharedPreferences sp;
+    public boolean canNext = true;
 
     public MessagesSource(Context ctx) {
         setContext(ctx);
@@ -50,10 +51,6 @@ public abstract  class MessagesSource implements Serializable {
 
     public abstract void getNext(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
 
-    public boolean canNext() {
-        return true;
-    };
-
 
     public abstract void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont);
 
@@ -64,5 +61,14 @@ public abstract  class MessagesSource implements Serializable {
     }
 
     public abstract MicroBlog getMicroBlog();
+
+    public boolean canNext() {
+        return canNext;
+    }
+
+    public void setCanNext(boolean canNext) {
+        this.canNext = canNext;
+    }
+
 
 }

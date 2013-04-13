@@ -380,7 +380,7 @@ public class Utils {
         authorizer.authorize(context, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
-                final DefaultHttpClient client = new DefaultHttpClient();
+                final DefaultHttpClient client = getNewHttpClient();
                 try {
                     final Function<Void, String> thiz = this;
                     boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
@@ -670,7 +670,7 @@ public class Utils {
         }
     }
 
-    public static HttpClient getNewHttpClient() {
+    public static DefaultHttpClient getNewHttpClient() {
 
         try {
             KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());

@@ -809,6 +809,7 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "msrcMyBlog", false);
         copyBoolean(jo, sp, "msrcSrachiki", false);
         copyBoolean(jo, sp, "msrcUnread", false);
+        copyBoolean(jo, sp, "msrcUnanswered", false);
         copyBoolean(jo, sp, "msrcSaved", false);
         copyBoolean(jo, sp, "msrcPrivate", false);
         copyBoolean(jo, sp, "msrcDiscuss", false);

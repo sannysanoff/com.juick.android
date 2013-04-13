@@ -2,6 +2,7 @@ package com.juick.android;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.*;
 import android.widget.Gallery;
@@ -16,33 +17,35 @@ import java.util.ArrayList;
  * Time: 1:18 AM
  * To change this template use File | Settings | File Templates.
  */
-public class WebViewGallery extends Gallery {
+public class ImageGallery extends Gallery {
 
     private final int slop;
     private float initialX;
     private float initialY;
+    Handler handler;
 
     private ScaleGestureDetector mScaleDetector;
 
-    public WebViewGallery(Context context) {
+    public ImageGallery(Context context) {
         super(context);
         slop = ViewConfiguration.get(context).getScaledTouchSlop();
         init();
     }
 
-    public WebViewGallery(Context context, AttributeSet attrs) {
+    public ImageGallery(Context context, AttributeSet attrs) {
         super(context, attrs);
         slop = ViewConfiguration.get(context).getScaledTouchSlop();
         init();
     }
 
-    public WebViewGallery(Context context, AttributeSet attrs, int defStyle) {
+    public ImageGallery(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         slop = ViewConfiguration.get(context).getScaledTouchSlop();
         init();
     }
 
     void init() {
+        handler = new Handler();
         if (Build.VERSION.SDK_INT >= 8 && mScaleDetector == null) {
         }
     }
@@ -140,7 +143,7 @@ public class WebViewGallery extends Gallery {
             if (view instanceof MyImageView) {
                 ((MyImageView)view).destroy();
             }
-            view.setTag(MyWebView.DESTROYED_TAG, Boolean.FALSE);
+            view.setTag(MyImageView.DESTROYED_TAG, Boolean.FALSE);
         }
         views.clear();
         //removeAllViewsInLayout();
@@ -149,5 +152,11 @@ public class WebViewGallery extends Gallery {
     ArrayList<ImageView> views = new ArrayList<ImageView>();
     public void addInitializedNonWebView(ImageView wv) {
         views.add(wv);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        cleanup();
+        super.onDetachedFromWindow();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

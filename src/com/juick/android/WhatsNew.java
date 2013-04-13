@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 public class WhatsNew {
 
     ReleaseFeatures[] features = new ReleaseFeatures[]{
-            new ReleaseFeatures("2013032301", R.string.rf_2013032301),
+            new ReleaseFeatures("2013041201", R.string.rf_2013041201),
             new ReleaseFeatures("2012121903", R.string.rf_2012121903),
             new ReleaseFeatures("2012092002", R.string.rf_2012092001),
             new ReleaseFeatures("2012091402", R.string.rf_2012091402),
@@ -310,34 +310,41 @@ public class WhatsNew {
         };
         String currentSetting = sp.getString("usage_statistics", "");
         if (currentSetting.length() == 0) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            final View stat = context.getLayoutInflater().inflate(R.layout.enable_statistics, null);
-            final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
-                    .setMessage(context.getString(R.string.EnableUsageStatistics))
-                    .setCancelable(false)
-                    .setView(stat)
-                    .create();
+            Runnable loop = new Runnable() {
+                Runnable thiz = this;
+                @Override
+                public void run() {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    final View stat = context.getLayoutInflater().inflate(R.layout.enable_statistics, null);
+                    final AlertDialog alert = builder.setTitle(context.getString(R.string.UsageStatistics))
+                            .setMessage(context.getString(R.string.EnableUsageStatistics))
+                            .setCancelable(false)
+                            .setView(stat)
+                            .create();
 
-            stat.findViewById(R.id.read_privacy_policy).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showPrivacyPolicy();
+                    stat.findViewById(R.id.read_privacy_policy).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            showPrivacyPolicy(thiz);
+                        }
+                    });
+                    stat.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String option = getSendStatValueFromUI(stat);
+                            if (option.length() != 0) {
+                                sp.edit().putString("usage_statistics", option).commit();
+                                alert.dismiss();
+                                after.run();
+                            } else {
+                                Toast.makeText(context, context.getString(R.string.ChooseFirstOption), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                    alert.show();
                 }
-            });
-            stat.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String option = getSendStatValueFromUI(stat);
-                    if (option.length() != 0) {
-                        sp.edit().putString("usage_statistics", option).commit();
-                        alert.dismiss();
-                        after.run();
-                    } else {
-                        Toast.makeText(context, context.getString(R.string.ChooseFirstOption), Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-            alert.show();
+            };
+            loop.run();
         } else {
             after.run();
         }
@@ -360,7 +367,7 @@ public class WhatsNew {
         return option;
     }
 
-    public void showPrivacyPolicy() {
+    public void showPrivacyPolicy(final Runnable then) {
         WebView wv = new WebView(context);
         Utils.setupWebView(wv, context.getString(R.string.privacy_policy));
 
@@ -373,8 +380,16 @@ public class WhatsNew {
                         dialog.cancel();
                     }
                 })
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        if (then != null)
+                            then.run();
+                    }
+                })
                 .setCancelable(true);
-        builder.show();
+        final AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 
 
