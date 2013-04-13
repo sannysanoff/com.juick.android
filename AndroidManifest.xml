@@ -33,8 +33,6 @@
                  android:label="@string/Juick"
                  android:name="com.juick.android.JuickAdvancedApplication"
                  >
-        <provider android:name="com.juick.android.CachedImageContentProvider"
-                  android:authorities="com.juick.android.imagecache"/>
         <uses-library android:name="com.google.android.maps" android:required="false"/>
         <meta-data
                 android:name="android.app.default_searchable"

@@ -384,7 +384,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
                             views.put(i, view);
                             ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
-                            gallery.addInitializedNonWebView(wv);
+                            gallery.addInitializedImageView(wv);
                         } else {
                             cleanupRow(view);
                         }
@@ -1019,7 +1019,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                updateWebView(destFile, bitmap);
+                                updateImageView(destFile, bitmap);
                             }
                         });
                     }
@@ -1039,8 +1039,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     progressBar.setVisibility(View.VISIBLE);
                     TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
                     progressBarText.setVisibility(View.VISIBLE);
-                    final ImageView webView = (ImageView) imageHolder.findViewById(R.id.non_webview);
-                    webView.setVisibility(View.INVISIBLE);
+                    final ImageView imageView = (ImageView) imageHolder.findViewById(R.id.non_webview);
+                    imageView.setVisibility(View.INVISIBLE);
                     new Thread("Image downloadhttpGeter") {
                         @Override
                         public void run() {
@@ -1124,7 +1124,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                 handler.post(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        updateWebView(destFile, finalBmp);
+                                                        updateImageView(destFile, finalBmp);
                                                     }
                                                 });
                                             }
@@ -1189,11 +1189,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             return new File(cacheDir, urlToFileName(url));
         }
 
-        private void updateWebView(final File destFile, Bitmap bitmap) {
-            final ImageView webView = (ImageView) imageHolder.findViewById(R.id.non_webview);
-            if (webView != null) {      // concurrent remove
-                if (destFile.getPath().equals(webView.getTag())) return;    // already there
-                webView.setTag(destFile.getPath());
+        private void updateImageView(final File destFile, Bitmap bitmap) {
+            final ImageView imageView = (ImageView) imageHolder.findViewById(R.id.non_webview);
+            if (imageView != null) {      // concurrent remove
+                if (destFile.getPath().equals(imageView.getTag())) return;    // already there
+                imageView.setTag(destFile.getPath());
                 BitmapFactory.Options opts = new BitmapFactory.Options();
                 if (bitmap != null) {
                     imageW = bitmap.getWidth();
@@ -1225,21 +1225,21 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     View content = imageHolder.findViewById(R.id.content);
                     content.getLayoutParams().width = scaledW;
                     content.getLayoutParams().height = scaledH;
-                    if (webView.getTag(MyImageView.DESTROYED_TAG) == null) {
+                    if (imageView.getTag(MyImageView.DESTROYED_TAG) == null) {
                         View progressBar = imageHolder.findViewById(R.id.progressbar);
                         progressBar.setVisibility(View.INVISIBLE);
                         TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
                         progressBarText.setVisibility(View.INVISIBLE);
-                        webView.setVisibility(View.VISIBLE);
-                        webView.getLayoutParams().height = destHeight;
+                        imageView.setVisibility(View.VISIBLE);
+                        imageView.getLayoutParams().height = destHeight;
 
                         try {
                             gallery.blockLayoutRequest = true;
                             if (bitmap != null) {
                                 BitmapCounts.retainBitmap(bitmap);
-                                webView.setImageDrawable(new BitmapDrawable(bitmap));
+                                imageView.setImageDrawable(new BitmapDrawable(bitmap));
                             } else {
-                                webView.setImageURI(Uri.parse(CachedImageContentProvider.constructUri(destFile.getName())));
+                                imageView.setImageURI(Uri.fromFile(destFile));
                             }
                             gallery.blockLayoutRequest = false;
                             Rect rect = new Rect();
@@ -1251,7 +1251,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 resetAdapter();
                             }
                         } catch (Exception e) {
-                            Log.e("JuickAdvanced","Exception in MyWebView.loaddata:  "+e.toString());
+                            Log.e("JuickAdvanced","Exception in MyImageView.loaddata:  "+e.toString());
                             // that webview is probably destroyed some way
                         }
                     }
@@ -1307,7 +1307,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                updateWebView(destFile, bitmap);
+                                updateImageView(destFile, bitmap);
                             }
                         });
                     }

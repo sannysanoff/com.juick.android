@@ -150,7 +150,7 @@ public class ImageGallery extends Gallery {
     }
 
     ArrayList<ImageView> views = new ArrayList<ImageView>();
-    public void addInitializedNonWebView(ImageView wv) {
+    public void addInitializedImageView(ImageView wv) {
         views.add(wv);
     }
 
