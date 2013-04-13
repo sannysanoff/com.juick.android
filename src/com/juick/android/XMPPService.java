@@ -1089,7 +1089,7 @@ public class XMPPService extends Service {
                 public void run() {
                     if (verboseXMPP() || reason.startsWith("!"))
                         if (wasUp) {
-                            Toast.makeText(XMPPService.this, "XMPP Disconnected: " + reason, Toast.LENGTH_LONG).show();
+                            JuickAdvancedApplication.showXMPPToast("XMPP Disconnected: " + reason);
                         }
                 }
             });
@@ -1226,7 +1226,7 @@ public class XMPPService extends Service {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(XMPPService.this, "ExtXMPP:" + error, Toast.LENGTH_LONG).show();
+                        JuickAdvancedApplication.showXMPPToast("ExtXMPP:" + error);
                     }
                 });
             }

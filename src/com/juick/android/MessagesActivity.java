@@ -61,6 +61,7 @@ public class MessagesActivity extends FragmentActivity {
                 if (messagesSource == null) {
                     messagesSource = new JuickCompatibleURLMessagesSource(this);
                 }
+                messagesSource.setContext(this);
             }
             initWithMessagesSource();
         }

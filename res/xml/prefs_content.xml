@@ -45,6 +45,11 @@
                 android:defaultValue="true"
                 android:persistent="true"/>
         <CheckBoxPreference
+                android:key="image.hide_gif"
+                android:title="Hide GIF pictures"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
                 android:key="image.indirect"
                 android:title="@string/IndirectImages"
                 android:summary="@string/Gelbooru"

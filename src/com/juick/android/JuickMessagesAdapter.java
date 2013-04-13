@@ -85,6 +85,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private boolean trackLastRead;
     private int subtype;
     private final boolean indirectImages;
+    private final boolean hideGif;
     private final boolean otherImages;
     Handler handler;
     boolean enableScaleByGesture;
@@ -162,6 +163,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         indirectImages = sp.getBoolean("image.indirect", true);
+        hideGif = sp.getBoolean("image.hide_gif", false);
         enableScaleByGesture = sp.getBoolean("enableScaleByGesture", true);
         otherImages = sp.getBoolean("image.other", true);
         textScale = 1;
@@ -222,14 +224,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         MainActivity.restyleChildrenOrWidget(sll, true);
                     }
                 });
-//                TextView tv = (TextView) v.findViewById(R.id.text);
-//                float textSize = tv.getTextSize();
-//                try {
-//                    Float fontScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
-//                    tv.setTextSize(textSize*fontScale);
-//                } catch (Exception e) {
-//                    //
-//                }
             }
             final LinearLayout ll = (LinearLayout)v;
             final MyTextView t = (MyTextView) v.findViewById(R.id.text);
@@ -348,7 +342,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 });
                 final HashMap<Integer, ImageLoaderConfiguration> imageLoaders = new HashMap<Integer, ImageLoaderConfiguration>();
                 gallery.setTag(imageLoaders);
-                final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
+                final Display dd = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay();
+                final int HEIGHT = (int)(Math.max(dd.getHeight(), dd.getWidth()) * imageHeightPercent);
                 gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, HEIGHT + 20));
                 gallery.setAdapter(new BaseAdapter() {
 
@@ -517,6 +512,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         for (String url : urls) {
             String urlLower = url.toLowerCase();
             if (isValidImageURl(urlLower)) {
+                if (hideGif && url.toLowerCase().contains(".gif")) continue;
                 retval.add(ImageURLConvertor.convertURLToDownloadable(url));
             }
         }
@@ -791,6 +787,20 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         if (!condensed) {
+
+            // found messages count (search results)
+            if (jmsg.myFoundCount != 0 || jmsg.hisFoundCount != 0) {
+                ssb.append("\n");
+                int where = ssb.length();
+                if (jmsg.myFoundCount != 0) {
+                    ssb.append(ctx.getString(R.string.MyReplies_)+jmsg.myFoundCount+"  ");
+                }
+                if (jmsg.hisFoundCount != 0) {
+                    ssb.append(ctx.getString(R.string.UserReplies_)+jmsg.hisFoundCount);
+                }
+                ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TRANSLATED_LABEL, 0xFF4ec856)), where, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
             //
             // TIME
             //
@@ -967,7 +977,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 toAdd.add(message);
             }
         }
-        addAll(toAdd);
+        try {
+            addAll(toAdd);
+        } catch (Throwable th) {
+            // unimplemented?
+            for (JuickMessage juickMessage : toAdd) {
+                add(juickMessage);
+            }
+        }
     }
 
     public static class ImageLoaderConfiguration {

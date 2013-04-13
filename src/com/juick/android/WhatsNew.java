@@ -117,7 +117,7 @@ public class WhatsNew {
                                 try {
                                     int updateVersionCode = Integer.parseInt(version);
                                     if (updateVersionCode > currentVersionCode) {
-                                        if (!new File(updatesDir, "ignore-"+version).exists()) {
+                                        if (!new File(updatesDir, "ignore-"+version).exists() || force) {
                                             JsonObject jsonElement = (JsonObject)new Gson().fromJson(json.getResult(), JsonElement.class);
                                             JsonPrimitive url = (JsonPrimitive)jsonElement.get("url");
                                             updateURL = url.getAsString();

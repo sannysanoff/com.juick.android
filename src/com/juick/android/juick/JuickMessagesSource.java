@@ -68,6 +68,21 @@ public abstract class JuickMessagesSource extends MessagesSource {
         if (json.has("video")) {
             jmsg.Video = json.getJSONObject("video").getString("mp4");
         }
+        if (json.has("context_post")) {
+            jmsg.contextPost = initFromJSON(json.getJSONObject("context_post"));
+        }
+        if (json.has("context_reply")) {
+            jmsg.contextReply = initFromJSON(json.getJSONObject("context_reply"));
+        }
+        if (json.has("context_reply")) {
+            jmsg.contextReply = initFromJSON(json.getJSONObject("context_reply"));
+        }
+        if (json.has("my_found_count")) {
+            jmsg.myFoundCount = (int)json.getDouble("my_found_count");
+        }
+        if (json.has("his_found_count")) {
+            jmsg.hisFoundCount = (int)json.getDouble("his_found_count");
+        }
         jmsg.microBlogCode = JuickMessageID.CODE;
 
         return jmsg;

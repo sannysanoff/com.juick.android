@@ -29,11 +29,13 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.util.Pair;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 import com.google.gson.Gson;
+import com.juick.android.ja.JAPastConversationMessagesSource;
+import com.juick.android.ja.JAUnansweredMessagesSource;
+import com.juick.android.ja.Network;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
@@ -51,6 +53,12 @@ import java.util.TimeZone;
  */
 public class UserCenterActivity extends Activity {
 
+    private View search;
+    private String uname;
+
+    public static final int SEARCH_PAST_CONVERSATIONS = 0x100001;
+    public static final int SEARCH_MORE               = 0x100002;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
@@ -61,7 +69,7 @@ public class UserCenterActivity extends Activity {
         final TextView userRealName = (TextView)findViewById(R.id.user_realname);
         final ImageView userPic = (ImageView)findViewById(R.id.userpic);
         final TextView userName = (TextView)findViewById(R.id.username);
-        final View search = findViewById(R.id.search);
+        search = findViewById(R.id.search);
         final View stats = findViewById(R.id.stats);
         userRealName.setText("...");
         Bundle extras = getIntent().getExtras();
@@ -69,7 +77,7 @@ public class UserCenterActivity extends Activity {
             finish();
             return;
         }
-        final String uname = extras.getString("uname");
+        uname = extras.getString("uname");
         final int uid = extras.getInt("uid");
 
         final MessageID mid = (MessageID)extras.getSerializable("mid");
@@ -224,7 +232,14 @@ public class UserCenterActivity extends Activity {
         search.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(UserCenterActivity.this, "Coming soon", Toast.LENGTH_LONG).show();
+                search.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+                    @Override
+                    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                        menu.add(0, SEARCH_PAST_CONVERSATIONS, 0, "My dialogs with user");
+                        menu.add(0, SEARCH_MORE, 1, "More");
+                    }
+                });
+                search.showContextMenu();
             }
         });
         stats.setOnClickListener(new View.OnClickListener() {
@@ -321,6 +336,24 @@ public class UserCenterActivity extends Activity {
                 });
             }
         });
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        if (item.getItemId() == SEARCH_PAST_CONVERSATIONS) {
+            Intent i = new Intent(this, MessagesActivity.class);
+            i.putExtra("messagesSource", new JAPastConversationMessagesSource(this, uname));
+            startActivity(i);
+            return true;
+        }
+        if (item.getItemId() == SEARCH_MORE) {
+            Toast.makeText(this, "Coming soon", Toast.LENGTH_LONG).show();
+        }
+        return super.onContextItemSelected(item);
     }
 
     private void enableJAM(final Runnable then) {

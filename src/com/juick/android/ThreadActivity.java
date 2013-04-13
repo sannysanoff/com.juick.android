@@ -248,7 +248,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
             showThread.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    tf.showThread(msg);
+                    tf.showThread(msg, false);
                 }
             });
         } else {

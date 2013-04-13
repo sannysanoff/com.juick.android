@@ -7,27 +7,27 @@
             android:entryValues="@array/scaleFontSize"
             android:defaultValue="1.0"
             android:persistent="true"/>
-    <PreferenceCategory android:title="Full Screen">
+    <PreferenceCategory android:title="@string/FullScreen">
         <CheckBoxPreference
                 android:key="fullScreenMessages"
-                android:title="In Messages view"
+                android:title="@string/InMessagesView"
                 android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="fullScreenThread"
-                android:title="In Thread view"
+                android:title="@string/InThreadView"
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Message Menu Mode">
+    <PreferenceCategory android:title="@string/MessageMenuMode">
         <CheckBoxPreference
                 android:key="dialogMessageMenu"
-                android:title="New message menu "
-                android:summary="..instead of legacy menu"
+                android:title="@string/NewMessageMenu"
+                android:summary="@string/InsteadOfLegacyMenu"
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Legacy Menu">
+    <PreferenceCategory android:title="@string/LegacyMenu">
         <ListPreference
                 android:key="menuFontScale"
                 android:title="@string/Menu_font_scale_factor"

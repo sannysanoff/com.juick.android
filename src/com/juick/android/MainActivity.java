@@ -25,6 +25,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -137,7 +140,7 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onNewIntent(Intent intent) {
-        if (!Utils.hasAuth(getApplicationContext())) {
+        if (JuickComAuthorizer.getJuickAccountName(this) == null) {
             startActivity(new Intent(this, SignInActivity.class));
             return;
         }
@@ -152,6 +155,7 @@ public class MainActivity extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
         XMPPService.log("MainActivity.create()");
+
         nActiveMainActivities++;
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();
@@ -161,7 +165,7 @@ public class MainActivity extends FragmentActivity implements
 
         if (maybeLaunchIntent(getIntent(), true)) return;
 
-        if (!Utils.hasAuth(getApplicationContext())) {
+        if (JuickComAuthorizer.getJuickAccountName(this) == null) {
             finish();
             startActivity(new Intent(this, SignInActivity.class));
             return;
@@ -947,6 +951,7 @@ public class MainActivity extends FragmentActivity implements
         };
         for (String refreshCause : refreshCauses) {
             if (refreshCause.equals(s)) {
+                if (s.equals("messagesFontScale") && sp.getBoolean("enableScaleByGesture", true)) continue; // should have been pinch zoom
                 doReload();
                 break;
             }

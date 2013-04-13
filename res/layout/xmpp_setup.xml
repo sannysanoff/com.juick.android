@@ -1,185 +1,225 @@
-<ScrollView
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        >
-    <TableLayout
+        android:orientation="vertical"
+        android:layout_height="fill_parent">
 
+    <ScrollView
+            xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:orientation="vertical">
-        <TableRow android:layout_width="fill_parent"
-                >
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:paddingRight="5sp"
-                    android:text="@string/Presets_"/>
-            <Spinner
-                    android:id="@+id/template_selection"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    android:entries="@array/xmppTemplate"
-                    />
-        </TableRow>
-        <TableRow android:layout_width="fill_parent" android:layout_height="wrap_content">
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:paddingRight="5sp"
-                    android:text="JID:"/>
-            <EditText
-                    android:id="@+id/jid"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/LeftPartOf_"
-                    />
-        </TableRow>
-        <TableRow android:layout_width="fill_parent">
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="5sp"
-                    android:gravity="right"
-                    android:text="Password:"/>
-            <EditText
-                    android:id="@+id/password"
-                    android:password="true"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    android:paddingTop="0dp"
-                    android:paddingBottom="0dp"
-                    />
-        </TableRow>
-        <TableRow>
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:paddingRight="5sp"
-                    android:text="Server:"/>
-            <EditText
-                    android:id="@+id/server"
-                    android:text="jabber.ru"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    />
-        </TableRow>
-        <TableRow>
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:paddingRight="5sp"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:text="Port:"/>
-            <EditText
-                    android:id="@+id/port"
-                    android:text="5222"
-                    android:inputType="numberDecimal"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    />
-        </TableRow>
-        <TableRow>
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:paddingRight="5sp"
-                    android:paddingLeft="15sp"
-                    android:text="Secure:"/>
-            <CheckBox
-                    android:id="@+id/secure"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    />
-        </TableRow>
-        <TableRow>
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="right"
-                    android:paddingRight="5sp"
-                    android:text="@string/Priority_"/>
-            <EditText
-                    android:id="@+id/priority"
-                    android:text="55"
-                    android:inputType="numberSigned"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    />
-        </TableRow>
-        <TableRow>
-            <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="5sp"
-                    android:gravity="right"
-                    android:text="Resource:"/>
-            <EditText
-                    android:id="@+id/resource"
-                    android:text="com.juickadvanced"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="20dp"
-                    android:paddingRight="10dp"
-                    android:paddingLeft="10dp"
-                    />
-        </TableRow>
-        <TableRow>
-            <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    >
-            </LinearLayout>
-            <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                <Button
-                        android:id="@+id/test_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20sp"
-                        android:text="@string/Test__"/>
-                <Button
-                        android:id="@+id/readme_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20sp"
-                        android:text="@string/ReadThis"/>
+            android:layout_height="fill_parent"
+            >
 
-            </LinearLayout>
-        </TableRow>
-        <TableRow>
-            <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+        <TableLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+            <TableRow android:layout_width="fill_parent"
                     >
-            </LinearLayout>
-            <Button
-                    android:id="@+id/okbutton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20sp"
-                    android:text="@android:string/ok"/>
-        </TableRow>
-    </TableLayout>
-</ScrollView>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:paddingRight="5sp"
+                        android:text="@string/Presets_"/>
+
+                <Spinner
+                        android:id="@+id/template_selection"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:entries="@array/xmppTemplate"
+                        />
+            </TableRow>
+
+            <TableRow
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:paddingRight="5sp"
+                        android:text="JID:"/>
+
+                <EditText
+                        android:id="@+id/jid"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/LeftPartOf_"
+                        />
+            </TableRow>
+
+            <TableRow android:layout_width="fill_parent">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="5sp"
+                        android:gravity="right"
+                        android:text="Password:"/>
+
+                <EditText
+                        android:id="@+id/password"
+                        android:password="true"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp"
+                        />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:paddingRight="5sp"
+                        android:text="Server:"/>
+
+                <EditText
+                        android:id="@+id/server"
+                        android:text="jabber.ru"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:paddingRight="5sp"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:text="Port:"/>
+
+                <EditText
+                        android:id="@+id/port"
+                        android:text="5222"
+                        android:inputType="numberDecimal"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:paddingRight="5sp"
+                        android:paddingLeft="15sp"
+                        android:text="Secure:"/>
+
+                <CheckBox
+                        android:id="@+id/secure"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="right"
+                        android:paddingRight="5sp"
+                        android:text="@string/Priority_"/>
+
+                <EditText
+                        android:id="@+id/priority"
+                        android:text="55"
+                        android:inputType="numberSigned"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="5sp"
+                        android:gravity="right"
+                        android:text="Resource:"/>
+
+                <EditText
+                        android:id="@+id/resource"
+                        android:text="com.juickadvanced"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="20dp"
+                        android:paddingRight="10dp"
+                        android:paddingLeft="10dp"
+                        />
+            </TableRow>
+
+            <TableRow>
+
+                <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        >
+                </LinearLayout>
+
+                <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                    <Button
+                            android:id="@+id/test_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20sp"
+                            android:text="@string/Test__"/>
+
+                    <Button
+                            android:id="@+id/readme_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20sp"
+                            android:text="@string/ReadThis"/>
+
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow>
+
+                <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        >
+                </LinearLayout>
+
+                <Button
+                        android:id="@+id/okbutton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20sp"
+                        android:text="@android:string/ok"/>
+            </TableRow>
+        </TableLayout>
+    </ScrollView>
+</LinearLayout>

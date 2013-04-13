@@ -19,7 +19,9 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.SupportActivity;
@@ -55,6 +57,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
      */
     private boolean alternativeLongClick;
     private JuickMessage prefetched;    // this is partially obtained thread originating in 'pending' replies screen
+    private Toast shownThreadToast;
+    private boolean navigationMenuShown;
 
     public interface ThreadExternalUpdater {
 
@@ -711,6 +715,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private void closeNavigationMenu() {
+        navigationMenuShown = false;
         for (int i = 0; i < flyingItems.length; i++) {
             final FlyingItem item = flyingItems[i];
             item.setVisibility(View.VISIBLE);
@@ -759,6 +764,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     private void openNavigationMenu(float currentTranslation) {
         try {
+            navigationMenuShown = true;
             for (final FlyingItem item : flyingItems) {
                 item.setVisibility(View.VISIBLE);
                 item.ani = new TranslateAnimation(
@@ -843,11 +849,19 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public void showThread(JuickMessage jmsg) {
+    public void hideThread() {
+        if (shownThreadToast != null) {
+            shownThreadToast.cancel();
+            shownThreadToast = null;
+        }
+
+    }
+    public void showThread(JuickMessage jmsg, boolean keepShow) {
         if (jmsg.getReplyTo() != 0) {
             JuickMessage reply = jmsg;
             LinearLayout ll = new LinearLayout(getActivity());
             ll.setOrientation(LinearLayout.VERTICAL);
+            ll.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
             int totalCount = 0;
             while (reply != null) {
                 totalCount += reply.Text.length();
@@ -867,11 +881,13 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 int bottomSize = windowHeight - listBottom;
                 ll.setPressed(true);
                 MainActivity.restyleChildrenOrWidget(ll);
-                Toast result = new Toast(getActivity());
-                result.setView(ll);
-                result.setGravity(Gravity.BOTTOM | Gravity.LEFT, 0, bottomSize);
-                result.setDuration(Toast.LENGTH_LONG);
-                result.show();
+                if (!keepShow || shownThreadToast.getView().getParent() == null) { // new or already hidden
+                    shownThreadToast = new Toast(getActivity());
+                    shownThreadToast.setView(ll);
+                    shownThreadToast.setGravity(Gravity.BOTTOM | Gravity.LEFT, 0, bottomSize);
+                    shownThreadToast.setDuration(Toast.LENGTH_LONG);
+                }
+                shownThreadToast.show();
             }
         }
     }
@@ -892,7 +908,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private boolean isNavigationMenuShown() {
-        return flyingItems != null && flyingItems[0].widget.getVisibility() == View.VISIBLE;
+        return navigationMenuShown;
     }
 
 

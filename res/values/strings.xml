@@ -297,7 +297,7 @@
                 } catch (e) {
                     document.getElementById(\"morra\").innerHTML = \"\"+e;
                 }
-            }, 100);
+            }, 1000);
         </script>
                 ]]>
     </string>
@@ -1012,6 +1012,16 @@
     <string name="PressOkToTrust">Press OK if you trust Juick Advanced to validate your juick identity on juick advanced
         server. Your password is never stored. Read p. 8.1 in privacy policy.
     </string>
+    <string name="PastDialogsWithUser">Past dialogs with user</string>
+    <string name="MyReplies_">My replies:</string>
+    <string name="UserReplies_">User replies:</string>
+    <string name="FullScreen">Full Screen</string>
+    <string name="InMessagesView">In Messages view</string>
+    <string name="InThreadView">In Thread view</string>
+    <string name="MessageMenuMode">Message Menu Mode</string>
+    <string name="NewMessageMenu">New message menu</string>
+    <string name="InsteadOfLegacyMenu">..instead of legacy menu</string>
+    <string name="LegacyMenu">Legacy Menu</string>
 
 
 </resources>

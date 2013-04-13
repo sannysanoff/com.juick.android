@@ -24,15 +24,21 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 
 import java.io.OutputStreamWriter;
@@ -62,6 +68,7 @@ public class SignInActivity extends Activity implements OnClickListener {
 
         setContentView(R.layout.signin);
 
+
         etNick = (EditText) findViewById(R.id.juickNick);
         etPassword = (EditText) findViewById(R.id.juickPassword);
         bSave = (Button) findViewById(R.id.buttonSave);
@@ -70,7 +77,7 @@ public class SignInActivity extends Activity implements OnClickListener {
         bSave.setOnClickListener(this);
         bCancel.setOnClickListener(this);
 
-        if (Utils.hasAuth(getApplicationContext())) {
+        if (JuickComAuthorizer.getJuickAccountName(this) != null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setNeutralButton(R.string.OK, new android.content.DialogInterface.OnClickListener() {
 
@@ -82,11 +89,31 @@ public class SignInActivity extends Activity implements OnClickListener {
             builder.setMessage(R.string.Only_one_account);
             builder.show();
         }
-    }
+        PackageManager pm = getPackageManager();
+        try {
+            PackageInfo pi = pm.getPackageInfo("com.juickadvanced", 0);
+            ApplicationInfo ai = pi.applicationInfo;
+            if ((ai.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) == ApplicationInfo.FLAG_EXTERNAL_STORAGE) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setPositiveButton("Insecure", new android.content.DialogInterface.OnClickListener() {
 
-    @Override
-    public void finish() {
-        super.finish();    //To change body of overridden methods use File | Settings | File Templates.
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                        sp.edit().putBoolean("use_insecure_password_storage", true).commit();
+                    }
+                });
+                builder.setNegativeButton("Keep asking", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //To change body of implemented methods use File | Settings | File Templates.
+                    }
+                });
+                builder.setMessage("You have installed program to SD Card. This disables secure storage for saving login/password. Press 'Insecure' to allow Juick Advanced save login/password in its private application data instead. Otherwise it will keep asking.");
+                builder.show();
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // do something
+        }
     }
 
     public void onClick(View view) {
@@ -134,6 +161,12 @@ public class SignInActivity extends Activity implements OnClickListener {
                     Account account = new Account(nick, getString(R.string.com_juick));
                     AccountManager am = AccountManager.get(SignInActivity.this);
                     boolean accountCreated = am.addAccountExplicitly(account, password, null);
+
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                    if (sp.getBoolean("use_insecure_password_storage", false)) {
+                        sp.edit().putString("juick_account_name", nick).putString("juick_account_password", password).commit();
+                    }
+
                     Bundle extras = getIntent().getExtras();
                     if (extras != null && accountCreated) {
                         AccountAuthenticatorResponse response = extras.getParcelable(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE);

@@ -61,7 +61,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
         handler.post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(context, errorId, Toast.LENGTH_LONG).show();
+                JuickAdvancedApplication.showXMPPToast(errorId);
             }
         });
     }

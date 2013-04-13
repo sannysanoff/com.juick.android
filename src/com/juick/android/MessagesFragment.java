@@ -187,13 +187,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 @Override
                 public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                     double velox = (e2.getX() - e1.getX()) / (e2.getEventTime() - e1.getEventTime());
-                    if (velocityX > velocityY && velox > 0.4) {
+                    if (velocityX > velocityY && velox > 0.8) {
                         final int motionRow = findMotionRow((int) e1.getY());
                         if (motionRow != -1) {
                             final ListView listView = getListView();
                             final int itemIndex = listView.getFirstVisiblePosition() + motionRow;
                             final Object item = listView.getAdapter().getItem(itemIndex);
-                            if (item instanceof JuickMessage) {
+                            if (item instanceof JuickMessage && messagesSource instanceof JAUnansweredMessagesSource) {
                                 final JuickMessage jm = (JuickMessage) item;
                                 if (jm.contextPost != null) {
                                     preventClickOn = jm;
@@ -825,7 +825,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         Intent i = new Intent(getActivity(), ThreadActivity.class);
         i.putExtra("mid", jmsg.getMID());
         i.putExtra("messagesSource", messagesSource);
-        if (jmsg.contextPost != null) {
+        if (jmsg.contextPost != null && messagesSource instanceof JAUnansweredMessagesSource) {
             i.putExtra("prefetched", jmsg);
         }
         startActivity(i);

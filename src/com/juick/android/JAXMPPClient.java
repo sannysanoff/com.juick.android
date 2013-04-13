@@ -496,7 +496,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                                     handler.post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(context, finalError, Toast.LENGTH_LONG).show();
+                                            JuickAdvancedApplication.showXMPPToast(finalError);
                                         }
                                     });
                                 }

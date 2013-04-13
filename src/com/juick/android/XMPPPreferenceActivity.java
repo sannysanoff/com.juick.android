@@ -29,7 +29,7 @@ public class XMPPPreferenceActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        JuickAdvancedApplication.setupTheme(this);
+        //JuickAdvancedApplication.setupTheme(this);
         handler = new Handler();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xmpp_setup);

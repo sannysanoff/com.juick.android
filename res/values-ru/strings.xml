@@ -441,6 +441,13 @@
     <string name="PrivacyWarning">Требуется подтверждение</string>
     <string name="PressOkToTrust">Нажмите OK если вы доверяете Juick Advanced проверить ваш аккаунт Juick на сервере juick advanced. Ваш пароль отправляется
         туда при необходимости (по https), но не сохраняется в файлах или БД. См. пункт 8.1 политики конфиденциальности.</string>
+    <string name="PastDialogsWithUser">Прошлые диалоги с юзером</string>
+    <string name="MyReplies_">Моих реплик:</string>
+    <string name="UserReplies_">Реплик Юзера:</string>
+    <string name="FullScreen">Full Screen</string>
+    <string name="InMessagesView">In Messages view</string>
+    <string name="InThreadView">In Thread view</string>
+    <string name="LegacyMenu">Legacy Menu</string>
 
 
 </resources>

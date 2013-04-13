@@ -48,6 +48,7 @@ public class ImagePreviewHelper {
                     @Override
                     public void run() {
                         DownloadManager mgr= (DownloadManager)view.getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+
                         Uri parse = Uri.parse(url);
                         DownloadManager.Request req=new DownloadManager.Request(parse);
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
@@ -93,7 +94,15 @@ public class ImagePreviewHelper {
         TextView infotv = (TextView)view.findViewById(R.id.imagepreview_info);
         infotv.setText(info);
         iv.setImageDrawable(drawable);
-        this.url = url;
+        this.url = maybeConvertJuickURLToFull(url);
+    }
+
+    private String maybeConvertJuickURLToFull(String url) {
+        if (url.startsWith("http://i.juick.com/p")) {
+            url = url.substring(url.lastIndexOf("/"));
+            url = "http://i.juick.com/p" + url;
+        }
+        return url;
     }
 
     public void hide(){

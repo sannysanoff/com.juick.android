@@ -40,6 +40,10 @@ public class JuickComAuthorizer extends Utils.URLAuth {
                 accountName = accs[0].name.trim();
             }
         }
+        if (accountName == null) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+            accountName = sp.getString("juick_account_name", null);
+        }
         return accountName;
     }
 
@@ -114,34 +118,24 @@ public class JuickComAuthorizer extends Utils.URLAuth {
      * must call on secondary thread
      */
     public static String getBasicAuthString(Context context) {
-        AccountManager am = AccountManager.get(context);
-        Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
-        if (accs.length > 0) {
-            Bundle b = null;
-            try {
-                b = am.getAuthToken(accs[0], "", false, null, null).getResult();
-            } catch (Exception e) {
-                Log.e("getBasicAuthString", Log.getStackTraceString(e));
-            }
-            if (b != null) {
-                String authStr = b.getString(AccountManager.KEY_ACCOUNT_NAME) + ":" + b.getString(AccountManager.KEY_AUTHTOKEN);
-                final String auth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
-                if (context instanceof Activity) {
-                    final Activity act = (Activity)context;
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                    boolean verboseDebug = sp.getBoolean("verboseDebug", false);
-                    if (verboseDebug) {
-                        act.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(act, "Auth: " + auth, Toast.LENGTH_LONG).show();
-                            }
-                        });
+        if (getJuickAccountName(context) != null) {
+            String authStr = getJuickAccountName(context) + ":" + getPassword(context);
+            final String auth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
+            if (context instanceof Activity) {
+                final Activity act = (Activity)context;
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                boolean verboseDebug = sp.getBoolean("verboseDebug", false);
+                if (verboseDebug) {
+                    act.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(act, "Auth: " + auth, Toast.LENGTH_LONG).show();
+                        }
+                    });
 
-                    }
                 }
-                return auth;
             }
+            return auth;
         }
         return "";
     }
@@ -163,7 +157,8 @@ public class JuickComAuthorizer extends Utils.URLAuth {
                 return b.getString(AccountManager.KEY_AUTHTOKEN);
             }
         }
-        return null;
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        return sp.getString("juick_account_password", null);
     }
 
 }
