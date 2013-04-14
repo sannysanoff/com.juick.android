@@ -2,5 +2,8 @@
     <style name="Theme.Sherlock.NoNavigation" parent="Theme.Sherlock.Light">
         <item name="windowActionBar">false</item>
     </style>
+    <style name="Theme.Sherlock.JustNavigation" >
+        <item name="windowActionBar">true</item>
+    </style>
 
 </resources>

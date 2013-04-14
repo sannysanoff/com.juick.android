@@ -708,6 +708,10 @@ public class DatabaseService extends Service {
                     ", read=" + read +
                     '}';
         }
+
+        public double getHours() {
+            return ((startDate.getTime() - endDate.getTime()) / 1000) / (60 * 60.0);
+        }
     }
 
     public ArrayList<Period> getJuickPeriods(int days) {
@@ -739,7 +743,12 @@ public class DatabaseService extends Service {
                     period.endMid =thisMid.getMid()+1;
                     period.endDate = new Date(thisMessageDate);
                     period.read = false;
-                    retval.add(period);
+                    if (Math.abs(period.getHours()) > days * 24) {
+                        // bug hider
+                    } else {
+                        // ok
+                        retval.add(period);
+                    }
                 }
                 savedMsgid = thisMid;
                 savedMsgDate = thisMessageDate;

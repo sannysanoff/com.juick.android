@@ -94,7 +94,7 @@ public class UnreadSegmentsView extends ListView {
                     SimpleDateFormat sdf = new SimpleDateFormat("dd MMM HH:mm");
                     sb.append(sdf.format(period.startDate));
                     if (period.endDate != null) {
-                        double hours = ((period.startDate.getTime() - period.endDate.getTime()) / 1000) / (60 * 60.0);
+                        double hours = period.getHours();
                         DecimalFormat df = new DecimalFormat();
                         df.setMaximumFractionDigits(1);
                         sb.append(" - " + df.format(hours) + " hours");

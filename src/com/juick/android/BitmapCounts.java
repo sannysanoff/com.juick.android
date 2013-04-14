@@ -30,6 +30,7 @@ public class BitmapCounts {
         Integer integer = counts.get(bitmap);
         if (integer == null) {
             // not ours. no warning
+            bitmap.recycle();
         } else if (integer == 1) {
             counts.remove(bitmap);
             bitmap.recycle();

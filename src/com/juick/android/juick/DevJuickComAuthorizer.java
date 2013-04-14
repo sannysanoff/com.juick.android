@@ -208,7 +208,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
                         if (responseBody.result != null && responseBody.result.indexOf("forbidden") != -1) {
                             result.apply(new Utils.RESTResponse(activity.getString(R.string.InvalidLoginPassword), false, null));
                         } else {
-                            result.apply(new Utils.RESTResponse("Unknown response from server.", false, null));
+                            result.apply(new Utils.RESTResponse("http://juick.com/login: Unknown response: code="+o.getStatusLine().getStatusCode()+" msg="+o.getStatusLine().getReasonPhrase()+" data="+responseBody.result, false, null));
                         }
                         return "";
                     }

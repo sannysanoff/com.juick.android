@@ -163,9 +163,9 @@ public class XMPPControlActivity extends Activity {
                             juboBlacklist.setText(XMPPService.juboMessageFilter_tmp.info() + "; from cache");
                         }
                         lastConnect.setText(XMPPService.lastSuccessfulConnect == 0 ? "never" : sdf.format(new Date(XMPPService.lastSuccessfulConnect)));
-                        memoryTotal.setText("" + (Runtime.getRuntime().totalMemory() / 1024) + " KB");
-                        memoryUsed.setText("" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024) + " KB");
-                        instCount.setText("PLL:"+PressableLinearLayout.instanceCount+" MIV:"+MyImageView.instanceCount+" JMA:" + JuickMessagesAdapter.instanceCount + " BC:"+BitmapCounts.counts.size()+" TF:"+ThreadFragment.instanceCount+" TA:"+ThreadFragment.instanceCount+" WS:"+WsClient.instanceCount);
+                        memoryTotal.setText(getTotalMemoryString());
+                        memoryUsed.setText(getUsedMemoryString());
+                        instCount.setText(getInstancesString());
                         infoDate.setText("" + sdf.format(new Date()));
                         lastGCM.setText("" + (XMPPService.lastGCMMessage != null ? sdf.format(XMPPService.lastGCMMessage) : " --- "));
                         lastWS.setText("" + (XMPPService.lastWSMessage != null ? sdf.format(XMPPService.lastWSMessage) : " --- "));
@@ -181,6 +181,22 @@ public class XMPPControlActivity extends Activity {
 
             }
         }, 20);
+    }
+
+    private static String getUsedMemoryString() {
+        return "" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024) + " KB";
+    }
+
+    private static String getTotalMemoryString() {
+        return "" + (Runtime.getRuntime().totalMemory() / 1024) + " KB";
+    }
+
+    private static String getInstancesString() {
+        return "PLL:"+ PressableLinearLayout.instanceCount+" MIV:"+ MyImageView.instanceCount+" JMA:" + JuickMessagesAdapter.instanceCount + " BC:"+ BitmapCounts.counts.size()+" TF:"+ ThreadFragment.instanceCount+" TA:"+ThreadFragment.instanceCount+" WS:"+ WsClient.instanceCount;
+    }
+
+    public static String getMemoryStatusString() {
+        return "Used: "+getUsedMemoryString()+" Total: "+getTotalMemoryString()+" Instances: "+getInstancesString();
     }
 
 }

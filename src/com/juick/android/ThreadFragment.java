@@ -51,7 +51,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private Runnable doOnClick;
     private long doOnClickActualTime;
     private MyImageView navMenu;
-    ImagePreviewHelper imagePreviewHelper;
     /**
      * @see MessagesFragment#alternativeLongClick
      */
@@ -59,6 +58,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     private JuickMessage prefetched;    // this is partially obtained thread originating in 'pending' replies screen
     private Toast shownThreadToast;
     private boolean navigationMenuShown;
+    private JuickFragmentActivity parent;
 
     public interface ThreadExternalUpdater {
 
@@ -123,8 +123,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         }
     }
 
-    public ThreadFragment(Object restoreData) {
+    public ThreadFragment(Object restoreData, JuickFragmentActivity parent) {
         this.restoreData = restoreData;
+        this.parent = parent;
         implicitlyCreated = false;
     }
 
@@ -183,8 +184,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         initAdapter();
         MessagesFragment.installDividerColor(getListView());
 
-        imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container));
-        listAdapter.imagePreviewHelper = imagePreviewHelper;
+        parent.imagePreviewHelper = listAdapter.imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container), getActivity());
     }
 
 

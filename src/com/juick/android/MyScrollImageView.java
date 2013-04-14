@@ -191,16 +191,20 @@ public class MyScrollImageView extends ImageView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        viewWidth = MeasureSpec.getSize(widthMeasureSpec);
-        viewHeight = MeasureSpec.getSize(heightMeasureSpec);
-        if (oldMeasuredHeight == viewWidth && oldMeasuredHeight == viewHeight
-                || viewWidth == 0 || viewHeight == 0)
-            return;
-        oldMeasuredHeight = viewHeight;
-        oldMeasuredWidth = viewWidth;
-        if (saveScale == 1) {
-            refresh();
+        try {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            viewWidth = MeasureSpec.getSize(widthMeasureSpec);
+            viewHeight = MeasureSpec.getSize(heightMeasureSpec);
+            if (oldMeasuredHeight == viewWidth && oldMeasuredHeight == viewHeight
+                    || viewWidth == 0 || viewHeight == 0)
+                return;
+            oldMeasuredHeight = viewHeight;
+            oldMeasuredWidth = viewWidth;
+            if (saveScale == 1) {
+                refresh();
+            }
+        } catch (OutOfMemoryError e) {
+            //
         }
     }
 
@@ -210,7 +214,7 @@ public class MyScrollImageView extends ImageView {
         refresh();
     }
 
-    private void refresh() {
+    public void refresh() {
         //
         // Rescales image on rotation
         //

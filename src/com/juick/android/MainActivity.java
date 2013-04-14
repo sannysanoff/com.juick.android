@@ -63,7 +63,7 @@ import java.util.*;
 /**
  * @author Ugnich Anton
  */
-public class MainActivity extends FragmentActivity implements
+public class MainActivity extends JuickFragmentActivity implements
         ActionBar.OnNavigationListener,
         IRunningActivity,
         SharedPreferences.OnSharedPreferenceChangeListener {
@@ -941,20 +941,25 @@ public class MainActivity extends FragmentActivity implements
         if (s.startsWith("msrc")) {
             updateNavigation();
         }
+        boolean invalidateRendering = false;
         if (s.startsWith("Colors.")) {
-            doReload();
+            invalidateRendering = true;
         }
         String[] refreshCauses = new String[] {
                 "messagesFontScale",
                 "showNumbers",
+                "wrapUserpics",
                 "showUserpics",
         };
         for (String refreshCause : refreshCauses) {
             if (refreshCause.equals(s)) {
                 if (s.equals("messagesFontScale") && sp.getBoolean("enableScaleByGesture", true)) continue; // should have been pinch zoom
-                doReload();
+                invalidateRendering = true;
                 break;
             }
+        }
+        if (invalidateRendering) {
+            mf.listAdapter.notifyDataSetInvalidated();
         }
     }
 
@@ -976,7 +981,7 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     public void onBackPressed() {
-        if (mf != null && mf.imagePreviewHelper != null && mf.imagePreviewHelper.handleBack()) return;
+        if (mf != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack()) return;
         super.onBackPressed();
     }
 

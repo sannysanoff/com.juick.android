@@ -46,6 +46,11 @@
             android:summary="@string/WhenReplying"
             android:defaultValue="false"
             android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="turnOffButtons"
+            android:title="Turn off buttons light"
+            android:defaultValue="false"
+            android:persistent="true"/>
     <PreferenceCategory android:title="@string/CameraCapture">
         <CheckBoxPreference
             android:key="useTempFileForCapture"

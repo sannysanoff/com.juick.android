@@ -12,6 +12,12 @@
             android:summary="@string/UserIconsWillBeShown"
             android:defaultValue="true"
             android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="wrapUserpics"
+            android:title="Wrap userpics with text"
+            android:summary="turn off to get twitter-style look"
+            android:defaultValue="true"
+            android:persistent="true"/>
     <PreferenceCategory android:title="@string/LoadImages">
         <ListPreference
                 android:key="image.loadMode"

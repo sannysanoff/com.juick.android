@@ -44,6 +44,7 @@ public class JuickAdvancedApplication extends Application {
     public static SharedPreferences sp;
     final private Object savedListLock = new Object();
     public static String version = "unknown";
+    Activity currentActivity;
 
     static HashMap<String, Integer> themesMap = new HashMap<String, Integer>() {{
         put("Theme_Sherlock_Light",R.style.Theme_Sherlock_Light);
@@ -56,11 +57,12 @@ public class JuickAdvancedApplication extends Application {
 
     public static void setupTheme(Activity activity) {
         // String nativeTheme = sp.getString("nativeTheme", "default");
-        String nativeTheme = "Theme_Sherlock_Light";
-        Integer themeId = themesMap.get(nativeTheme);
-        if (themeId != null) {
-            activity.setTheme(themeId);
-        }
+//        String nativeTheme = "Theme_Sherlock_Light";
+//        Integer themeId = themesMap.get(nativeTheme);
+//        if (themeId != null) {
+//            activity.setTheme(themeId);
+//        }
+        activity.setTheme(R.style.Theme_Sherlock_JustNavigation);
     }
 
 
@@ -204,5 +206,9 @@ public class JuickAdvancedApplication extends Application {
         } else {
             success.run();
         }
+    }
+
+    public void setActiveActivity(Activity a) {
+        currentActivity = a;
     }
 }

@@ -47,6 +47,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.juickadvanced.imaging.*;
+import org.acra.ACRA;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -75,7 +76,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public static Set<String> filteredOutUsers;
     private final double imageHeightPercent;
-    private final String imageLoadMode;
+    static String imageLoadMode;
     private final String proxyPassword;
     private final String proxyLogin;
     private final Thread mUiThread;
@@ -84,9 +85,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     Utils.ServiceGetter<XMPPService> xmppServiceGetter;
     private boolean trackLastRead;
     private int subtype;
-    private final boolean indirectImages;
+    static boolean indirectImages;
+    static boolean otherImages;
     private final boolean hideGif;
-    private final boolean otherImages;
     Handler handler;
     boolean enableScaleByGesture;
     ImagePreviewHelper imagePreviewHelper;
@@ -131,10 +132,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     static long lastCachedShowUserpics;
     static boolean _showUserpics;
+    static boolean _wrapUserpics;
     public static boolean showUserpics(Context ctx) {
         if (System.currentTimeMillis() - lastCachedShowUserpics > 3000) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
             _showUserpics = sp.getBoolean("showUserpics", true);
+            _wrapUserpics = sp.getBoolean("wrapUserpics", true);
             try {
                 Class.forName(LeadingMarginSpan.LeadingMarginSpan2.class.getName());
             } catch (Throwable e) {
@@ -163,9 +166,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
         indirectImages = sp.getBoolean("image.indirect", true);
+        otherImages = sp.getBoolean("image.other", true);
         hideGif = sp.getBoolean("image.hide_gif", false);
         enableScaleByGesture = sp.getBoolean("enableScaleByGesture", true);
-        otherImages = sp.getBoolean("image.other", true);
         textScale = 1;
         try {
             textScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
@@ -329,7 +332,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 if (System.currentTimeMillis() - lastClick < 500) {
                                     if (imagePreviewHelper != null) {
                                         MyImageView myImageView = (MyImageView)gallery.getSelectedView().findViewById(R.id.non_webview);
-                                        imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url);
+                                        imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url, false);
                                     }
                                     lastClick = 0;  // triple click prevention
                                     return;
@@ -527,7 +530,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return url;
     }
 
-    public boolean isValidImageURl(String urlLower) {
+    public static boolean isValidImageURl(String urlLower) {
         if (!otherImages) {
             if (urlLower.contains("juick.com/")) {
                 // ok
@@ -542,7 +545,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return ValidImageURLDetector.isValidImageURL0(urlLower);
     }
 
-    private boolean isHTMLSource(String url) {
+    private static boolean isHTMLSource(String url) {
         if (!indirectImages) return false;
         if (imageLoadMode.contains("japroxy")) return false;
         return HTMLImageSourceDetector.isHTMLImageSource0(url);
@@ -665,6 +668,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         if (colorTheme == null)
             colorTheme = new ColorsTheme.ColorTheme(ctx);
         return colorTheme;
+    }
+
+    public void invalidateItemsRendering() {
+        for(int i=0; i<getCount(); i++) {
+            getItem(i).parsedText = null;
+        }
+        notifyDataSetInvalidated();
     }
 
     public static ParsedMessage formatMessageText(final Context ctx, final JuickMessage jmsg, boolean condensed) {
@@ -838,7 +848,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             userpicSpan = new LeadingMarginSpan.LeadingMarginSpan2() {
                 @Override
                 public int getLeadingMarginLineCount() {
-                    return 2;  //To change body of implemented methods use File | Settings | File Templates.
+                    if (_wrapUserpics) {
+                        return 2;
+                    } else {
+                        return 22222;
+                    }
                 }
 
                 @Override
@@ -1026,7 +1040,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             activity = (Activity)getContext();
             this.imageHolder = imageHolder;
             updateUIBindings();
-            final File destFile = getDestFile();
+            final File destFile = getDestFile(getContext(), url);
             suffix = getSuffix(destFile);
             if (destFile.exists()) {
                 new Thread() {
@@ -1200,12 +1214,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             });
         }
 
-        private File getDestFile() {
-            File cacheDir = new File(getContext().getCacheDir(), "image_cache");
-            cacheDir.mkdirs();
-            return new File(cacheDir, urlToFileName(url));
-        }
-
         private void updateImageView(final File destFile, Bitmap bitmap) {
             final ImageView imageView = (ImageView) imageHolder.findViewById(R.id.non_webview);
             if (imageView != null) {      // concurrent remove
@@ -1256,7 +1264,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 BitmapCounts.retainBitmap(bitmap);
                                 imageView.setImageDrawable(new BitmapDrawable(bitmap));
                             } else {
-                                imageView.setImageURI(Uri.fromFile(destFile));
+                                try {
+                                    imageView.setImageURI(Uri.fromFile(destFile));
+                                } catch (OutOfMemoryError e) {
+                                    ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                                }
                             }
                             gallery.blockLayoutRequest = false;
                             Rect rect = new Rect();
@@ -1283,39 +1295,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             gallery.onRestoreInstanceState(parcelable);
         }
 
-        private String urlToFileName(String url) {
-            StringBuilder sb = new StringBuilder();
-            String curl = Uri.encode(url);
-            int ask = url.indexOf('?');
-            if (ask != -1) {
-                String suburl = url.substring(0, ask);
-                if (isValidImageURl(suburl)) {
-                    int q = suburl.lastIndexOf('.');
-                    // somefile.jpg?zz=true   -> somefile.jpg?zz=true.jpg   -> somefile.jpg_zz_true.jpg
-                    url += suburl.substring(q);
-                }
-            }
-            for(int i=0; i<curl.length(); i++) {
-                char c = curl.charAt(i);
-                if (Character.isLetterOrDigit(c) || c == '.') {
-                    sb.append(c);
-                } else {
-                    sb.append("_");
-                }
-            }
-            String retval = sb.toString();
-            if (retval.length() > 120) {
-                String md5DigestForString = Utils.getMD5DigestForString(retval).replace("/","_");
-                int q = retval.lastIndexOf('.');
-                return "longname_"+md5DigestForString+retval.substring(q);
-            }
-            return retval;
-        }
 
         public void setDestinationView(View destinationView) {
             this.imageHolder = destinationView;
             updateUIBindings();
-            final File destFile = getDestFile();
+            final File destFile = getDestFile(getContext(), url);
             if (destFile.exists() && !loading) {
                 new Thread() {
                     @Override
@@ -1355,7 +1339,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         public CharSequence info() {
-            File destFile = getDestFile();
+            File destFile = getDestFile(getContext(), url);
             String suffix = getSuffix(destFile);
             return "Image: "+imageW+"x"+imageH+" size "+(destFile.length()/1024)+"K "+ suffix;
         }
@@ -1386,6 +1370,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             try {
                 return BitmapFactory.decodeFile(imgPath.getPath());
             } catch (OutOfMemoryError e) {
+                ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
                 return null;
             }
         }
@@ -1397,4 +1382,47 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         super.finalize();
         instanceCount--;
     }
+
+    public static String urlToFileName(String url) {
+        StringBuilder sb = new StringBuilder();
+        String curl = Uri.encode(url);
+        int ask = url.indexOf('?');
+        if (ask != -1) {
+            String suburl = url.substring(0, ask);
+            if (isValidImageURl(suburl)) {
+                int q = suburl.lastIndexOf('.');
+                // somefile.jpg?zz=true   -> somefile.jpg?zz=true.jpg   -> somefile.jpg_zz_true.jpg
+                url += suburl.substring(q);
+            }
+        }
+        for(int i=0; i<curl.length(); i++) {
+            char c = curl.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == '.') {
+                sb.append(c);
+            } else {
+                sb.append("_");
+            }
+        }
+        String retval = sb.toString();
+        if (retval.length() > 120) {
+            String md5DigestForString = Utils.getMD5DigestForString(retval).replace("/","_");
+            int q = retval.lastIndexOf('.');
+            return "longname_"+md5DigestForString+retval.substring(q);
+        }
+        return retval;
+    }
+
+    public static File getDestFile(Context ctx, String url) {
+        final File destFile;
+        if (url.startsWith("file://")) {
+            return new File("/"+new URLParser(url).getPathPart());
+        } else {
+            File cacheDir = new File(ctx.getCacheDir(), "image_cache");
+            cacheDir.mkdirs();
+            return new File(cacheDir, urlToFileName(url));
+        }
+
+
+    }
+
 }

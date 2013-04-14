@@ -53,7 +53,7 @@ import java.util.Vector;
  *
  * @author Ugnich Anton
  */
-public class ThreadActivity extends FragmentActivity implements View.OnClickListener, DialogInterface.OnClickListener, ThreadFragment.ThreadFragmentListener {
+public class ThreadActivity extends JuickFragmentActivity implements View.OnClickListener, DialogInterface.OnClickListener, ThreadFragment.ThreadFragmentListener {
 
     public static int instanceCount;
     {
@@ -154,7 +154,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
 
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        tf = new ThreadFragment(getLastCustomNonConfigurationInstance());
+        tf = new ThreadFragment(getLastCustomNonConfigurationInstance(), this);
         Bundle args = new Bundle();
         args.putSerializable("mid", mid);
         args.putSerializable("messagesSource", messagesSource);
@@ -515,7 +515,7 @@ public class ThreadActivity extends FragmentActivity implements View.OnClickList
     @Override
     public void onBackPressed() {
         if (tf.onBackPressed()) return;
-        if (tf != null && tf.imagePreviewHelper != null && tf.imagePreviewHelper.handleBack())
+        if (tf != null && tf.listAdapter.imagePreviewHelper != null && tf.listAdapter.imagePreviewHelper.handleBack())
             return;
         super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
     }

@@ -37,7 +37,7 @@ import com.juickadvanced.R;
  *
  * @author Ugnich Anton
  */
-public class MessagesActivity extends FragmentActivity {
+public class MessagesActivity extends JuickFragmentActivity {
 
     MessagesFragment mf;
     Object restoreData;
@@ -128,7 +128,7 @@ public class MessagesActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
-        if (mf != null && mf.imagePreviewHelper != null && mf.imagePreviewHelper.handleBack())
+        if (mf != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack())
             return;
         super.onBackPressed();
     }

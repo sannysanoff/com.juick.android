@@ -63,7 +63,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         instanceCount++;
     }
 
-    private JuickMessagesAdapter listAdapter;
+    public JuickMessagesAdapter listAdapter;
     private View viewLoading;
     private boolean loading = true;
     private int page = 1;
@@ -96,10 +96,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     Utils.ServiceGetter<DatabaseService> databaseGetter;
     boolean trackLastRead = false;
-    private Activity parent;
+    private JuickFragmentActivity parent;
     private Runnable doOnClick;
     private long doOnClickActualTime;
-    ImagePreviewHelper imagePreviewHelper;
 
 
     /**
@@ -110,7 +109,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private JuickMessage preventClickOn;
 
 
-    public MessagesFragment(Object restoreData, Activity parent) {
+    public MessagesFragment(Object restoreData, JuickFragmentActivity parent) {
         this.restoreData = restoreData;
         implicitlyCreated = false;
         this.parent = parent;
@@ -186,6 +185,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
                 @Override
                 public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                    if (e1 == null || e2 == null) return false;
                     double velox = (e2.getX() - e1.getX()) / (e2.getEventTime() - e1.getEventTime());
                     if (velocityX > velocityY && velox > 0.8) {
                         final int motionRow = findMotionRow((int) e1.getY());
@@ -374,7 +374,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 System.out.println();
             }
         });
-        init();
+        init(false);
     }
 
 //    private MessageMenu openMessageMenu(ListView listView) {
@@ -388,11 +388,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listView.setDividerHeight(1);
     }
 
-    private void init() {
+    private void init(final boolean moveToTop) {
         if (implicitlyCreated) return;
 
-        imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container));
-        listAdapter.imagePreviewHelper = imagePreviewHelper;
+        parent.imagePreviewHelper = listAdapter.imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container), parent);
 
         final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList(getActivity());
         final ListView lv = getListView();
@@ -455,10 +454,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                             try {
                                                 if (isAdded()) {
                                                     initListWithMessages(messages);
-                                                    if (finalListPosition != null) {
-                                                        lv.onRestoreInstanceState(finalListPosition);
+                                                    if (moveToTop) {
+                                                        lv.setSelection(0);
                                                     } else {
-                                                        setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                        if (finalListPosition != null) {
+                                                            lv.onRestoreInstanceState(finalListPosition);
+                                                        } else {
+                                                            setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                        }
                                                     }
                                                     Log.w("com.juick.advanced","getFirst: end.");
                                                     handler.postDelayed(new Runnable() {
@@ -835,7 +838,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onClick(View view) {
         mRefreshState = REFRESHING;
         prepareForRefresh();
-        init();
+        init(true);
     }
 
     @Override
