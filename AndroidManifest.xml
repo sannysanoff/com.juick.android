@@ -54,6 +54,14 @@
                 <data android:scheme="http" android:host="bnw.im"/>
             </intent-filter>
         </activity>
+        <activity android:name="com.juick.android.SimpleBrowser" android:label="Juick Simple Browser">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http" android:host="*"/>
+            </intent-filter>
+        </activity>
         <activity android:name="com.juick.android.MessagesActivity"
                   android:theme="@style/Theme.Sherlock.JustNoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation">
