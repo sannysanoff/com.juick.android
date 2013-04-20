@@ -71,6 +71,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public static Pattern msgPattern = Pattern.compile("#[0-9]+");
 //    public static Pattern usrPattern = Pattern.compile("@[a-zA-Z0-9\\-]{2,16}");
     private static String Replies;
+    private final boolean noProxyOnWifi;
     public int type;
     private boolean allItemsEnabled = true;
 
@@ -165,6 +166,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         imageLoadMode = sp.getString("image.loadMode", "off");
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
+        noProxyOnWifi = sp.getBoolean("imageproxy.skipOnWifi", false);
         indirectImages = sp.getBoolean("image.indirect", true);
         otherImages = sp.getBoolean("image.other", true);
         hideGif = sp.getBoolean("image.hide_gif", false);
@@ -440,6 +442,16 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return v;
     }
 
+    static boolean useDirectImageMode(Context ctx) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        boolean noProxyOnWifi = sp.getBoolean("imageproxy.skipOnWifi", false);
+        if (noProxyOnWifi) {
+            String connectivityTypeKey = ConnectivityChangeReceiver.getCurrentConnectivityTypeKey(ctx);
+            if (connectivityTypeKey.startsWith("WIFI")) return true;
+        }
+        return false;
+    }
+
     private void startLoadUserPic(final JuickMessage jmsg, final MyTextView t, final ListRowRuntime lrr, ParsedMessage parsedMessage, final ImageView userPic) {
         if (parsedMessage.userpicSpan != null) {
             lrr.pictureSize = (int)(parsedMessage.userpicSpan.getLeadingMargin(true) * 0.9);
@@ -514,7 +526,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ArrayList<String> retval = new ArrayList<String>();
         for (String url : urls) {
             String urlLower = url.toLowerCase();
-            if (isValidImageURl(urlLower)) {
+            if (isValidImageURl(getContext(), urlLower)) {
                 if (hideGif && url.toLowerCase().contains(".gif")) continue;
                 retval.add(ImageURLConvertor.convertURLToDownloadable(url));
             }
@@ -530,7 +542,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return url;
     }
 
-    public static boolean isValidImageURl(String urlLower) {
+    public static boolean isValidImageURl(Context ctx, String urlLower) {
         if (!otherImages) {
             if (urlLower.contains("juick.com/")) {
                 // ok
@@ -538,16 +550,19 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 return false;
             }
         }
-        if (isHTMLSource(urlLower)) return true;
+        if (isHTMLSource(ctx, urlLower)) return true;
         if (imageLoadMode.contains("japroxy") && HTMLImageSourceDetector.isHTMLImageSource0(urlLower)) {
             return true;
         }
         return ValidImageURLDetector.isValidImageURL0(urlLower);
     }
 
-    private static boolean isHTMLSource(String url) {
+    private static boolean isHTMLSource(Context ctx, String url) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        String imageLoadMode = sp.getString("image.loadMode", "off");
+        boolean indirectImages = sp.getBoolean("image.indirect", true);
         if (!indirectImages) return false;
-        if (imageLoadMode.contains("japroxy")) return false;
+        if (imageLoadMode.contains("japroxy") && !useDirectImageMode(ctx)) return false;
         return HTMLImageSourceDetector.isHTMLImageSource0(url);
     }
 
@@ -1027,6 +1042,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         DefaultHttpClient httpClient;
         HttpGet httpGet;
         boolean notOnlyImage;
+        boolean deletedInvalid;
         ImageGallery gallery;
 
         String suffix;
@@ -1042,17 +1058,36 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             updateUIBindings();
             final File destFile = getDestFile(getContext(), url);
             suffix = getSuffix(destFile);
-            if (destFile.exists()) {
+            loadFromFileOrNetwork(url, imageHolder, forceOriginalImage, destFile);
+        }
+
+        private void loadFromFileOrNetwork(final String url, final View imageHolder, final boolean forceOriginalImage, final File destFile) {
+            if (destFile.exists() && destFile.length()>1024) {
                 new Thread() {
                     @Override
                     public void run() {
                         final Bitmap bitmap = maybeDecodeImage(destFile);
-                        handler.post(new Runnable() {
+                        if (bitmap == null) if (!deletedInvalid) {
+                            destFile.delete();  // bad bad image
+                            updateStatus("Deleted bad existing image.");
+                            deletedInvalid = true;
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    loadFromFileOrNetwork(url, imageHolder, forceOriginalImage, destFile);
+                                }
+                            });
+                        } else {
+                            updateStatus("Bad cached image ;(");
+                        }
+                        else {
+                            handler.post(new Runnable() {
                             @Override
                             public void run() {
                                 updateImageView(destFile, bitmap);
                             }
                         });
+                        }
                     }
                 }.start();
             } else {
@@ -1060,7 +1095,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 httpClient = new DefaultHttpClient();
                 String loadURl = url;
 
-                if (!forceOriginalImage && !isHTMLSource(url)) {
+                if (!forceOriginalImage && !isHTMLSource(getContext(), url)) {
                     loadURl = setupProxyForURL(url);
                 }
                 try {
@@ -1130,6 +1165,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                 if (type.startsWith("text")) {
                                                     String imageURL = ExtractImageURLFromHTML.extractImageURLFromHTML(sb);
                                                     if (imageURL != null) {
+                                                        ImageLoader.this.url = imageURL;    // for image preview helper
                                                         suffix = "jpg";
                                                         totalRead = 0;
                                                         if (!forceOriginalImage)
@@ -1177,6 +1213,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
         private String setupProxyForURL(String url) {
+            if (useDirectImageMode(getContext())) {
+                return url;
+            }
             String loadURl = url;
             if (imageLoadMode.contains("japroxy")) {
                 final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
@@ -1388,13 +1427,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         instanceCount--;
     }
 
-    public static String urlToFileName(String url) {
+    public static String urlToFileName(Context ctx, String url) {
         StringBuilder sb = new StringBuilder();
         String curl = Uri.encode(url);
         int ask = url.indexOf('?');
         if (ask != -1) {
             String suburl = url.substring(0, ask);
-            if (isValidImageURl(suburl)) {
+            if (isValidImageURl(ctx, suburl)) {
                 int q = suburl.lastIndexOf('.');
                 // somefile.jpg?zz=true   -> somefile.jpg?zz=true.jpg   -> somefile.jpg_zz_true.jpg
                 url += suburl.substring(q);
@@ -1424,7 +1463,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         } else {
             File cacheDir = new File(ctx.getCacheDir(), "image_cache");
             cacheDir.mkdirs();
-            return new File(cacheDir, urlToFileName(url));
+            return new File(cacheDir, urlToFileName(ctx, url));
         }
 
 
