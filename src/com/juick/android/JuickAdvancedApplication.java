@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.Window;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -62,7 +64,12 @@ public class JuickAdvancedApplication extends Application {
 //        if (themeId != null) {
 //            activity.setTheme(themeId);
 //        }
-        activity.setTheme(R.style.Theme_Sherlock_JustNavigation);
+        boolean doit = true;
+        System.out.println("Oh");
+        if (activity instanceof FragmentActivity) {
+            ((FragmentActivity)activity).requestWindowFeature((long)android.view.Window.FEATURE_ACTION_BAR);
+            //activity.setTheme(R.style.Theme_Sherlock_JustNavigation);
+        }
     }
 
 

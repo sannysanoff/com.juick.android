@@ -184,10 +184,10 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     }
 
     protected void addMicroblogSpecificCommands(final String UName) {
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Subscribe_to) + " @" + UName) {
+        menuActions.add(new RunnableItem(UName + " " + activity.getResources().getString(R.string.UserCenter)) {
             @Override
             public void run() {
-                actionSubscribeUser();
+                actionUserCenter();
             }
         });
         if (listSelectedItem.getRID() == 0) {
@@ -204,12 +204,6 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 }
             });
         }
-        menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Blacklist) + " @" + UName) {
-            @Override
-            public void run() {
-                actionBlacklistUser();
-            }
-        });
         if (listSelectedItem.getRID() == 0) {
             menuActions.add(new RunnableItem(activity.getResources().getString(R.string.Recommend_message)) {
                 @Override

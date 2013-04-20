@@ -184,7 +184,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         initAdapter();
         MessagesFragment.installDividerColor(getListView());
 
-        parent.imagePreviewHelper = listAdapter.imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container), getActivity());
+        if (parent != null)
+            parent.imagePreviewHelper = listAdapter.imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container), getActivity());
     }
 
 

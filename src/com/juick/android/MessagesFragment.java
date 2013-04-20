@@ -43,6 +43,7 @@ import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import org.acra.ACRA;
 import org.apache.http.client.HttpClient;
 
 import java.net.URLEncoder;
@@ -695,39 +696,46 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             public void run() {
                 final Activity activity = getActivity();
                 if (activity != null && isAdded()) {
-                    messagesSource.getNext(progressNotification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
-                        @Override
-                        public Void apply(final ArrayList<JuickMessage> messages) {
-                            final ArrayList<JuickMessage> messagesFiltered = filterMessages(messages);
-                            if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
-                                for (JuickMessage juickMessage : messagesFiltered) {
-                                    juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(activity, juickMessage, false);
+                    try {
+                        messagesSource.getNext(progressNotification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                            @Override
+                            public Void apply(final ArrayList<JuickMessage> messages) {
+                                final ArrayList<JuickMessage> messagesFiltered = filterMessages(messages);
+                                if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
+                                    for (JuickMessage juickMessage : messagesFiltered) {
+                                        juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(activity, juickMessage, false);
+                                    }
                                 }
-                            }
-                            activity.runOnUiThread(new Runnable() {
+                                activity.runOnUiThread(new Runnable() {
 
-                                public void run() {
-                                    progressNotification.loadingg.setVisibility(View.GONE);
-                                    progressNotification.progressBar.setVisibility(View.GONE);
-                                    if (messages.size() == 0) {
-                                        progressNotification.progress.setText(progressNotification.lastError);
+                                    public void run() {
+                                        progressNotification.loadingg.setVisibility(View.GONE);
+                                        progressNotification.progressBar.setVisibility(View.GONE);
+                                        if (messages.size() == 0) {
+                                            progressNotification.progress.setText(progressNotification.lastError);
+                                        }
+                                        if (getView() == null) return;  // already closed?
+                                        MyListView parent = (MyListView)getListView();
+
+                                        if (getListView().getAdapter().getCount() - (recentFirstVisibleItem + recentVisibleItemCount) > 3) {
+                                            parent.blockLayoutRequests = true;  // a nafig nam layout, at least 3 items below?
+                                        }
+                                        try {
+                                            listAdapter.addAllMessages(messagesFiltered);
+                                        } finally {
+                                            parent.blockLayoutRequests = false;
+                                        }
+                                        loading = false;
                                     }
-                                    if (getView() == null) return;  // already closed?
-                                    MyListView parent = (MyListView)getListView();
-                                    if (getListView().getAdapter().getCount() - (recentFirstVisibleItem + recentVisibleItemCount) > 3) {
-                                        parent.blockLayoutRequests = true;  // a nafig nam layout, at least 3 items below?
-                                    }
-                                    try {
-                                        listAdapter.addAllMessages(messagesFiltered);
-                                    } finally {
-                                        parent.blockLayoutRequests = false;
-                                    }
-                                    loading = false;
-                                }
-                            });
-                            return null;  //To change body of implemented methods use File | Settings | File Templates.
-                        }
-                    });
+                                });
+                                return null;  //To change body of implemented methods use File | Settings | File Templates.
+                            }
+                        });
+                    } catch (OutOfMemoryError e) {
+                        messagesSource.setCanNext(false);
+                        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                        progressNotification.notifyDownloadError("OUT OF MEMORY");
+                    }
                 }
             }
         };

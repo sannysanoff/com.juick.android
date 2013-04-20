@@ -36,6 +36,21 @@ public class NewJuickPreferenceActivity extends Activity {
         }
     }
 
+    public class ChartMenuItem extends MenuItem {
+        private final String chartName;
+
+        public ChartMenuItem(int labelId, int label2Id, final String chartName) {
+            super(labelId, label2Id, new Runnable() {
+                @Override
+                public void run() {
+                    showChart(chartName);
+                }
+            });
+            this.chartName = chartName;
+        }
+    }
+
+
     public enum Menu {
         TOP_LEVEL,
         REPORTS_CHARTS
@@ -97,30 +112,15 @@ public class NewJuickPreferenceActivity extends Activity {
     }
 
     private void initReportsMenu(ArrayList<MenuItem> menu) {
-        menu.add(new MenuItem(R.string.UsageReportsPerWeek, R.string.UsageReportsPerWeek2, new Runnable() {
-            @Override
-            public void run() {
-                showChart("USAGE_RPW2");
-            }
-        }));
-        menu.add(new MenuItem(R.string.JuickUsersPerMonth, R.string.JuickUsersPerMonth2, new Runnable() {
-            @Override
-            public void run() {
-                showChart("JUICK_UPM2");
-            }
-        }));
-        menu.add(new MenuItem(R.string.VersionInstalls, R.string.VersionInstalls2, new Runnable() {
-            @Override
-            public void run() {
-                showChart("VERSION_INSTALLS");
-            }
-        }));
-        menu.add(new MenuItem(R.string.ClassicUsers, R.string.ClassicUsers2, new Runnable() {
-            @Override
-            public void run() {
-                showChart("CLASSIC_USERS");
-            }
-        }));
+        menu.add(new ChartMenuItem(R.string.UsageReportsPerWeek, R.string.UsageReportsPerWeek2, "USAGE_RPW2"));
+        menu.add(new ChartMenuItem(R.string.JuickUsersPerMonth, R.string.JuickUsersPerMonth2, "JUICK_UPM2"));
+        menu.add(new ChartMenuItem(R.string.JuickTrafficAllTime, R.string.JuickTrafficAllTime2, "JUICK_TPM"));
+        menu.add(new ChartMenuItem(R.string.JuickTrafficRecently, R.string.JuickTrafficRecently2, "JUICK_TPW"));
+        menu.add(new ChartMenuItem(R.string.JuickWeekActivity, R.string.JuickWeekActivity2, "JUICK_WEEK_ACTIVITY"));
+        menu.add(new ChartMenuItem(R.string.JuickPostLength, R.string.JuickPostLength2, "JUICK_POSTLEN"));
+        menu.add(new ChartMenuItem(R.string.JuickHoles, R.string.JuickHoles2, "JA_HOLES"));
+        menu.add(new ChartMenuItem(R.string.VersionInstalls, R.string.VersionInstalls2, "VERSION_INSTALLS"));
+        menu.add(new ChartMenuItem(R.string.ClassicUsers, R.string.ClassicUsers2, "CLASSIC_USERS"));
     }
 
     private void showChart(String chart) {
@@ -171,7 +171,11 @@ public class NewJuickPreferenceActivity extends Activity {
             TextView text = (TextView)listItem.findViewById(android.R.id.text1);
             text.setText(items.get(position).labelId);
             TextView text2 = (TextView)listItem.findViewById(android.R.id.text2);
-            text2.setText(items.get(position).label2Id);
+            try {
+                text2.setText(items.get(position).label2Id);
+            } catch (Exception e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
             return listItem;
         }
     }

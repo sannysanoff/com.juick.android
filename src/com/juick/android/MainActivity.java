@@ -981,7 +981,7 @@ public class MainActivity extends JuickFragmentActivity implements
 
     @Override
     public void onBackPressed() {
-        if (mf != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack()) return;
+        if (mf != null && mf.listAdapter != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack()) return;
         super.onBackPressed();
     }
 

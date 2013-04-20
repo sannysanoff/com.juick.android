@@ -11,6 +11,9 @@
                 android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="XMPP / Jabber">
+        <Preference android:title="@string/XMPPControl">
+            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
+        </Preference>
         <Preference android:title="@string/XMPPLoginInfo">
             <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPPreferenceActivity"/>
         </Preference>
@@ -38,9 +41,6 @@
                 android:title="@string/VerboseEventNotifications"
                 android:defaultValue="false"
                 android:persistent="true"/>
-        <Preference android:title="@string/XMPPControl">
-            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
-        </Preference>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/Notifications">
         <CheckBoxPreference

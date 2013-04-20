@@ -569,16 +569,24 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             @Override
             public void run() {
                 if (wsClient == null) {
+                    XMPPService.log("onKeepAlive: restarting");
                     maybeStartWSClient();
                 } else {
                     try {
                         if (!wsClient.send(createClientPing())) {
+                            XMPPService.log("onKeepAlive: send failed");
                             wsClient.disconnect();
                             wsClient = null;
                             maybeStartWSClient();
+                        } else {
+                            XMPPService.log("onKeepAlive: send ok");
                         }
                     } catch (Exception e) {
-                        //
+                        XMPPService.log("onKeepAlive: "+e.toString());
+                        if (wsClient != null) {
+                            wsClient.disconnect();
+                            wsClient = null;
+                        }
                     }
                 }
             }

@@ -449,13 +449,43 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
         public ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(XMPPIncomingMessagesActivity.this);
 
+
+        @Override
+        public int getViewTypeCount() {
+            return 5;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            Object item = displayItems.get(position);
+            if (item instanceof Header) {
+                return 0;
+            }
+            Item messagesItem = (Item)item;
+            XMPPService.IncomingMessage message = messagesItem.messages.get(0);
+            if (message instanceof XMPPService.JuickPrivateIncomingMessage) {
+                return 1;
+            }
+            if (message instanceof XMPPService.JuickThreadIncomingMessage) {
+                return 2;
+            }
+            if (message instanceof XMPPService.JabberIncomingMessage) {
+                return 3;
+            }
+            if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
+                return 4;
+            }
+            return -1;
+        }
+
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             long l = System.currentTimeMillis();
             try {
                 Object item = displayItems.get(i);
                 if (item instanceof Header) {
-                    view = getLayoutInflater().inflate(R.layout.incoming_messages_section, null);
+                    if (view == null)
+                        view = getLayoutInflater().inflate(R.layout.incoming_messages_section, null);
                     TextView tv = (TextView)view.findViewById(R.id.value);
                     TextView btn = (TextView)view.findViewById(R.id.button);
                     if (editMode) {
@@ -481,7 +511,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 XMPPService.IncomingMessage message = messagesItem.messages.get(0);
                 if (message instanceof XMPPService.JuickPrivateIncomingMessage) {
                     XMPPService.JuickPrivateIncomingMessage privmsg = (XMPPService.JuickPrivateIncomingMessage)message;
-                    view = getLayoutInflater().inflate(R.layout.incoming_messages_private, null);
+                    if (view == null)
+                        view = getLayoutInflater().inflate(R.layout.incoming_messages_private, null);
                     makePressable(view);
                     TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
                     TextView preview = (TextView)view.findViewById(R.id.preview);
@@ -527,7 +558,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         }
                         sb.append(" ");
                     }
-                    view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
+                    if (view == null)
+                        view = getLayoutInflater().inflate(R.layout.incoming_messages_threads, null);
                     makePressable(view);
                     XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
                     XMPPService.JuickIncomingMessage originalMessage = commentMessage.getOriginalMessage();
@@ -600,7 +632,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
                 if (message instanceof XMPPService.JabberIncomingMessage) {
                     XMPPService.JabberIncomingMessage jabberIncomingMessage = (XMPPService.JabberIncomingMessage)message;
-                    view = getLayoutInflater().inflate(R.layout.incoming_messages_other, null);
+                    if (view == null)
+                        view = getLayoutInflater().inflate(R.layout.incoming_messages_other, null);
                     makePressable(view);
                     TextView from  = (TextView)view.findViewById(R.id.from);
                     TextView preview = (TextView)view.findViewById(R.id.preview);
@@ -612,7 +645,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
                 if (message instanceof XMPPService.JuickSubscriptionIncomingMessage) {
                     XMPPService.JuickSubscriptionIncomingMessage subscriptionMessage = (XMPPService.JuickSubscriptionIncomingMessage)message;
-                    view = getLayoutInflater().inflate(R.layout.incoming_messages_subscription, null);
+                    if (view == null)
+                        view = getLayoutInflater().inflate(R.layout.incoming_messages_subscription, null);
                     makePressable(view);
 
                     SpannableStringBuilder ssb = new SpannableStringBuilder(subscriptionMessage.getFrom()+" ");

@@ -1308,7 +1308,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                updateImageView(destFile, bitmap);
+                                try {
+                                    updateImageView(destFile, bitmap);
+                                } catch (Exception e) {
+                                    Toast.makeText(getContext(), "OUT OF MEMORY", Toast.LENGTH_SHORT).show();
+                                    ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                                }
                             }
                         });
                     }
