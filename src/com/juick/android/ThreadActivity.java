@@ -30,7 +30,6 @@ import android.preference.PreferenceManager;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.MenuItem;
 import android.text.Spannable;
@@ -47,6 +46,10 @@ import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
 import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Vector;
 
 /**
@@ -65,7 +68,13 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     private TextView tvReplyTo;
     private RelativeLayout replyToContainer;
     private Button showThread;
+    private Button draftsButton;
+    private boolean enableDrafts;
     private EditText etMessage;
+    private String pulledDraft;        // originally pulled draft text, saved to compare and ignore save question
+    private String pulledDraftMid;
+    private long pulledDraftRid;
+    private long pulledDraftTs;
     private Button bSend;
     private ImageButton bAttach;
     private MessageID mid = null;
@@ -133,6 +142,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         replyToContainer = (RelativeLayout) findViewById(R.id.replyToContainer);
         setHeight(replyToContainer, 0);
         showThread = (Button) findViewById(R.id.showThread);
+        draftsButton = (Button) findViewById(R.id.drafts);
         etMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -148,11 +158,105 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                 //To change body of implemented methods use File | Settings | File Templates.
             }
         });
+        draftsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                class Item {
+                    String label;
+                    long ts;
+                    int index;
+
+                    Item(String label, long ts, int index) {
+                        this.label = label;
+                        this.ts = ts;
+                        this.index = index;
+                    }
+                }
+                final ArrayList<Item> items = new ArrayList<Item>();
+                final SharedPreferences drafts = getSharedPreferences("drafts", MODE_PRIVATE);
+                for(int q=0; q<1000; q++) {
+                    String msg = drafts.getString("message"+q, null);
+                    if (msg != null) {
+                        if (msg.length() > 50)
+                            msg = msg.substring(0, 50);
+                        items.add(new Item(msg, drafts.getLong("timestamp"+q, 0), q));
+                    }
+                }
+                Collections.sort(items, new Comparator<Item>() {
+                    @Override
+                    public int compare(Item item, Item item2) {
+                        final long l = item2.ts - item.ts;
+                        return l == 0 ? 0 : l > 0 ? 1: -1;
+                    }
+                });
+                CharSequence[] arr = new CharSequence[items.size()];
+                for (int i1 = 0; i1 < items.size(); i1++) {
+                    Item item = items.get(i1);
+                    arr[i1] = item.label;
+                }
+                new AlertDialog.Builder(ThreadActivity.this)
+                        .setItems(arr, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, final int which) {
+                                final Runnable doPull= new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        pullDraft(null, drafts, items.get(which).index);
+                                        updateDraftsButton();
+                                    }
+                                };
+                                if (pulledDraft != null && pulledDraft.trim().equals(etMessage.getText().toString().trim())) {
+                                    // no need to ask, user just looks at the drafts
+                                    saveDraft(pulledDraftRid, pulledDraftMid, pulledDraftTs, pulledDraft);
+                                    doPull.run();
+                                } else {
+                                    if (etMessage.getText().toString().length() > 0) {
+                                        new AlertDialog.Builder(ThreadActivity.this)
+                                                .setTitle("Replacing text")
+                                                .setMessage("Your entered is not sent and will be replaced!")
+                                                .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        doPull.run();
+                                                    }
+
+                                                })
+                                                .setNeutralButton(pulledDraft != null ? "Save changed draft":"Save to draft", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        if (pulledDraft != null) {
+                                                            saveDraft(pulledDraftRid, pulledDraftMid, System.currentTimeMillis(), etMessage.getText().toString());
+                                                        } else {
+                                                            saveDraft(rid, mid.toString(), System.currentTimeMillis(), etMessage.getText().toString());
+                                                        }
+                                                        doPull.run();
+                                                    }
+                                                })
+                                                .setPositiveButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                    }
+                                                }).show();
+                                    } else {
+                                        doPull.run();
+                                    }
+                                }
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        })
+                        .show();
+            }
+        });
+        enableDrafts = (sp.getBoolean("enableDrafts", false));
         if (sp.getBoolean("capitalizeReplies", false)) {
             etMessage.setInputType(etMessage.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
         }
-
-
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         tf = new ThreadFragment(getLastCustomNonConfigurationInstance(), this);
         Bundle args = new Bundle();
@@ -164,6 +268,23 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         ft.add(R.id.threadfragment, tf);
         ft.commit();
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+
+    }
+
+    void saveDraft(long saveRid, String saveMid, long saveTs, String messag) {
+        final SharedPreferences drafts = getSharedPreferences("drafts", MODE_PRIVATE);
+        for (int i = 0; i < 1000; i++) {
+            final String string = drafts.getString("message" + i, null);
+            if (string == null) {
+                drafts.edit()
+                        .putString("message" + i, messag)
+                        .putLong("timestamp" + i, saveTs)
+                        .putLong("rid" + i, saveRid)
+                        .putString("mid" + i, saveMid)
+                        .commit();
+                break;
+            }
+        }
     }
 
     private void doCancel() {
@@ -227,14 +348,71 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         oldTitle.setText(title);
         DatabaseService.rememberVisited(message);
         final Intent i = getIntent();
-        if (i.getSerializableExtra("prefetched") != null && !focusedOnceOnPrefetched) {
+        final Serializable prefetched = i.getSerializableExtra("prefetched");
+        JuickMessage prefetchedReply = null;
+        if (prefetched != null && !focusedOnceOnPrefetched) {
             focusedOnceOnPrefetched = true;
-            final JuickMessage lastReply = (JuickMessage) tf.getListView().getAdapter().getItem(tf.getListView().getAdapter().getCount() - 1);
-            onReplySelected(lastReply);
+            prefetchedReply = (JuickMessage) tf.getListView().getAdapter().getItem(tf.getListView().getAdapter().getCount() - 1);
+            onReplySelected(prefetchedReply);
             etMessage.requestFocus();
+        } else {
         }
+        final String midS = mid.toString();
+        final SharedPreferences drafts = getSharedPreferences("drafts", MODE_PRIVATE);
+        for (int q = 0; q < 1000; q++) {
+            final String savedMID = drafts.getString("mid" + q, null);
+            if (savedMID != null && savedMID.equals(midS)) {
+                pullDraft(prefetchedReply, drafts, q);
+                break;
+            } else {
+            }
+        }
+        updateDraftsButton();
     }
-    
+
+    private void updateDraftsButton() {
+        final SharedPreferences drafts = getSharedPreferences("drafts", MODE_PRIVATE);
+        draftsButton.setVisibility(drafts.getAll().size() > 0 && enableDrafts? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * @param prefetchedReply nullable, for prefetch mode only
+     * @param drafts
+     * @param q     draft index
+     * @return      number of someDrafts increased if this draft is of no use
+     */
+    private void pullDraft(JuickMessage prefetchedReply, SharedPreferences drafts, int q) {
+        final long savedRid = drafts.getLong("rid" + q, 0);
+        boolean matchingRid = prefetchedReply == null;
+        for(int msg=0; msg<tf.getListView().getAdapter().getCount(); msg++) {
+            final Object item = tf.getListView().getAdapter().getItem(msg);
+            if (item instanceof JuickMessage) {
+                JuickMessage someReply = (JuickMessage) item;
+                if (someReply.getRID() == savedRid) {
+                    onReplySelected(someReply);
+                    if (prefetchedReply != null && prefetchedReply.getRID() == someReply.getRID()) {
+                        matchingRid = true;
+                    }
+                    break;
+                }
+            }
+        }
+        if (matchingRid) {
+            etMessage.setText(pulledDraft = drafts.getString("message" + q, null));
+            pulledDraftMid= drafts.getString("mid" + q, null);
+            pulledDraftRid= drafts.getLong("rid" + q, 0);
+            pulledDraftTs= drafts.getLong("timestamp" + q, 0);
+            etMessage.requestFocus();
+            drafts.edit()
+                    .remove("message" + q)
+                    .remove("timestamp" + q)
+                    .remove("rid" + q)
+                    .remove("mid" + q)
+                    .commit();
+        }
+        return;
+    }
+
     public void onReplySelected(final JuickMessage msg) {
         selectedReply = msg;
         rid = msg.getRID();
@@ -517,6 +695,42 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         if (tf.onBackPressed()) return;
         if (tf != null && tf.listAdapter.imagePreviewHelper != null && tf.listAdapter.imagePreviewHelper.handleBack())
             return;
+        if (enableDrafts) {
+            final String messag = etMessage.getText().toString().trim();
+            if (messag.length() > 0) {
+                if (pulledDraft != null && pulledDraft.trim().equals(etMessage.getText().toString().trim())) {
+                    saveDraft(pulledDraftRid, pulledDraftMid, pulledDraftTs, pulledDraft);
+                } else {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Leaving thread")
+                            .setMessage("Your reply is not sent!")
+                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            })
+                            .setNeutralButton("Save draft", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (pulledDraft != null ) {
+                                        saveDraft(pulledDraftRid, pulledDraftMid, System.currentTimeMillis(), messag);
+                                    } else {
+                                        saveDraft(rid, mid.toString(), System.currentTimeMillis(), messag);
+                                    }
+                                    finish();
+                                }
+                            })
+                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            }).show();
+                    return;
+                }
+            }
+        }
         super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
     }
 }

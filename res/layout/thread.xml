@@ -98,22 +98,32 @@
                     android:paddingBottom="2dip"
                     android:textColor="#000"/>
         </RelativeLayout>
-        <LinearLayout
+        <RelativeLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/replyToContainer"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
-                android:orientation="vertical">
+                >
+            <Button
+                    android:id="@+id/drafts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:visibility="gone"
+                    android:text="@string/Drafts"
+                    />
             <EditText
                     android:id="@+id/editMessage"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:layout_toLeftOf="@id/drafts"
+                    android:layout_alignParentLeft="true"
                     android:textCursorDrawable="@null"
                     android:maxHeight="260dip"
                     android:hint="@string/ClickToReply"
                     />
-        </LinearLayout>
+        </RelativeLayout>
     </RelativeLayout>
 
     <ImageView

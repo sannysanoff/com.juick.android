@@ -448,6 +448,7 @@
     <string name="InMessagesView">In Messages view</string>
     <string name="InThreadView">In Thread view</string>
     <string name="LegacyMenu">Legacy Menu</string>
+    <string name="Drafts">Черновики</string>
 
 
 </resources>

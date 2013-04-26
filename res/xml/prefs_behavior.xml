@@ -41,6 +41,11 @@
             android:defaultValue="false"
             android:persistent="true"/>
     <CheckBoxPreference
+            android:key="enableDrafts"
+            android:title="Enable saving drafts"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <CheckBoxPreference
             android:key="capitalizeReplies"
             android:title="@string/CapitalizeReplyText"
             android:summary="@string/WhenReplying"
