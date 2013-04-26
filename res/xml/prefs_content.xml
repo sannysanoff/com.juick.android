@@ -18,6 +18,24 @@
             android:summary="turn off to get twitter-style look"
             android:defaultValue="true"
             android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="compactComments"
+            android:title="Compact comments"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <ListPreference
+            android:key="messagesFontScale"
+            android:title="@string/Message_font_scale_factor"
+            android:entries="@array/scaleFontSize"
+            android:entryValues="@array/scaleFontSize"
+            android:defaultValue="1.0"
+            android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="feedlyFonts"
+            android:title="@string/UseAlternativeFontForTags"
+            android:summary="@string/UseAlternativeFontForTags2"
+            android:defaultValue="false"
+            android:persistent="true"/>
     <PreferenceCategory android:title="@string/LoadImages">
         <ListPreference
                 android:key="image.loadMode"
@@ -88,6 +106,84 @@
         <Preference android:title="@string/JuBoFilters">
             <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.ViewJuboFiltersActivity"/>
         </Preference>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/Colors">
+        <!--
+                <ListPreference
+                        android:key="nativeTheme"
+                        android:title="Theme for UI elemnents"
+                        android:entries="@array/themes"
+                        android:entryValues="@array/themes"
+                        android:defaultValue="default"
+                        android:persistent="true"/>
+        -->
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.COMMON_BACKGROUND"
+                android:title="@string/CommonBackground"
+                android:defaultValue="0xFFFFFFFF"
+                android:persistent="true"/>
+        <!--
+                <yuku.ambilwarna.widget.AmbilWarnaPreference
+                    android:key="Colors.BUTTON_BACKGROUND"
+                    android:title="Button background"
+                    android:defaultValue="0xFFFFFFFF"
+                    android:persistent="true"/>
+        -->
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.COMMON_FOREGROUND"
+                android:title="@string/CommonForeground"
+                android:defaultValue="0xFF000000"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.DIVIDER"
+                android:title="@string/ListDivider"
+                android:defaultValue="0xFF808080"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.USERNAME"
+                android:title="@string/Usernames"
+                android:defaultValue="0xFFC8934E"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.USERNAME_ME"
+                android:title="@string/YourUsername"
+                android:defaultValue="0xFF938e00"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.USERNAME_READ"
+                android:title="@string/UserNamesRead"
+                android:defaultValue="0xFFc84e4e"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.TAGS"
+                android:title="@string/Tags"
+                android:defaultValue="0xFF0000CC"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.URLS"
+                android:title="@string/URLs"
+                android:defaultValue="0xFF0000CC"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.MESSAGE_ID"
+                android:title="@string/MessageIDs"
+                android:defaultValue="0xFFa0a5bd"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.NUMBER_OF_COMMENTS"
+                android:title="@string/NumberOfrComments"
+                android:defaultValue="0xFFC8934E"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.TRANSLATED_LABEL"
+                android:title="@string/TranslatedLabel"
+                android:defaultValue="0xFF4ec856"
+                android:persistent="true"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+                android:key="Colors.DATE"
+                android:title="@string/Dates"
+                android:defaultValue="0xFFAAAAAA"
+                android:persistent="true"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

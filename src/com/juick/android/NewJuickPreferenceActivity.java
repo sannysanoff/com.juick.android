@@ -65,10 +65,10 @@ public class NewJuickPreferenceActivity extends Activity {
                 runPrefs(R.xml.prefs_ui);
             }
         }));
-        menu.add(new MenuItem(R.string.Behavior, R.string.Behavior2, new Runnable() {
+        menu.add(new MenuItem(R.string.ContentSettings, R.string.ContentSettings2, new Runnable() {
             @Override
             public void run() {
-                runPrefs(R.xml.prefs_behavior);
+                runPrefs(R.xml.prefs_content);
 
             }
         }));
@@ -76,13 +76,6 @@ public class NewJuickPreferenceActivity extends Activity {
             @Override
             public void run() {
                 runPrefs(R.xml.prefs_xmpp);
-            }
-        }));
-        menu.add(new MenuItem(R.string.ContentSettings, R.string.ContentSettings2, new Runnable() {
-            @Override
-            public void run() {
-                runPrefs(R.xml.prefs_content);
-
             }
         }));
         menu.add(new MenuItem(R.string.Sources, R.string.Sources2, new Runnable() {

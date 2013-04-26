@@ -75,7 +75,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     private String pulledDraftMid;
     private long pulledDraftRid;
     private long pulledDraftTs;
-    private Button bSend;
+    private ImageButton bSend;
     private ImageButton bAttach;
     private MessageID mid = null;
     private int rid = 0;
@@ -125,7 +125,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             }
         });
         final View buttons = findViewById(R.id.buttons);
-        bSend = (Button) findViewById(R.id.buttonSend);
+        bSend = (ImageButton) findViewById(R.id.buttonSend);
         bSend.setOnClickListener(this);
         bAttach = (ImageButton) findViewById(R.id.buttonAttachment);
         bAttach.setOnClickListener(this);
@@ -213,8 +213,8 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                                 } else {
                                     if (etMessage.getText().toString().length() > 0) {
                                         new AlertDialog.Builder(ThreadActivity.this)
-                                                .setTitle("Replacing text")
-                                                .setMessage("Your entered is not sent and will be replaced!")
+                                                .setTitle(getString(R.string.ReplacingText))
+                                                .setMessage(getString(R.string.YourTextWillBeReplaced))
                                                 .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                                                     @Override
                                                     public void onClick(DialogInterface dialog, int which) {
@@ -222,7 +222,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                                                     }
 
                                                 })
-                                                .setNeutralButton(pulledDraft != null ? "Save changed draft":"Save to draft", new DialogInterface.OnClickListener() {
+                                                .setNeutralButton(getString(pulledDraft != null ? R.string.SaveChangedDraft:R.string.SaveDraft), new DialogInterface.OnClickListener() {
                                                     @Override
                                                     public void onClick(DialogInterface dialog, int which) {
                                                         if (pulledDraft != null) {
@@ -702,18 +702,18 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                     saveDraft(pulledDraftRid, pulledDraftMid, pulledDraftTs, pulledDraft);
                 } else {
                     new AlertDialog.Builder(this)
-                            .setTitle("Leaving thread")
-                            .setMessage("Your reply is not sent!")
+                            .setTitle(getString(R.string.LeavingThread))
+                            .setMessage(getString(R.string.YourReplyIsNotSent))
                             .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     dialog.cancel();
                                 }
                             })
-                            .setNeutralButton("Save draft", new DialogInterface.OnClickListener() {
+                            .setNeutralButton(getString(R.string.SaveDraft), new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (pulledDraft != null ) {
+                                    if (pulledDraft != null) {
                                         saveDraft(pulledDraftRid, pulledDraftMid, System.currentTimeMillis(), messag);
                                     } else {
                                         saveDraft(rid, mid.toString(), System.currentTimeMillis(), messag);

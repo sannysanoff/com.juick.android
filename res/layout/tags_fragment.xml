@@ -56,16 +56,26 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             >
-        <TextView
-                android:padding="5sp"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:autoLink="none"
-                android:linksClickable="true"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:text=""
-                android:id="@+id/tags"/>
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <TextView
+                    android:padding="5sp"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:autoLink="none"
+                    android:linksClickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:text=""
+                    android:id="@+id/tags"/>
+            <Button
+                    android:id="@+id/myAll"
+                    android:layout_width="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:text="My / All"
+                    android:layout_height="wrap_content"/>
+        </RelativeLayout>
     </ScrollView>
 
  </LinearLayout>

@@ -6,6 +6,7 @@ import android.app.Application;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
@@ -56,6 +57,7 @@ public class JuickAdvancedApplication extends Application {
         put("Theme_Light",android.R.style.Theme_Light);
         put("Theme_Translucent",android.R.style.Theme_Translucent);
     }};
+    public static Typeface dinWebPro;
 
     public static void setupTheme(Activity activity) {
         // String nativeTheme = sp.getString("nativeTheme", "default");
@@ -97,7 +99,11 @@ public class JuickAdvancedApplication extends Application {
             version = ""+getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode;
         } catch (Exception ex) {
         }
-
+        try {
+            dinWebPro = Typeface.createFromAsset(this.getAssets(), "fonts/DINWebPro-CondensedMedium.ttf");
+        } catch (Throwable e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
         startService(new Intent(this, XMPPService.class));
 

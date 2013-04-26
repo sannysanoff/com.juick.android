@@ -17,6 +17,8 @@
  */
 package com.juick.android;
 
+import android.app.Activity;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -31,6 +33,7 @@ import android.text.style.URLSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
@@ -51,12 +54,22 @@ public class TagsFragment extends Fragment  {
     private TagsFragmentListener parentActivity;
     private int uid = 0;
     private boolean multi = false;
+    private boolean showMine = true;
+    /**
+     * whether it should persist mine/all selection
+     */
+    public boolean saveMineAll = false;
+    private Button myAll;
+    SharedPreferences sp;
 
     @Override
     public void onAttach(SupportActivity activity) {
         super.onAttach(activity);
         try {
             parentActivity = (TagsFragmentListener) activity;
+            sp = activity.getPreferences(Activity.MODE_PRIVATE);
+            if (saveMineAll)
+                showMine = sp.getBoolean("showMine", true);
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString() + " must implement TagsFragmentListener");
         }
@@ -103,6 +116,17 @@ public class TagsFragment extends Fragment  {
         super.onViewCreated(view, savedInstanceState);
         myView = view;
         Bundle args = getArguments();
+        myAll = (Button)view.findViewById(R.id.myAll);
+        myAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showMine = !showMine;
+                if (saveMineAll) {
+                    sp.edit().putBoolean("showMine", showMine).commit();
+                }
+                reloadTags(view);
+            }
+        });
         if (args != null) {
             uid = args.getInt("uid", 0);
             multi = args.getBoolean("multi", false);
@@ -127,8 +151,6 @@ public class TagsFragment extends Fragment  {
 //        MessagesFragment.installDividerColor(getListView());
         MainActivity.restyleChildrenOrWidget(view);
         final TextView progress = (TextView)myView.findViewById(R.id.progress);
-        final View progressAll = myView.findViewById(R.id.progress_all);
-        final View selectedContainer = myView.findViewById(R.id.selected_container);
         final View okbutton = myView.findViewById(R.id.okbutton);
         progress.setText(R.string.Loading___);
         okbutton.setOnClickListener(new View.OnClickListener() {
@@ -148,14 +170,21 @@ public class TagsFragment extends Fragment  {
             }
         });
 
+        reloadTags(view);
+    }
+
+    private void reloadTags(final View view) {
+        final View selectedContainer = myView.findViewById(R.id.selected_container);
+        final View progressAll = myView.findViewById(R.id.progress_all);
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
+                final int tagsUID = showMine ? uid : 0;
                 String url = "http://api.juick.com/tags";
-                File globalTagsCache = new File(view.getContext().getCacheDir(), "global_tags-" + uid + ".json");
+                File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-" + tagsUID + ".json");
                 String cachedString = null;
-                if (uid != 0) {
-                    url += "?user_id=" + uid;
+                if (tagsUID != 0) { // -1 == mine
+                    url += "?user_id=" + tagsUID;
                 }
                 if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {
                     cachedString = XMPPService.readFile(globalTagsCache);
@@ -165,7 +194,7 @@ public class TagsFragment extends Fragment  {
                     XMPPService.writeStringToFile(globalTagsCache, jsonStr);
                 }
                 if (isAdded()) {
-                    final SpannableStringBuilder ssb = new SpannableStringBuilder();
+                    final SpannableStringBuilder tagsSSB = new SpannableStringBuilder();
                     if (jsonStr != null) {
                         try {
                             JSONArray json = new JSONArray(jsonStr);
@@ -187,25 +216,25 @@ public class TagsFragment extends Fragment  {
                                 }
                             }
                             for (int i = 0; i < cnt; i++) {
-                                int index = ssb.length();
+                                int index = tagsSSB.length();
                                 final String tagg = json.getJSONObject(i).getString("tag");
-                                ssb.append("*" + tagg);
-                                ssb.setSpan(new URLSpan(tagg) {
+                                tagsSSB.append("*" + tagg);
+                                tagsSSB.setSpan(new URLSpan(tagg) {
                                     @Override
                                     public void onClick(View widget) {
-                                        onTagClick(tagg, uid);
+                                        onTagClick(tagg, tagsUID);
                                     }
-                                }, index, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                }, index, tagsSSB.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                                 Double scale = scales.get(tagg);
                                 if (scale != null) {
-                                    ssb.setSpan(new RelativeSizeSpan((float)scale.doubleValue()), index, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                    tagsSSB.setSpan(new RelativeSizeSpan((float)scale.doubleValue()), index, tagsSSB.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                                 }
-                                tagOffsets.put(tagg, new TagOffsets(index, ssb.length()));
-                                ssb.append(" ");
+                                tagOffsets.put(tagg, new TagOffsets(index, tagsSSB.length()));
+                                tagsSSB.append(" ");
 
                             }
                         } catch (Exception ex) {
-                            ssb.append("Error: "+ex.toString());
+                            tagsSSB.append("Error: " + ex.toString());
                         }
                     }
                     if (getActivity() != null) {
@@ -217,7 +246,7 @@ public class TagsFragment extends Fragment  {
                                 progressAll.setVisibility(View.GONE);
                                 if (multi)
                                     selectedContainer.setVisibility(View.VISIBLE);
-                                tv.setText(ssb, TextView.BufferType.SPANNABLE);
+                                tv.setText(tagsSSB, TextView.BufferType.SPANNABLE);
                                 tv.setMovementMethod(LinkMovementMethod.getInstance());
                                 MainActivity.restyleChildrenOrWidget(view);
                                 final TextView selected = (TextView)myView.findViewById(R.id.selected);

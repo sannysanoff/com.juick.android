@@ -318,6 +318,15 @@
             <b>Апрель 2013, зимний билд</b>
             <ul>
             <li>
+            Готичненький шрифт для отображения тегов. Включить: <input type="checkbox" name="prefs.feedlyFonts" #prefs.checked.feedlyFonts#>
+            </li>
+            <li>
+            Компактное изображение комментариев. Всё то же, только дата не занимает лишнюю строку и короче. Включить: <input type="checkbox" name="prefs.compactComments" #prefs.checked.compactComments#>
+            </li>
+            <li>
+            Твиттер-стайл выравниевние текста. Под аватарку не затекает. Включить: <input type="checkbox" name="prefs.wrapUserpics" #prefs.checked.wrapUserpics!#>
+            </li>
+            <li>
             Черновики комментов. При выходе из треда, если что-то написано и не отправлено, предлагает записать черновик. Восстанавливает текст при входе в тот же тред,
             да и просто можно использовать из другого места. Чтобы удалить черновик, восстановите и отредактируйте его в ноль или отправьте.
             Разрешить черновики: <input type="checkbox" name="prefs.enableDrafts" #prefs.checked.enableDrafts#>
@@ -330,6 +339,9 @@
             </li>
             <li>
             В поиске теперь можно вводить #12345 или @Vasya, откроется соответственно пост или все посты юзера.
+            </li>
+            <li>
+            Список тегов при поиске или создании нового сообщения - новая кнопа: мой/общий список.
             </li>
             <li>
             Весьма оптимизирована производительность UI, картинки не моргают, всё скроллируется еще плавнее, должно хорошо отразиться и на батарейке. Добавлен двойной клик на картинки,
@@ -892,12 +904,10 @@
         If you don\'t know your password: use your jabber client and send LOGIN command to the juick bot. Open link received.
         Set up your password here: http://juick.com/settings?page=password
     </string>
-    <string name="UI_Settings">UI</string>
-    <string name="UsabilityEnhancements">Look and feel: font size etc, colors, menu type</string>
-    <string name="Behavior">Behavior</string>
-    <string name="Behavior2">Confirmations, markers and other helpful stuff</string>
+    <string name="UI_Settings">UI / Behavior</string>
+    <string name="UsabilityEnhancements">Menu type, confirmations, markers, drafts etc</string>
     <string name="ContentSettings">Content</string>
-    <string name="ContentSettings2">Images, message numbers, filters etc</string>
+    <string name="ContentSettings2">Colors, images, message numbers, filters etc</string>
     <string name="Sources">Sources</string>
     <string name="Sources2">JuBo, jugregator.org etc</string>
     <string name="NetworkingAndStorage">Network and storage</string>
@@ -1038,6 +1048,14 @@
     <string name="InsteadOfLegacyMenu">..instead of legacy menu</string>
     <string name="LegacyMenu">Legacy Menu</string>
     <string name="Drafts">Drafts</string>
+    <string name="LeavingThread">Leaving thread</string>
+    <string name="YourReplyIsNotSent">Your reply is not sent!</string>
+    <string name="SaveDraft">Save draft</string>
+    <string name="ReplacingText">Replacing text</string>
+    <string name="YourTextWillBeReplaced">Your entered text is not sent and will be replaced!</string>
+    <string name="SaveChangedDraft">Save changed draft</string>
+    <string name="UseAlternativeFontForTags">Use alternative fonts for tags</string>
+    <string name="UseAlternativeFontForTags2">(slim font)</string>
 
 
 </resources>

@@ -52,6 +52,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         TagsFragment tf = new TagsFragment();
+        tf.saveMineAll = true;
         Bundle args = new Bundle();
         args.putSerializable("messagesSource", getIntent().getSerializableExtra("messagesSource"));
         uid = getIntent().getIntExtra("uid", -1);

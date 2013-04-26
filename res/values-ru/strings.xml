@@ -327,12 +327,10 @@
     </string>
     <string name="OnlyNeededIfUsing">Нужен только если вы ее используете</string>
 
-    <string name="UI_Settings">Интерфейс</string>
-    <string name="UsabilityEnhancements">Внешний вид: размеры шрифтов, цвета, тип меню</string>
-    <string name="Behavior">Поведение</string>
-    <string name="Behavior2">Подтверждения, маркеры и прочее полезное</string>
-    <string name="ContentSettings">Содержание</string>
-    <string name="ContentSettings2">Картинки, номера постов, фильтры итд.</string>
+    <string name="UI_Settings">Интерфейс / Поведение</string>
+    <string name="UsabilityEnhancements">Тип меню, подтверждения, черновики..</string>
+    <string name="ContentSettings">Контент</string>
+    <string name="ContentSettings2">Цвета, картинки, номера постов, фильтры итд.</string>
     <string name="Sources">Источники</string>
     <string name="Sources2">JuBo, jugregator.org итд.</string>
     <string name="NetworkingAndStorage">Сеть и сохранение данных</string>
@@ -444,11 +442,19 @@
     <string name="PastDialogsWithUser">Прошлые диалоги с юзером</string>
     <string name="MyReplies_">Моих реплик:</string>
     <string name="UserReplies_">Реплик Юзера:</string>
-    <string name="FullScreen">Full Screen</string>
-    <string name="InMessagesView">In Messages view</string>
-    <string name="InThreadView">In Thread view</string>
-    <string name="LegacyMenu">Legacy Menu</string>
+    <string name="FullScreen">Во весь экран</string>
+    <string name="InMessagesView">В мессагах</string>
+    <string name="InThreadView">В тредах</string>
+    <string name="LegacyMenu">Простое меню</string>
     <string name="Drafts">Черновики</string>
+    <string name="LeavingThread">Выход из комментов</string>
+    <string name="YourReplyIsNotSent">Ваш коммент не отправлен!</string>
+    <string name="SaveDraft">В черновики</string>
+    <string name="SaveChangedDraft">Заменить черновик</string>
+    <string name="ReplacingText">Заменяем текст ответа</string>
+    <string name="YourTextWillBeReplaced">Ваш текст не отправлен и будет заменен</string>
+    <string name="UseAlternativeFontForTags">Альтернативный шрифт для тегов</string>
+    <string name="UseAlternativeFontForTags2">(готичненькие теги)</string>
 
 
 </resources>

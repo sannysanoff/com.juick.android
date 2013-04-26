@@ -20,10 +20,16 @@
             android:enabled="false"
             android:text="@string/To__All"/>
         <Button
+                android:id="@+id/drafts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/Drafts"/>
+        <ImageButton
             android:id="@+id/buttonSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send"/>
+            android:layout_width="82sp"
+            android:layout_height="48sp"
+            android:scaleType="center"
+            android:src="@drawable/send36"/>
         <ProgressBar
             android:id="@+id/progressSend"
             android:layout_width="wrap_content"

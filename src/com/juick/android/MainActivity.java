@@ -870,7 +870,8 @@ public class MainActivity extends JuickFragmentActivity implements
 //            btn.setBackgroundColor(colorTheme.getButtonBackground());
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
-            if (text.getId() != R.id.old_title) // keep it authentic
+            final int id = text.getId();
+            if (id != R.id.old_title && id != R.id.gotoMain) // keep it authentic
                 text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
             restyleViewGroup((ViewGroup) view, colorTheme, pressed, selected, dontBackground);

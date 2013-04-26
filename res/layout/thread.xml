@@ -44,14 +44,14 @@
             android:background="#FFFFFF"
             android:layout_alignParentBottom="true"
             >
-        <Button
+        <ImageButton
                 android:id="@+id/buttonSend"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48sp"
                 android:paddingLeft="30sp"
                 android:paddingRight="30sp"
                 android:layout_alignParentRight="true"
-                android:text="@string/Send"/>
+                android:src="@drawable/send36"/>
         <ImageButton
                 android:id="@+id/buttonAttachment"
                 android:layout_width="wrap_content"
@@ -103,14 +103,16 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/replyToContainer"
                 android:focusable="true"
+                android:background="#ffff0000"
                 android:focusableInTouchMode="true"
                 >
+            <!-- red color will be replaced by restyle -->
             <Button
                     android:id="@+id/drafts"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     android:text="@string/Drafts"
                     />
             <EditText

@@ -66,7 +66,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     public ImageButton bTags;
     public ImageButton bLocation;
     public ImageButton bAttachment;
-    private Button bSend;
+    private ImageButton bSend;
     private ProgressBar progressSend;
     private int pid = 0;
     public int pidHint = 0;
@@ -111,7 +111,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         bTags = (ImageButton) findViewById(R.id.buttonTags);
         bLocation = (ImageButton) findViewById(R.id.buttonLocation);
         bAttachment = (ImageButton) findViewById(R.id.buttonAttachment);
-        bSend = (Button) findViewById(R.id.buttonSend);
+        bSend = (ImageButton) findViewById(R.id.buttonSend);
         progressSend = (ProgressBar) findViewById(R.id.progressSend);
 
         bLocationHint.setOnClickListener(this);

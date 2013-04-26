@@ -35,6 +35,7 @@ import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * @author Ugnich Anton
@@ -299,6 +300,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                                 @Override
                                 public Void apply(ArrayList<JuickMessage> messages) {
+                                    preprocessMessages(messages);
                                     then.apply(new MessagesFragment.RetainedData(messages, null));
                                     return null;
                                 }
@@ -313,6 +315,23 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             }
         }, "Init adapter, mid=" + mid);
         thr.start();
+    }
+
+    /**
+     * calculate delta times
+     * @param messages
+     */
+    private void preprocessMessages(ArrayList<JuickMessage> messages) {
+        if (messages == null || messages.size() == 0) return;
+        Date prevTime = messages.get(0).Timestamp;
+        for (int i = 1; i < messages.size(); i++) {
+            JuickMessage message = messages.get(i);
+            message.deltaTime = message.Timestamp.getTime() - prevTime.getTime();
+            if (message.Timestamp.getDate() != prevTime.getDate()) {
+                message.deltaTime = Long.MIN_VALUE;
+            }
+            prevTime = message.Timestamp;
+        }
     }
 
     /**

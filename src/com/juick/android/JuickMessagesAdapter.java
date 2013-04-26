@@ -28,6 +28,7 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.text.Layout;
 import android.text.Layout.Alignment;
+import android.text.TextPaint;
 import android.text.style.*;
 import android.util.Log;
 import android.view.*;
@@ -88,10 +89,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private int subtype;
     static boolean indirectImages;
     static boolean otherImages;
+    static boolean feedlyFonts;
+    static boolean compactComments;
     private final boolean hideGif;
     Handler handler;
     boolean enableScaleByGesture;
     ImagePreviewHelper imagePreviewHelper;
+    static boolean russian;
 
 
     public static int instanceCount;
@@ -170,6 +174,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         indirectImages = sp.getBoolean("image.indirect", true);
         otherImages = sp.getBoolean("image.other", true);
         hideGif = sp.getBoolean("image.hide_gif", false);
+        feedlyFonts = sp.getBoolean("feedlyFonts", false);
+        compactComments = sp.getBoolean("compactComments", false);
+        russian = XMPPIncomingMessagesActivity.isRussian();
         enableScaleByGesture = sp.getBoolean("enableScaleByGesture", true);
         textScale = 1;
         try {
@@ -232,6 +239,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
             final LinearLayout ll = (LinearLayout)v;
             final MyTextView t = (MyTextView) v.findViewById(R.id.text);
+            final TextView compactDate = (TextView) v.findViewById(R.id.compactDate);
             final MyTextView pret = (MyTextView) v.findViewById(R.id.pretext);
             final ListRowRuntime lrr = new ListRowRuntime(jmsg, null, 0);
             final ListRowRuntime prelrr = jmsg.contextPost != null ? new ListRowRuntime(jmsg.contextPost, null, 0) : null;
@@ -304,6 +312,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
             if (!parsedMessage.read) {  // could be set synchronously by the getMessageReadStatus, above
                 t.setText(parsedMessage.textContent);
+                compactDate.setText(parsedMessage.compactDate);
             }
             if (parsedPreMessage != null) {
                 pret.setText(parsedPreMessage.textContent);
@@ -622,6 +631,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public static class ParsedMessage {
         SpannableStringBuilder textContent;
+        SpannableStringBuilder compactDate;
         ArrayList<String> urls;
         public int messageNumberStart, messageNumberEnd;
         public int userNameStart, userNameEnd;
@@ -699,6 +709,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         getColorTheme(ctx);
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         int spanOffset = 0;
+        final boolean isMainMessage = jmsg.getRID() == 0;
+        final boolean doCompactComment = !isMainMessage && compactComments;
         if (jmsg.continuationInformation != null) {
             ssb.append(jmsg.continuationInformation+"\n");
             ssb.setSpan(new StyleSpan(Typeface.ITALIC), spanOffset, ssb.length()-1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -723,10 +735,17 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             // TAGS
             //
             String tags = jmsg.getTags();
+            if (feedlyFonts)
+                tags = tags.toUpperCase();
             ssb.append(tags + "\n");
-            if (tags.length() > 0)
+            if (tags.length() > 0) {
                 ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), spanOffset,
                         ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (feedlyFonts) {
+                    ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.dinWebPro), spanOffset,
+                            ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
             spanOffset = ssb.length();
         }
         if (jmsg.translated) {
@@ -743,7 +762,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             //
             // numbers
             //
-            if (jmsg.getRID() == 0) {
+            if (isMainMessage) {
                 messageNumberStart = ssb.length();
                 ssb.append(jmsg.getDisplayMessageNo());
                 messageNumberEnd = ssb.length();
@@ -811,6 +830,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             pos = m.end();
         }
 
+        SpannableStringBuilder compactDt = null;
         if (!condensed) {
 
             // found messages count (search results)
@@ -826,21 +846,39 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TRANSLATED_LABEL, 0xFF4ec856)), where, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
-            //
-            // TIME
-            //
+
             int rightPartOffset = spanOffset = ssb.length();
 
-            try {
-                DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
-//            df.setTimeZone(TimeZone.getDefault());
-                String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
-                ssb.append("\n" + date + " ");
-            } catch (Exception e) {
-                ssb.append("\n[fmt err] ");
-            }
+            if (!doCompactComment) {
+                //
+                // TIME (bottom of message)
+                //
 
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                try {
+                    DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
+                    String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
+                    ssb.append("\n" + date + " ");
+                } catch (Exception e) {
+                    ssb.append("\n[fmt err] ");
+                }
+
+                ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                compactDt = new SpannableStringBuilder();
+                try {
+                    if (true || jmsg.deltaTime!= Long.MIN_VALUE) {
+                        compactDt.append(XMPPIncomingMessagesActivity.toRelaviteDate(jmsg.Timestamp.getTime(), russian));
+                    } else {
+                        DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
+                        String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
+                        compactDt.append(date);
+                    }
+                } catch (Exception e) {
+                    compactDt.append("\n[fmt err] ");
+                }
+                compactDt.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.DATE, 0xFFAAAAAA)), 0, compactDt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            }
 
             spanOffset = ssb.length();
 
@@ -853,8 +891,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.NUMBER_OF_COMMENTS, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 ssb.setSpan(new WrapTogetherSpan(){}, spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            // right align
-            ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (!doCompactComment) {
+                // right align
+                ssb.setSpan(new AlignmentSpan.Standard(Alignment.ALIGN_OPPOSITE), rightPartOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
         }
 
 
@@ -893,6 +933,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         parsedMessage.userNameEnd = userNameEnd;
         parsedMessage.messageNumberStart = messageNumberStart;
         parsedMessage.messageNumberEnd = messageNumberEnd;
+        parsedMessage.compactDate = compactDt;
         return parsedMessage;
     }
 
@@ -961,6 +1002,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private ParsedMessage formatFirstMessageText(JuickMessage jmsg) {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         String tags = jmsg.getTags();
+        if (feedlyFonts) {
+            tags = tags.toLowerCase();
+        }
         if (tags.length() > 0) {
             tags += "\n";
         }
@@ -974,6 +1018,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ssb.append(tags + txt);
         if (tags.length() > 0) {
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), 0, tags.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (feedlyFonts) {
+                ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.dinWebPro), 0, tags.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
         }
 
         int paddingt = tags.length();
@@ -1468,5 +1515,39 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
     }
+
+    public static String formatTimeDiff(long timediff, boolean russian) {
+        StringBuilder sb = new StringBuilder();
+        if (timediff < 0) {
+            return russian ? "раньше" : "earlier";
+        }
+        timediff /= 1000;
+        timediff /= 60;
+        long minutes = timediff % 60;
+        timediff /= 60;
+        long hours = timediff % 24;
+        timediff /= 24;
+        long days = timediff;
+        sb.append("+");
+        if (days != 0) {
+            sb.append(days);
+            sb.append(russian?"д":"d ");
+        }
+        if (hours != 0) {
+            sb.append(hours);
+            sb.append(russian?"ч":"h ");
+        }
+        if (minutes != 0) {
+            sb.append(minutes);
+            sb.append(russian?"м":"m ");
+        }
+        if (sb.length() == 1) {
+            sb.setLength(0);
+            sb.append(russian ? "сразу" : "immed.");
+        }
+        return sb.toString();
+    }
+
+
 
 }
