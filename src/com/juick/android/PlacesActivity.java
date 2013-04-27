@@ -139,28 +139,30 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == MENUITEM_SPECIFYLOCATION) {
-            Intent i = new Intent(Intent.ACTION_PICK);
-            i.setClass(this, PickLocationActivity.class);
-            if (location != null) {
-                i.putExtra("lat", location.getLatitude());
-                i.putExtra("lon", location.getLongitude());
-            }
-            startActivityForResult(i, ACTIVITY_PICKLOCATION);
-            return true;
-        } else if (item.getItemId() == MENUITEM_NEWPLACE) {
-            try {
+        try {
+            if (item.getItemId() == MENUITEM_SPECIFYLOCATION) {
+                new PickLocationActivity(); // guard
+                Intent i = new Intent(Intent.ACTION_PICK);
+                i.setClass(this, PickLocationActivity.class);
+                if (location != null) {
+                    i.putExtra("lat", location.getLatitude());
+                    i.putExtra("lon", location.getLongitude());
+                }
+                startActivityForResult(i, ACTIVITY_PICKLOCATION);
+                return true;
+            } else if (item.getItemId() == MENUITEM_NEWPLACE) {
+                new PlaceEditActivity();        // guard
                 Intent i = new Intent(Intent.ACTION_PICK);
                 i.setClass(this, PlaceEditActivity.class);
                 i.putExtra("lat", location.getLatitude());
                 i.putExtra("lon", location.getLongitude());
                 startActivityForResult(i, ACTIVITY_NEWPLACE);
-            } catch (Throwable ex) {
-                Toast.makeText(this, "Probably Google Maps library is missing", Toast.LENGTH_LONG).show();
+                return true;
+            } else {
+                return super.onOptionsItemSelected(item);
             }
-            return true;
-        } else {
-            return super.onOptionsItemSelected(item);
+        } catch (Throwable ex) {
+            Toast.makeText(this, "Probably Google Maps library is missing", Toast.LENGTH_LONG).show();
         }
     }
 

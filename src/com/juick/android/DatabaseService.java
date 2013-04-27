@@ -620,6 +620,7 @@ public class DatabaseService extends Service {
                     ReadMarker readMarker = marker;
                     Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{readMarker.mid.toString()});
                     if (cursor.getCount() == 0) {
+                        cursor.close();
                         ContentValues contentValues = new ContentValues();
                         contentValues.put("msgid", readMarker.mid.toString());
                         contentValues.put("tm", System.currentTimeMillis());
@@ -631,6 +632,7 @@ public class DatabaseService extends Service {
                     } else {
                         cursor.moveToFirst();
                         int oldNreplies = cursor.getInt(cursor.getColumnIndex("nreplies"));
+                        cursor.close();
                         if (oldNreplies != readMarker.nreplies) {
                             db.execSQL("update message_read set nreplies=? where msgid=?",
                                     new Object[]{readMarker.nreplies, readMarker.mid.toString()});
@@ -801,6 +803,13 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "dialogMessageMenu", false);
         copyBoolean(jo, sp, "web_for_subscriptions", false);
         copyBoolean(jo, sp, "web_for_myblog", false);
+        copyBoolean(jo, sp, "wrapUserpics", true);
+        copyBoolean(jo, sp, "compactComments", false);
+        copyBoolean(jo, sp, "feedlyFonts", false);
+        copyBoolean(jo, sp, "fullScreenMessages", false);
+        copyBoolean(jo, sp, "fullScreenThread", false);
+        copyBoolean(jo, sp, "enableDrafts", false);
+        copyBoolean(jo, sp, "turnOffButtons", false);
         copyString(jo, sp, "messagesFontScale", "1.0");
         copyInteger(jo, sp, "Colors.COMMON_BACKGROUND", -1);
         copyString(jo, sp, "locationAccuracy", "ACCURACY_FINE");
@@ -809,6 +818,8 @@ public class DatabaseService extends Service {
         copyString(jo, sp, "juickBotOn", "skip");
         copyString(jo, sp, "image.loadMode", "off");
         copyString(jo, sp, "image.height_percent", "0.3");
+        copyBoolean(jo, sp, "imageproxy.skipOnWifi", false);
+        copyBoolean(jo, sp, "image.hide_gif", false);
         copyBoolean(jo, sp, "ringtone_enabled", true);
         copyBoolean(jo, sp, "vibration_enabled", true);
         copyBoolean(jo, sp, "led_enabled", true);

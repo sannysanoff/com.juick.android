@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Handler;
@@ -131,8 +132,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public String loginLocal(Context context, Handler handler, String username, String cookie) {
-        JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal");
         this.context = context;
+        JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal");
         this.handler = handler;
         this.username = username;
         socketName = "jamSocket";
@@ -328,14 +329,19 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         callXmppControlSafe(context, clientToServer, new Utils.Function<Void, ServerToClient>() {
             @Override
             public Void apply(ServerToClient serverToClient) {
-                if (then == null) {
-                    if (serverToClient.getErrorMessage() != null) {
-                        Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
+                try {
+                    if (then == null) {
+                        if (serverToClient.getErrorMessage() != null) {
+                            Toast.makeText(context, serverToClient.getErrorMessage(), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(context, R.string.Done, Toast.LENGTH_LONG).show();
+                        }
                     } else {
-                        Toast.makeText(context, R.string.Done, Toast.LENGTH_LONG).show();
+                        then.apply(serverToClient);
                     }
-                } else {
-                    then.apply(serverToClient);
+                } catch (Throwable e) {
+                    final RuntimeException ne = new RuntimeException("Probably toast error: context=" + context + " cr=" + (context != null ? context.getResources() : null)+" em="+serverToClient.getErrorMessage(), e);
+                    ACRA.getErrorReporter().handleException(ne, false);
                 }
                 return null;
             }
