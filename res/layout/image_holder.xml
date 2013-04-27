@@ -30,7 +30,14 @@
                 android:layout_alignParentTop="true"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:visibility="invisible"
+                android:visibility="gone"
+                />
+        <com.juick.android.GIFView
+                android:id="@+id/gif_view"
+                android:layout_alignParentTop="true"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:visibility="gone"
                 />
 
     </RelativeLayout>

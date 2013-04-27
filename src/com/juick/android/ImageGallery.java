@@ -138,19 +138,26 @@ public class ImageGallery extends Gallery {
     }
 
     public void cleanup() {
-        for (ImageView view : views) {
+        for (View view : views) {
             view.setOnTouchListener(null);
             if (view instanceof MyImageView) {
                 ((MyImageView)view).destroy();
+                view.setTag(MyImageView.DESTROYED_TAG, Boolean.FALSE);
             }
-            view.setTag(MyImageView.DESTROYED_TAG, Boolean.FALSE);
+            if (view instanceof GIFView) {
+                ((GIFView)view).setMovieFile(null);
+                view.setTag(MyImageView.DESTROYED_TAG, Boolean.FALSE);
+            }
         }
         views.clear();
         //removeAllViewsInLayout();
     }
 
-    ArrayList<ImageView> views = new ArrayList<ImageView>();
-    public void addInitializedImageView(ImageView wv) {
+    /**
+     * add a list of views to be destroyed on owner's recycle
+     */
+    ArrayList<View> views = new ArrayList<View>();
+    public void addInitializedView(View wv) {
         views.add(wv);
     }
 

@@ -1114,6 +1114,26 @@ public class XMPPService extends Service {
         }
     }
 
+    public static byte[] readFile(File f, int maxlen) {
+        if (!f.exists()) return null;
+        try {
+            FileInputStream fis = new FileInputStream(f);
+            byte[] arr = new byte[1024];
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while (true) {
+                int len = fis.read(arr);
+                if (len < 1) break;
+                baos.write(arr, 0, len);
+                if (baos.size() >= maxlen)
+                    break;
+            }
+            fis.close();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     public boolean up = false;
 
     @Override

@@ -102,7 +102,7 @@ public class UserpicStorage {
                                         @Override
                                         public void run() {
                                             try {
-                                                Utils.BINResponse binary = Utils.getBinary(ctx, id.getURL(size), null, 0);
+                                                final Utils.BINResponse binary = Utils.getBinary(ctx, id.getURL(size), null, 0);
                                                 boolean persist = true;
                                                 if (binary.errorText != null) {
                                                     binary.result = new byte[0];
@@ -119,7 +119,7 @@ public class UserpicStorage {
                                                     dbs.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                                         @Override
                                                         public void withService(DatabaseService service) {
-                                                            service.storeUserpic(id.toString(size), arr);
+                                                            service.storeUserpic(id.toString(size), binary.result);
                                                         }
                                                     });
                                                 }

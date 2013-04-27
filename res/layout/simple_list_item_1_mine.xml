@@ -1,0 +1,16 @@
+<com.juick.android.PressableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                         android:layout_width="fill_parent"
+                                         android:layout_height="wrap_content"
+                                         android:orientation="vertical"
+                                         android:background="#ffffffff"
+                                         >
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@android:id/text1"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:textAppearance="?android:attr/textAppearanceLarge"
+              android:gravity="center_vertical"
+              android:paddingLeft="6dip"
+              android:minHeight="?android:attr/listPreferredItemHeight"/>
+
+</com.juick.android.PressableLinearLayout>

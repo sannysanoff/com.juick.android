@@ -65,7 +65,7 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                 if (history.size() > 0) {
                     currentURL = history.remove(history.size()-1);
                     currentBody = historyCache.remove(historyCache.size()-1);
-                    Utils.setupWebView(webView, currentBody);
+                    setupWebView(webView, currentBody);
                 }
                 button.setEnabled(history.size() > 0);
             }
@@ -130,11 +130,12 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
 
         });
         reload();
+        MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
     }
 
     private void reload() {
         if (currentURL != null) {
-            Utils.setupWebView(webView, "Loading..");
+            setupWebView(webView, "Loading..");
             new Thread() {
                 @Override
                 public void run() {
@@ -146,10 +147,10 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                         public void run() {
                             if (currentURL.equals(loadingURL)) {
                                 if (response.getErrorText() != null) {
-                                    Utils.setupWebView(webView, response.getErrorText());
+                                    setupWebView(webView, response.getErrorText());
                                 } else {
                                     final String result = postProcessHTMLResult(response.getResult());
-                                    Utils.setupWebView(webView, result);
+                                    setupWebView(webView, result);
                                     currentBody = response.getResult();
                                 }
                             }
@@ -158,8 +159,30 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                 }
             }.start();
         } else {
-            Utils.setupWebView(webView, "Must be started with argument for URL viewing.");
+            setupWebView(webView, "Must be started with argument for URL viewing.");
         }
+    }
+
+    public void setupWebView(WebView wv, String html) {
+        ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(wv.getContext());
+        final int foreground = colorTheme.getColor(ColorsTheme.ColorKey.COMMON_FOREGROUND, 0xFF000000);
+        final int background = colorTheme.getColor(ColorsTheme.ColorKey.COMMON_BACKGROUND, 0xFFFFFFFF);
+        final int urls = colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC);
+        final String bodyColors = String.format(" bgcolor='#%s' text='#%s' vlink='#%s' link='#%s' ", hex(background), hex(foreground), hex(urls), hex(urls));
+        final int bodyIndex = html.toLowerCase().indexOf("<body");
+        if (bodyIndex < 0) {
+            html = "<body " + bodyColors + ">" + html;
+        } else {
+            html = html.substring(0, bodyIndex + 5) + bodyColors + html.substring(bodyIndex + 5); // injection
+        }
+        Utils.setupWebView(wv, html);
+    }
+
+    public static String hex(int color) {
+        String hexx = Integer.toHexString(color);
+        while(hexx.length() < 6) hexx = "0" + hexx;
+        if (hexx.length() > 6) hexx = hexx.substring(hexx.length() - 6, hexx.length());
+        return hexx;
     }
 
     private String postProcessHTMLResult(String result) {

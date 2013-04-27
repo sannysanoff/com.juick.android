@@ -43,6 +43,7 @@ import android.support.v4.view.MenuItem;
 import android.support.v4.view.Window;
 import android.text.TextUtils;
 import android.view.*;
+import android.webkit.WebView;
 import android.widget.*;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.psto.PstoCompatibleMessagesSource;
@@ -417,25 +418,34 @@ public class MainActivity extends JuickFragmentActivity implements
                     return convertView;
                 }
                 final int screenHeight = getWindow().getWindowManager().getDefaultDisplay().getHeight();
-                View retval = convertView;
-                if (retval == null) {
-                    retval = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                final PressableLinearLayout retval = convertView != null ?
+                        (PressableLinearLayout)convertView
+                        : (PressableLinearLayout)getLayoutInflater().inflate(R.layout.simple_list_item_1_mine, null);
+                TextView tv = (TextView) retval.findViewById(android.R.id.text1);
+                if (parent instanceof Spinner) {
+                    tv.setTextSize(18 * finalMenuFontScale);
+                    tv.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+                } else {
+                    tv.setTextSize(22 * finalMenuFontScale);
                 }
-                if (retval instanceof TextView) {
-                    TextView tv = (TextView) retval;
-                    if (parent instanceof Spinner) {
-                        tv.setTextSize(18 * finalMenuFontScale);
-                        tv.setEllipsize(TextUtils.TruncateAt.MARQUEE);
-                    } else {
-                        tv.setTextSize(22 * finalMenuFontScale);
-                    }
-                    tv.setText(getString(navigationItems.get(position).labelId));
-                    if (compressedMenu) {
-                        int minHeight = (int) ((screenHeight * 0.7) / getCount());
-                        tv.setMinHeight(minHeight);
-                        tv.setMinimumHeight(minHeight);
-                    }
+                tv.setText(getString(navigationItems.get(position).labelId));
+                if (compressedMenu) {
+                    int minHeight = (int) ((screenHeight * 0.7) / getCount());
+                    tv.setMinHeight(minHeight);
+                    tv.setMinimumHeight(minHeight);
                 }
+                retval.setPressedListener(new PressableLinearLayout.PressedListener() {
+                    @Override
+                    public void onPressStateChanged(boolean selected) {
+                        MainActivity.restyleChildrenOrWidget(retval, false);
+                    }
+
+                    @Override
+                    public void onSelectStateChanged(boolean selected) {
+                        MainActivity.restyleChildrenOrWidget(retval, false);
+                    }
+                });
+                MainActivity.restyleChildrenOrWidget(retval, false);
                 return retval;
             }
         };

@@ -318,13 +318,24 @@
             <b>Апрель 2013, зимний билд</b>
             <ul>
             <li>
+            Если вы не пользуете картиночный прокси, и если вам приезжает анимированный GIF, теперь он анимируется.
+            (Еще не сделано для полного просмотра). Закешированные ранее картинки показываются закешированными (не GIF).
+            Будет улучшено позднее.
+            </li>
+            <li>
             Готичненький шрифт для отображения тегов. Включить: <input type="checkbox" name="prefs.feedlyFonts" #prefs.checked.feedlyFonts#>
             </li>
             <li>
             Компактное изображение комментариев. Всё то же, только дата не занимает лишнюю строку и короче. Включить: <input type="checkbox" name="prefs.compactComments" #prefs.checked.compactComments#>
             </li>
             <li>
-            Твиттер-стайл выравниевние текста. Под аватарку не затекает. Включить: <input type="checkbox" name="prefs.wrapUserpics" #prefs.checked.wrapUserpics!#>
+            Твиттер-стайл выравнивание текста. Под аватарку не затекает. Включить: <input type="checkbox" name="prefs.wrapUserpics" #prefs.checked.wrapUserpics!#>
+            </li>
+            <li>
+            Неиспользование прокси картинок при включенном Wi-Fi. Разрешить: <input type="checkbox" name="prefs.imageproxy.skipOnWifi" #prefs.checked.imageproxy.skipOnWifi#>
+            </li>
+            <li>
+            Не показывать GIF картинки (т.к. они анимированные и в инлайне анноят). Подтвердить: <input type="checkbox" name="prefs.image.hide_gif" #prefs.checked.image.hide_gif#>
             </li>
             <li>
             Черновики комментов. При выходе из треда, если что-то написано и не отправлено, предлагает записать черновик. Восстанавливает текст при входе в тот же тред,

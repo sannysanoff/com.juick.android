@@ -78,7 +78,7 @@ public class DatabaseService extends Service {
         return gsonBuilder.create();
     }
 
-    public byte[] getStoredUserpic(String uid) {
+    public synchronized byte[] getStoredUserpic(String uid) {
         try {
             Cursor cursor = db.rawQuery("select * from userpic where uid=?", new String[]{uid});
             try {
@@ -103,12 +103,14 @@ public class DatabaseService extends Service {
                     cv.put("uid", uid);
                     cv.put("body", body);
                     cv.put("save_date", System.currentTimeMillis());
-                    db.insert("userpic", null, cv);
+                    long l = db.insert("userpic", null, cv);
+                    if (l != -1) {
+                        db.setTransactionSuccessful();
+                    }
                 } catch (Exception e) {
                     System.out.println("oh");
                     // duplicate key
                 }
-                db.setTransactionSuccessful();
                 return true;
             }
         });

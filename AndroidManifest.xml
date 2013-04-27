@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced"
-          android:versionCode="2013042601" android:versionName="18.18.21">
+          android:versionCode="2013042701" android:versionName="18.18.22">
 
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>

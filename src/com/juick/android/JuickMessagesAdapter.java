@@ -28,7 +28,6 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.text.Layout;
 import android.text.Layout.Alignment;
-import android.text.TextPaint;
 import android.text.style.*;
 import android.util.Log;
 import android.view.*;
@@ -343,7 +342,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 if (System.currentTimeMillis() - lastClick < 500) {
                                     if (imagePreviewHelper != null) {
                                         MyImageView myImageView = (MyImageView)gallery.getSelectedView().findViewById(R.id.non_webview);
-                                        imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url, false);
+                                        if (myImageView.getVisibility() == View.VISIBLE) {
+                                            imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url, false);
+                                        }
                                     }
                                     lastClick = 0;  // triple click prevention
                                     return;
@@ -393,7 +394,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
                             views.put(i, view);
                             ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
-                            gallery.addInitializedImageView(wv);
+                            gallery.addInitializedView(wv);
+                            GIFView gv = (GIFView) view.findViewById(R.id.gif_view);
+                            gallery.addInitializedView(gv);
                         } else {
                             cleanupRow(view);
                         }
@@ -425,7 +428,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 BitmapCounts.releaseBitmap(bd.getBitmap());
                                 wv.setImageDrawable(null);
                             }
-
                         }
                     }
                 });
@@ -1003,7 +1005,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         String tags = jmsg.getTags();
         if (feedlyFonts) {
-            tags = tags.toLowerCase();
+            tags = tags.toUpperCase();
         }
         if (tags.length() > 0) {
             tags += "\n";
@@ -1154,6 +1156,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     progressBarText.setVisibility(View.VISIBLE);
                     final ImageView imageView = (ImageView) imageHolder.findViewById(R.id.non_webview);
                     imageView.setVisibility(View.INVISIBLE);
+                    final GIFView gifView = (GIFView) imageHolder.findViewById(R.id.gif_view);
+                    gifView.setVisibility(View.GONE);
                     new Thread("Image downloadhttpGeter") {
                         @Override
                         public void run() {
@@ -1302,10 +1306,22 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         private void updateImageView(final File destFile, Bitmap bitmap) {
             final ImageView imageView = (ImageView) imageHolder.findViewById(R.id.non_webview);
+            final GIFView gifView = (GIFView) imageHolder.findViewById(R.id.gif_view);
             if (imageView != null) {      // concurrent remove
                 if (destFile.getPath().equals(imageView.getTag())) return;    // already there
                 imageView.setTag(destFile.getPath());
                 BitmapFactory.Options opts = new BitmapFactory.Options();
+                boolean isGif = false;
+                final byte[] arr = XMPPService.readFile(destFile, 1024);
+                if (arr != null && arr.length >= 4) {
+                    isGif = arr[0] == 'G' && arr[1] == 'I' && arr[2] == 'F' && arr[3] == '8';
+                }
+                if (isGif) {
+                    if (bitmap != null) {
+                        BitmapCounts.releaseBitmap(bitmap);
+                        bitmap = null;
+                    }
+                }
                 if (bitmap != null) {
                     imageW = bitmap.getWidth();
                     imageH = bitmap.getHeight();
@@ -1341,19 +1357,25 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         progressBar.setVisibility(View.INVISIBLE);
                         TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
                         progressBarText.setVisibility(View.INVISIBLE);
-                        imageView.setVisibility(View.VISIBLE);
+                        imageView.setVisibility(!isGif ? View.VISIBLE: View.GONE);
+                        gifView.setVisibility(isGif ? View.VISIBLE: View.GONE);
                         imageView.getLayoutParams().height = destHeight;
+                        gifView.getLayoutParams().height = destHeight;
 
                         try {
                             gallery.blockLayoutRequest = true;
-                            if (bitmap != null) {
-                                BitmapCounts.retainBitmap(bitmap);
-                                imageView.setImageDrawable(new BitmapDrawable(bitmap));
+                            if (isGif) {
+                                gifView.setMovieFile(destFile);
                             } else {
-                                try {
-                                    imageView.setImageURI(Uri.fromFile(destFile));
-                                } catch (OutOfMemoryError e) {
-                                    ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                                if (bitmap != null) {
+                                    BitmapCounts.retainBitmap(bitmap);
+                                    imageView.setImageDrawable(new BitmapDrawable(bitmap));
+                                } else {
+                                    try {
+                                        imageView.setImageURI(Uri.fromFile(destFile));
+                                    } catch (OutOfMemoryError e) {
+                                        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                                    }
                                 }
                             }
                             gallery.blockLayoutRequest = false;

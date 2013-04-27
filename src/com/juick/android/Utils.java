@@ -233,6 +233,39 @@ public class Utils {
     }
 
 
+    public static class GetServiceRequest {
+        ServiceGetter sg;
+        ServiceGetter.Receiver receive;
+
+        GetServiceRequest(ServiceGetter sg, ServiceGetter.Receiver receive) {
+            this.sg = sg;
+            this.receive = receive;
+        }
+    }
+
+    public static class GetServiceStatus {
+        public GetServiceStatus() {
+        }
+
+        int inProgress;
+        ArrayList<GetServiceRequest> waiting = new ArrayList<GetServiceRequest>();
+
+        public void tryNext() {
+            GetServiceRequest remove = null;
+            synchronized (waiting) {
+                if (waiting.size() > 0) {
+                    remove = waiting.remove(0);
+                }
+            }
+            if (remove != null) {
+                Log.i("JA-BIND", "Dequeued request for: "+remove.sg.serviceClass);
+                remove.sg.getService(remove.receive);
+            }
+        }
+    }
+
+    static Map<Class, GetServiceStatus> getServiceQueue = new HashMap<Class, GetServiceStatus>();
+
     public static class ServiceGetter<T extends Service> {
 
         Context context;
@@ -268,12 +301,29 @@ public class Utils {
         }
 
         public void getService(final Receiver<T> receive) {
+            final GetServiceStatus getServiceStatus;
+            synchronized (getServiceQueue) {
+                GetServiceStatus getServiceStatus__ = getServiceQueue.get(serviceClass);
+                if (getServiceStatus__ == null) {
+                    getServiceStatus__ = new GetServiceStatus();
+                    getServiceQueue.put(serviceClass, getServiceStatus__);
+                }
+                getServiceStatus = getServiceStatus__;
+                if (getServiceStatus.inProgress >= 3) {
+                    Log.i("JA-BIND", "Queued request for: "+serviceClass);
+                    getServiceStatus.waiting.add(new GetServiceRequest(this, receive));
+                    return;
+                }
+                getServiceStatus.inProgress++;
+            }
+
             final Exception where = new Exception("This is the stack trace of call");
             ServiceConnection mConnection = new ServiceConnection() {
 
                 @Override
                 public void onServiceConnected(ComponentName className,
                                                IBinder ibinder) {
+                    Log.i("JA-BIND", "Successful bind service: "+className+" " + ibinder);
                     // We've bound to LocalService, cast the IBinder and get LocalService instance
                     if (LocalBinder.class.isAssignableFrom(ibinder.getClass())) {
                         LocalBinder<T> binder = (LocalBinder<T>) ibinder;
@@ -281,6 +331,10 @@ public class Utils {
                             receive.withService(binder.getService());
                         } finally {
                             context.unbindService(this);
+                            synchronized (getServiceQueue) {
+                                getServiceStatus.inProgress--;
+                                getServiceStatus.tryNext();
+                            }
                         }
                     } else {
                         throw new RuntimeException("getService: bad binder: " + ibinder, where);
@@ -291,10 +345,15 @@ public class Utils {
                 public void onServiceDisconnected(ComponentName arg0) {
                     receive.withoutService();
                     context.unbindService(this);
+                    synchronized (getServiceQueue) {
+                        getServiceStatus.inProgress--;
+                    }
+                    getServiceStatus.tryNext();
                 }
             };
 
             Intent intent = new Intent(context, serviceClass);
+            Log.i("JA-BIND", "Begin bind service: "+serviceClass);
             context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         }

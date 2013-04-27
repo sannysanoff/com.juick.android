@@ -16,3 +16,4 @@ ant release
 rm -rf libs/common.jar
 jar cvf ../src-`date +%Y%m%d`XX.jar src
 git commit -a -m 'commit for '`date +%Y%m%d`XX.jar
+echo RESULT: /home/san/Work/jui/android/com.juick.android/bin/com.juickadvanced-release.apk
