@@ -37,7 +37,7 @@ public class MyScrollImageView extends ImageView {
     PointF last = new PointF();
     PointF start = new PointF();
     float minScale = 1f;
-    float maxScale = 3f;
+    float maxScale = 10f;
     float[] m;
 
 
