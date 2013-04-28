@@ -133,7 +133,7 @@ public class BNWMessageMenu extends MessageMenu {
 
     protected void actionUserBlog() {
         Intent i = new Intent(activity, MessagesActivity.class);
-        i.putExtra("messagesSource", new BnwCompatibleMessagesSource(activity, "@" + listSelectedItem.User.UName, "/show?user=" + listSelectedItem.User.UName));
+        i.putExtra("messagesSource", new BnwCompatibleMessagesSource(activity, "@" + listSelectedItem.User.UName, "/show?user=" + listSelectedItem.User.UName, "userblog"));
         activity.startActivity(i);
     }
 

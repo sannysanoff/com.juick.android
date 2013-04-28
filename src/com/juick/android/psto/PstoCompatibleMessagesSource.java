@@ -27,8 +27,8 @@ public class PstoCompatibleMessagesSource extends MessagesSource {
     String title;
     int page;
 
-    public PstoCompatibleMessagesSource(Context ctx, String title, String path) {
-        super(ctx);
+    public PstoCompatibleMessagesSource(Context ctx, String psto_kind, String title, String path) {
+        super(ctx, "psto_"+psto_kind);
         this.title = title;
         urlParser = new URLParser(path);
         PstoAuthorizer.skipAskPassword = false;

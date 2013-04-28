@@ -296,7 +296,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity).putArg("popular", "1");
+                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "top", activity).putArg("popular", "1");
                     ms.setKind("popular");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
@@ -308,7 +308,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity).putArg("media", "all");
+                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "photos", activity).putArg("media", "all");
                     ms.setKind("media");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
@@ -324,7 +324,7 @@ public class JuickMicroBlog implements MicroBlog {
                         @Override
                         public Void apply(Pair<Integer, String> cred) {
                             final Bundle args = new Bundle();
-                            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity).putArg("user_id", "" + cred.first);
+                            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("user_id", "" + cred.first);
                             ms.setKind("my_home");
                             args.putSerializable("messagesSource", ms);
                             activity.runDefaultFragmentWithBundle(args, thiz);
@@ -339,7 +339,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://s.jugregator.org/api");
+                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "srachiki", activity, "http://s.jugregator.org/api");
                     ms.setCanNext(false);
                     ms.setKind("srachiki");
                     args.putSerializable("messagesSource", ms);
@@ -352,7 +352,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://juick.com/?show=private");
+                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "private", activity, "http://juick.com/?show=private");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -363,7 +363,7 @@ public class JuickMicroBlog implements MicroBlog {
                 @Override
                 public void action() {
                     final Bundle args = new Bundle();
-                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), activity, "http://juick.com/?show=discuss");
+                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "discussions", activity, "http://juick.com/?show=discuss");
                     args.putSerializable("messagesSource", ms);
                     activity.runDefaultFragmentWithBundle(args, this);
                 }
@@ -496,7 +496,7 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new JuickCompatibleURLMessagesSource(context).getChildren(mid, notifications, cont);
+        new JuickCompatibleURLMessagesSource(context, "dummy").getChildren(mid, notifications, cont);
     }
 
     @Override

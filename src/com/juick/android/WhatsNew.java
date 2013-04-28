@@ -27,6 +27,7 @@ import org.acra.ACRA;
 import org.apache.http.client.HttpClient;
 
 import java.io.*;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -262,6 +263,22 @@ public class WhatsNew {
 
     }
 
+    public void increaseUsage(Context ctx, String key, long usedTime) {
+        final SharedPreferences sp = ctx.getSharedPreferences("activity_time", Context.MODE_PRIVATE);
+        long soFar = sp.getLong(key, 0);
+        soFar += usedTime;
+        sp.edit().putLong(key, soFar).commit();
+    }
+
+    public static void collectUsage(Context ctx, JsonObject jo) {
+        //To change body of created methods use File | Settings | File Templates.
+        final SharedPreferences sp = ctx.getSharedPreferences("activity_time", Context.MODE_PRIVATE);
+        final Map<String,?> all = sp.getAll();
+        for (Map.Entry<String, ?> stringEntry : all.entrySet()) {
+            jo.addProperty(stringEntry.getKey(), stringEntry.getValue().toString());
+        }
+    }
+
 
     class ReleaseFeatures {
         int textId;
@@ -298,7 +315,7 @@ public class WhatsNew {
                             new Thread() {
                                 @Override
                                 public void run() {
-                                    Network.postJSONHome(service, "/E_RPusage_report_handler", jo.toString());
+                                    Network.postJSONHome(service, "/usage_report_handler", jo.toString());
                                 }
 
                             }.start();

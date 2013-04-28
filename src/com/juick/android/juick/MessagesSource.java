@@ -23,9 +23,11 @@ public abstract  class MessagesSource implements Serializable {
     protected transient Context ctx;
     protected transient SharedPreferences sp;
     public boolean canNext = true;
+    public String kind;
 
-    public MessagesSource(Context ctx) {
+    public MessagesSource(Context ctx, String kind) {
         setContext(ctx);
+        this.kind = kind;
     }
 
     public void setContext(Context ctx) {
@@ -56,8 +58,8 @@ public abstract  class MessagesSource implements Serializable {
 
     public abstract CharSequence getTitle();
 
-    public String getKind() {
-        return "other";
+    public final String getKind() {
+        return kind;
     }
 
     public abstract MicroBlog getMicroBlog();

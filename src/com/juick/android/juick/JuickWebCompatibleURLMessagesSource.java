@@ -23,8 +23,8 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     URLParser urlParser;
     private int lastRetrievedMID;
 
-    public JuickWebCompatibleURLMessagesSource(String label, Context activity, String url) {
-        super(activity);
+    public JuickWebCompatibleURLMessagesSource(String label, String kind, Context activity, String url) {
+        super(activity, kind);
         urlParser = new URLParser(url);
         this.label = label;
     }
@@ -42,7 +42,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     }
 
     protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        Utils.RESTResponse result = new JuickCompatibleURLMessagesSource(label, ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
+        Utils.RESTResponse result = new JuickCompatibleURLMessagesSource(label, "dummy", ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
         final String jsonStr = result.getResult();
         Utils.DownloadErrorNotification errorNotification = null;
         if (notification instanceof Utils.DownloadErrorNotification)
@@ -79,7 +79,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
+        new JuickCompatibleURLMessagesSource(ctx, "dummy").getChildren(mid, notifications, cont);
     }
 
     @Override

@@ -36,12 +36,12 @@ import java.util.Vector;
 public class JuboMessagesSource extends MessagesSource {
 
     public JuboMessagesSource(Context ctx) {
-        super(ctx);
+        super(ctx,"jubo_rss");
     }
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
+        new JuickCompatibleURLMessagesSource(ctx, kind).getChildren(mid, notifications, cont);
     }
 
     @Override

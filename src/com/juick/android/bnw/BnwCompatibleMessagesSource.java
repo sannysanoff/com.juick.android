@@ -31,8 +31,8 @@ public class BnwCompatibleMessagesSource extends MessagesSource {
     String title;
     int page;
 
-    public BnwCompatibleMessagesSource(Context ctx, String title, String path) {
-        super(ctx);
+    public BnwCompatibleMessagesSource(Context ctx, String title, String path, String bnw_kind) {
+        super(ctx, "bnw_"+bnw_kind);
         this.title = title;
         urlParser = new URLParser("http://ipv4.bnw.im/api"+path);
     }

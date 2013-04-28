@@ -27,7 +27,7 @@ public class JAPastConversationMessagesSource extends MessagesSource {
     private final String uname;
 
     public JAPastConversationMessagesSource(Context ctx, String uname) {
-        super(ctx);
+        super(ctx, "ja_past_conversation");
         this.uname = uname;
         setCanNext(false);
     }
@@ -58,7 +58,7 @@ public class JAPastConversationMessagesSource extends MessagesSource {
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
+        new JuickCompatibleURLMessagesSource(ctx, "dummy").getChildren(mid, notifications, cont);
     }
 
     @Override

@@ -35,8 +35,8 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
 
 
 
-    public JuickCompatibleURLMessagesSource(Context ctx) {
-        this(ctx.getString(R.string.All_messages), ctx);
+    public JuickCompatibleURLMessagesSource(Context ctx, String kind) {
+        this(ctx.getString(R.string.All_messages), kind, ctx);
     }
 
     @Override
@@ -48,12 +48,12 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
         return true;
     }
 
-    public JuickCompatibleURLMessagesSource(String label, Context ctx) {
-        this(label, ctx, "http://api.juick.com/messages");
+    public JuickCompatibleURLMessagesSource(String label, String kind, Context ctx) {
+        this(label, kind, ctx, "http://api.juick.com/messages");
     }
 
-    public JuickCompatibleURLMessagesSource(String title, Context ctx, String baseURL) {
-        super(ctx);
+    public JuickCompatibleURLMessagesSource(String title, String kind, Context ctx, String baseURL) {
+        super(ctx, kind);
         this.title = title;
         urlParser = new URLParser(baseURL);
         String useBackupServerS = sp.getString("useBackupServer", "-1");

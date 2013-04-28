@@ -127,7 +127,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     private void checkMessagesSource() {
         if (messagesSource == null) {
-            messagesSource = new JuickCompatibleURLMessagesSource("X", this, "http://nonsense.x/");
+            messagesSource = new JuickCompatibleURLMessagesSource("X", "dummy", this, "http://nonsense.x/");
         }
     }
 

@@ -140,7 +140,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
 
         if (messagesSource == null)
-            messagesSource = new JuickCompatibleURLMessagesSource(getActivity());
+            messagesSource = new JuickCompatibleURLMessagesSource(getActivity(), "dummy");
         if (messagesSource.getContext() == null)
             messagesSource.setContext(JuickAdvancedApplication.instance);
         mFlipAnimation = new RotateAnimation(0, -180,
@@ -267,6 +267,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     @Override
     public void onResume() {
         prefetchMessages = sp.getBoolean("prefetchMessages", false);
+        startTime = System.currentTimeMillis();
         super.onResume();
     }
 
@@ -274,22 +275,20 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onDestroy() {
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
-        new WhatsNew(getActivity()).reportFeature("fragment_usage_"+messagesSource.getKind(), ""+totalRuntime);
     }
 
-    long totalRuntime = 0;
     long startTime = 0;
 
     @Override
     public void onPause() {
         super.onPause();
-        totalRuntime += System.currentTimeMillis() - startTime;
+        long usedTime = System.currentTimeMillis() - startTime;
+        new WhatsNew(getActivity()).increaseUsage(this.getListView().getContext(), "activity_time_"+messagesSource.getKind(), usedTime);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        startTime = System.currentTimeMillis();
     }
 
 

@@ -259,7 +259,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
     protected void actionUserBlog() {
         Intent i = new Intent(activity, MessagesActivity.class);
-        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + listSelectedItem.User.UName, activity).putArg("user_id", ""+listSelectedItem.User.UID));
+        i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + listSelectedItem.User.UName, "userblog", activity).putArg("user_id", ""+listSelectedItem.User.UID));
         activity.startActivity(i);
     }
 

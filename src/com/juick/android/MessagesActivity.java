@@ -59,7 +59,7 @@ public class MessagesActivity extends JuickFragmentActivity {
             if (messagesSource == null) {
                 messagesSource = (MessagesSource)i.getSerializableExtra("messagesSource");
                 if (messagesSource == null) {
-                    messagesSource = new JuickCompatibleURLMessagesSource(this);
+                    messagesSource = new JuickCompatibleURLMessagesSource(this, "new");
                 }
                 messagesSource.setContext(this);
             }

@@ -73,7 +73,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         if (search.startsWith("*")) {
             Intent i = new Intent(this, MessagesActivity.class);
             String tagg = Uri.encode(search.substring(1));
-            JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + search.substring(1), this);
+            JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Tag) + ": " + search.substring(1), "search_tag", this);
             jms.setCanNext(false);
             jms.putArg("tag", tagg);
             if (uid > 0) {
@@ -98,14 +98,14 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
                 @Override
                 public Void apply(Pair<String,String> cred) {
                     Intent i = new Intent(ExploreActivity.this, MessagesActivity.class);
-                    i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + maybeJuickUserId, ExploreActivity.this).putArg("user_id", cred.first));
+                    i.putExtra("messagesSource", new JuickCompatibleURLMessagesSource("@" + maybeJuickUserId, "direct_uid", ExploreActivity.this).putArg("user_id", cred.first));
                     startActivity(i);
                     return null;  //To change body of implemented methods use File | Settings | File Templates.
                 }
             });
         } else {
             Intent i = new Intent(this, MessagesActivity.class);
-            JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Search) + ": " + search, this);
+            JuickCompatibleURLMessagesSource jms = new JuickCompatibleURLMessagesSource(getString(R.string.Search) + ": " + search, "search", this);
             jms.setCanNext(false);
             if (uid > 0) {
                 jms.putArg("user_id", "" + uid);

@@ -318,6 +318,12 @@
             <b>Апрель 2013, зимний билд</b>
             <ul>
             <li>
+            ВАЖНО: если вдруг вас мучает то, что программа падает, ломается, внезапно останавливается или сообщает о непонятной ошибке,
+             вы можете разрешить отправлять ваш юзернейм вместе с тем отчётом об ошибке, который отправляется разработчику. Если ваш случай
+             уникальный и неповторимый в лабораторных условиях, разработчик вас законтачит. Если вам не терпится, вы можете написать приватный мессаг
+             и ваш случай будет рассмотрен индивидуально. Включить именные баг-репорты: <input type="checkbox" name="prefs.enableLoginNameWithCrashReport" #prefs.checked.enableLoginNameWithCrashReport#>
+            </li>
+            <li>
             Если вы не пользуете картиночный прокси, и если вам приезжает анимированный GIF, теперь он анимируется.
             (Еще не сделано для полного просмотра). Закешированные ранее картинки показываются закешированными (не GIF).
             Будет улучшено позднее.
@@ -956,6 +962,10 @@
     <string name="JuickPostLength2">During all juick existence</string>
     <string name="JuickHoles">Private/Deleted posts</string>
     <string name="JuickHoles2">Missing entries in sequence</string>
+    <string name="FeatureUsage">Usage of JA features</string>
+    <string name="FeatureUsage2">What settings do users use</string>
+    <string name="ThemeUsage">Usage of JA themes</string>
+    <string name="ThemeUsage2">Dark or Light?</string>
     <string name="JuickWeekActivity">Activity by days of week</string>
     <string name="JuickWeekActivity2">Compared with averages</string>
     <string name="VersionInstalls">\'Juick Advanced\' installs</string>

@@ -120,7 +120,7 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent i = new Intent(this, MessagesActivity.class);
         String placeName = listAdapter.getItem(position).name;
-        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(R.string.Place_name_) + placeName, this).putArg("place_id", "" + listAdapter.getItem(position).pid);
+        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(getString(R.string.Place_name_) + placeName, "places", this).putArg("place_id", "" + listAdapter.getItem(position).pid);
         ms.setKind("place");
         i.putExtra("messagesSource", ms);
         startActivity(i);
@@ -163,6 +163,7 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
             }
         } catch (Throwable ex) {
             Toast.makeText(this, "Probably Google Maps library is missing", Toast.LENGTH_LONG).show();
+            return true;
         }
     }
 

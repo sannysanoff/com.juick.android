@@ -850,13 +850,8 @@ public class DatabaseService extends Service {
             jo.addProperty("ja_version", "unknown");
         }
 
-        Cursor cursor = db.rawQuery("select feature_name, sum(feature_value) from feature_usage group by feature_name", new String[]{});
-        while(cursor.moveToNext()) {
-            String name = cursor.getString(0);
-            String value = cursor.getString(1);
-            jo.addProperty(name, value);
-        }
-        cursor.close();
+        WhatsNew.collectUsage(this, jo);
+
         return jo;
     }
 

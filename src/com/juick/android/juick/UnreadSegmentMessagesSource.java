@@ -22,7 +22,7 @@ public class UnreadSegmentMessagesSource extends JuickCompatibleURLMessagesSourc
     private DatabaseService.Period period;
 
     public UnreadSegmentMessagesSource(String label, Context ctx, DatabaseService.Period period) {
-        super(label, ctx);
+        super(label, "unread_segment", ctx);
         this.period = period;
     }
 
@@ -51,8 +51,4 @@ public class UnreadSegmentMessagesSource extends JuickCompatibleURLMessagesSourc
         return true;
     }
 
-    @Override
-    public String getKind() {
-        return "unread_segments";
-    }
 }

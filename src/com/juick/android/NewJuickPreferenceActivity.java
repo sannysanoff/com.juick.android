@@ -112,6 +112,8 @@ public class NewJuickPreferenceActivity extends Activity {
         menu.add(new ChartMenuItem(R.string.JuickWeekActivity, R.string.JuickWeekActivity2, "JUICK_WEEK_ACTIVITY"));
         menu.add(new ChartMenuItem(R.string.JuickPostLength, R.string.JuickPostLength2, "JUICK_POSTLEN"));
         menu.add(new ChartMenuItem(R.string.JuickHoles, R.string.JuickHoles2, "JA_HOLES"));
+        menu.add(new ChartMenuItem(R.string.FeatureUsage, R.string.FeatureUsage2, "FEATURE_USAGE"));
+        menu.add(new ChartMenuItem(R.string.ThemeUsage, R.string.ThemeUsage2, "THEME_USAGE"));
         menu.add(new ChartMenuItem(R.string.VersionInstalls, R.string.VersionInstalls2, "VERSION_INSTALLS"));
         menu.add(new ChartMenuItem(R.string.ClassicUsers, R.string.ClassicUsers2, "CLASSIC_USERS"));
     }

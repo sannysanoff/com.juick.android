@@ -24,10 +24,8 @@ import java.util.TimeZone;
  */
 public abstract class JuickMessagesSource extends MessagesSource {
 
-    String kind;
-
-    public JuickMessagesSource(Context ctx) {
-        super(ctx);
+    public JuickMessagesSource(Context ctx, String kind) {
+        super(ctx, kind);
     }
 
     public static JuickMessage initFromJSON(JSONObject json) throws JSONException {
@@ -96,10 +94,6 @@ public abstract class JuickMessagesSource extends MessagesSource {
             juser.FullName = json.getString("fullname");
         }
         return juser;
-    }
-
-    public String getKind() {
-        return kind;
     }
 
     @Override

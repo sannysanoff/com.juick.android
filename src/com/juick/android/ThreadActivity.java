@@ -97,6 +97,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     public ThreadFragment tf;
     private MessagesSource messagesSource;
     private JuickMessage selectedReply;
+    private long usageStart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -323,12 +324,15 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
         launchMainMessagesEnabler();
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
+        usageStart = System.currentTimeMillis();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         resumed = false;
+        long usedTime = System.currentTimeMillis() - usageStart;
+        new WhatsNew(this).increaseUsage(this, "activity_time_"+messagesSource.getKind()+"_thread", usedTime);
     }
 
     private void setFormEnabled(boolean state) {

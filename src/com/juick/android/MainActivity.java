@@ -179,6 +179,9 @@ public class MainActivity extends JuickFragmentActivity implements
     private void initWithAuth() {
         startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
+        if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
+            ACRA.getErrorReporter().putCustomData("juick_user", JuickComAuthorizer.getJuickAccountName(this));
+        }
         if (sp.getBoolean("fullScreenMessages", false)) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
@@ -459,9 +462,9 @@ public class MainActivity extends JuickFragmentActivity implements
 
     private JuickMessagesSource getSubscriptionsMessagesSource(int labelId) {
         if (sp.getBoolean("web_for_subscriptions", false)) {
-            return new JuickWebCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://juick.com/?show=my");
+            return new JuickWebCompatibleURLMessagesSource(getString(labelId), "juick_web_subscriptions", MainActivity.this, "http://juick.com/?show=my");
         } else {
-            return new JuickCompatibleURLMessagesSource(getString(labelId), MainActivity.this, "http://api.juick.com/home");
+            return new JuickCompatibleURLMessagesSource(getString(labelId), "juick_api_subscriptions", MainActivity.this, "http://api.juick.com/home");
         }
     }
 
@@ -752,7 +755,7 @@ public class MainActivity extends JuickFragmentActivity implements
                     Intent intent = new Intent(this, ThreadActivity.class);
                     intent.setData(null);
                     intent.putExtra("mid", new JuickMessageID(mid));
-                    intent.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(this));
+                    intent.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(this, "mid_from_url"));
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
@@ -769,7 +772,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 if (shouldFinish) finish();
                 Intent intent = new Intent(this, MessagesActivity.class);
                 intent.setData(null);
-                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, "PSTO Main","http://psto.net/recent"));
+                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, "main", "PSTO Main","http://psto.net/recent"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -781,7 +784,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 intent.setData(null);
                 PstoMessageID mid = new PstoMessageID(hostPart[0], segs.get(0));
                 intent.putExtra("mid", mid);
-                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, getString(R.string.navigationPSTORecent),"http://psto.net/recent"));
+                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, "direct_mid", getString(R.string.navigationPSTORecent),"http://psto.net/recent"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -796,7 +799,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 intent.setData(null);
                 BnwMessageID mid = new BnwMessageID(segs.get(1));
                 intent.putExtra("mid", mid);
-                intent.putExtra("messagesSource", new BnwCompatibleMessagesSource(this, getString(R.string.navigationBNWAll),"/show"));
+                intent.putExtra("messagesSource", new BnwCompatibleMessagesSource(this, "direct_mid", getString(R.string.navigationBNWAll),"/show"));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
@@ -971,6 +974,14 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         if (invalidateRendering) {
             mf.listAdapter.notifyDataSetInvalidated();
+        }
+        if (s.equals("enableLoginNameWithCrashReport")) {
+            if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
+                ACRA.getErrorReporter().putCustomData("juick_user", JuickComAuthorizer.getJuickAccountName(this));
+            } else {
+                ACRA.getErrorReporter().putCustomData("juick_user", "");
+            }
+
         }
     }
 

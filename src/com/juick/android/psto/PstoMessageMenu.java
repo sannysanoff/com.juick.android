@@ -33,7 +33,7 @@ public class PstoMessageMenu extends MessageMenu {
 
     protected void actionUserBlog() {
         Intent i = new Intent(activity, MessagesActivity.class);
-        i.putExtra("messagesSource", new PstoCompatibleMessagesSource(activity, "@" + listSelectedItem.User.UName, "http://"+listSelectedItem.User.UName+".psto.net/"));
+        i.putExtra("messagesSource", new PstoCompatibleMessagesSource(activity, "userblog", "@" + listSelectedItem.User.UName, "http://"+listSelectedItem.User.UName+".psto.net/"));
         activity.startActivity(i);
     }
 

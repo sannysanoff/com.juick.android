@@ -25,7 +25,7 @@ public class SavedMessagesSource extends MessagesSource {
     long lastMessage;
 
     public SavedMessagesSource(Context ctx) {
-        super(ctx);
+        super(ctx, "saved");
     }
 
     @Override
@@ -75,11 +75,6 @@ public class SavedMessagesSource extends MessagesSource {
     @Override
     public CharSequence getTitle() {
         return ctx.getString(R.string.navigationSaved);
-    }
-
-    @Override
-    public String getKind() {
-        return "saved_messages";
     }
 
     @Override

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
 
     public AllMessagesSource(Context ctx) {
-        super(ctx.getString(R.string.All_messages), ctx);
+        super(ctx.getString(R.string.All_messages), "all", ctx);
     }
 
     @Override
@@ -69,8 +69,4 @@ public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
         return true;
     }
 
-    @Override
-    public String getKind() {
-        return "all_messages";
-    }
 }

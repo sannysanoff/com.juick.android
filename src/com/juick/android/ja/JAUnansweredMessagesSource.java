@@ -31,7 +31,7 @@ import java.util.ArrayList;
 public class JAUnansweredMessagesSource extends MessagesSource {
 
     public JAUnansweredMessagesSource(Context ctx) {
-        super(ctx);
+        super(ctx, "unanswered");
         setCanNext(false);
     }
 
@@ -90,7 +90,7 @@ public class JAUnansweredMessagesSource extends MessagesSource {
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new JuickCompatibleURLMessagesSource(ctx).getChildren(mid, notifications, cont);
+        new JuickCompatibleURLMessagesSource(ctx, "dummy").getChildren(mid, notifications, cont);
     }
 
     @Override

@@ -164,7 +164,7 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                 } else if (b == 0xFF && flagInside) {
                     if (listener != null) {
                         String incomingData = new String(buf.toByteArray(), "utf-8");
-                        JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx);
+                        JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx, "dummy");
                         final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + incomingData + "]");
                         listener.onNewMessages(messages);
                     }

@@ -15,6 +15,12 @@
     <Preference android:title="@string/Privacy_Policy" android:summary="@string/Privacy_Policy2">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="privacy"/>
     </Preference>
+    <CheckBoxPreference
+            android:key="enableLoginNameWithCrashReport"
+            android:title="Attach your microblog ID to crash report"
+            android:summary="Two-way contact with developer"
+            android:defaultValue="false"
+            android:persistent="true"/>
     <Preference android:title="@string/VariousInfo" android:summary="@string/VariousInfo2">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="various_info"/>
     </Preference>
