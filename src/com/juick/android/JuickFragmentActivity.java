@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -82,5 +84,18 @@ public class JuickFragmentActivity extends FragmentActivity {
         JuickAdvancedApplication.instance.setActiveActivity(null);
         unregisterReceiver(downloadCompleteReceiver);
         super.onPause();
+    }
+
+    public void onFragmentCreated() {
+
+    }
+
+    public boolean onListTouchEvent(View view, MotionEvent event) {
+        //To change body of created methods use File | Settings | File Templates.
+        return false;
+    }
+
+    public boolean maybeHandleGeneralHorizontalFling(MotionEvent e1, MotionEvent e2, double velox) {
+        return false;  //To change body of created methods use File | Settings | File Templates.
     }
 }

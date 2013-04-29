@@ -194,50 +194,62 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             final ListView listView = getListView();
                             final int itemIndex = listView.getFirstVisiblePosition() + motionRow;
                             final Object item = listView.getAdapter().getItem(itemIndex);
-                            if (item instanceof JuickMessage && messagesSource instanceof JAUnansweredMessagesSource) {
+                            if (item instanceof JuickMessage) {
                                 final JuickMessage jm = (JuickMessage) item;
-                                if (jm.contextPost != null) {
+                                if (maybeHandleGeneralHorizontalFling(e1, e2, velox)) {
                                     preventClickOn = jm;
-                                    final View view = listView.getChildAt(motionRow);
-                                    TranslateAnimation ta = new TranslateAnimation(0, view.getWidth(), 0, 0);
-                                    // v = s/t   t=s/v
-                                    ta.setDuration((int)(view.getWidth()/(velox)));
-                                    ta.setAnimationListener(new Animation.AnimationListener() {
+                                    handler.postDelayed(new Runnable() {
                                         @Override
-                                        public void onAnimationStart(Animation animation) {
-                                            //To change body of implemented methods use File | Settings | File Templates.
+                                        public void run() {
+                                            preventClickOn = null;  // skip false start
                                         }
+                                    }, 300);
+                                    return false;
+                                }
+                                if  (messagesSource instanceof JAUnansweredMessagesSource) {
+                                    if (jm.contextPost != null) {
+                                        preventClickOn = jm;
+                                        final View view = listView.getChildAt(motionRow);
+                                        TranslateAnimation ta = new TranslateAnimation(0, view.getWidth(), 0, 0);
+                                        // v = s/t   t=s/v
+                                        ta.setDuration((int)(view.getWidth()/(velox)));
+                                        ta.setAnimationListener(new Animation.AnimationListener() {
+                                            @Override
+                                            public void onAnimationStart(Animation animation) {
+                                                //To change body of implemented methods use File | Settings | File Templates.
+                                            }
 
-                                        @Override
-                                        public void onAnimationEnd(Animation animation) {
-                                            listAdapter.remove((JuickMessage)item);
-                                            new Thread() {
-                                                @Override
-                                                public void run() {
-                                                    Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID)jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
-                                                        @Override
-                                                        public Void apply(final Utils.RESTResponse response) {
-                                                            if (response.getErrorText() != null) {
-                                                                getActivity().runOnUiThread(new Runnable() {
-                                                                    @Override
-                                                                    public void run() {
-                                                                        Toast.makeText(getActivity(), response.getErrorText(), Toast.LENGTH_SHORT).show();
-                                                                    }
-                                                                });
+                                            @Override
+                                            public void onAnimationEnd(Animation animation) {
+                                                listAdapter.remove((JuickMessage)item);
+                                                new Thread() {
+                                                    @Override
+                                                    public void run() {
+                                                        Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID)jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
+                                                            @Override
+                                                            public Void apply(final Utils.RESTResponse response) {
+                                                                if (response.getErrorText() != null) {
+                                                                    getActivity().runOnUiThread(new Runnable() {
+                                                                        @Override
+                                                                        public void run() {
+                                                                            Toast.makeText(getActivity(), response.getErrorText(), Toast.LENGTH_SHORT).show();
+                                                                        }
+                                                                    });
+                                                                }
+                                                                return null;
                                                             }
-                                                            return null;
-                                                        }
-                                                    });
-                                                }
-                                            }.start();
-                                        }
+                                                        });
+                                                    }
+                                                }.start();
+                                            }
 
-                                        @Override
-                                        public void onAnimationRepeat(Animation animation) {
-                                            //To change body of implemented methods use File | Settings | File Templates.
-                                        }
-                                    });
-                                    view.startAnimation(ta);
+                                            @Override
+                                            public void onAnimationRepeat(Animation animation) {
+                                                //To change body of implemented methods use File | Settings | File Templates.
+                                            }
+                                        });
+                                        view.startAnimation(ta);
+                                    }
                                 }
                             }
                         }
@@ -261,6 +273,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             });
         }
 
+    }
+
+    private boolean maybeHandleGeneralHorizontalFling(MotionEvent e1, MotionEvent e2, double velox) {
+        return parent.maybeHandleGeneralHorizontalFling(e1, e2, velox);
     }
 
     boolean prefetchMessages = false;
@@ -375,6 +391,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         });
         init(false);
+        parent.onFragmentCreated();
     }
 
 //    private MessageMenu openMessageMenu(ListView listView) {
@@ -992,6 +1009,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 applyHeaderPadding(event);
                 break;
         }
+        parent.onListTouchEvent(view, event);
         return false;
     }
 

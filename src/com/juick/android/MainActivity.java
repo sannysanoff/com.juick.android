@@ -25,9 +25,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -36,14 +33,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBar;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.support.v4.view.Window;
 import android.text.TextUtils;
 import android.view.*;
-import android.webkit.WebView;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.psto.PstoCompatibleMessagesSource;
@@ -128,12 +124,130 @@ public class MainActivity extends JuickFragmentActivity implements
 
     }
 
+
+    public boolean isNavigationMenuShown() {
+        final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
+        return navigationPanel.getWidth() >= 0;
+    }
+
+    public void openNavigationMenu() {
+        if (isNavigationMenuShown()) return;
+        final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
+        TranslateAnimation immediate = new TranslateAnimation(0, navigationPanel.getWidth(), 0, 0);
+        immediate.setDuration(300);
+        navigationPanel.startAnimation(immediate);
+
+
+    }
+
+    public void closeNavigationMenu() {
+
+    }
+
+//    boolean ignoreMove = false;
+//    float touchOriginX = -1;
+//    float touchOriginY = -1;
+//    float initNavMenuTranslationX;
+
+    @Override
+    public boolean onListTouchEvent(View view, MotionEvent event) {
+        super.onListTouchEvent(view, event);
+//        MotionEvent.PointerCoords pc = new MotionEvent.PointerCoords();
+//        event.getPointerCoords(0, pc);
+//        switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                int[] listViewLocation = new int[2];
+//                int[] imageLocation = new int[2];
+//                mf.getListView().getLocationOnScreen(listViewLocation);
+//                float touchX = pc.x + listViewLocation[0] - imageLocation[0];
+//                float touchY = pc.y + listViewLocation[1] - imageLocation[1];
+//                System.out.println("TOUCH: ACTION_DOWN: x=" + pc.x + " y=" + pc.y);
+//                if (touchX > -20 && touchX < navMenu.getWidth()
+//                        && touchY > 0 && touchY < navMenu.getHeight()*1.5) {  // extra Y pixels due to picture not balanced
+//                    touchOriginX = pc.x;
+//                    touchOriginY = pc.y;
+//                    System.out.println("TOUCH: OK TOUCH NAVMENU");
+//                    return true;
+//                }
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                if (!isNavigationMenuShown())
+//                if (touchOriginX > 0 || ignoreMove) {
+//                    touchOriginX = -1;
+//                    ignoreMove = false;
+//                    return true;
+//                }
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                event.getPointerCoords(0, pc);
+//                double travelledDistance = Math.sqrt(Math.pow(touchOriginX - pc.x, 2) + Math.pow(touchOriginY - pc.y, 2));
+//                boolean inZone = false;
+//                if (!isNavigationMenuShown()) {
+//                    if (touchOriginX >= 0) {
+//                        // detect angle where finger moves
+//                        if (travelledDistance < 10) {   // grace period
+//                            inZone = true;
+//                        } else {
+//                            float dx = Math.abs(touchOriginX - pc.x);
+//                            float dy = Math.abs(touchOriginY - pc.y);
+//                            if (dx > dy) {
+//                                // movement in 45 degree zone
+//                                if (touchOriginX > pc.x) {
+//                                    // towards left
+//                                    inZone = true;
+//                                    double neededDistance = 1.5 / 2.54 * getResources().getDisplayMetrics().xdpi;
+//                                    if (travelledDistance > neededDistance) {
+//                                        // moved 1.5 centimeters
+//                                        System.out.println("TOUCH: OPEN MENU");
+//                                        ignoreMove = true;
+//                                        openNavigationMenu();
+//                                        touchOriginX = -1;
+//                                    }
+//                                }
+//                            } else {
+//                                System.out.println("TOUCH: LEAVING ZONE: dx=" + dx + " dy=" + dy);
+//                            }
+//                        }
+//                        if (inZone && !ignoreMove) {
+//                            TranslateAnimation immediate = new TranslateAnimation(
+//                                    Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX, Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX,
+//                                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+//                            immediate.setDuration(5);
+//                            immediate.setFillAfter(true);
+//                            immediate.setFillBefore(true);
+//                            immediate.setFillEnabled(true);
+//                            //navMenu.startAnimation(immediate);
+//                        }
+//                    }
+//                    if (!inZone) {
+//                        resetMainMenuButton(false);
+//                        if (touchOriginX >= 0) {
+//                            System.out.println("TOUCH: ACTION_MOVE: x=" + pc.x + " y=" + pc.y);
+//                            System.out.println("TOUCH: LEFT ZONE");
+//                            touchOriginX = -1;
+//                        }
+//                    }
+//                    if (inZone) {
+//                        return true;
+//                    }
+//                    if (doOnClick != null || ignoreMove) {
+//                        return true;
+//                    }
+//                }
+//                break;
+//        }
+        return false;
+
+    }
+
     public ArrayList<NavigationItem> navigationItems = new ArrayList<NavigationItem>();
 
     public void runDefaultFragmentWithBundle(Bundle args, NavigationItem ni) {
         mf = new MessagesFragment(restoreData, this);
         restoreData = null;
         lastNavigationItem = ni;
+        final SharedPreferences spn = getSharedPreferences("saved_last_navigation_type", MODE_PRIVATE);
+        spn.edit().putInt("last_navigation", ni.labelId).commit();
         replaceFragment(mf, args);
     }
 
@@ -191,7 +305,6 @@ public class MainActivity extends JuickFragmentActivity implements
         startService(new Intent(this, DatabaseService.class));
 
         clearObsoleteImagesInCache();
-        updateNavigation();
 
 
         maybeSendUsageReport();
@@ -219,13 +332,13 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         }
 
-        setContentView(R.layout.messages);
-        findViewById(R.id.old_title).setVisibility(View.GONE);
+        setContentView(R.layout.main);
         restoreData = getLastCustomNonConfigurationInstance();
         new WhatsNew(this).runAll();
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
 
         WhatsNew.checkForUpdates(this, null, false);
+        updateNavigation();
 
     }
 
@@ -454,11 +567,38 @@ public class MainActivity extends JuickFragmentActivity implements
         };
         ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+        final MyListView navigationList = (MyListView)findViewById(R.id.navigation_list);
+        navigationList.setAdapter(navigationAdapter);
         bar.setListNavigationCallbacks(navigationAdapter, this);
+
+        final SharedPreferences spn = getSharedPreferences("saved_last_navigation_type", MODE_PRIVATE);
+        int restoredLastNavItem = spn.getInt("last_navigation", 0);
+        if (restoredLastNavItem != 0) {
+            for (int i = 0; i < navigationItems.size(); i++) {
+                NavigationItem navigationItem = navigationItems.get(i);
+                if (navigationItem.labelId == restoredLastNavItem) {
+                    lastNavigationItem = navigationItem;
+                    break;
+                }
+            }
+            if (lastNavigationItem != null) {
+                restoreLastNavigationPosition();
+                lastNavigationItem.action();
+            }
+        }
 
 
     }
 
+    @Override
+    public boolean maybeHandleGeneralHorizontalFling(MotionEvent e1, MotionEvent e2, double velox) {
+        if (velox > 0 && e1.getX() < 10) {
+            openNavigationMenu();
+            Toast.makeText(this, "Open navigation menu!", Toast.LENGTH_LONG).show();
+            return true;
+        }
+        return false;
+    }
 
     private JuickMessagesSource getSubscriptionsMessagesSource(int labelId) {
         if (sp.getBoolean("web_for_subscriptions", false)) {

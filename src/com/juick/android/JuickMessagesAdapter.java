@@ -1085,7 +1085,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         LinearLayout listRow;
         boolean loading;
         boolean terminated;
-        int totalRead = 0;
         String status;
         TextView progressBarText;
         DefaultHttpClient httpClient;
@@ -1111,31 +1110,42 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         private void loadFromFileOrNetwork(final String url, final View imageHolder, final boolean forceOriginalImage, final File destFile) {
-            if (destFile.exists() && destFile.length()>1024) {
+            if (destFile.exists() && destFile.length() > 1024) {
                 new Thread() {
                     @Override
                     public void run() {
-                        final Bitmap bitmap = maybeDecodeImage(destFile);
-                        if (bitmap == null) if (!deletedInvalid) {
-                            destFile.delete();  // bad bad image
-                            updateStatus("Deleted bad existing image.");
-                            deletedInvalid = true;
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    loadFromFileOrNetwork(url, imageHolder, forceOriginalImage, destFile);
+                        try {
+                            final Bitmap bitmap = BitmapFactory.decodeFile(destFile.getPath());
+                            if (bitmap == null) {
+                                if (!deletedInvalid) {
+                                    destFile.delete();  // bad bad image
+                                    updateStatus("Deleted bad existing image.");
+                                    deletedInvalid = true;
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            loadFromFileOrNetwork(url, imageHolder, forceOriginalImage, destFile);
+                                        }
+                                    });
+                                } else {
+                                    updateStatus("Bad cached image ;(");
                                 }
-                            });
-                        } else {
-                            updateStatus("Bad cached image ;(");
-                        }
-                        else {
-                            handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateImageView(destFile, bitmap);
+                            } else {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            updateImageView(destFile, bitmap);
+                                        } catch (OutOfMemoryError e) {
+                                            handleOOM(activity, e);
+                                            updateStatus("Out of memory");
+                                        }
+                                    }
+                                });
                             }
-                        });
+                        } catch (OutOfMemoryError e) {
+                            handleOOM(activity, e);
+                            updateStatus("Out of memory");
                         }
                     }
                 }.start();
@@ -1148,9 +1158,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     loadURl = setupProxyForURL(url);
                 }
                 try {
+                    final File tmpFile = new File(destFile.getPath()+".tmp");
+                    final long tmpFileLength = tmpFile.exists() ? tmpFile.length() : -1;  // flag for partial download
                     httpGet = new HttpGet(loadURl);
+                    if (tmpFileLength != -1) {
+                        httpGet.addHeader("Range","bytes="+tmpFileLength+"-");
+                    }
                     loading = true;
-                    View progressBar = imageHolder.findViewById(R.id.progressbar);
+                    final View progressBar = imageHolder.findViewById(R.id.progressbar);
                     progressBar.setVisibility(View.VISIBLE);
                     TextView progressBarText = (TextView) imageHolder.findViewById(R.id.progressbar_text);
                     progressBarText.setVisibility(View.VISIBLE);
@@ -1167,50 +1182,90 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     @Override
                                     public HttpResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
                                         updateStatus("Load..");
-                                        if (response.getStatusLine().getStatusCode() != 200) {
+                                        int fileOffset = 0;
+                                        HttpEntity entity = response.getEntity();
+                                        long len = entity != null ? entity.getContentLength() : 0;
+                                        int statusCode = response.getStatusLine().getStatusCode();
+                                        if (tmpFileLength != -1 && statusCode == 206) { // partial content
+                                            final Header[] headers = response.getHeaders("Content-Range");
+                                            if (headers == null || headers.length != 1) {
+                                                // spec failed
+                                                destFile.delete();
+                                                updateStatus("bad partial content");
+                                                return response;
+                                            }
+                                            final String partialContent = headers[0].getValue();
+                                            final Matcher matcher = Pattern.compile("bytes (.*)-(.*)/(.*)").matcher(partialContent);
+                                            if( matcher.find()) {
+                                                fileOffset = Integer.parseInt(matcher.group(1));
+                                                len = Integer.parseInt(matcher.group(3));
+                                            } else {
+                                                updateStatus("bad partial content");
+                                                return response;
+                                            }
+                                            // gut
+                                        } else if (statusCode != 200) {
                                             destFile.delete();
                                             updateStatus("ERR:" + response.getStatusLine().getStatusCode());
                                             return response;
                                         }
-                                        HttpEntity entity = response.getEntity();
                                         String type = "image";
                                         Header contentType = entity.getContentType();
                                         if (contentType != null)
                                             type = contentType.getValue();
-                                        long len = entity.getContentLength();
                                         String maybeTotalSize = "K";
                                         if (len > 0) {
-                                            maybeTotalSize = "/"+(len/1024)+"K";
+                                            maybeTotalSize = "/" + (len / 1024) + "K";
                                         }
                                         InputStream content = entity.getContent();
                                         long l = System.currentTimeMillis();
                                         StringBuffer sb = new StringBuffer();
                                         if (content != null) {
-                                            OutputStream outContent = new FileOutputStream(destFile);
-                                            byte[] buf = new byte[4096];
-                                            while (true) {
-                                                int rd = content.read(buf);
-                                                if (rd <= 0) break;
-                                                totalRead += rd;
-                                                if (terminated)
-                                                    break;
-                                                outContent.write(buf, 0, rd);
-                                                if (type.equals("text/html")) {
-                                                    try {
-                                                        sb.append(new String(buf, 0, rd));
-                                                    } catch (Exception e) {
-                                                        // invalid encoding goes here
+                                            RandomAccessFile raf = new RandomAccessFile(tmpFile, "rw");
+                                            try {
+                                                byte[] buf = new byte[4096];
+                                                while (true) {
+                                                    int rd = content.read(buf);
+                                                    if (rd <= 0) break;
+                                                    if (terminated)
+                                                        break;
+                                                    raf.seek(fileOffset);
+                                                    raf.write(buf, 0, rd);
+                                                    fileOffset += rd;
+                                                    if (type.equals("text/html")) {
+                                                        try {
+                                                            sb.append(new String(buf, 0, rd));
+                                                        } catch (Exception e) {
+                                                            // invalid encoding goes here
+                                                        }
+                                                    }
+                                                    if (System.currentTimeMillis() - l > 300) {
+                                                        updateStatus("Load.." + (fileOffset / 1024) + maybeTotalSize + " - " + suffix);
+                                                        l = System.currentTimeMillis();
                                                     }
                                                 }
-                                                if (System.currentTimeMillis() - l > 300) {
-                                                    updateStatus("Load.." + (totalRead / 1024) + maybeTotalSize +" - " + suffix);
-                                                    l = System.currentTimeMillis();
+                                            } finally {
+                                                content.close();
+                                                raf.close();
+                                            }
+                                            if (len < 1 || len == fileOffset) {        // complete file or unknown length
+                                                destFile.delete();
+                                                tmpFile.renameTo(destFile);
+                                            } else {
+                                                if (!terminated) {
+                                                    updateStatus("Incomplete file");
+                                                    return response;
                                                 }
                                             }
-                                            content.close();
-                                            outContent.close();
-                                            updateStatus("Done.." + (totalRead / 1024) + "K" + (terminated ? " (t)":""));
+                                            updateStatus("Done.." + (fileOffset / 1024) + "K" + (terminated ? " (t)" : ""));
+                                            handler.post(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    progressBar.setVisibility(View.GONE);
+                                                }
+                                            });
                                             if (terminated) {
+                                                updateStatus("Terminated?");
                                                 destFile.delete();
                                             } else {
                                                 if (type.startsWith("text")) {
@@ -1218,7 +1273,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                     if (imageURL != null) {
                                                         ImageLoader.this.url = imageURL;    // for image preview helper
                                                         suffix = "jpg";
-                                                        totalRead = 0;
                                                         if (!forceOriginalImage)
                                                             imageURL = setupProxyForURL(imageURL);
                                                         updateStatus("Img load starts..");
@@ -1237,14 +1291,25 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                             }
                                             loading = false;
                                             if (!terminated) {
-                                                Bitmap bmp = maybeDecodeImage(destFile);
-                                                final Bitmap finalBmp = bmp;
-                                                handler.post(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        updateImageView(destFile, finalBmp);
-                                                    }
-                                                });
+                                                try {
+
+                                                    Bitmap bmp = BitmapFactory.decodeFile(destFile.getPath());
+                                                    final Bitmap finalBmp = bmp;
+                                                    handler.post(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            try {
+                                                                updateImageView(destFile, finalBmp);
+                                                            } catch (OutOfMemoryError e) {
+                                                                updateStatus("Out of memory");
+                                                                handleOOM(activity, e);
+                                                            }
+                                                        }
+                                                    });
+                                                } catch (OutOfMemoryError e) {
+                                                    updateStatus("Out of memory");
+                                                    handleOOM(activity, e);
+                                                }
                                             }
                                         }
                                         return null;
@@ -1252,12 +1317,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                 });
 
                             } catch (Exception e) {
-                                updateStatus("Error:"+e);
+                                updateStatus("Error:" + e);
                             }
                         }
                     }.start();
                 } catch (Exception e) {
-                    updateStatus("Error: "+e.toString());
+                    updateStatus("Error: " + e.toString());
                 }
             }
         }
@@ -1371,11 +1436,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     BitmapCounts.retainBitmap(bitmap);
                                     imageView.setImageDrawable(new BitmapDrawable(bitmap));
                                 } else {
-                                    try {
-                                        imageView.setImageURI(Uri.fromFile(destFile));
-                                    } catch (OutOfMemoryError e) {
-                                        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
-                                    }
+                                    imageView.setImageURI(Uri.fromFile(destFile));
                                 }
                             }
                             gallery.blockLayoutRequest = false;
@@ -1412,18 +1473,23 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 new Thread() {
                     @Override
                     public void run() {
-                        final Bitmap bitmap = maybeDecodeImage(destFile);
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    updateImageView(destFile, bitmap);
-                                } catch (Exception e) {
-                                    Toast.makeText(getContext(), "OUT OF MEMORY", Toast.LENGTH_SHORT).show();
-                                    ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                        try {
+                            final Bitmap bitmap = BitmapFactory.decodeFile(destFile.getPath());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        updateImageView(destFile, bitmap);
+                                    } catch (OutOfMemoryError e) {
+                                        handleOOM(activity, e);
+                                        updateStatus("Out of memory");
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        } catch (OutOfMemoryError e) {
+                            handleOOM(activity, e);
+                            updateStatus("Out of memory");
+                        }
                     }
                 }.start();
             }
@@ -1467,27 +1533,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
     }
 
-    /**
-     * decode it if it is not too big
-     * @param imgPath
-     * @return
-     */
-    private Bitmap maybeDecodeImage(File imgPath) {
-        Display defaultDisplay = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay();
-        int screenWidth = defaultDisplay.getWidth();
-        int screenHeight = defaultDisplay.getWidth();
-        BitmapFactory.Options opts = new BitmapFactory.Options();
-        opts.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(imgPath.getPath(), opts);
-        if (opts.outHeight != 0 && opts.outWidth != 0 && opts.outHeight < screenHeight * 1.5 && opts.outWidth < screenWidth * 1.5) {
-            try {
-                return BitmapFactory.decodeFile(imgPath.getPath());
-            } catch (OutOfMemoryError e) {
-                ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
-                return null;
+    private void handleOOM(final Activity activity, OutOfMemoryError e) {
+        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: " + XMPPControlActivity.getMemoryStatusString(), e));
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(activity, "Out of memory", Toast.LENGTH_SHORT).show();
             }
-        }
-        return null;
+        });
     }
 
     @Override
