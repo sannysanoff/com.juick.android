@@ -1,32 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.juick.android.MyRelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="fill_parent"
+                android:id="@+id/layout_container"
                 android:layout_height="fill_parent"
         >
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                 android:id="@+id/messagesfragment"
-                 android:layout_width="fill_parent"
-                 android:layout_height="fill_parent"/>
-    <LinearLayout
-            android:layout_width="200sp"
+    <RelativeLayout
+            android:layout_width="260sp"
             android:layout_height="fill_parent"
             android:orientation="vertical"
             android:id="@+id/navigation_panel"
             android:layout_alignParentLeft="true"
-            android:visibility="gone"
+            android:background="#FF404040"
+            android:visibility="visible"
             >
         <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="#004000"
+                android:layout_width="fill_parent"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:paddingBottom="4sp"
+                android:paddingTop="4sp"
+                android:layout_height="40sp"
+                android:background="#FFFFFF"
+                android:textColor="#777777"
                 android:text="Navigation"
+                android:id="@+id/navlabel"
+                android:layout_alignParentTop="true"
                 />
-        <com.juick.android.MyListView
+        <ImageButton
+                android:layout_width="40sp"
+                android:gravity="center"
+                android:background="@drawable/white_button_background"
+                android:src="@drawable/menu_btn_bg"
+                android:layout_height="40sp"
+                android:id="@+id/navigation_menu_button"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                />
+        <com.mobeta.android.dslv.DragSortListView
                 android:id="@+id/navigation_list"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
+                android:layout_below="@id/navlabel"
+                android:choiceMode="singleChoice"
                 />
 
-    </LinearLayout>
-</RelativeLayout>
+    </RelativeLayout>
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                 android:id="@+id/messagesfragment"
+                 android:layout_width="fill_parent"
+                 android:layout_height="fill_parent"/>
+
+</com.juick.android.MyRelativeLayout>

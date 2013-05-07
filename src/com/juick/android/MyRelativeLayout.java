@@ -32,5 +32,17 @@ public class MyRelativeLayout extends RelativeLayout {
         super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
+    interface Listener {
+        void onLayout();
+    }
 
+    Listener listener;
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        if (listener != null) {
+            listener.onLayout();
+        }
+    }
 }

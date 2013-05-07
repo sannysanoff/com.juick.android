@@ -149,6 +149,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     private String performLogin(Context context, XMPPConnectionSetup setup) {
+        if (JuickComAuthorizer.getPassword(context) == null)
+            return new String("No Juick Account");
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
         Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
@@ -171,6 +173,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     String relogin() {
+        if (setup == null || setup.jid == null) {
+            ACRA.getErrorReporter().handleException(new RuntimeException("relogin: null setup or jid: "+setup), false);
+            return "Incomplete JAXMPP configuration.";
+        }
         if (setup.jid.endsWith("@local")) {
             int lastLocal = setup.jid.lastIndexOf("@local");
             String uname = setup.jid.substring(0, lastLocal);
@@ -181,6 +187,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     private String performLoginLocal(Context context, String username, String cookie) {
+        if (JuickComAuthorizer.getPassword(context) == null)
+            return new String("No Juick Account");
         setup = new XMPPConnectionSetup();
         setup.jid = username.trim()+"@local";
         setup.password = cookie;

@@ -1,15 +1,26 @@
 package com.juick.android.juick;
 
 import android.accounts.Account;
+import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.Base64;
+import com.juick.android.MainActivity;
 import com.juick.android.Utils;
 import com.juick.android.ja.Network;
 import com.juickadvanced.R;
@@ -17,10 +28,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.message.BasicHeader;
 
-import java.net.HttpURLConnection;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.OutputStreamWriter;
+import java.net.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,6 +52,8 @@ public class JuickComAuthorizer extends Utils.URLAuth {
         if (accountName == null) {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
             accountName = sp.getString("juick_account_name", null);
+            if (getPassword(context) == null)
+                accountName = null;
         }
         return accountName;
     }
@@ -53,13 +64,139 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorize(Context act, boolean forceOptionalAuth, String url, Utils.Function<Void, String> withCookie) {
-        withCookie.apply(getBasicAuthString(act.getApplicationContext()));
+    public void authorize(final Context act, final boolean forceOptionalAuth, final String url, final Utils.Function<Void, String> withCookie) {
+        if (!authNeeded(url)) {
+            withCookie.apply(null);
+            return;
+        }
+        final String basicAuthString = getBasicAuthString(act.getApplicationContext());
+        if (getPassword(act.getApplicationContext()) == null || basicAuthString.length() == 0 || forceOptionalAuth) {
+            final Activity activity = (Activity)act;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                    final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
+                    final EditText login = (EditText)content.findViewById(R.id.login);
+                    final CheckBox insecure = (CheckBox) content.findViewById(R.id.insecure);
+                    PackageManager pm = activity.getPackageManager();
+                    try {
+                        PackageInfo pi = pm.getPackageInfo("com.juickadvanced", 0);
+                        ApplicationInfo ai = pi.applicationInfo;
+                        if ((ai.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) == ApplicationInfo.FLAG_EXTERNAL_STORAGE) {
+                            insecure.setChecked(true);
+                        }
+                    } catch (PackageManager.NameNotFoundException e) {
+                        // do something
+                    }
+                    insecure.setEnabled(true);
+                    final EditText password = (EditText)content.findViewById(R.id.password);
+                    login.setText(JuickComAuthorizer.getJuickAccountName(activity));
+                    login.setHint("JuickUser");
+                    AlertDialog dlg = new AlertDialog.Builder(activity)
+                            .setTitle("Juick.com API login")
+                            .setView(content)
+                            .setPositiveButton("Login", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    final String loginS = login.getText().toString().trim();
+                                    final String passwordS = password.getText().toString().trim();
+                                    final boolean insecureB = insecure.isChecked();
+                                    if (insecureB) {
+                                        sp.edit().putString("juick_account_name", loginS).commit();
+                                    }
+
+                                    new Thread(new Runnable() {
+
+                                        public void run() {
+                                            int status = 0;
+                                            try {
+                                                String authStr = loginS + ":" + passwordS;
+                                                final String basicAuth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
+                                                Utils.verboseDebugString(activity, "Authorization: " + basicAuth);
+                                                URL apiUrl = new URL("http://api.juick.com/post");
+                                                HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
+                                                conn.setConnectTimeout(10000);
+                                                conn.setUseCaches(false);
+                                                conn.setRequestMethod("POST");
+                                                conn.setDoOutput(true);
+                                                conn.setRequestProperty("Authorization", basicAuth);
+                                                conn.connect();
+                                                OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+                                                wr.write("body=PING");
+                                                wr.close();
+                                                status = conn.getResponseCode();
+                                                conn.disconnect();
+                                            } catch (Exception e) {
+                                                Utils.verboseDebugString(activity, e.toString());
+                                                Log.e("checkingNickPassw", e.toString());
+                                            }
+                                            if (status == 200) {
+                                                Account account = new Account(loginS, activity.getString(R.string.com_juick));
+                                                AccountManager am = AccountManager.get(activity);
+                                                boolean accountCreated = am.addAccountExplicitly(account, passwordS, null);
+
+                                                if (insecureB) {
+                                                    sp.edit().putString("juick_account_name", loginS).putString("juick_account_password", passwordS).commit();
+                                                }
+
+                                            } else {
+                                                final int finalStatus = status;
+                                                activity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Toast.makeText(activity, "auth: HTTP status: " + finalStatus, Toast.LENGTH_LONG);
+                                                        authorize(act, forceOptionalAuth, url, withCookie);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }).start();
+                                }})
+                            .setCancelable(false)
+                            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    new Thread() {
+                                        @Override
+                                        public void run() {
+                                            withCookie.apply(null);
+                                        }
+                                    }.start();
+                                }
+                            }).create();
+                    dlg.setOnShowListener(new DialogInterface.OnShowListener() {
+                        @Override
+                        public void onShow(DialogInterface dialog) {
+                            if (login.getText().length() == 0)
+                                login.requestFocus();
+                            else
+                                password.requestFocus();
+                        }
+                    });
+                    try {
+                        dlg.show();
+                    } catch (Exception e) {
+                        //
+                    }
+                }
+            });
+
+        } else {
+            withCookie.apply(basicAuthString);
+        }
+    }
+
+    private boolean authNeeded(String url) {
+        if (url.contains("popular=1")) return false;
+        if (url.contains("media=all")) return false;
+        if (url.contains("/messages")) return false;
+        return true;
     }
 
     @Override
     public void authorizeRequest(HttpRequestBase request, String cookie) {
-        if (cookie.length() > 0) {
+        if (cookie != null && cookie.length() > 0) {
             request.addHeader(new BasicHeader("Authorization", cookie));
         }
         if (cachedIPAddress != null && cachedIPAddress.length() > 0) {

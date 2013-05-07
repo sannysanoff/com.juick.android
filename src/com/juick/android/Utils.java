@@ -189,8 +189,11 @@ public class Utils {
         }
     }
 
+    public static boolean skipWeb = false;
+
     public static void setupWebView(final WebView wv, String content) {
         try {
+            if (skipWeb) return;
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(wv.getContext());
             File file = new File(wv.getContext().getCacheDir(), "temp.html");
             String PREFIX = "#prefs.checked.";

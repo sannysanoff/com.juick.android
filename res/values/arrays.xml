@@ -165,4 +165,26 @@
         <item>ja pocket.com</item>
         <item>ja bolerplate-lib</item>
     </string-array>
+    <string-array name="navigation_menu_start">
+        <item>start editing</item>
+        <item>restore default order</item>
+    </string-array>
+    <string-array name="navigation_menu_end">
+        <item>finish editing</item>
+        <item>restore default order</item>
+    </string-array>
+    <string-array name="back_button">
+        <item>default exit sequence</item>
+        <item>open nav</item>
+    </string-array>
+    <string-array name="exit_sequence">
+        <item>never exit</item>
+        <item>fast dblclick</item>
+        <item>any dblclick</item>
+        <item>back from nav list</item>
+    </string-array>
+    <string-array name="exit_confirmation">
+        <item>no confirmation</item>
+        <item>dialog box</item>
+    </string-array>
 </resources>

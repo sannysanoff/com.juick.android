@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.Utils;
@@ -75,9 +76,10 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
                         }
                         final View content = activity.getLayoutInflater().inflate(R.layout.web_login, null);
                         final EditText login = (EditText)content.findViewById(R.id.login);
-                        final String accountName = JuickComAuthorizer.getJuickAccountName(activity);
                         final EditText password = (EditText)content.findViewById(R.id.password);
-                        login.setText(accountName);
+                        final CheckBox insecure = (CheckBox) content.findViewById(R.id.insecure);
+                        insecure.setChecked(true);
+                        login.setText(JuickComAuthorizer.getJuickAccountName(activity));
                         AlertDialog dlg = new AlertDialog.Builder(activity)
                                 .setTitle("Juick.com Web login")
                                 .setView(content)

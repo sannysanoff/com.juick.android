@@ -458,7 +458,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         boolean noProxyOnWifi = sp.getBoolean("imageproxy.skipOnWifi", false);
         if (noProxyOnWifi) {
             String connectivityTypeKey = ConnectivityChangeReceiver.getCurrentConnectivityTypeKey(ctx);
-            if (connectivityTypeKey.startsWith("WIFI")) return true;
+            if (connectivityTypeKey != null && connectivityTypeKey.startsWith("WIFI")) return true;
         }
         return false;
     }

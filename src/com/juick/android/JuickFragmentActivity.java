@@ -87,7 +87,6 @@ public class JuickFragmentActivity extends FragmentActivity {
     }
 
     public void onFragmentCreated() {
-
     }
 
     public boolean onListTouchEvent(View view, MotionEvent event) {

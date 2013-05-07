@@ -210,40 +210,34 @@ public class BNWMicroBlog implements MicroBlog {
     @Override
     public void addNavigationSources(ArrayList<MainActivity.NavigationItem> navigationItems, final MainActivity mainActivity) {
         SharedPreferences sp = mainActivity.sp;
-        if (sp.getBoolean("msrcBNWFeed", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationBNWFeed) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/feed", "home");
-                    args.putSerializable("messagesSource", ms);
-                    mainActivity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcBNWAll", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationBNWAll) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/show","all");
-                    args.putSerializable("messagesSource", ms);
-                    mainActivity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcBNWHot", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationBNWHot) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/today","top");
-                    ms.setCanNext(false);
-                    args.putSerializable("messagesSource", ms);
-                    mainActivity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
+        navigationItems.add(new MainActivity.NavigationItem(60001, R.string.navigationBNWFeed, R.drawable.navicon_bnw, "msrcBNWFeed") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/feed", "home");
+                args.putSerializable("messagesSource", ms);
+                mainActivity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(60002, R.string.navigationBNWAll, R.drawable.navicon_bnw, "msrcBNWAll") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/show", "all");
+                args.putSerializable("messagesSource", ms);
+                mainActivity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(60003, R.string.navigationBNWHot, R.drawable.navicon_bnw, "msrcBNWHot") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                BnwCompatibleMessagesSource ms = new BnwCompatibleMessagesSource(mainActivity, mainActivity.getString(labelId), "/today", "top");
+                ms.setCanNext(false);
+                args.putSerializable("messagesSource", ms);
+                mainActivity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
     }
 
     @Override

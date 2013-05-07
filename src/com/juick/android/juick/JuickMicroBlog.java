@@ -247,11 +247,20 @@ public class JuickMicroBlog implements MicroBlog {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    private JuickMessagesSource getSubscriptionsMessagesSource(MainActivity activity, int labelId) {
+        if (activity.sp.getBoolean("web_for_subscriptions", false)) {
+            return new JuickWebCompatibleURLMessagesSource(getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
+        } else {
+            return new JuickCompatibleURLMessagesSource(getString(labelId), "juick_api_subscriptions", activity, "http://api.juick.com/home");
+        }
+    }
+
+
     @Override
     public void addNavigationSources(final ArrayList<MainActivity.NavigationItem> navigationItems, final MainActivity activity) {
         final SharedPreferences sp = activity.sp;
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(activity, XMPPService.class);
-        navigationItems.add(new MainActivity.NavigationItem(R.string.navigationAll) {
+        navigationItems.add(new MainActivity.NavigationItem(10001, R.string.navigationAll, R.drawable.navicon_juick, null) {
             @Override
             public void action() {
                 final Bundle args = new Bundle();
@@ -264,185 +273,181 @@ public class JuickMicroBlog implements MicroBlog {
                 activity.mf.clearSavedPosition(activity);
             }
         });
-        if (sp.getBoolean("msrcUnanswered", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationUnanswered) {
-                MainActivity.NavigationItem thiz = this;
+        MainActivity.NavigationItem subscriptionsItem = new MainActivity.NavigationItem(10100, R.string.navigationSubscriptions, R.drawable.navicon_juick, null) {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickMessagesSource ms = getSubscriptionsMessagesSource(activity, R.string.navigationSubscriptions);
+                ms.setKind("home");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
 
-                @Override
-                public void action() {
-                    JuickAdvancedApplication.confirmAdvancedPrivacy(
-                            activity,
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    final Bundle args = new Bundle();
-                                    JAUnansweredMessagesSource ms = new JAUnansweredMessagesSource(activity);
-                                    args.putSerializable("messagesSource", ms);
-                                    activity.runDefaultFragmentWithBundle(args, thiz);
-                                }
+        };
+        navigationItems.add(subscriptionsItem);
+        navigationItems.add(new MainActivity.NavigationItem(10002, R.string.navigationUnanswered, R.drawable.navicon_juickadvanced, "msrcUnanswered") {
+            MainActivity.NavigationItem thiz = this;
 
-                            }, new Runnable() {
-                                @Override
-                                public void run() {
-                                    activity.restoreLastNavigationPosition();
-                                }
+            @Override
+            public void action() {
+                JuickAdvancedApplication.confirmAdvancedPrivacy(
+                        activity,
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                final Bundle args = new Bundle();
+                                JAUnansweredMessagesSource ms = new JAUnansweredMessagesSource(activity);
+                                args.putSerializable("messagesSource", ms);
+                                activity.runDefaultFragmentWithBundle(args, thiz);
                             }
-                    );
-                }
-            });
-        }
-        if (sp.getBoolean("msrcTopMessages", true)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationTop) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "top", activity).putArg("popular", "1");
-                    ms.setKind("popular");
-                    args.putSerializable("messagesSource", ms);
-                    activity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcWithPhotos", true)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationPhoto) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "photos", activity).putArg("media", "all");
-                    ms.setKind("media");
-                    args.putSerializable("messagesSource", ms);
-                    activity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcMyBlog", true)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationMy) {
-                @Override
-                public void action() {
-                    final MainActivity.NavigationItem thiz = this;
-                    withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
+
+                        }, new Runnable() {
+                            @Override
+                            public void run() {
+                                activity.restoreLastNavigationPosition();
+                            }
+                        }
+                );
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10003, R.string.navigationTop, R.drawable.navicon_juick, "msrcTopMessages") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "top", activity).putArg("popular", "1");
+                ms.setKind("popular");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10003, R.string.navigationPhoto, R.drawable.navicon_juick, "msrcWithPhotos") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "photos", activity).putArg("media", "all");
+                ms.setKind("media");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10004, R.string.navigationMy, R.drawable.navicon_juick, "msrcMyBlog") {
+            @Override
+            public void action() {
+                final MainActivity.NavigationItem thiz = this;
+                withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
+                    @Override
+                    public Void apply(Pair<Integer, String> cred) {
+                        final Bundle args = new Bundle();
+                        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("user_id", "" + cred.first);
+                        ms.setKind("my_home");
+                        args.putSerializable("messagesSource", ms);
+                        activity.runDefaultFragmentWithBundle(args, thiz);
+                        return null;
+                    }
+                });
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10005, R.string.navigationSrachiki, R.drawable.navicon_jugregator, "msrcSrachiki") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "srachiki", activity, "http://s.jugregator.org/api");
+                ms.setCanNext(false);
+                ms.setKind("srachiki");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10006, R.string.navigationPrivate, R.drawable.navicon_juick, "msrcPrivate") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "private", activity, "http://juick.com/?show=private");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10007, R.string.navigationDiscuss, R.drawable.navicon_juick, "msrcDiscuss") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "discussions", activity, "http://juick.com/?show=discuss");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new MainActivity.NavigationItem(10008, R.string.navigationJuboRSS, R.drawable.navicon_jubo, "msrcJubo") {
+            @Override
+            public void action() {
+                final int myIndex = navigationItems.indexOf(this);
+                String juboRssURL = sp.getString("juboRssURL", "");
+                if (juboRssURL.length() == 0) {
+                    xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                         @Override
-                        public Void apply(Pair<Integer, String> cred) {
-                            final Bundle args = new Bundle();
-                            JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("user_id", "" + cred.first);
-                            ms.setKind("my_home");
-                            args.putSerializable("messagesSource", ms);
-                            activity.runDefaultFragmentWithBundle(args, thiz);
-                            return null;
+                        public void withService(XMPPService service) {
+                            boolean canAskJubo = false;
+                            String message = getString(R.string.JuboRSSURLIsUnknown);
+                            boolean canManuallyConnectJabber = false;
+                            if (!service.juboOnline) {
+                                boolean useXMPP = sp.getBoolean("useXMPP", false);
+                                if (!useXMPP) {
+                                    message += getString(R.string.ICouldAskButXMPPIsOff);
+                                } else {
+                                    if (service.botOnline) {
+                                        message += getString(R.string.JuboNotThere);
+                                    } else {
+                                        if (sp.getBoolean("useXMPPOnlyForBL", false)) {
+                                            canManuallyConnectJabber = true;
+                                        }
+                                        message += getString(R.string.ICouldButXMPPIfNotWorking);
+                                    }
+                                }
+                            } else {
+                                canAskJubo = true;
+                                message += getString(R.string.OrICanAskJuboNoe);
+                            }
+                            AlertDialog.Builder builder = new AlertDialog.Builder(activity)
+                                    .setTitle(R.string.navigationJuboRSS)
+                                    .setMessage(message)
+                                    .setCancelable(true)
+                                    .setNeutralButton(getString(R.string.EnterJuboRSSURLManually), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            enterJuboURLManually(myIndex, activity);
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            dialogInterface.dismiss();
+                                            activity.restoreLastNavigationPosition();
+                                        }
+                                    });
+                            if (canManuallyConnectJabber) {
+                                builder.setPositiveButton(service.getString(R.string.StartServiceAndTry), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        askJuboFirst(myIndex, true, activity);
+                                    }
+                                });
+                            }
+                            if (canAskJubo) {
+                                builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        askJuboFirst(myIndex, false, activity);
+                                    }
+                                });
+                            }
+                            builder.show();
                         }
                     });
+                } else {
+                    openJuboMessages(myIndex, activity);
                 }
-            });
-        }
-        if (sp.getBoolean("msrcSrachiki", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationSrachiki) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "srachiki", activity, "http://s.jugregator.org/api");
-                    ms.setCanNext(false);
-                    ms.setKind("srachiki");
-                    args.putSerializable("messagesSource", ms);
-                    activity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcPrivate", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationPrivate) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "private", activity, "http://juick.com/?show=private");
-                    args.putSerializable("messagesSource", ms);
-                    activity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcDiscuss", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationDiscuss) {
-                @Override
-                public void action() {
-                    final Bundle args = new Bundle();
-                    JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "discussions", activity, "http://juick.com/?show=discuss");
-                    args.putSerializable("messagesSource", ms);
-                    activity.runDefaultFragmentWithBundle(args, this);
-                }
-            });
-        }
-        if (sp.getBoolean("msrcJubo", false)) {
-            navigationItems.add(new MainActivity.NavigationItem(R.string.navigationJuboRSS) {
-                @Override
-                public void action() {
-                    final int myIndex = navigationItems.indexOf(this);
-                    String juboRssURL = sp.getString("juboRssURL", "");
-                    if (juboRssURL.length() == 0) {
-                        xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                            @Override
-                            public void withService(XMPPService service) {
-                                boolean canAskJubo = false;
-                                String message = getString(R.string.JuboRSSURLIsUnknown);
-                                boolean canManuallyConnectJabber = false;
-                                if (!service.juboOnline) {
-                                    boolean useXMPP = sp.getBoolean("useXMPP", false);
-                                    if (!useXMPP) {
-                                        message += getString(R.string.ICouldAskButXMPPIsOff);
-                                    } else {
-                                        if (service.botOnline) {
-                                            message += getString(R.string.JuboNotThere);
-                                        } else {
-                                            if (sp.getBoolean("useXMPPOnlyForBL", false)) {
-                                                canManuallyConnectJabber = true;
-                                            }
-                                            message += getString(R.string.ICouldButXMPPIfNotWorking);
-                                        }
-                                    }
-                                } else {
-                                    canAskJubo = true;
-                                    message += getString(R.string.OrICanAskJuboNoe);
-                                }
-                                AlertDialog.Builder builder = new AlertDialog.Builder(activity)
-                                        .setTitle(R.string.navigationJuboRSS)
-                                        .setMessage(message)
-                                        .setCancelable(true)
-                                        .setNeutralButton(getString(R.string.EnterJuboRSSURLManually), new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                enterJuboURLManually(myIndex, activity);
-                                            }
-                                        })
-                                        .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialogInterface, int i) {
-                                                dialogInterface.dismiss();
-                                                activity.restoreLastNavigationPosition();
-                                            }
-                                        });
-                                if (canManuallyConnectJabber) {
-                                    builder.setPositiveButton(service.getString(R.string.StartServiceAndTry), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            askJuboFirst(myIndex, true, activity);
-                                        }
-                                    });
-                                }
-                                if (canAskJubo) {
-                                    builder.setPositiveButton(getString(R.string.AskJuBo), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            askJuboFirst(myIndex, false, activity);
-                                        }
-                                    });
-                                }
-                                builder.show();
-                            }
-                        });
-                    } else {
-                        openJuboMessages(myIndex, activity);
-                    }
-                }
+            }
 
-            });
-        }
+        });
     }
 
     @Override
@@ -591,19 +596,23 @@ public class JuickMicroBlog implements MicroBlog {
         }
         if (myUserId.equals("") || myUserName.equals("")) {
             final String userName = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
-            String titleOfDialog = activity.getString(R.string.GettingYourId);
+            if (userName == null) {
+                Toast.makeText(activity, "No Juick Account configured", Toast.LENGTH_SHORT).show();
+            } else {
+                String titleOfDialog = activity.getString(R.string.GettingYourId);
 
-            final Utils.Function<Void, Pair<String, String>> withUserId = new Utils.Function<Void, Pair<String, String>>() {
-                @Override
-                public Void apply(Pair<String, String> cred) {
-                    sp.edit().putString("myUserId", cred.first).commit();
-                    sp.edit().putString("myUserName", cred.second).commit();
-                    action.apply(new Pair<Integer, String>(Integer.parseInt(cred.first), cred.second));
-                    return null;
-                }
-            };
+                final Utils.Function<Void, Pair<String, String>> withUserId = new Utils.Function<Void, Pair<String, String>>() {
+                    @Override
+                    public Void apply(Pair<String, String> cred) {
+                        sp.edit().putString("myUserId", cred.first).commit();
+                        sp.edit().putString("myUserName", cred.second).commit();
+                        action.apply(new Pair<Integer, String>(Integer.parseInt(cred.first), cred.second));
+                        return null;
+                    }
+                };
 
-            obtainProperUserIdByName(activity, userName, titleOfDialog, withUserId);
+                obtainProperUserIdByName(activity, userName, titleOfDialog, withUserId);
+            }
         } else {
             action.apply(new Pair<Integer, String>(Integer.parseInt(myUserId), myUserName));
         }

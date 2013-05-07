@@ -1009,7 +1009,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 applyHeaderPadding(event);
                 break;
         }
-        parent.onListTouchEvent(view, event);
+        if (parent.onListTouchEvent(view, event)) return true;
         return false;
     }
 

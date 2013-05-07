@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" filepath="$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" />
       <module fileurl="file://$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" filepath="$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" />
       <module fileurl="file://$PROJECT_DIR$/com.juick.android.iml" filepath="$PROJECT_DIR$/com.juick.android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../com.mobeta.android.dslv/com.mobeta.android.dslv.iml" filepath="$PROJECT_DIR$/../com.mobeta.android.dslv/com.mobeta.android.dslv.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../common/common.iml" filepath="$PROJECT_DIR$/../../common/common.iml" />
     </modules>
   </component>

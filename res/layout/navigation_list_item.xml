@@ -1,0 +1,52 @@
+<com.juick.android.PressableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                         android:layout_width="fill_parent"
+                                         android:layout_height="wrap_content"
+                                         android:orientation="horizontal"
+                                         android:background="@drawable/navigation_list_background"
+                                         >
+
+    <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            >
+        <ImageView
+                android:id="@+id/draggable"
+                android:layout_width="36sp"
+                android:layout_height="36sp"
+                android:layout_alignParentLeft="true"
+                android:src="@drawable/ic_mp_move"
+                />
+        <CheckBox
+                android:id="@+id/checkbox"
+                android:layout_width="36sp"
+                android:layout_height="36sp"
+                android:layout_toRightOf="@id/draggable"
+                />
+        <ImageView
+                android:id="@android:id/icon"
+                android:layout_marginTop="4sp"
+                android:layout_marginLeft="7sp"
+                android:layout_width="26sp"
+                android:layout_height="26sp"
+                android:layout_toRightOf="@id/checkbox"
+                android:src="@drawable/navicon_juickadvanced"
+                />
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:id="@android:id/text1"
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:textColor="#FFFFFF"
+                  android:gravity="center_vertical"
+                  android:text="Sample"
+                  android:checked="true"
+                  android:paddingLeft="6dip"
+                  android:layout_toRightOf="@android:id/icon"
+                  android:layout_alignParentRight="true"
+                  android:textSize="16sp"
+                  android:minHeight="36sp"
+                  android:background="@drawable/navigation_list_background"
+                />
+
+    </RelativeLayout>
+
+</com.juick.android.PressableLinearLayout>

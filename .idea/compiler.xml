@@ -12,6 +12,7 @@
       <directory url="file://$PROJECT_DIR$/../ActionBarSherlock/library/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/gen/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/gen" includeSubdirectories="true" />
+      <directory url="file://$PROJECT_DIR$/../com.mobeta.android.dslv/gen" includeSubdirectories="true" />
     </excludeFromCompile>
     <resourceExtensions />
     <wildcardResourcePatterns>

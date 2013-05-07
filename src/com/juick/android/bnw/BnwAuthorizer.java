@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.Utils;
@@ -66,12 +67,14 @@ public class BnwAuthorizer extends Utils.URLAuth {
                                 thiz.run();
                             }
                         });
+                        return;
                     }
                     final View content = ((Activity) context).getLayoutInflater().inflate(R.layout.web_login, null);
                     final EditText login = (EditText) content.findViewById(R.id.login);
-                    final String accountName = JuickComAuthorizer.getJuickAccountName(context);
                     final EditText password = (EditText) content.findViewById(R.id.password);
-                    login.setText(accountName);
+                    final CheckBox insecure = (CheckBox) content.findViewById(R.id.insecure);
+                    insecure.setChecked(true);
+                    login.setText(webLogin);
                     AlertDialog dlg = new AlertDialog.Builder(context)
                             .setTitle("BNW Web login")
                             .setView(content)
@@ -98,7 +101,10 @@ public class BnwAuthorizer extends Utils.URLAuth {
                     dlg.setOnShowListener(new DialogInterface.OnShowListener() {
                         @Override
                         public void onShow(DialogInterface dialog) {
-                            password.requestFocus();
+                            if (login.getText().length() == 0)
+                                login.requestFocus();
+                            else
+                                password.requestFocus();
                         }
                     });
                     try {
