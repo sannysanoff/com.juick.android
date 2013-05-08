@@ -391,7 +391,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             }
         });
         init(false);
-        parent.onFragmentCreated();
+        if (parent != null) {
+            parent.onFragmentCreated();
+        }
     }
 
 //    private MessageMenu openMessageMenu(ListView listView) {

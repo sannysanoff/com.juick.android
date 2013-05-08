@@ -454,7 +454,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     static boolean useDirectImageMode(Context ctx) {
+        if (ctx == null) return false;
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        if (sp == null) return false;
         boolean noProxyOnWifi = sp.getBoolean("imageproxy.skipOnWifi", false);
         if (noProxyOnWifi) {
             String connectivityTypeKey = ConnectivityChangeReceiver.getCurrentConnectivityTypeKey(ctx);
@@ -1579,7 +1581,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     public static File getDestFile(Context ctx, String url) {
-        final File destFile;
         if (url.startsWith("file://")) {
             return new File("/"+new URLParser(url).getPathPart());
         } else {
