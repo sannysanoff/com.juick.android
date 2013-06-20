@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="AmbilWarna" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="library" name="libs" level="project" />
-    <orderEntry type="module" module-name="com.mobeta.android.dslv" />
   </component>
 </module>
 
