@@ -63,10 +63,10 @@ public class Network {
                 JuickMicroBlog.withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
                     @Override
                     public Void apply(final Pair<Integer, String> integerStringPair) {
-                        final String password = URLEncoder.encode(JuickComAuthorizer.getPassword(ctx));
                         new Thread("JAHTTPS API fetch") {
                             @Override
                             public void run() {
+                                final String password = URLEncoder.encode(JuickComAuthorizer.getPassword(ctx));
                                 final Utils.RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
                                         + "&password=" + password, notifications);
                                 then.apply(response);
