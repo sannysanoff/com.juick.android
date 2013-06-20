@@ -26,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -108,6 +109,8 @@ public class Utils {
         public abstract ReplyCode validateNon200Reply(HttpResponse o, String url);
 
         public abstract void clearCookie(Context context, Runnable then);
+
+        public abstract void reset(Context context, Handler handler);
     }
 
     static class DummyAuthorizer extends URLAuth {
@@ -170,6 +173,11 @@ public class Utils {
 
         @Override
         public void clearCookie(Context context, Runnable then) {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public void reset(Context context, Handler handler) {
             //To change body of implemented methods use File | Settings | File Templates.
         }
     }

@@ -49,13 +49,14 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
         sp.edit().putBoolean("xmpp_privacy_warned", true).putBoolean("xmpp_privacy_should_warn", false).commit();
         Runnable loop = new Runnable() {
             Runnable thiz = this;
+
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 final AlertDialog alerDialog;
                 alerDialog = builder
                         .setTitle(activity.getString(R.string.XMPP_client))
-                        .setMessage(activity.getString(R.string.NowUsesServerSideXMPPClient)+" "+ (weDisabled ? activity.getString(R.string.WeTurnedOffXMPP) : ""))
+                        .setMessage(activity.getString(R.string.NowUsesServerSideXMPPClient) + " " + (weDisabled ? activity.getString(R.string.WeTurnedOffXMPP) : ""))
                         .setCancelable(true)
                         .setNeutralButton(R.string.ReadPrivacyPolicy, new DialogInterface.OnClickListener() {
                             @Override
@@ -98,13 +99,35 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
         if (intent.getAction().equals("check_new_version")) {
             Toast.makeText(JuickPreferencesActivity.this, getString(R.string.WillCheckForNewVersion), Toast.LENGTH_LONG).show();
             WhatsNew.getLastCheck(this).delete();
-            WhatsNew.checkForUpdates(this, new Utils.Function<Void,String>() {
+            WhatsNew.checkForUpdates(this, new Utils.Function<Void, String>() {
                 @Override
                 public Void apply(String reason) {
-                    Toast.makeText(JuickPreferencesActivity.this, getString(R.string.NewVersionNotFound)+": "+reason, Toast.LENGTH_LONG).show();
+                    Toast.makeText(JuickPreferencesActivity.this, getString(R.string.NewVersionNotFound) + ": " + reason, Toast.LENGTH_LONG).show();
                     return null;
                 }
             }, true);
+        }
+        if (intent.getAction().equals("clear_all_auth")) {
+            new AlertDialog.Builder(this)
+                    .setMessage(getString(R.string.ThisWillRemoveAuth))
+                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    })
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ArrayList<Utils.URLAuth> authorizers = Utils.authorizers;
+                            for (Utils.URLAuth authorizer : authorizers) {
+                                authorizer.reset(JuickPreferencesActivity.this, handler);
+                            }
+                            Toast.makeText(JuickPreferencesActivity.this, getString(R.string.AllAuthHasBeenCleared), Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setCancelable(true)
+                    .show();
         }
         if (intent.getAction().equals("whatsnew")) {
             final WhatsNew whatsNew = new WhatsNew(this);

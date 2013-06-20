@@ -19,9 +19,7 @@
 package com.juick.android;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
@@ -35,6 +33,7 @@ import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewConfigurationCompat;
 import android.util.Log;
 import android.view.*;
+import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.view.animation.TranslateAnimation;
@@ -576,142 +575,171 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     boolean navigationOpenMode = false;
 
     public Boolean maybeInterceptTouchEventFromActivity(MotionEvent event) {
-        if (rightScrollBound == 0) return null;
+        if (rightScrollBound == 0) {
+            Log.w("JAGP","rightScrollBound == 0");
+            return null;
+        }
         int action = event.getAction();
-        switch(action) {
-            case MotionEvent.ACTION_UP:
-                if (mIsUnableToDrag) return null;
-                if (mIsBeingDragged) {
-                    if (!navigationOpenMode) {
-                        if (Math.abs(lastToXDelta) < rightScrollBound/2) {
+        int actionMasked = event.getActionMasked();
+        final View frag = getActivity().findViewById(R.id.messagesfragment);
+        if (action == MotionEvent.ACTION_DOWN || actionMasked == MotionEvent.ACTION_POINTER_DOWN) {
+            if (mScrollState == SCROLL_STATE_IDLE && frag.getAnimation() == null) {
+                if (event.getPointerCount() == 1) {
+                    Log.w("JAGP","action_down 1");
+                    navigationOpenMode = frag.getLeft() > 0;
+                    mLastMotionX = mInitialMotionX = event.getX();
+                    mLastMotionY = event.getY();
+                    currentScrollX = 0;
+                    mActivePointerId = MotionEventCompat.getPointerId(event, 0);
+                    mIsBeingDragged = false;
+                    mIsUnableToDrag = false;
+                } else {
+                    Log.w("JAGP","action_down 2");
+                    if (mIsBeingDragged) {
+                        if (!navigationOpenMode) {
+                            Log.w("JAGP","action_down 3");
                             setScrollState(SCROLL_STATE_IDLE);
                             scrollToX(0, 500);
+                        }
+                    }
+                    mIsUnableToDrag = true;
+                }
+            } else {
+                Log.w("JAGP","!(mScrollState == SCROLL_STATE_IDLE && frag.getAnimation() == null)");
+            }
+        }
+        if (action == MotionEvent.ACTION_UP || actionMasked == MotionEvent.ACTION_POINTER_UP) {
+            if (mIsUnableToDrag) return null;
+            if (mIsBeingDragged) {
+                final int activePointerId = mActivePointerId;
+                if (activePointerId == INVALID_POINTER) {
+                    // If we don't have a valid id, the touch down wasn't on content.
+                    return null;
+                }
+                int pointerIndex = MotionEventCompat.findPointerIndex(event, activePointerId);
+                if (pointerIndex == event.getActionIndex()) {
+                    if (!navigationOpenMode) {
+                        if (Math.abs(lastToXDelta) < rightScrollBound/2) {
+                            Log.w("JAGP","action_up 1");
+                            setScrollState(SCROLL_STATE_SETTLING);
+                            scrollToX(0, 500);
                         } else {
-                            setScrollState(SCROLL_STATE_IDLE);
+                            Log.w("JAGP","action_up 2");
+                            setScrollState(SCROLL_STATE_SETTLING);
                             scrollToX((int) -rightScrollBound, 200);
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
+                                    Log.w("JAGP","action_up 3");
                                     ((MainActivity) getActivity()).openNavigationMenu(false);
                                     lastToXDelta = 0;
+                                    frag.clearAnimation();
                                 }
                             }, 200);
                         }
                     } else {
-                        setScrollState(SCROLL_STATE_IDLE);
+                        Log.w("JAGP","action_up 4");
+                        mIsBeingDragged = false;
+                        setScrollState(SCROLL_STATE_SETTLING);
                         scrollToX((int)rightScrollBound, 200);
+                        mActivePointerId = INVALID_POINTER;
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
+                                Log.w("JAGP","action_up 5");
                                 ((MainActivity) getActivity()).closeNavigationMenu(false);
                                 lastToXDelta = 0;
+                                frag.clearAnimation();
                             }
                         }, 200);
 
                     }
-                    return true;
+                    return null;
                 }
-                break;
-            case MotionEvent.ACTION_DOWN:
-                final View frag = getActivity().findViewById(R.id.messagesfragment);
-                navigationOpenMode = frag.getLeft() > 0;
-                mLastMotionX = mInitialMotionX = event.getX();
-                mLastMotionY = event.getY();
-                currentScrollX = 0;
-                mActivePointerId = MotionEventCompat.getPointerId(event, 0);
-                if (mScrollState == SCROLL_STATE_SETTLING) {
-                    // Let the user 'catch' the pager as it animates.
-                    mIsBeingDragged = true;
-                    mIsUnableToDrag = false;
-                    setScrollState(SCROLL_STATE_DRAGGING);
-                    return true;
-                } else {
-                    //completeScroll();
-                    mIsBeingDragged = false;
-                    mIsUnableToDrag = false;
-                }
-                break;
-            case MotionEvent.ACTION_MOVE: {
-                if (mIsUnableToDrag) return null;
-
-                /*
-                 * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
-                 * whether the user has moved far enough from his original down touch.
-                 */
-
-                /*
-                * Locally do absolute value. mLastMotionY is set to the y value
-                * of the down event.
-                */
-                MotionEvent ev = event;
-                final int activePointerId = mActivePointerId;
-                if (activePointerId == INVALID_POINTER) {
-                    // If we don't have a valid id, the touch down wasn't on content.
-                    break;
-                }
-
-                int pointerIndex = MotionEventCompat.findPointerIndex(ev, activePointerId);
-                float x = MotionEventCompat.getX(ev, pointerIndex);
-                float dx = x - mLastMotionX;
-                float xDiff = Math.abs(dx);
-                float yDiff = Math.abs(MotionEventCompat.getY(ev, pointerIndex) - mLastMotionY);
-                Log.i("JADRAG","MotionEvent.ACTION_MOVE: x="+x+" dx="+dx+" dragged="+mIsBeingDragged);
-
-                if (!mIsBeingDragged) {
-                    if (isListAnyPressed()) {
-                        mIsUnableToDrag = true;
-                    } else if (xDiff > mTouchSlop && xDiff > yDiff) {
-                        mIsBeingDragged = true;
-                        setScrollState(SCROLL_STATE_DRAGGING);
-                        mLastMotionX = x;
-                        return true;
-                    } else {
-                        if (yDiff > mTouchSlop) {
-                            // The finger has moved enough in the vertical
-                            // direction to be counted as a drag...  abort
-                            // any attempt to drag horizontally, to work correctly
-                            // with children that have scrolling containers.
-                            mIsUnableToDrag = true;
-                        }
-                    }
-                }
-
-
-                if (mIsBeingDragged) {
-                    // Scroll to follow the motion event
-                    final int activePointerIndex = MotionEventCompat.findPointerIndex(
-                            ev, mActivePointerId);
-                    x = MotionEventCompat.getX(ev, activePointerIndex);
-                    final float deltaX = mLastMotionX - x;
-                    mLastMotionX = x;
-                    float oldScrollX = getScrollX();
-                    float scrollX = oldScrollX + deltaX;
-                    final int width = getListView().getWidth();
-                    final int widthWithMargin = width;
-
-                    final float leftBound = -widthWithMargin;
-                    if (navigationOpenMode) {
-                        if (scrollX < 0) {
-                            scrollX = 0;
-                        } else if (scrollX > rightScrollBound) {    // prevent too much to left
-                            scrollX = rightScrollBound;
-                        }
-                    } else {
-                        if (scrollX > 0) {
-                            scrollX = 0;
-                        } else if (scrollX > rightScrollBound) {
-                            scrollX = rightScrollBound;
-                        }
-                    }
-                    // Don't lose the rounded component
-                    mLastMotionX += scrollX - (int) scrollX;
-                    Log.i("JADRAG","MotionEvent.ACTION_MOVE: x="+x+" dx="+deltaX+" mLastMotionX="+mLastMotionX+" scrollx="+scrollX);
-                    scrollToX((int) scrollX, 1);
-                    return true;
-                }
-
-
             }
+        }
+        if (action == MotionEvent.ACTION_MOVE) {
+            if (mIsUnableToDrag) return null;
+            if (mScrollState == SCROLL_STATE_SETTLING) return null;
+
+            /*
+             * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
+             * whether the user has moved far enough from his original down touch.
+             */
+
+            /*
+            * Locally do absolute value. mLastMotionY is set to the y value
+            * of the down event.
+            */
+            MotionEvent ev = event;
+            final int activePointerId = mActivePointerId;
+            if (activePointerId == INVALID_POINTER) {
+                // If we don't have a valid id, the touch down wasn't on content.
+                return null;
+            }
+
+            int pointerIndex = MotionEventCompat.findPointerIndex(ev, activePointerId);
+            float x = MotionEventCompat.getX(ev, pointerIndex);
+            float dx = x - mLastMotionX;
+            float xDiff = Math.abs(dx);
+            float yDiff = Math.abs(MotionEventCompat.getY(ev, pointerIndex) - mLastMotionY);
+
+            if (!mIsBeingDragged) {
+                if (isListAnyPressed()) {
+                    //Log.w("JAGP","action_move 1");
+                    mIsUnableToDrag = true;
+                } else if (xDiff > mTouchSlop && xDiff > yDiff) {
+                    mIsBeingDragged = true;
+                    setScrollState(SCROLL_STATE_DRAGGING);
+                    mLastMotionX = x;
+                    //Log.w("JAGP","action_move 2");
+                    return null;
+                } else {
+                    if (yDiff > mTouchSlop) {
+                        // The finger has moved enough in the vertical
+                        // direction to be counted as a drag...  abort
+                        // any attempt to drag horizontally, to work correctly
+                        // with children that have scrolling containers.
+                        //Log.w("JAGP","action_move 3");
+                        mIsUnableToDrag = true;
+                    }
+                }
+            }
+
+
+            if (mIsBeingDragged) {
+                //Log.w("JAGP","action_move 4");
+                // Scroll to follow the motion event
+                final int activePointerIndex = MotionEventCompat.findPointerIndex(
+                        ev, mActivePointerId);
+                x = MotionEventCompat.getX(ev, activePointerIndex);
+                final float deltaX = mLastMotionX - x;
+                mLastMotionX = x;
+                float oldScrollX = getScrollX();
+                float scrollX = oldScrollX + deltaX;
+                final int width = getListView().getWidth();
+                final int widthWithMargin = width;
+
+                final float leftBound = -widthWithMargin;
+                if (navigationOpenMode) {
+                    if (scrollX < 0) {
+                        scrollX = 0;
+                    } else if (scrollX > rightScrollBound) {    // prevent too much to left
+                        scrollX = rightScrollBound;
+                    }
+                } else {
+                    if (scrollX > 0) {
+                        scrollX = 0;
+                    } else if (scrollX > rightScrollBound) {
+                        scrollX = rightScrollBound;
+                    }
+                }
+                // Don't lose the rounded component
+                mLastMotionX += scrollX - (int) scrollX;
+                scrollToX((int) scrollX, 1);
+                return null;
+            }
+
 
         }
         return null;
@@ -1139,13 +1167,34 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     Integer lastToXDelta;
     public void scrollToX(int scrollX, long duration) {
         currentScrollX = scrollX;
+        final View frag = getActivity().findViewById(R.id.messagesfragment);
         TranslateAnimation ta = new TranslateAnimation(lastToXDelta != null ? lastToXDelta : 0, -scrollX, 0, 0);
         lastToXDelta = -scrollX;
         ta.setFillEnabled(true);
         ta.setDuration(duration);
         ta.setFillAfter(true);
         ta.setFillBefore(true);
-        final View frag = getActivity().findViewById(R.id.messagesfragment);
+        if (duration > 2) {
+            ta.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    if (mScrollState == SCROLL_STATE_SETTLING) {
+                        setScrollState(SCROLL_STATE_IDLE);
+                        frag.clearAnimation();
+                    }
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+            });
+        }
         frag.startAnimation(ta);
     }
 
@@ -1153,19 +1202,22 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         return currentScrollX;
     }
 
+    Runnable reenabler = new Runnable() {
+        @Override
+        public void run() {
+            setListActionsEnabled(true);
+        }
+    };
+
     private void setScrollState(int newState) {
         if (mScrollState == newState) {
             return;
         }
-        if (newState == SCROLL_STATE_DRAGGING) {
+        if (newState != SCROLL_STATE_IDLE) {
+            handler.removeCallbacks(reenabler);
             setListActionsEnabled(false);
         } else {
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    setListActionsEnabled(true);
-                }
-            }, 500);
+            handler.postDelayed(reenabler, 500);
         }
         mScrollState = newState;
     }

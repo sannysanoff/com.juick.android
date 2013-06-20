@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.CheckBox;
@@ -58,12 +59,19 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
         if (myCookie == null) {
             if (ctx instanceof Activity) {
                 final Activity activity = (Activity)ctx;
+                final String juickComPassword = JuickComAuthorizer.getPassword(activity);
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         String webLogin = sp.getString("web_login",null);
                         String webPassword = sp.getString("web_password",null);
                         final Runnable thiz = this;
+                        if (webLogin == null) {
+                            webLogin = JuickComAuthorizer.getJuickAccountName(activity);
+                        }
+                        if (webPassword == null) {
+                            webPassword = juickComPassword;
+                        }
                         if (webLogin != null && webPassword != null) {
                             tryLoginWithPassword(webLogin, webPassword, new Runnable() {
                                 @Override
@@ -79,7 +87,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
                         final EditText password = (EditText)content.findViewById(R.id.password);
                         final CheckBox insecure = (CheckBox) content.findViewById(R.id.insecure);
                         insecure.setChecked(true);
-                        login.setText(JuickComAuthorizer.getJuickAccountName(activity));
+                        login.setText(webLogin);
                         AlertDialog dlg = new AlertDialog.Builder(activity)
                                 .setTitle("Juick.com Web login")
                                 .setView(content)
@@ -260,5 +268,11 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
         then.run();
         myCookie = null;
 
+    }
+
+    @Override
+    public void reset(Context context, Handler handler) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().remove("web_cookie").remove("web_login").remove("web_password").commit();
     }
 }

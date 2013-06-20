@@ -464,6 +464,9 @@
     <string name="EmptyList">Пустой список</string>
     <string name="TooManyTags">Слишком много тегов, максимум 5.</string>
     <string name="StorePlainTextPassword">Сохранить пароль рядом с программой</string>
+    <string name="AllAuthHasBeenCleared">Все сохраненные логины и пароли удалены</string>
+    <string name="ThisWillRemoveAuth">Вы действительно хотите удалить созраненные логины и пароли из программы?</string>
+    <string name="ClearAllAuth">Удалить сохраненные логины</string>
 
 
 </resources>

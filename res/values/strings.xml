@@ -1108,6 +1108,10 @@
     <string name="EmptyList">Empty list</string>
     <string name="TooManyTags">Too many tags, maximum 5.</string>
     <string name="StorePlainTextPassword">Store plain-text password in private area</string>
+    <string name="AllAuthHasBeenCleared">All saved logins and passwords has been cleared</string>
+    <string name="ThisWillRemoveAuth">This will remove all saved logins and passwords from application. Continue?
+    </string>
+    <string name="ClearAllAuth">Clear all saved auth</string>
 
 
 </resources>

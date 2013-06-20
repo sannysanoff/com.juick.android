@@ -1,18 +1,17 @@
 package com.juick.android.juick;
 
 import android.accounts.Account;
-import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -20,9 +19,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.Base64;
-import com.juick.android.MainActivity;
 import com.juick.android.Utils;
-import com.juick.android.ja.Network;
 import com.juickadvanced.R;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -132,6 +129,9 @@ public class JuickComAuthorizer extends Utils.URLAuth {
                                                 Log.e("checkingNickPassw", e.toString());
                                             }
                                             if (status == 200) {
+
+
+
                                                 Account account = new Account(loginS, activity.getString(R.string.com_juick));
                                                 AccountManager am = AccountManager.get(activity);
                                                 boolean accountCreated = am.addAccountExplicitly(account, passwordS, null);
@@ -300,4 +300,14 @@ public class JuickComAuthorizer extends Utils.URLAuth {
         return sp.getString("juick_account_password", null);
     }
 
+    @Override
+    public void reset(Context context, Handler handler) {
+        AccountManager am = AccountManager.get(context);
+        Account accs[] = am.getAccountsByType(context.getString(R.string.com_juick));
+        for (Account acc : accs) {
+            am.removeAccount(acc, null, handler);
+        }
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().remove("juick_account_password").remove("juick_account_name").commit();
+    }
 }

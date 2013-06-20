@@ -9,6 +9,9 @@
     <Preference android:title="@string/CheckForNewVersionNow">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="check_new_version"/>
     </Preference>
+    <Preference android:title="@string/ClearAllAuth">
+        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="clear_all_auth"/>
+    </Preference>
     <Preference android:title="@string/WhatsNew" android:summary="@string/WhatsNew2">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="whatsnew"/>
     </Preference>

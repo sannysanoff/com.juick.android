@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.WindowManager;
@@ -12,7 +13,6 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.Utils;
-import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -314,6 +314,12 @@ public class PstoAuthorizer extends Utils.URLAuth {
                 }
             });
         }
+    }
+
+    @Override
+    public void reset(Context context, Handler handler) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().remove("psto.web_cookie").remove("psto.web_login").remove("psto.web_password").commit();
     }
 
 
