@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * Time: 10:44 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract  class MessagesSource implements Serializable {
+public abstract class MessagesSource implements Serializable {
 
     protected transient Context ctx;
     protected transient SharedPreferences sp;

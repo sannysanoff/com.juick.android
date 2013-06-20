@@ -52,6 +52,7 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         Bundle args = new Bundle();
         args.putInt("uid", uid);
         args.putBoolean("multi", multi);
+        args.putBoolean("add_system_tags", true);
         tf.setArguments(args);
         ft.add(R.id.tagsfragment, tf);
         ft.commit();

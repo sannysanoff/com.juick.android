@@ -94,7 +94,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             }
         }
     };
-    public ThreadFragment tf;
     private MessagesSource messagesSource;
     private JuickMessage selectedReply;
     private long usageStart;
@@ -308,6 +307,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
 
     private void resetForm() {
         rid = 0;
+        selectedReply = null;
         setHeight(replyToContainer, 0);
         etMessage.setText("");
         attachmentMime = null;

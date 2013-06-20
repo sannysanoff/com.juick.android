@@ -247,11 +247,11 @@ public class JuickMicroBlog implements MicroBlog {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    private JuickMessagesSource getSubscriptionsMessagesSource(MainActivity activity, int labelId) {
+    public static JuickMessagesSource getSubscriptionsMessagesSource(MainActivity activity, int labelId) {
         if (activity.sp.getBoolean("web_for_subscriptions", false)) {
-            return new JuickWebCompatibleURLMessagesSource(getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
+            return new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
         } else {
-            return new JuickCompatibleURLMessagesSource(getString(labelId), "juick_api_subscriptions", activity, "http://api.juick.com/home");
+            return new JuickCompatibleURLMessagesSource(activity.getString(labelId), "juick_api_subscriptions", activity, "http://api.juick.com/home");
         }
     }
 
@@ -586,35 +586,86 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     public static void withUserId(final Activity activity, final Utils.Function<Void,Pair<Integer, String>> action) {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
-        String myUserId = sp.getString("myUserId", "");
-        String myUserName = sp.getString("myUserName", "");
+        new Thread("withUserId password getter"){
+            @Override
+            public void run() {
+                final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
+                final String myUserId = atoi(sp.getString("myUserId", ""));
+                final String myUserName;
+                String pass = JuickComAuthorizer.getPassword(activity);
+                if (pass == null || pass.length() == 0) myUserName = ""; else myUserName = JuickComAuthorizer.getJuickAccountName(activity);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (myUserId.equals("") || myUserName.equals("")) {
+                            final String userName = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
+                            if (userName == null) {
+                                // get some stuff
+                                class MyDownloadErrorNotification implements Utils.DownloadErrorNotification {
+                                    String error;
+                                    public void notifyDownloadError(String error) {
+                                        this.error = error;
+                                    }
+                                }
+                                final MyDownloadErrorNotification den = new MyDownloadErrorNotification();
+                                new Thread("Sample data fetcher") {
+                                    @Override
+                                    public void run() {
+                                        new JuickCompatibleURLMessagesSource("dummy", "dummy", activity, "http://api.juick.com/home").getNext(den, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                                            @Override
+                                            public Void apply(ArrayList<JuickMessage> juickMessages) {
+                                                activity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        if (den.error != null) {
+                                                            Toast.makeText(activity, "No Juick Account configured", Toast.LENGTH_SHORT).show();
+                                                        } else {
+                                                            withUserId(activity, action);
+                                                        }
+                                                    }
+                                                });
+                                                return null;
+                                            }
+                                        });
+                                    }
+                                }.start();
+                                return;
+                            } else {
+                                String titleOfDialog = activity.getString(R.string.GettingYourId);
+
+                                final Utils.Function<Void, Pair<String, String>> withUserId = new Utils.Function<Void, Pair<String, String>>() {
+                                    @Override
+                                    public Void apply(Pair<String, String> cred) {
+                                        sp.edit().putString("myUserId", cred.first).commit();
+                                        sp.edit().putString("myUserName", cred.second).commit();
+                                        action.apply(new Pair<Integer, String>(Integer.parseInt(cred.first), cred.second));
+                                        return null;
+                                    }
+                                };
+
+                                obtainProperUserIdByName(activity, userName, titleOfDialog, withUserId);
+                            }
+                        } else {
+                            final Pair<Integer, String> data = new Pair<Integer, String>(Integer.parseInt(myUserId), myUserName);
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    action.apply(data);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }.start();
+    }
+
+    private static String atoi(String myUserId) {
         try {
             Integer.parseInt(myUserId);
+            return myUserId;
         } catch (Exception ex) {
-            myUserId = "";
-        }
-        if (myUserId.equals("") || myUserName.equals("")) {
-            final String userName = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
-            if (userName == null) {
-                Toast.makeText(activity, "No Juick Account configured", Toast.LENGTH_SHORT).show();
-            } else {
-                String titleOfDialog = activity.getString(R.string.GettingYourId);
-
-                final Utils.Function<Void, Pair<String, String>> withUserId = new Utils.Function<Void, Pair<String, String>>() {
-                    @Override
-                    public Void apply(Pair<String, String> cred) {
-                        sp.edit().putString("myUserId", cred.first).commit();
-                        sp.edit().putString("myUserName", cred.second).commit();
-                        action.apply(new Pair<Integer, String>(Integer.parseInt(cred.first), cred.second));
-                        return null;
-                    }
-                };
-
-                obtainProperUserIdByName(activity, userName, titleOfDialog, withUserId);
-            }
-        } else {
-            action.apply(new Pair<Integer, String>(Integer.parseInt(myUserId), myUserName));
+            return "";
         }
     }
 

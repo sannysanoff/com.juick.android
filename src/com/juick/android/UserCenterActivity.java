@@ -26,6 +26,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.util.Pair;
@@ -58,10 +59,12 @@ public class UserCenterActivity extends Activity {
 
     public static final int SEARCH_PAST_CONVERSATIONS = 0x100001;
     public static final int SEARCH_MORE               = 0x100002;
+    Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
+        handler = new Handler();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_center);
         final ListView list = (ListView) findViewById(R.id.list);
@@ -345,9 +348,20 @@ public class UserCenterActivity extends Activity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         if (item.getItemId() == SEARCH_PAST_CONVERSATIONS) {
-            Intent i = new Intent(this, MessagesActivity.class);
-            i.putExtra("messagesSource", new JAPastConversationMessagesSource(this, uname));
-            startActivity(i);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    JuickMicroBlog.withUserId(UserCenterActivity.this, new Utils.Function<Void, Pair<Integer, String>>() {
+                        @Override
+                        public Void apply(Pair<Integer, String> integerStringPair) {
+                            Intent i = new Intent(UserCenterActivity.this, MessagesActivity.class);
+                            i.putExtra("messagesSource", new JAPastConversationMessagesSource(UserCenterActivity.this, uname));
+                            startActivity(i);
+                            return null;
+                        }
+                    });
+                }
+            }, 500);
             return true;
         }
         if (item.getItemId() == SEARCH_MORE) {

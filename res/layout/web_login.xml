@@ -80,7 +80,7 @@
                     android:paddingRight="5sp"
                     android:gravity="left"
                     android:enabled="false"
-                    android:text="Store plain-text password in private area"/>
+                    android:text="@string/StorePlainTextPassword"/>
         </LinearLayout>
     </TableRow>
 </TableLayout>

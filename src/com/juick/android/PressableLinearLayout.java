@@ -74,6 +74,20 @@ public class PressableLinearLayout extends LinearLayout {
             pressedListener.onSelectStateChanged(selected);
     }
 
+    Boolean overrideHasFocusable = null;
+
+    @Override
+    public boolean hasFocusable() {
+        if (overrideHasFocusable != null) {
+            return overrideHasFocusable;
+        }
+        return super.hasFocusable();
+    }
+
+    public void setOverrideHasFocusable(Boolean overrideHasFocusable) {
+        this.overrideHasFocusable = overrideHasFocusable;
+    }
+
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         try {

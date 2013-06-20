@@ -1007,19 +1007,21 @@ public class XMPPService extends Service {
         TopicStarterDelayedNotificationsHandled result = TopicStarterDelayedNotificationsHandled.NO_DELAYED_MESSAGES_FOUND;
         cachedTopicStarters.put(subscriptionIncomingMessage.getMID(), subscriptionIncomingMessage);
         boolean forMe = false;
-        for (IncomingMessage incomingMessage : new ArrayList<IncomingMessage>(incomingMessages)) {
-            if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getMID().equals(subscriptionIncomingMessage.getMID())) {
-                // details came!
-                JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;
-                imsg.setOriginalMessage(subscriptionIncomingMessage);
-                if (imsg.delayedNotificationResolution) {
-                    result = TopicStarterDelayedNotificationsHandled.DELAYED_FOUND_NO_PERSONALS;
-                    imsg.delayedNotificationResolution = false;
-                    forMe |= isMessageToMe(imsg);
-                } else {
-                    forMe |= isMessageToMe(imsg);
+        synchronized (incomingMessages) {
+            for (IncomingMessage incomingMessage : new ArrayList<IncomingMessage>(incomingMessages)) {
+                if (incomingMessage instanceof JuickThreadIncomingMessage && ((JuickThreadIncomingMessage) incomingMessage).getMID().equals(subscriptionIncomingMessage.getMID())) {
+                    // details came!
+                    JuickThreadIncomingMessage imsg = (JuickThreadIncomingMessage) incomingMessage;
+                    imsg.setOriginalMessage(subscriptionIncomingMessage);
+                    if (imsg.delayedNotificationResolution) {
+                        result = TopicStarterDelayedNotificationsHandled.DELAYED_FOUND_NO_PERSONALS;
+                        imsg.delayedNotificationResolution = false;
+                        forMe |= isMessageToMe(imsg);
+                    } else {
+                        forMe |= isMessageToMe(imsg);
+                    }
+                    saveMessage(imsg);
                 }
-                saveMessage(imsg);
             }
         }
         switch (result) {
@@ -1185,27 +1187,31 @@ public class XMPPService extends Service {
                 } catch (Exception e) {
                     Log.e("com.juickadvanced", "restoreMessages", e);
                 }
-                incomingMessages.addAll(readMessages);
-                if (incomingMessages.size() > 0) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            XMPPMessageReceiver.updateInfo(XMPPService.this, incomingMessages.size(), true);
-                            HashSet<Integer> alreadyRequestedTopicStarters = new HashSet<Integer>();
-                            for (IncomingMessage incomingMessage : incomingMessages) {
-                                if (incomingMessage instanceof JuickThreadIncomingMessage) {
-                                    JuickThreadIncomingMessage jtim = (JuickThreadIncomingMessage) incomingMessage;
-                                    if (jtim.originalMessage == null || jtim.originalMessage.from.contains("???")) {
-                                        JuickMessageID mid = jtim.getMID();
-                                        if (!alreadyRequestedTopicStarters.contains(mid.getMid())) {
-                                            alreadyRequestedTopicStarters.add(mid.getMid());
-                                            requestMessageBody(mid);
+                synchronized (incomingMessages) {
+                    incomingMessages.addAll(readMessages);
+                    if (incomingMessages.size() > 0) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                XMPPMessageReceiver.updateInfo(XMPPService.this, incomingMessages.size(), true);
+                                HashSet<Integer> alreadyRequestedTopicStarters = new HashSet<Integer>();
+                                synchronized (incomingMessages) {
+                                    for (IncomingMessage incomingMessage : incomingMessages) {
+                                        if (incomingMessage instanceof JuickThreadIncomingMessage) {
+                                            JuickThreadIncomingMessage jtim = (JuickThreadIncomingMessage) incomingMessage;
+                                            if (jtim.originalMessage == null || jtim.originalMessage.from.contains("???")) {
+                                                JuickMessageID mid = jtim.getMID();
+                                                if (!alreadyRequestedTopicStarters.contains(mid.getMid())) {
+                                                    alreadyRequestedTopicStarters.add(mid.getMid());
+                                                    requestMessageBody(mid);
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }.start();

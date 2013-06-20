@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#FFFFFF">
+
+    <ImageView
+            android:id="@+id/button"
+            android:scaleType="fitCenter"
+            android:layout_width="48sp"
+            android:layout_marginLeft="5sp"
+            android:layout_height="48sp"
+            android:src="@drawable/icon48"/>
+    <TextView
+            android:id="@+id/text"
+            android:layout_width="wrap_content"
+            android:layout_marginLeft="5sp"
+            android:layout_height="48sp"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            android:text="Juick Advanced"/>
+</LinearLayout>

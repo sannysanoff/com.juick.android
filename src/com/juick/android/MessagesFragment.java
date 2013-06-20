@@ -20,33 +20,36 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ListFragment;
+import android.support.v4.view.MotionEventCompat;
+import android.support.v4.view.ViewConfigurationCompat;
 import android.util.Log;
 import android.view.*;
-import android.view.animation.*;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.juick.android.ja.JAUnansweredMessagesSource;
 import com.juick.android.ja.Network;
-import com.juickadvanced.data.juick.JuickMessage;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
-import android.os.Bundle;
-import android.support.v4.app.ListFragment;
-import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juickadvanced.data.juick.JuickMessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessageID;
 import org.acra.ACRA;
 import org.apache.http.client.HttpClient;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
@@ -60,6 +63,7 @@ import java.util.regex.Pattern;
 public class MessagesFragment extends ListFragment implements AdapterView.OnItemClickListener, AbsListView.OnScrollListener, View.OnTouchListener, View.OnClickListener {
 
     public static int instanceCount;
+
     {
         instanceCount++;
     }
@@ -67,7 +71,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public JuickMessagesAdapter listAdapter;
     private View viewLoading;
     private boolean loading = true;
-    private int page = 1;
     // Pull to refresh
     private static final int TAP_TO_REFRESH = 1;
     private static final int PULL_TO_REFRESH = 2;
@@ -83,7 +86,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private RotateAnimation mReverseFlipAnimation;
     private int mRefreshViewHeight;
     private int mRefreshOriginalTopPadding;
-    private int mLastMotionY;
+    private float mLastMotionY;
+    private float mLastMotionX;
+    private float mInitialMotionX;
+    private int mActivePointerId;
+    private int mScrollState = SCROLL_STATE_IDLE;
+    private static final int INVALID_POINTER = -1;
+    public static final int SCROLL_STATE_DRAGGING = 10;
+    public static final int SCROLL_STATE_SETTLING = 11;
+
+
     private boolean mBounceHack;
     private ScaleGestureDetector mScaleDetector = null;
     private GestureDetector gestureDetector = null;
@@ -108,7 +120,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
      */
     private boolean alternativeLongClick;
     private JuickMessage preventClickOn;
-
+    private int mTouchSlop;
+    private float rightScrollBound;
 
     public MessagesFragment(Object restoreData, JuickFragmentActivity parent) {
         this.restoreData = restoreData;
@@ -121,12 +134,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
 
-
     MessagesSource messagesSource;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final ViewConfiguration configuration = ViewConfiguration.get(getActivity());
+        mTouchSlop = ViewConfigurationCompat.getScaledPagingTouchSlop(configuration);
         databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
         handler = new Handler();
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -136,7 +150,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         Bundle args = getArguments();
 
         if (args != null) {
-            messagesSource = (MessagesSource)args.getSerializable("messagesSource");
+            messagesSource = (MessagesSource) args.getSerializable("messagesSource");
         }
 
         if (messagesSource == null)
@@ -158,128 +172,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         if (Build.VERSION.SDK_INT >= 8) {
             mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
-            gestureDetector = new GestureDetector(getActivity(), new GestureDetector.OnGestureListener() {
-                @Override
-                public boolean onDown(MotionEvent e) {
-                    return false;  //To change body of implemented methods use File | Settings | File Templates.
-                }
-
-                @Override
-                public void onShowPress(MotionEvent e) {
-                    //To change body of implemented methods use File | Settings | File Templates.
-                }
-
-                @Override
-                public boolean onSingleTapUp(MotionEvent e) {
-                    return false;  //To change body of implemented methods use File | Settings | File Templates.
-                }
-
-                @Override
-                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                    return false;  //To change body of implemented methods use File | Settings | File Templates.
-                }
-
-                @Override
-                public void onLongPress(MotionEvent e) {
-                    //To change body of implemented methods use File | Settings | File Templates.
-                }
-
-                @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                    if (e1 == null || e2 == null) return false;
-                    double velox = (e2.getX() - e1.getX()) / (e2.getEventTime() - e1.getEventTime());
-                    if (velocityX > velocityY && velox > 0.8) {
-                        final int motionRow = findMotionRow((int) e1.getY());
-                        if (motionRow != -1) {
-                            final ListView listView = getListView();
-                            final int itemIndex = listView.getFirstVisiblePosition() + motionRow;
-                            final Object item = listView.getAdapter().getItem(itemIndex);
-                            if (item instanceof JuickMessage) {
-                                final JuickMessage jm = (JuickMessage) item;
-                                if (maybeHandleGeneralHorizontalFling(e1, e2, velox)) {
-                                    preventClickOn = jm;
-                                    handler.postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            preventClickOn = null;  // skip false start
-                                        }
-                                    }, 300);
-                                    return false;
-                                }
-                                if  (messagesSource instanceof JAUnansweredMessagesSource) {
-                                    if (jm.contextPost != null) {
-                                        preventClickOn = jm;
-                                        final View view = listView.getChildAt(motionRow);
-                                        TranslateAnimation ta = new TranslateAnimation(0, view.getWidth(), 0, 0);
-                                        // v = s/t   t=s/v
-                                        ta.setDuration((int)(view.getWidth()/(velox)));
-                                        ta.setAnimationListener(new Animation.AnimationListener() {
-                                            @Override
-                                            public void onAnimationStart(Animation animation) {
-                                                //To change body of implemented methods use File | Settings | File Templates.
-                                            }
-
-                                            @Override
-                                            public void onAnimationEnd(Animation animation) {
-                                                listAdapter.remove((JuickMessage)item);
-                                                new Thread() {
-                                                    @Override
-                                                    public void run() {
-                                                        Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID)jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
-                                                            @Override
-                                                            public Void apply(final Utils.RESTResponse response) {
-                                                                if (response.getErrorText() != null) {
-                                                                    getActivity().runOnUiThread(new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                            Toast.makeText(getActivity(), response.getErrorText(), Toast.LENGTH_SHORT).show();
-                                                                        }
-                                                                    });
-                                                                }
-                                                                return null;
-                                                            }
-                                                        });
-                                                    }
-                                                }.start();
-                                            }
-
-                                            @Override
-                                            public void onAnimationRepeat(Animation animation) {
-                                                //To change body of implemented methods use File | Settings | File Templates.
-                                            }
-                                        });
-                                        view.startAnimation(ta);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return false;
-                }
-
-                int findMotionRow(int y) {
-                    final ListView listView = getListView();
-                    int childCount = listView.getChildCount();
-                    if (childCount > 0) {
-                        for (int i = 0; i < childCount; i++) {
-                            View v = listView.getChildAt(i);
-                            if (y <= v.getBottom()) {
-                                return i;
-                            }
-                        }
-                    }
-                    return -1;
-                }
-            });
         }
 
     }
 
-    private boolean maybeHandleGeneralHorizontalFling(MotionEvent e1, MotionEvent e2, double velox) {
-        return parent.maybeHandleGeneralHorizontalFling(e1, e2, velox);
-    }
-
     boolean prefetchMessages = false;
+
     @Override
     public void onResume() {
         prefetchMessages = sp.getBoolean("prefetchMessages", false);
@@ -299,14 +197,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onPause() {
         super.onPause();
         long usedTime = System.currentTimeMillis() - startTime;
-        new WhatsNew(getActivity()).increaseUsage(this.getListView().getContext(), "activity_time_"+messagesSource.getKind(), usedTime);
+        new WhatsNew(getActivity()).increaseUsage(this.getListView().getContext(), "activity_time_" + messagesSource.getKind(), usedTime);
     }
 
     @Override
     public void onStart() {
         super.onStart();
     }
-
 
 
     @Override
@@ -347,6 +244,40 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
 
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
+
+        listAdapter.setOnForgetListener(new Utils.Function<Void,JuickMessage>() {
+            @Override
+            public Void apply(final JuickMessage jm) {
+                Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
+                    @Override
+                    public Void apply(final Utils.RESTResponse response) {
+                        if (response.getErrorText() != null) {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getActivity(), response.getErrorText(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } else {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    listAdapter.remove(jm);
+                                    //To change body of implemented methods use File | Settings | File Templates.
+                                    if (listAdapter.getCount() == 0) {
+                                        if ((getActivity() instanceof MainActivity)) {
+                                            ((MainActivity)getActivity()).doReload();
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                        return null;
+                    }
+                });
+                return null;
+            }
+        });
         listView.setOnTouchListener(this);
         listView.setOnScrollListener(this);
         listView.setOnItemClickListener(this);
@@ -363,7 +294,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     doOnClick = new Runnable() {
                         @Override
                         public void run() {
-                            JuickMessage msg = (JuickMessage)itemAtPosition;
+                            JuickMessage msg = (JuickMessage) itemAtPosition;
                             MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
                             messageMenu.onItemLongClick(parent, view, position, id);
                         }
@@ -396,7 +327,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
     }
 
-//    private MessageMenu openMessageMenu(ListView listView) {
+    //    private MessageMenu openMessageMenu(ListView listView) {
 //        return messagesSource.getMicroBlog().getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
 //    }
 //
@@ -410,7 +341,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private void init(final boolean moveToTop) {
         if (implicitlyCreated) return;
 
-        parent.imagePreviewHelper = listAdapter.imagePreviewHelper = new ImagePreviewHelper((ViewGroup)getView().findViewById(R.id.imagepreview_container), parent);
+        parent.imagePreviewHelper = listAdapter.imagePreviewHelper = new ImagePreviewHelper((ViewGroup) getView().findViewById(R.id.imagepreview_container), parent);
 
         final MessageListBackingData savedMainList = JuickAdvancedApplication.instance.getSavedList(getActivity());
         final ListView lv = getListView();
@@ -420,7 +351,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             initListWithMessages(savedMainList.messages);
             int selectItem = 0;
             ListAdapter wrappedAdapter = lv.getAdapter();
-            for(int i=0; i< wrappedAdapter.getCount(); i++) {
+            for (int i = 0; i < wrappedAdapter.getCount(); i++) {
                 Object ai = wrappedAdapter.getItem(i);
                 if (ai != null && ai instanceof JuickMessage) {
                     if (((JuickMessage) ai).getMID().equals(savedMainList.topMessageId)) {
@@ -447,7 +378,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             });
                             Log.w("com.juick.advanced", "getFirst: before filter");
                             final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
-                            Log.w("com.juick.advanced","getFirst: after filter");
+                            Log.w("com.juick.advanced", "getFirst: after filter");
                             if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
                                 for (JuickMessage juickMessage : messages) {
                                     juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
@@ -459,7 +390,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                     handler.post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            notification.statusText.setText("Error obtaining messages: " + notification.lastError);
+                                            if (notification.lastError == null) {
+                                                notification.statusText.setText(parent.getString(R.string.EmptyList));
+                                            } else {
+                                                notification.statusText.setText("Error obtaining messages: " + notification.lastError);
+
+                                            }
                                             notification.progressBar.setVisibility(View.GONE);
                                         }
                                     });
@@ -482,7 +418,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                                             setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
                                                         }
                                                     }
-                                                    Log.w("com.juick.advanced","getFirst: end.");
+                                                    Log.w("com.juick.advanced", "getFirst: end.");
                                                     handler.postDelayed(new Runnable() {
                                                         @Override
                                                         public void run() {
@@ -497,7 +433,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                     });
                                 }
                             } else {
-                                Log.w("com.juick.advanced","getFirst: not added!");
+                                Log.w("com.juick.advanced", "getFirst: not added!");
                             }
                             return null;
                         }
@@ -512,7 +448,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             }
                         });
                     } else {
-                        then.apply((RetainedData)restoreData);
+                        then.apply((RetainedData) restoreData);
                         restoreData = null;
                     }
                 }
@@ -522,19 +458,19 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     protected void onListLoaded() {
-        if (messagesSource instanceof JAUnansweredMessagesSource && !sp.getBoolean("MessagesFragmentSlideInfoDisplayed", false)) {
-            sp.edit().putBoolean("MessagesFragmentSlideInfoDisplayed", true).commit();
-            new AlertDialog.Builder(getActivity())
-                    .setTitle(getActivity().getString(R.string.SlideToDeleteItems))
-                    .setMessage(getActivity().getString(R.string.UnneededItems_))
-                    .setIcon(R.drawable.mobile_gesture)
-                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        @Override
-                        public void onCancel(DialogInterface dialog) {
-                            //To change body of implemented methods use File | Settings | File Templates.
-                        }
-                    }).show();
-        }
+//        if (messagesSource instanceof JAUnansweredMessagesSource && !sp.getBoolean("MessagesFragmentSlideInfoDisplayed", false)) {
+//            sp.edit().putBoolean("MessagesFragmentSlideInfoDisplayed", true).commit();
+//            new AlertDialog.Builder(getActivity())
+//                    .setTitle(getActivity().getString(R.string.SlideToDeleteItems))
+//                    .setMessage(getActivity().getString(R.string.UnneededItems_))
+//                    .setIcon(R.drawable.mobile_gesture)
+//                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+//                        @Override
+//                        public void onCancel(DialogInterface dialog) {
+//                            //To change body of implemented methods use File | Settings | File Templates.
+//                        }
+//                    }).show();
+//        }
     }
 
     private void initListWithMessages(ArrayList<JuickMessage> messages) {
@@ -542,10 +478,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             Log.w("com.juick.advanced", "getFirst: in ui thread!");
             listAdapter.clear();
             listAdapter.addAllMessages(messages);
-            Log.w("com.juick.advanced","getFirst: added all");
+            Log.w("com.juick.advanced", "getFirst: added all");
             if (getListView().getFooterViewsCount() == 0) {
                 getListView().addFooterView(viewLoading, null, false);
-                Log.w("com.juick.advanced","getFirst: added footer");
+                Log.w("com.juick.advanced", "getFirst: added footer");
             }
             topMessageId = messages.get(0).getMID();
         } else {
@@ -559,14 +495,14 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         if (getListAdapter() != listAdapter) {
             setListAdapter(listAdapter);
-            Log.w("com.juick.advanced","getFirst: adapter set");
+            Log.w("com.juick.advanced", "getFirst: adapter set");
         }
 
         loading = false;
         resetHeader();
-        Log.w("com.juick.advanced","getFirst: header reset");
+        Log.w("com.juick.advanced", "getFirst: header reset");
         getListView().invalidateViews();
-        Log.w("com.juick.advanced","getFirst: invalidated views");
+        Log.w("com.juick.advanced", "getFirst: invalidated views");
         getListView().setRecyclerListener(new AbsListView.RecyclerListener() {
             @Override
             public void onMovedToScrapHeap(View view) {
@@ -592,7 +528,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             int firstVisiblePosition = lv.getFirstVisiblePosition();
             JuickMessage jm = (JuickMessage) adapter.getItem(firstVisiblePosition);
             mlbd.topMessageId = jm.getMID();
-            for(int i=0; i< lv.getChildCount(); i++) {
+            for (int i = 0; i < lv.getChildCount(); i++) {
                 View thatView = lv.getChildAt(i);
                 int positionForView = lv.getPositionForView(thatView);
                 if (positionForView == firstVisiblePosition) {
@@ -608,10 +544,177 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
         int firstVisiblePosition = Math.max(0, lv.getFirstVisiblePosition() - 120);
         mlbd.messages = new ArrayList<JuickMessage>();
-        for(int i=firstVisiblePosition; i<listAdapter.getCount(); i++) {
+        for (int i = firstVisiblePosition; i < listAdapter.getCount(); i++) {
             mlbd.messages.add(listAdapter.getItem(i));
         }
         return mlbd;
+    }
+
+    public void scrollMessages(int delta) {
+        String scollMode = sp.getString("keyScrollMode", "page");
+        ListView lv = getListView();
+        if (lv.getChildCount() == 1 && scollMode.equals("message")) scollMode = "page";
+        if (scollMode.equals("message")) {
+            int firstVisiblePosition = lv.getFirstVisiblePosition();
+            if (delta == +1) {
+                lv.setSelection(firstVisiblePosition + 1);
+            } else {
+                if (firstVisiblePosition != 0) {
+                    lv.setSelection(firstVisiblePosition - 1);
+                }
+            }
+        }
+        if (scollMode.equals("page")) {
+            if (delta == +1) {
+                lv.smoothScrollBy((int) (lv.getHeight() * 0.93), 200);
+            } else {
+                lv.smoothScrollBy(-(int) (lv.getHeight() * 0.93), 200);
+            }
+        }
+    }
+
+    boolean navigationOpenMode = false;
+
+    public Boolean maybeInterceptTouchEventFromActivity(MotionEvent event) {
+        if (rightScrollBound == 0) return null;
+        int action = event.getAction();
+        switch(action) {
+            case MotionEvent.ACTION_UP:
+                if (mIsUnableToDrag) return null;
+                if (mIsBeingDragged) {
+                    if (!navigationOpenMode) {
+                        if (Math.abs(lastToXDelta) < rightScrollBound/2) {
+                            setScrollState(SCROLL_STATE_IDLE);
+                            scrollToX(0, 500);
+                        } else {
+                            setScrollState(SCROLL_STATE_IDLE);
+                            scrollToX((int) -rightScrollBound, 200);
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ((MainActivity) getActivity()).openNavigationMenu(false);
+                                    lastToXDelta = 0;
+                                }
+                            }, 200);
+                        }
+                    } else {
+                        setScrollState(SCROLL_STATE_IDLE);
+                        scrollToX((int)rightScrollBound, 200);
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((MainActivity) getActivity()).closeNavigationMenu(false);
+                                lastToXDelta = 0;
+                            }
+                        }, 200);
+
+                    }
+                    return true;
+                }
+                break;
+            case MotionEvent.ACTION_DOWN:
+                final View frag = getActivity().findViewById(R.id.messagesfragment);
+                navigationOpenMode = frag.getLeft() > 0;
+                mLastMotionX = mInitialMotionX = event.getX();
+                mLastMotionY = event.getY();
+                currentScrollX = 0;
+                mActivePointerId = MotionEventCompat.getPointerId(event, 0);
+                if (mScrollState == SCROLL_STATE_SETTLING) {
+                    // Let the user 'catch' the pager as it animates.
+                    mIsBeingDragged = true;
+                    mIsUnableToDrag = false;
+                    setScrollState(SCROLL_STATE_DRAGGING);
+                    return true;
+                } else {
+                    //completeScroll();
+                    mIsBeingDragged = false;
+                    mIsUnableToDrag = false;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE: {
+                if (mIsUnableToDrag) return null;
+
+                /*
+                 * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
+                 * whether the user has moved far enough from his original down touch.
+                 */
+
+                /*
+                * Locally do absolute value. mLastMotionY is set to the y value
+                * of the down event.
+                */
+                MotionEvent ev = event;
+                final int activePointerId = mActivePointerId;
+                if (activePointerId == INVALID_POINTER) {
+                    // If we don't have a valid id, the touch down wasn't on content.
+                    break;
+                }
+
+                int pointerIndex = MotionEventCompat.findPointerIndex(ev, activePointerId);
+                float x = MotionEventCompat.getX(ev, pointerIndex);
+                float dx = x - mLastMotionX;
+                float xDiff = Math.abs(dx);
+                float yDiff = Math.abs(MotionEventCompat.getY(ev, pointerIndex) - mLastMotionY);
+                Log.i("JADRAG","MotionEvent.ACTION_MOVE: x="+x+" dx="+dx+" dragged="+mIsBeingDragged);
+
+                if (!mIsBeingDragged) {
+                    if (isListAnyPressed()) {
+                        mIsUnableToDrag = true;
+                    } else if (xDiff > mTouchSlop && xDiff > yDiff) {
+                        mIsBeingDragged = true;
+                        setScrollState(SCROLL_STATE_DRAGGING);
+                        mLastMotionX = x;
+                        return true;
+                    } else {
+                        if (yDiff > mTouchSlop) {
+                            // The finger has moved enough in the vertical
+                            // direction to be counted as a drag...  abort
+                            // any attempt to drag horizontally, to work correctly
+                            // with children that have scrolling containers.
+                            mIsUnableToDrag = true;
+                        }
+                    }
+                }
+
+
+                if (mIsBeingDragged) {
+                    // Scroll to follow the motion event
+                    final int activePointerIndex = MotionEventCompat.findPointerIndex(
+                            ev, mActivePointerId);
+                    x = MotionEventCompat.getX(ev, activePointerIndex);
+                    final float deltaX = mLastMotionX - x;
+                    mLastMotionX = x;
+                    float oldScrollX = getScrollX();
+                    float scrollX = oldScrollX + deltaX;
+                    final int width = getListView().getWidth();
+                    final int widthWithMargin = width;
+
+                    final float leftBound = -widthWithMargin;
+                    if (navigationOpenMode) {
+                        if (scrollX < 0) {
+                            scrollX = 0;
+                        } else if (scrollX > rightScrollBound) {    // prevent too much to left
+                            scrollX = rightScrollBound;
+                        }
+                    } else {
+                        if (scrollX > 0) {
+                            scrollX = 0;
+                        } else if (scrollX > rightScrollBound) {
+                            scrollX = rightScrollBound;
+                        }
+                    }
+                    // Don't lose the rounded component
+                    mLastMotionX += scrollX - (int) scrollX;
+                    Log.i("JADRAG","MotionEvent.ACTION_MOVE: x="+x+" dx="+deltaX+" mLastMotionX="+mLastMotionX+" scrollx="+scrollX);
+                    scrollToX((int) scrollX, 1);
+                    return true;
+                }
+
+
+            }
+
+        }
+        return null;
     }
 
     public static class RetainedData {
@@ -706,7 +809,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
         loading = true;
         restoreData = null;
-        page++;
 
         final MoreMessagesLoadNotification progressNotification = new MoreMessagesLoadNotification();
         Thread thr = new Thread("Download messages (more)") {
@@ -733,7 +835,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                             progressNotification.progress.setText(progressNotification.lastError);
                                         }
                                         if (getView() == null) return;  // already closed?
-                                        MyListView parent = (MyListView)getListView();
+                                        MyListView parent = (MyListView) getListView();
 
                                         if (getListView().getAdapter().getCount() - (recentFirstVisibleItem + recentVisibleItemCount) > 3) {
                                             parent.blockLayoutRequests = true;  // a nafig nam layout, at least 3 items below?
@@ -751,7 +853,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         });
                     } catch (OutOfMemoryError e) {
                         messagesSource.setCanNext(false);
-                        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+XMPPControlActivity.getMemoryStatusString(), e));
+                        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: " + XMPPControlActivity.getMemoryStatusString(), e));
                         progressNotification.notifyDownloadError("OUT OF MEMORY");
                     }
                 }
@@ -761,15 +863,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     void log(String str) {
-        Log.w("com.juickadvanced","MessagesFragment: "+str);
+        Log.w("com.juickadvanced", "MessagesFragment: " + str);
     }
 
     static BitSet russians = new BitSet();
+
     static {
         String russian = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
         russian = russian + russian.toLowerCase();
-        for(int i=0; i<russian.length(); i++) {
-            int code = (int)russian.charAt(i);
+        for (int i = 0; i < russian.length(); i++) {
+            int code = (int) russian.charAt(i);
             russians.set(code);
         }
     }
@@ -807,7 +910,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             if (filterNonRussian) {
                 String text = message.Text;
                 int nRussian = 0;
-                while(true) {
+                while (true) {
                     boolean replaced = false;
                     Matcher matcher = httpURL.matcher(text);
                     if (matcher.find()) {
@@ -821,7 +924,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     if (!replaced) break;
                 }
                 final int limit = text.length();
-                for(int i=0; i< limit; i++) {
+                for (int i = 0; i < limit; i++) {
                     int charCode = (int) text.charAt(i);
                     if (russians.get(charCode)) {
                         nRussian++;
@@ -884,7 +987,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         recentFirstVisibleItem = firstVisibleItem;
         recentVisibleItemCount = visibleItemCount;
-        int prefetchMessagesSize = prefetchMessages ? 20:0;
+        int prefetchMessagesSize = prefetchMessages ? 20 : 0;
         if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && loading == false) {
             if (messagesSource.canNext()) {
                 loadMore();
@@ -894,12 +997,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             JuickMessage jm;
             if (firstVisibleItem != 0) {
                 ListAdapter listAdapter = getListAdapter();
-                jm = (JuickMessage)listAdapter.getItem(firstVisibleItem-1);
+                jm = (JuickMessage) listAdapter.getItem(firstVisibleItem - 1);
                 topMessageId = jm.getMID();
                 if (firstVisibleItem > 1 && trackLastRead) {
                     final int itemToReport = firstVisibleItem - 1;
                     if (lastItemReported < itemToReport) {
-                        for(lastItemReported++; lastItemReported <= itemToReport; lastItemReported++) {
+                        for (lastItemReported++; lastItemReported <= itemToReport; lastItemReported++) {
                             final int itemToSave = lastItemReported;
                             if (itemToSave - 1 < listAdapter.getCount()) {  // some async delete could happen
                                 final JuickMessage item = (JuickMessage) listAdapter.getItem(itemToSave - 1);
@@ -917,15 +1020,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             } else {
                 if (getListAdapter() != null) {
-                    jm = (JuickMessage)getListAdapter().getItem(firstVisibleItem);
+                    jm = (JuickMessage) getListAdapter().getItem(firstVisibleItem);
                     if (topMessageId instanceof JuickMessageID) {
-                        ((JuickMessageID)topMessageId).getNextMid(); // open/closed interval
+                        ((JuickMessageID) topMessageId).getNextMid(); // open/closed interval
                     } else {
                         topMessageId = jm.getMID(); // dunno here
                     }
                 }
             }
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+        }
 
         if (messagesSource.supportsBackwardRefresh()) {
             // When the refresh view is completely visible, change the text to say
@@ -969,6 +1073,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
     }
 
+    boolean mIsBeingDragged;
+    boolean mIsUnableToDrag;
+
     public boolean onTouch(View view, MotionEvent event) {
         if (mScaleDetector != null) {
             mScaleDetector.onTouchEvent(event);
@@ -980,7 +1087,20 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         final int y = (int) event.getY();
         mBounceHack = false;
 
-        switch (event.getAction()) {
+        int action = event.getAction();
+
+        // Nothing more to do here if we have decided whether or not we
+        // are dragging.
+        if (action != MotionEvent.ACTION_DOWN) {
+            if (mIsBeingDragged) {
+                return true;
+            }
+            if (mIsUnableToDrag) {
+                return false;
+            }
+        }
+
+        switch (action) {
             case MotionEvent.ACTION_UP:
                 if (!getListView().isVerticalScrollBarEnabled()) {
                     getListView().setVerticalScrollBarEnabled(true);
@@ -1001,17 +1121,75 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     }
                 }
                 break;
-            case MotionEvent.ACTION_DOWN:
-                mLastMotionY = y;
-                break;
-            case MotionEvent.ACTION_MOVE:
+            case MotionEvent.ACTION_MOVE: {
+
                 if (doOnClick != null) {
                     return true;
                 }
                 applyHeaderPadding(event);
                 break;
+            }
         }
         if (parent.onListTouchEvent(view, event)) return true;
+        return false;
+    }
+
+    int currentScrollX = 0;
+
+    Integer lastToXDelta;
+    public void scrollToX(int scrollX, long duration) {
+        currentScrollX = scrollX;
+        TranslateAnimation ta = new TranslateAnimation(lastToXDelta != null ? lastToXDelta : 0, -scrollX, 0, 0);
+        lastToXDelta = -scrollX;
+        ta.setFillEnabled(true);
+        ta.setDuration(duration);
+        ta.setFillAfter(true);
+        ta.setFillBefore(true);
+        final View frag = getActivity().findViewById(R.id.messagesfragment);
+        frag.startAnimation(ta);
+    }
+
+    public int getScrollX() {
+        return currentScrollX;
+    }
+
+    private void setScrollState(int newState) {
+        if (mScrollState == newState) {
+            return;
+        }
+        if (newState == SCROLL_STATE_DRAGGING) {
+            setListActionsEnabled(false);
+        } else {
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    setListActionsEnabled(true);
+                }
+            }, 500);
+        }
+        mScrollState = newState;
+    }
+
+    private void setListActionsEnabled(boolean enabled) {
+        int limit = getListView().getChildCount();
+        for(int i=0; i<limit; i++) {
+            View childAt = getListView().getChildAt(i);
+            if (childAt instanceof PressableLinearLayout) {
+                PressableLinearLayout pc = (PressableLinearLayout)childAt;
+                pc.setOverrideHasFocusable(enabled ? null : true);
+            }
+        }
+    }
+
+    private boolean isListAnyPressed() {
+        int limit = getListView().getChildCount();
+        for(int i=0; i<limit; i++) {
+            View childAt = getListView().getChildAt(i);
+            if (childAt instanceof PressableLinearLayout) {
+                PressableLinearLayout pc = (PressableLinearLayout)childAt;
+                if (pc.isPressed()) return true;
+            }
+        }
         return false;
     }
 
@@ -1119,5 +1297,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     protected void finalize() throws Throwable {
         super.finalize();
         instanceCount--;
+    }
+
+    public void setRightScrollBound(float rightScrollBound) {
+        this.rightScrollBound = rightScrollBound;
     }
 }

@@ -67,6 +67,11 @@ public class MessagesLoadNotification implements
                 statusText.setText(statusText.getContext().getString(backup ? R.string.LoadingBackup___ : R.string.Loading___)+" retry="+nretry);
             }
         });
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
     }
 
     @Override

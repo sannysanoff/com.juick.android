@@ -52,4 +52,11 @@
         <item>Не отправлять</item>
     </string-array>
 
+    <string-array name="keys_scrolling">
+        <item>нет навигации</item>
+        <item>вниз по сообщениям</item>
+        <item>вниз по страницам</item>
+    </string-array>
+
+
 </resources>

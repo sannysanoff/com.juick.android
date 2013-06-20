@@ -8,6 +8,14 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/NavigationMode">
+        <CheckBoxPreference
+                android:key="googlePlusNavigation"
+                android:title="@string/GooglePlusNavigation"
+                android:summary="@string/GooglePlusNavigationDesc"
+                android:defaultValue="false"
+                android:persistent="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/LegacyMenu">
         <ListPreference
                 android:key="menuFontScale"
@@ -29,62 +37,71 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <CheckBoxPreference
-            android:key="persistLastMessagesPosition"
-            android:title="@string/Save_position"
-            android:summary="@string/Position_can_be_reset"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="lastReadMessages"
-            android:title="@string/MarkAlreadyReadMessages"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="prefetchMessages"
-            android:title="@string/PrefetchMoreMessages"
-            android:summary="@string/AndNeverSeeLoading"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="enableScaleByGesture"
-            android:title="@string/EnableFontScaleByGesture"
-            android:defaultValue="true"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="confirmActions"
-            android:title="@string/Confirm_asctions"
-            android:summary="@string/Such_as_blacklist_recommend"
-            android:defaultValue="true"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="previewReplies"
-            android:title="@string/PreviewRepliesBeforeSend"
-            android:summary="@string/PreviewRepliesBeforeSend2"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="warnRepliesToBody"
-            android:title="@string/WarnRepliesWithoutReplyTo"
-            android:summary="@string/WarnRepliesWithoutReplyTo2"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="enableDrafts"
-            android:title="Enable saving drafts"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="capitalizeReplies"
-            android:title="@string/CapitalizeReplyText"
-            android:summary="@string/WhenReplying"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    <CheckBoxPreference
-            android:key="turnOffButtons"
-            android:title="Turn off buttons light"
-            android:defaultValue="false"
-            android:persistent="true"/>
+    <PreferenceCategory android:title="@string/General">
+        <CheckBoxPreference
+                android:key="persistLastMessagesPosition"
+                android:title="@string/Save_position"
+                android:summary="@string/Position_can_be_reset"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="lastReadMessages"
+                android:title="@string/MarkAlreadyReadMessages"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="prefetchMessages"
+                android:title="@string/PrefetchMoreMessages"
+                android:summary="@string/AndNeverSeeLoading"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="enableScaleByGesture"
+                android:title="@string/EnableFontScaleByGesture"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <ListPreference
+                android:key="keyScrollMode"
+                android:title="@string/VolumeKeysScrolling"
+                android:entries="@array/keys_scrolling"
+                android:entryValues="@array/keys_scrolling_values"
+                android:defaultValue="page"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="confirmActions"
+                android:title="@string/Confirm_asctions"
+                android:summary="@string/Such_as_blacklist_recommend"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="previewReplies"
+                android:title="@string/PreviewRepliesBeforeSend"
+                android:summary="@string/PreviewRepliesBeforeSend2"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="warnRepliesToBody"
+                android:title="@string/WarnRepliesWithoutReplyTo"
+                android:summary="@string/WarnRepliesWithoutReplyTo2"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="enableDrafts"
+                android:title="Enable saving drafts"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="capitalizeReplies"
+                android:title="@string/CapitalizeReplyText"
+                android:summary="@string/WhenReplying"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="turnOffButtons"
+                android:title="Turn off buttons light"
+                android:defaultValue="false"
+                android:persistent="true"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/CameraCapture">
         <CheckBoxPreference
                 android:key="useTempFileForCapture"

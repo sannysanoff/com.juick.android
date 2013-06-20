@@ -25,6 +25,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
+import android.view.KeyEvent;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.Window;
@@ -39,7 +40,6 @@ import com.juickadvanced.R;
  */
 public class MessagesActivity extends JuickFragmentActivity {
 
-    MessagesFragment mf;
     Object restoreData;
     MessagesSource messagesSource;
 
@@ -145,4 +145,5 @@ public class MessagesActivity extends JuickFragmentActivity {
         }
         return super.onOptionsItemSelected(item);    //To change body of overridden methods use File | Settings | File Templates.
     }
+
 }

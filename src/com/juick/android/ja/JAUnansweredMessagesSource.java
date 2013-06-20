@@ -37,7 +37,7 @@ public class JAUnansweredMessagesSource extends MessagesSource {
 
     @Override
     public boolean supportsBackwardRefresh() {
-        return true;
+        return false;
     }
 
     @Override

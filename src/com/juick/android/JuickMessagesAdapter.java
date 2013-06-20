@@ -103,6 +103,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         instanceCount++;
     }
 
+    private Utils.Function<Void, JuickMessage> onForgetListener;
+
 
     public static Set<String> getFilteredOutUsers(Context ctx) {
         if (filteredOutUsers == null) {
@@ -188,6 +190,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         handler = new Handler();
     }
 
+    public void setOnForgetListener(Utils.Function<Void, JuickMessage> onForgetListener) {
+        this.onForgetListener = onForgetListener;
+    }
+
+    public Utils.Function<Void, JuickMessage> getOnForgetListener() {
+        return onForgetListener;
+    }
+
 
     static class ListRowRuntime {
         int pictureSize;
@@ -239,6 +249,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             final LinearLayout ll = (LinearLayout)v;
             final MyTextView t = (MyTextView) v.findViewById(R.id.text);
             final TextView compactDate = (TextView) v.findViewById(R.id.compactDate);
+            final Button forget = (Button) v.findViewById(R.id.forget_button);
             final MyTextView pret = (MyTextView) v.findViewById(R.id.pretext);
             final ListRowRuntime lrr = new ListRowRuntime(jmsg, null, 0);
             final ListRowRuntime prelrr = jmsg.contextPost != null ? new ListRowRuntime(jmsg.contextPost, null, 0) : null;
@@ -317,9 +328,25 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 pret.setText(parsedPreMessage.textContent);
                 pret.setVisibility(View.VISIBLE);
                 preuserPic.setVisibility(View.VISIBLE);
+                if (jmsg.myFoundCount != 0 || jmsg.hisFoundCount != 0) {
+                    // other case
+                } else {
+                    forget.setVisibility(View.VISIBLE);
+                }
+                forget.setEnabled(true);
+                forget.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (onForgetListener != null) {
+                            forget.setEnabled(false);
+                            onForgetListener.apply(jmsg);
+                        }
+                    }
+                });
             } else {
                 pret.setVisibility(View.GONE);
                 preuserPic.setVisibility(View.GONE);
+                forget.setVisibility(View.GONE);
             }
             final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
             if (images.size() > 0 && !imageLoadMode.equals("off")) {

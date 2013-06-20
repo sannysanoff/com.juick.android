@@ -76,7 +76,6 @@ public class MainActivity extends JuickFragmentActivity implements
     public static int displayHeight;
 
     NavigationItem lastNavigationItem = null;
-    public MessagesFragment mf;
     Object restoreData;
     public SharedPreferences sp;
     public Handler handler;
@@ -140,71 +139,87 @@ public class MainActivity extends JuickFragmentActivity implements
         return navigationMenuShown;
     }
 
-    public void openNavigationMenu() {
+    public void openNavigationMenu(boolean animate) {
         if (isNavigationMenuShown()) return;
         navigationMenuShown = true;
         final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
         final View frag = (ViewGroup)findViewById(R.id.messagesfragment);
-        AnimationSet set = new AnimationSet(true);
-        TranslateAnimation translate = new TranslateAnimation(0, navigationPanel.getWidth(), 0, 0);
-        translate.setFillAfter(false);
-        translate.setFillEnabled(true);
-        translate.setDuration(400);
-        set.addAnimation(translate);
-        set.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
+        if (animate) {
+            AnimationSet set = new AnimationSet(true);
+            TranslateAnimation translate = new TranslateAnimation(0, navigationPanel.getWidth(), 0, 0);
+            translate.setFillAfter(false);
+            translate.setFillEnabled(true);
+            translate.setDuration(400);
+            set.addAnimation(translate);
+            set.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                frag.clearAnimation();
-                layoutNavigationPane();
-            }
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    frag.clearAnimation();
+                    layoutNavigationPane();
+                }
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
-        frag.startAnimation(set);
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+            });
+            frag.startAnimation(set);
+        } else {
+            layoutNavigationPane();
+        }
     }
 
-    public void closeNavigationMenu() {
+    public void closeNavigationMenu(boolean animate) {
         if (!isNavigationMenuShown()) return;
         final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
-        final View frag = (ViewGroup)findViewById(R.id.messagesfragment);
+        final View frag = findViewById(R.id.messagesfragment);
         final DragSortListView navigationList = (DragSortListView)findViewById(R.id.navigation_list);
         if (navigationList.isDragEnabled()) {
             navigationList.setDragEnabled(false);
             updateNavigation();
         }
-        AnimationSet set = new AnimationSet(true);
-        TranslateAnimation translate = new TranslateAnimation(0, -navigationPanel.getWidth(), 0, 0);
-        translate.setFillAfter(false);
-        translate.setFillEnabled(true);
-        translate.setDuration(400);
-        set.addAnimation(translate);
-        set.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
+        if (animate) {
+            final AnimationSet set = new AnimationSet(true);
+            TranslateAnimation translate = new TranslateAnimation(0, -navigationPanel.getWidth(), 0, 0);
+            translate.setFillAfter(false);
+            translate.setFillEnabled(true);
+            translate.setDuration(400);
+            set.addAnimation(translate);
+            set.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
 
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                navigationMenuShown = false;
-                frag.clearAnimation();
-                layoutNavigationPane();
-            }
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    navigationMenuShown = false;
+                    frag.clearAnimation();
+                    layoutNavigationPane();
+                }
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-                //To change body of implemented methods use File | Settings | File Templates.
-            }
-        });
-        frag.startAnimation(set);
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                    //To change body of implemented methods use File | Settings | File Templates.
+                }
+            });
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    frag.startAnimation(set);
+                    getActivity().findViewById(R.id.layout_container).invalidate();
+                }
+            }, 800); // without this animation does not always run if launched by list item click (back button ok). Investigate
+
+        } else {
+            navigationMenuShown = false;
+            layoutNavigationPane();
+        }
     }
 
 
@@ -214,11 +229,21 @@ public class MainActivity extends JuickFragmentActivity implements
 
     public void runDefaultFragmentWithBundle(Bundle args, NavigationItem ni) {
         mf = new MessagesFragment(restoreData, this);
+        setFragmentNeededMetrics();
         restoreData = null;
         lastNavigationItem = ni;
         final SharedPreferences spn = getSharedPreferences("saved_last_navigation_type", MODE_PRIVATE);
         spn.edit().putInt("last_navigation", ni.labelId).commit();
         replaceFragment(mf, args);
+    }
+
+    private void setFragmentNeededMetrics() {
+        if (sp.getBoolean("googlePlusNavigation", false)) {
+            final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
+            if (mf != null && navigationPanel.getWidth() != 0) {
+                mf.setRightScrollBound(navigationPanel.getWidth());
+            }
+        }
     }
 
     public static int nActiveMainActivities = 0;
@@ -270,10 +295,7 @@ public class MainActivity extends JuickFragmentActivity implements
         maybeSendUsageReport();
         maybeWarnXMPP();
 
-        ActionBar bar = getSupportActionBar();
-        bar.setDisplayShowTitleEnabled(false);
-        bar.setDisplayShowHomeEnabled(false);
-        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+        updateActionBarMode();
 
 
 //        if (getIntent().hasExtra("lastNavigationPosition")) {
@@ -286,7 +308,7 @@ public class MainActivity extends JuickFragmentActivity implements
             for (int i = 0; i < navigationItems.size(); i++) {
                 NavigationItem navigationItem = navigationItems.get(i);
                 if (navigationItem.labelId == mlbd.navigationItemLabelId) {
-                    getSupportActionBar().setSelectedNavigationItem(i);
+                    setSelectedNavigationItem(i);
                     break;
                 }
             }
@@ -298,6 +320,7 @@ public class MainActivity extends JuickFragmentActivity implements
             @Override
             public void onLayout() {
                 layoutNavigationPane();
+                setFragmentNeededMetrics();
             }
         };
         restoreData = getLastCustomNonConfigurationInstance();
@@ -309,10 +332,69 @@ public class MainActivity extends JuickFragmentActivity implements
 
     }
 
+    int selectedNavigationItem = -1;
+
+
+
+    private int getSelectedNavigationIndex() {
+        return selectedNavigationItem;
+    }
+
+    private void setSelectedNavigationItem(int index) {
+        boolean googlePlus = sp.getBoolean("googlePlusNavigation", false);
+        selectedNavigationItem = index;
+        if (!googlePlus) {
+            getSupportActionBar().setSelectedNavigationItem(index);
+        } else {
+            onNavigationItemSelected(index, 0);
+        }
+        updateNavigationBarTitle();
+    }
+
+    private void updateActionBarMode() {
+        boolean googlePlus = sp.getBoolean("googlePlusNavigation", false);
+        ActionBar bar = getSupportActionBar();
+        bar.setDisplayShowTitleEnabled(false);
+        bar.setDisplayShowHomeEnabled(false);
+        bar.setDisplayHomeAsUpEnabled(false);
+        bar.setNavigationMode(googlePlus ? ActionBar.NAVIGATION_MODE_STANDARD : ActionBar.NAVIGATION_MODE_LIST);
+        bar.setDisplayShowCustomEnabled(googlePlus);
+
+        if (googlePlus) {
+            View inflate = getLayoutInflater().inflate(R.layout.navbar, null);
+            bar.setCustomView(inflate);
+            View.OnClickListener listener = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (isNavigationMenuShown()) {
+                        closeNavigationMenu(true);
+                    } else {
+                        openNavigationMenu(true);
+                    }
+                }
+            };
+            inflate.findViewById(R.id.button).setOnClickListener(listener);
+            inflate.findViewById(R.id.text).setOnClickListener(listener);
+            restyleChildrenOrWidget(inflate, false);
+        }
+        updateNavigationBarTitle();
+    }
+
+    private void updateNavigationBarTitle() {
+        if (getSelectedNavigationIndex() != -1) {
+            ActionBar bar = getSupportActionBar();
+            String title = getString(navigationItems.get(getSelectedNavigationIndex()).labelId);
+            bar.setTitle(title);
+            if (bar.getCustomView() != null) {
+                ((TextView)bar.getCustomView().findViewById(R.id.text)).setText(title);
+            }
+        }
+    }
+
     @Override
     public void onFragmentCreated() {
         super.onFragmentCreated();    //To change body of overridden methods use File | Settings | File Templates.
-        ((MyListView)mf.getListView()).mindLeftFling = true;
+        // ((MyListView)mf.getListView()).mindLeftFling = true;
     }
 
     private void layoutNavigationPane() {
@@ -327,6 +409,7 @@ public class MainActivity extends JuickFragmentActivity implements
         } else {
             frag.layout(0, 0, mll.getWidth(), mll.getHeight());
         }
+        frag.clearAnimation();
         mll.blockLayoutRequests = oldBlockLayoutRequests;
     }
 
@@ -382,7 +465,6 @@ public class MainActivity extends JuickFragmentActivity implements
         }
     }
 
-    public static final int NAVITEM_SUBSCRIPTIONS = 1000;
     public static final int NAVITEM_UNREAD = 1001;
     public static final int NAVITEM_SAVED = 1002;
 
@@ -456,7 +538,7 @@ public class MainActivity extends JuickFragmentActivity implements
                                                         MainActivity.this,
                                                         period
                                                 ));
-                                        getSupportActionBar().setSelectedNavigationItem(myIndex);
+                                        setSelectedNavigationItem(myIndex);
                                         runDefaultFragmentWithBundle(args, thisNi);
                                     }
                                 });
@@ -484,7 +566,7 @@ public class MainActivity extends JuickFragmentActivity implements
             navigationItem.itemOrder = sp_order.getInt("order_" + navigationItem.id, -1);
             if (navigationItem.itemOrder == -1) {
                 navigationItem.itemOrder = index;
-                sp_order.edit().putInt("order_" + navigationItem.id, navigationItem.itemOrder).apply();
+                sp_order.edit().putInt("order_" + navigationItem.id, navigationItem.itemOrder).commit();
             }
             index++;
         }
@@ -630,15 +712,15 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         };
         ActionBar bar = getSupportActionBar();
-        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+        updateActionBarMode();
         navigationList.setDragEnabled(false);
         ((DragSortController)navigationList.getFloatViewManager()).setDragHandleId(R.id.draggable);
         navigationList.setAdapter(navigationListAdapter);
         navigationList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                getSupportActionBar().setSelectedNavigationItem(position);
-                closeNavigationMenu();
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                setSelectedNavigationItem(position);
+                closeNavigationMenu(true);
             }
         });
         navigationList.setDropListener(new DragSortListView.DropListener() {
@@ -651,7 +733,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 for (NavigationItem allNavigationItem : allNavigationItems) {
                     if (allNavigationItem.itemOrder != index) {
                         allNavigationItem.itemOrder = index;
-                        sp_order.edit().putInt("order_" + allNavigationItem.id, allNavigationItem.itemOrder).apply();
+                        sp_order.edit().putInt("order_" + allNavigationItem.id, allNavigationItem.itemOrder).commit();
                     }
                     index++;
                 }
@@ -681,7 +763,7 @@ public class MainActivity extends JuickFragmentActivity implements
                                     case 1:
                                         final Map<String, ?> all = sp_order.getAll();
                                         for (String s : all.keySet()) {
-                                            sp_order.edit().remove(s).apply();
+                                            sp_order.edit().remove(s).commit();
                                         }
                                         sp_order.edit().commit();
                                         updateNavigation();
@@ -717,16 +799,6 @@ public class MainActivity extends JuickFragmentActivity implements
     private boolean defaultValues(String sharedPrefsKey) {
         if (sharedPrefsKey.equals("msrcTopMessages")) return true;
         if (sharedPrefsKey.equals("msrcWithPhotos")) return true;
-        return false;
-    }
-
-    @Override
-    public boolean maybeHandleGeneralHorizontalFling(MotionEvent e1, MotionEvent e2, double velox) {
-        if (velox > 0 && e1.getX() < 20) {
-            openNavigationMenu();
-            //Toast.makeText(this, "Open navigation menu!", Toast.LENGTH_LONG).show();
-            return true;
-        }
         return false;
     }
 
@@ -915,8 +987,9 @@ public class MainActivity extends JuickFragmentActivity implements
         for (int i = 0; i < navigationItems.size(); i++) {
             NavigationItem navigationItem = navigationItems.get(i);
             if (navigationItem == lastNavigationItem) {
-                if (getSupportActionBar().getSelectedNavigationIndex() != i) {
-                    getSupportActionBar().setSelectedNavigationItem(i);
+                if (getSelectedNavigationIndex() != i) {
+                    setSelectedNavigationItem(i);
+                    updateNavigationBarTitle();
                     return true;
                 }
             }
@@ -993,7 +1066,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     long lastReload = System.currentTimeMillis();
-    private void doReload() {
+    public void doReload() {
         if (System.currentTimeMillis() - lastReload < 1000) return;
         if (resumed) {
             if (lastNavigationItem != null) {
@@ -1218,6 +1291,9 @@ public class MainActivity extends JuickFragmentActivity implements
         if (s.equals("enableJAMessaging")) {
             toggleJAMessaging();
         }
+        if (s.equals("googlePlusNavigation")) {
+            updateActionBarMode();
+        }
         boolean dontWatchPreferences = sp.getBoolean("dontWatchPreferences", false);
         if (dontWatchPreferences) return;
         if (s.startsWith("msrc")) {
@@ -1274,7 +1350,7 @@ public class MainActivity extends JuickFragmentActivity implements
     @Override
     public void onBackPressed() {
         if (isNavigationMenuShown()) {
-            closeNavigationMenu();
+            closeNavigationMenu(true);
             return;
         }
         if (mf != null && mf.listAdapter != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack()) return;
@@ -1295,6 +1371,5 @@ public class MainActivity extends JuickFragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
-
 
 }

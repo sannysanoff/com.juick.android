@@ -49,6 +49,15 @@
                 android:layout_alignParentRight="true"
                 android:layout_height="wrap_content"
                 />
+        <Button
+                android:id="@+id/forget_button"
+                android:layout_below="@id/text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/Forget"
+                android:visibility="gone"
+                android:layout_centerHorizontal="true"
+                />
     </com.juick.android.MyRelativeLayout>
 
 </com.juick.android.PressableLinearLayout>

@@ -139,6 +139,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
                                                 if (insecureB) {
                                                     sp.edit().putString("juick_account_name", loginS).putString("juick_account_password", passwordS).commit();
                                                 }
+                                                withCookie.apply(getBasicAuthString(act));
 
                                             } else {
                                                 final int finalStatus = status;
@@ -188,6 +189,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     private boolean authNeeded(String url) {
+        if (url.contains("thread?mid=")) return false;
         if (url.contains("popular=1")) return false;
         if (url.contains("media=all")) return false;
         if (url.contains("/messages")) return false;

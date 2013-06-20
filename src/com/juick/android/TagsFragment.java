@@ -215,9 +215,21 @@ public class TagsFragment extends Fragment  {
                                     scales.put(sortable.tag, 1.5);
                                 }
                             }
-                            for (int i = 0; i < cnt; i++) {
+                            int start = 0;
+                            if (getArguments().containsKey("add_system_tags")) {
+                                start = -4;
+                            }
+                            for (int i = start; i < cnt; i++) {
+                                final String tagg;
+                                switch (i) {
+                                    case -4: tagg = "public"; break;
+                                    case -3: tagg = "friends"; break;
+                                    case -2: tagg = "notwitter"; break;
+                                    case -1: tagg = "readonly"; break;
+                                    default: tagg = json.getJSONObject(i).getString("tag"); break;
+
+                                }
                                 int index = tagsSSB.length();
-                                final String tagg = json.getJSONObject(i).getString("tag");
                                 tagsSSB.append("*" + tagg);
                                 tagsSSB.setSpan(new URLSpan(tagg) {
                                     @Override
@@ -269,9 +281,14 @@ public class TagsFragment extends Fragment  {
             Spannable text = (Spannable)tv.getText();
             TagOffsets tagOffsets1 = tagOffsets.get(tagg);
             if (!selectedTags.remove(tagg)) {
-                selectedTags.add(tagg);
-                tagOffsets1.existingSpan = new StyleSpan(Typeface.BOLD);
-                text.setSpan(tagOffsets1.existingSpan, tagOffsets1.offset, tagOffsets1.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (selectedTags.size() == 5) {
+                    Toast.makeText(getActivity(), getString(R.string.TooManyTags), Toast.LENGTH_LONG).show();
+                    return;
+                } else {
+                    selectedTags.add(tagg);
+                    tagOffsets1.existingSpan = new StyleSpan(Typeface.BOLD);
+                    text.setSpan(tagOffsets1.existingSpan, tagOffsets1.offset, tagOffsets1.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             } else {
                 text.removeSpan(tagOffsets1.existingSpan);
                 tagOffsets1.existingSpan = null;

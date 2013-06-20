@@ -315,8 +315,30 @@
             <body>
 
             <form>
-            <b>Апрель 2013, зимний билд</b>
+            <b>Июнб 2013, летний билд</b>
             <ul>
+            <li>
+            Добавил к облаку тегов служебные теги при создании нового сообщения.
+            </li>
+            <li>
+            Навигация по жуйко-, бнваче- и псто- категориям сделана а-ля гугл-плюс. Позволяет делать ручную сортировку источников сообщений, включать их по месту.
+            Ставьте нужные наверх. Рекомендуется включить: <input type="checkbox" name="prefs.googlePlusNavigation" #prefs.checked.googlePlusNavigation#>
+            </li>
+            <li>
+            Листание страниц кнопочками громкости (по умолчанию включено). Позволяет еще более ускорить поглощение этой вашей информации,
+            за счёт уменьшения времени, тратящегося на плавный скроллинг и трекинг глазами ещё бегущего сообщения.
+            Опасно для мозга. Да как и жуйк сам по себе, впрочем.
+            </li>
+            <li>
+            Авторизация не нужна. Теперь после свежей инсталляции можно сразу смотреть все публичные сообщения и подобное.
+            Логин-пароль спросится лишь когда будет нужно, для подписок, дополнительных функций и прочих персонализированных вещей.
+            Не вводим пароль от жаббера, вводим вебский пароль.
+            </li>
+            <li>
+            Для инсталляций программы на карточку - стандартное сохранение жуйковского пароля в аккаунтах андроида не работает. Для этих случаев есть
+            опция "сохранить пароль рядом с программой", галочка во время логина. Приватные настройки программы хранятся на вашей карточке
+            в директории с программой, записанные в читабельном виде, имейте это в виду когда ставите галочку "сохранить рядом с программой".
+            </li>
             <li>
             ВАЖНО: если вдруг вас мучает то, что программа падает, ломается, внезапно останавливается или сообщает о непонятной ошибке,
              вы можете разрешить отправлять ваш юзернейм вместе с тем отчётом об ошибке, который отправляется разработчику. Если ваш случай
@@ -1077,6 +1099,15 @@
     <string name="SaveChangedDraft">Save changed draft</string>
     <string name="UseAlternativeFontForTags">Use alternative fonts for tags</string>
     <string name="UseAlternativeFontForTags2">(slim font)</string>
+    <string name="VolumeKeysScrolling">Volume Keys Scrolling</string>
+    <string name="General">General</string>
+    <string name="NavigationMode">Navigation</string>
+    <string name="GooglePlusNavigationDesc">You can use right slide to access it, too</string>
+    <string name="GooglePlusNavigation">Advanced navigation panel</string>
+    <string name="Forget">Forget</string>
+    <string name="EmptyList">Empty list</string>
+    <string name="TooManyTags">Too many tags, maximum 5.</string>
+    <string name="StorePlainTextPassword">Store plain-text password in private area</string>
 
 
 </resources>

@@ -455,6 +455,15 @@
     <string name="YourTextWillBeReplaced">Ваш текст не отправлен и будет заменен</string>
     <string name="UseAlternativeFontForTags">Альтернативный шрифт для тегов</string>
     <string name="UseAlternativeFontForTags2">(готичненькие теги)</string>
+    <string name="VolumeKeysScrolling">Листание громкостью</string>
+    <string name="General">Общее</string>
+    <string name="NavigationMode">Навигация</string>
+    <string name="GooglePlusNavigationDesc">Слайд вправо тоже открывает панель навигации</string>
+    <string name="GooglePlusNavigation">Продвинутая панель навигации</string>
+    <string name="Forget">Забыть</string>
+    <string name="EmptyList">Пустой список</string>
+    <string name="TooManyTags">Слишком много тегов, максимум 5.</string>
+    <string name="StorePlainTextPassword">Сохранить пароль рядом с программой</string>
 
 
 </resources>

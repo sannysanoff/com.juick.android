@@ -931,5 +931,33 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         return navigationMenuShown;
     }
 
+    public void scrollMessages(int delta) {
+        String scollMode = sp.getString("keyScrollMode", "page");
+        ListView lv = getListView();
+        if (lv.getChildCount() == 1 && scollMode.equals("message")) scollMode = "page";
+        if (scollMode.equals("message")) {
+            int firstVisiblePosition = lv.getFirstVisiblePosition();
+            if (delta == +1) {
+                if (firstVisiblePosition == 0) {
+                    firstVisiblePosition++; // list separator
+                }
+                lv.setSelection(firstVisiblePosition + 1);
+            } else {
+                if (firstVisiblePosition != 0) {
+                    lv.setSelection(firstVisiblePosition - 1);
+                }
+            }
+        }
+        if (scollMode.equals("page")) {
+            if (delta == +1) {
+                lv.smoothScrollBy((int)(lv.getHeight() * 0.93), 200);
+            } else {
+                lv.smoothScrollBy(-(int)(lv.getHeight() * 0.93), 200);
+            }
+        }
+    }
+
+
+
 
 }

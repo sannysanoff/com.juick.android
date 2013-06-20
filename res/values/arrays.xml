@@ -187,4 +187,14 @@
         <item>no confirmation</item>
         <item>dialog box</item>
     </string-array>
+    <string-array name="keys_scrolling">
+        <item>no scrolling</item>
+        <item>scroll by message</item>
+        <item>scroll by page</item>
+    </string-array>
+    <string-array name="keys_scrolling_values">
+        <item>none</item>
+        <item>message</item>
+        <item>page</item>
+    </string-array>
 </resources>
