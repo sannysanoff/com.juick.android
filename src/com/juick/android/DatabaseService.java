@@ -810,6 +810,7 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "fullScreenThread", false);
         copyBoolean(jo, sp, "enableDrafts", false);
         copyBoolean(jo, sp, "turnOffButtons", false);
+        copyBoolean(jo, sp, "googlePlusNavigation", false);
         copyString(jo, sp, "messagesFontScale", "1.0");
         copyInteger(jo, sp, "Colors.COMMON_BACKGROUND", -1);
         copyString(jo, sp, "locationAccuracy", "ACCURACY_FINE");
@@ -818,6 +819,7 @@ public class DatabaseService extends Service {
         copyString(jo, sp, "juickBotOn", "skip");
         copyString(jo, sp, "image.loadMode", "off");
         copyString(jo, sp, "image.height_percent", "0.3");
+        copyString(jo, sp, "keyScrollMode", "page");
         copyBoolean(jo, sp, "imageproxy.skipOnWifi", false);
         copyBoolean(jo, sp, "image.hide_gif", false);
         copyBoolean(jo, sp, "ringtone_enabled", true);
