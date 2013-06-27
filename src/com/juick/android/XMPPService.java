@@ -7,9 +7,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 import com.google.gson.*;
-import com.juick.android.juick.JuickComAuthorizer;
+import com.juick.android.juick.JuickComAPIAuthorizer;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -933,7 +932,7 @@ public class XMPPService extends Service {
             messageToMe = false;
         } else if (handled instanceof JuickThreadIncomingMessage) {
             JuickThreadIncomingMessage jtim = (JuickThreadIncomingMessage) handled;
-            String accountName = JuickComAuthorizer.getJuickAccountName(this);
+            String accountName = JuickComAPIAuthorizer.getJuickAccountName(this);
             if (accountName != null) {
                 accountName = accountName.toLowerCase();
                 if (!jtim.getBody().startsWith("@")) {  // if not, message is to /0

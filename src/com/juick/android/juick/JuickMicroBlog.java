@@ -77,7 +77,7 @@ public class JuickMicroBlog implements MicroBlog {
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Connection", "Keep-Alive");
             conn.setRequestProperty("Charset", "UTF-8");
-            conn.setRequestProperty("Authorization", JuickComAuthorizer.getBasicAuthString(context.getApplicationContext()));
+            conn.setRequestProperty("Authorization", JuickComAPIAuthorizer.getBasicAuthString(context.getApplicationContext()));
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
             String outStr = twoHyphens + boundary + end;
@@ -170,8 +170,8 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public void initialize() {
-        Utils.authorizers.add(0, new JuickComAuthorizer());
-        Utils.authorizers.add(0, new DevJuickComAuthorizer());
+        Utils.authorizers.add(0, new JuickComAPIAuthorizer());
+        Utils.authorizers.add(0, new JuickComWebAuthorizer());
     }
 
     @Override
@@ -592,13 +592,13 @@ public class JuickMicroBlog implements MicroBlog {
                 final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
                 final String myUserId = atoi(sp.getString("myUserId", ""));
                 final String myUserName;
-                String pass = JuickComAuthorizer.getPassword(activity);
-                if (pass == null || pass.length() == 0) myUserName = ""; else myUserName = JuickComAuthorizer.getJuickAccountName(activity);
+                String pass = JuickComAPIAuthorizer.getPassword(activity);
+                if (pass == null || pass.length() == 0) myUserName = ""; else myUserName = JuickComAPIAuthorizer.getJuickAccountName(activity);
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (myUserId.equals("") || myUserName.equals("")) {
-                            final String userName = JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext());
+                            final String userName = JuickComAPIAuthorizer.getJuickAccountName(activity.getApplicationContext());
                             if (userName == null) {
                                 // get some stuff
                                 class MyDownloadErrorNotification implements Utils.DownloadErrorNotification {

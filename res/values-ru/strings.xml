@@ -187,7 +187,7 @@
     <string name="WarnRepliesWithoutReplyTo2">Проверять, что был выбран респондент перед отправкой комментария</string>
     <string name="CapitalizeReplyText">С большой буквы</string>
     <string name="AccuracyOfLocation">Точность определения положения</string>
-    <string name="WhenReplying">..во время ответа</string>
+    <string name="WhenReplying">..во время набора ответа</string>
     <string name="CameraCapture">Камера</string>
     <string name="CaptureIntoTempFile">Хранить во временном файле (багфикс)</string>
     <string name="Debug">Отладка</string>

@@ -1,15 +1,13 @@
 package com.juick.android;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.juick.android.juick.JuickComAuthorizer;
+import com.juick.android.juick.JuickComAPIAuthorizer;
 import com.juickadvanced.R;
 import com.juickadvanced.xmpp.ClientToServer;
 import com.juickadvanced.xmpp.ServerToClient;
@@ -149,13 +147,13 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     private String performLogin(Context context, XMPPConnectionSetup setup) {
-        if (JuickComAuthorizer.getPassword(context) == null)
+        if (JuickComAPIAuthorizer.getPassword(context) == null)
             return new String("No Juick Account");
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
         Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
-        login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
-        login.setProofAccountToken(JuickComAuthorizer.getBasicAuthString(context));
+        login.setProofAccountId(JuickComAPIAuthorizer.getJuickAccountName(context));
+        login.setProofAccountToken(JuickComAPIAuthorizer.getBasicAuthString(context));
         login.setProofAccountType("juick");
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
@@ -187,7 +185,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     private String performLoginLocal(Context context, String username, String cookie) {
-        if (JuickComAuthorizer.getPassword(context) == null)
+        if (JuickComAPIAuthorizer.getPassword(context) == null)
             return new String("No Juick Account");
         setup = new XMPPConnectionSetup();
         setup.jid = username.trim()+"@local";
@@ -195,8 +193,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
         Login login = new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
-        login.setProofAccountId(JuickComAuthorizer.getJuickAccountName(context));
-        login.setProofAccountToken(JuickComAuthorizer.getBasicAuthString(context));
+        login.setProofAccountId(JuickComAPIAuthorizer.getJuickAccountName(context));
+        login.setProofAccountToken(JuickComAPIAuthorizer.getBasicAuthString(context));
         login.setProofAccountType("juick");
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);

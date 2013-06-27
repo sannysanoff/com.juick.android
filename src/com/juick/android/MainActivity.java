@@ -279,7 +279,7 @@ public class MainActivity extends JuickFragmentActivity implements
         startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
         if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
-            ACRA.getErrorReporter().putCustomData("juick_user", JuickComAuthorizer.getJuickAccountName(this));
+            ACRA.getErrorReporter().putCustomData("juick_user", JuickComAPIAuthorizer.getJuickAccountName(this));
         }
         if (sp.getBoolean("fullScreenMessages", false)) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -538,7 +538,9 @@ public class MainActivity extends JuickFragmentActivity implements
                                                         MainActivity.this,
                                                         period
                                                 ));
-                                        setSelectedNavigationItem(myIndex);
+                                        if (getSelectedNavigationIndex() != myIndex) {
+                                            setSelectedNavigationItem(myIndex);
+                                        }
                                         runDefaultFragmentWithBundle(args, thisNi);
                                     }
                                 });
@@ -708,6 +710,9 @@ public class MainActivity extends JuickFragmentActivity implements
                         sp.edit().putBoolean(theItem.sharedPrefsKey, isChecked).commit();
                     }
                 });
+                int spacing = sp.getInt("navigation_spacing", 0);
+                tv.setTextSize(getResources().getDimension(R.dimen.initialNavigationFontSize) + spacing);
+                retval.setPadding(0, spacing, 0, spacing);
                 return retval;
             }
         };
@@ -751,6 +756,7 @@ public class MainActivity extends JuickFragmentActivity implements
                         .setItems(navigationList.isDragEnabled() ? R.array.navigation_menu_end : R.array.navigation_menu_start, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                int spacing = sp.getInt("navigation_spacing", 0);
                                 switch(which) {
                                     case 0:
                                         if (navigationList.isDragEnabled()) {
@@ -767,6 +773,16 @@ public class MainActivity extends JuickFragmentActivity implements
                                         }
                                         sp_order.edit().commit();
                                         updateNavigation();
+                                        break;
+                                    case 2:     // wider
+                                        sp.edit().putInt("navigation_spacing", spacing+1).commit();
+                                        ((BaseAdapter)navigationList.getAdapter()).notifyDataSetInvalidated();
+                                        break;
+                                    case 3:     // narrower
+                                        if (spacing > 0) {
+                                            sp.edit().putInt("navigation_spacing", spacing-1).commit();
+                                            ((BaseAdapter)navigationList.getAdapter()).notifyDataSetInvalidated();
+                                        }
                                         break;
 
                                 }
@@ -1323,7 +1339,7 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         if (s.equals("enableLoginNameWithCrashReport")) {
             if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
-                ACRA.getErrorReporter().putCustomData("juick_user", JuickComAuthorizer.getJuickAccountName(this));
+                ACRA.getErrorReporter().putCustomData("juick_user", JuickComAPIAuthorizer.getJuickAccountName(this));
             } else {
                 ACRA.getErrorReporter().putCustomData("juick_user", "");
             }

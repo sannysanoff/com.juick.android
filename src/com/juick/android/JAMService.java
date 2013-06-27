@@ -6,8 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import com.juick.android.juick.JuickComAuthorizer;
-import com.juickadvanced.xmpp.ClientToServer;
+import com.juick.android.juick.JuickComAPIAuthorizer;
 import com.juickadvanced.xmpp.ServerToClient;
 
 /**
@@ -84,8 +83,8 @@ public class JAMService extends Service {
                             return;
                         }
                     }
-                    String juickAccountName = JuickComAuthorizer.getJuickAccountName(JAMService.this);
-                    String authString = JuickComAuthorizer.getBasicAuthString(JAMService.this);
+                    String juickAccountName = JuickComAPIAuthorizer.getJuickAccountName(JAMService.this);
+                    String authString = JuickComAPIAuthorizer.getBasicAuthString(JAMService.this);
                     if (localClient == client && juickAccountName != null) {
                         // [race condition here]
                         localClient.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {

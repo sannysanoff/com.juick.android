@@ -58,7 +58,6 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.HttpEntityWrapper;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -96,7 +95,7 @@ public class Utils {
 
         public abstract boolean acceptsURL(String url);
 
-        public abstract void authorize(Context act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie);
+        public abstract void authorize(Context act, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, Function<Void, String> withCookie);
 
         public abstract void authorizeRequest(HttpRequestBase request, String cookie);
 
@@ -104,9 +103,9 @@ public class Utils {
 
         public abstract String authorizeURL(String url, String cookie);
 
-        public abstract ReplyCode validateNon200Reply(HttpURLConnection conn, String url) throws IOException;
+        public abstract ReplyCode validateNon200Reply(HttpURLConnection conn, String url, boolean wasForcedAuth) throws IOException;
 
-        public abstract ReplyCode validateNon200Reply(HttpResponse o, String url);
+        public abstract ReplyCode validateNon200Reply(HttpResponse o, String url, boolean wasForcedAuth);
 
         public abstract void clearCookie(Context context, Runnable then);
 
@@ -124,7 +123,7 @@ public class Utils {
         }
 
         @Override
-        public void authorize(Context act, boolean forceOptionalAuth, String url, Function<Void, String> withCookie) {
+        public void authorize(Context act, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, Function<Void, String> withCookie) {
             withCookie.apply(null);
         }
 
@@ -162,12 +161,12 @@ public class Utils {
         }
 
         @Override
-        public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+        public ReplyCode validateNon200Reply(HttpURLConnection conn, String url, boolean wasForcedAuth) {
             return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
-        public ReplyCode validateNon200Reply(HttpResponse o, String url) {
+        public ReplyCode validateNon200Reply(HttpResponse o, String url, boolean wasForcedAuth) {
             return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
         }
 
@@ -443,11 +442,15 @@ public class Utils {
     public static int reloginTried;
 
     public static RESTResponse getJSON(final Context context, final String url, final Notification progressNotification, final int timeout) {
+        return getJSON(context, url, progressNotification, timeout, false);
+    }
+
+    public static RESTResponse getJSON(final Context context, final String url, final Notification progressNotification, final int timeout, final boolean forceAttachCredentials) {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
         final URLAuth finalAuthorizer = authorizer;
         final boolean[] cookieCleared = {false};
-        authorizer.authorize(context, false, url, new Function<Void, String>() {
+        authorizer.authorize(context, false, forceAttachCredentials, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 final DefaultHttpClient client = getNewHttpClient();
@@ -468,7 +471,7 @@ public class Utils {
                     client.execute(httpGet, new ResponseHandler<Object>() {
                         @Override
                         public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
-                            URLAuth.ReplyCode authReplyCode = authorizer.validateNon200Reply(o, url);
+                            URLAuth.ReplyCode authReplyCode = o.getStatusLine().getStatusCode() == 200 ? URLAuth.ReplyCode.NORMAL : authorizer.validateNon200Reply(o, url, forceAttachCredentials);
                             boolean simulateError = false;
                             if (o.getStatusLine().getStatusCode() == 200 && !simulateError) {
                                 reloginTried = 0;
@@ -480,12 +483,15 @@ public class Utils {
                                 ret[0] = streamToString(content, progressNotification);
                                 content.close();
                             } else {
-                                if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
+                                if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !forceAttachCredentials) {
+                                    ret[0] = getJSON(context, url, progressNotification, timeout, true);
+                                    return o;
+                                } else if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
                                     cookieCleared[0] = true;    // don't enter loop
                                     authorizer.clearCookie(context, new Runnable() {
                                         @Override
                                         public void run() {
-                                            authorizer.authorize(context, true, url, thiz);
+                                            authorizer.authorize(context, true, false, url, thiz);
                                         }
                                     });
                                     return null;
@@ -787,7 +793,7 @@ public class Utils {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
         final boolean[] cookieCleared = new boolean[]{false};
-        authorizer.authorize(context, false, url, new Function<Void, String>() {
+        authorizer.authorize(context, false, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
                 HttpURLConnection conn = null;
@@ -809,7 +815,7 @@ public class Utils {
                     wr.write(data);
                     wr.close();
 
-                    URLAuth.ReplyCode authReplyCode = authorizer.validateNon200Reply(conn, url);
+                    URLAuth.ReplyCode authReplyCode = authorizer.validateNon200Reply(conn, url, false);
                     try {
                         if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
                             cookieCleared[0] = true;    // don't enter loop
@@ -817,7 +823,7 @@ public class Utils {
                             authorizer.clearCookie(context, new Runnable() {
                                 @Override
                                 public void run() {
-                                    authorizer.authorize(context, true, url, thiz);
+                                    authorizer.authorize(context, true, false, url, thiz);
                                 }
                             });
                         } else {

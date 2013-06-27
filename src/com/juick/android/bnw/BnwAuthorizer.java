@@ -45,7 +45,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
 
     public static String myCookie;
     @Override
-    public void authorize(final Context context, boolean forceOptionalAuth, String url, final Utils.Function<Void, String> cont) {
+    public void authorize(final Context context, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, final Utils.Function<Void, String> cont) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         if (myCookie == null) {
             myCookie = sp.getString("bnw.web_cookie", null);
@@ -214,12 +214,12 @@ public class BnwAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url, boolean wasForcedAuth) {
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
+    public ReplyCode validateNon200Reply(HttpResponse o, String url, boolean wasForcedAuth) {
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

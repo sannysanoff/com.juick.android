@@ -584,6 +584,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         final View frag = getActivity().findViewById(R.id.messagesfragment);
         if (action == MotionEvent.ACTION_DOWN || actionMasked == MotionEvent.ACTION_POINTER_DOWN) {
             if (mScrollState == SCROLL_STATE_IDLE && frag.getAnimation() == null) {
+                if (!canStartScroll(event)) {
+                    mIsUnableToDrag = true;
+                    return null;
+                }
                 if (event.getPointerCount() == 1) {
                     Log.w("JAGP","action_down 1");
                     navigationOpenMode = frag.getLeft() > 0;
@@ -743,6 +747,28 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
         }
         return null;
+    }
+
+    private boolean canStartScroll(MotionEvent event) {
+        View view = JuickMessagesAdapter.findViewForCoordinates((ViewGroup) getActivity().getWindow().getDecorView(), event.getX(), event.getY());
+        while(view != null) {
+            Object tag = view.getTag();
+            if (tag instanceof String) {
+                String stag = (String)tag;
+                if (stag.contains("horizontal-slider")) {
+                    return false;
+                }
+            }
+            if (view instanceof ImageGallery) {
+                return false;
+            }
+            if (view.getParent() instanceof View) {
+                view = (View)view.getParent();
+            } else {
+                break;
+            }
+        }
+        return true;
     }
 
     public static class RetainedData {

@@ -29,8 +29,6 @@ public class MyListView extends ListView {
 
     public int maxActiveFingers = 0;
     boolean shouldReset = false;
-    boolean mindLeftFling;
-    boolean mindingLeftFling;
 
     public int getMaxActiveFingers() {
         return maxActiveFingers;
@@ -47,10 +45,6 @@ public class MyListView extends ListView {
                 maxActiveFingers = Math.max(ev.getPointerCount(), maxActiveFingers);
                 break;
             case MotionEvent.ACTION_DOWN:
-                if (ev.getX() < getWidth()/7 && mindLeftFling) {
-                    mindingLeftFling = true;
-                    return true;
-                }
                 if (shouldReset) {
                     shouldReset = false;
                     maxActiveFingers = 0;
@@ -60,14 +54,9 @@ public class MyListView extends ListView {
             case MotionEvent.ACTION_POINTER_UP:
                 break;
             case MotionEvent.ACTION_UP:     // last pointer up
-                if (mindingLeftFling) {
-                    mindingLeftFling = false;
-                    return true;
-                }
                 shouldReset = true;
                 break;
         }
-        if (mindingLeftFling) return true;
         return super.onTouchEvent(ev);
     }
 

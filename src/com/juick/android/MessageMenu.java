@@ -156,7 +156,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             });
         }
         addMicroblogSpecificCommands(UName);
-        if (UName.equalsIgnoreCase(JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
+        if (UName.equalsIgnoreCase(JuickComAPIAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
             maybeAddDeleteItem();
         }
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.TranslateToRussian)) {
@@ -704,7 +704,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             unsaveMessage.setEnabled(listSelectedItem.getRID() == 0);
             recommendMessage.setEnabled(listSelectedItem.getRID() == 0);
 
-            if (UName.equalsIgnoreCase(JuickComAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
+            if (UName.equalsIgnoreCase(JuickComAPIAuthorizer.getJuickAccountName(activity.getApplicationContext()))) {
                 recommendMessage.setVisibility(View.GONE);
             } else {
                 deleteMessage.setVisibility(View.GONE);

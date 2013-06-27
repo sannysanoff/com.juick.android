@@ -56,6 +56,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/Forget"
                 android:visibility="gone"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 android:layout_centerHorizontal="true"
                 />
     </com.juick.android.MyRelativeLayout>

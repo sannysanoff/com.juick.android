@@ -39,14 +39,14 @@ import java.util.List;
  * Time: 12:03 AM
  * To change this template use File | Settings | File Templates.
  */
-public class DevJuickComAuthorizer extends Utils.URLAuth {
+public class JuickComWebAuthorizer extends Utils.URLAuth {
     @Override
     public boolean acceptsURL(String url) {
         return url.indexOf("//juick.com/") != -1;
     }
 
     @Override
-    public void authorize(Context act, boolean forceOptionalAuth, String url, Utils.Function<Void, String> withCookie) {
+    public void authorize(Context act, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, Utils.Function<Void, String> withCookie) {
         getMyCookie(act, withCookie);
     }
 
@@ -59,7 +59,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
         if (myCookie == null) {
             if (ctx instanceof Activity) {
                 final Activity activity = (Activity)ctx;
-                final String juickComPassword = JuickComAuthorizer.getPassword(activity);
+                final String juickComPassword = JuickComAPIAuthorizer.getPassword(activity);
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -67,7 +67,7 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
                         String webPassword = sp.getString("web_password",null);
                         final Runnable thiz = this;
                         if (webLogin == null) {
-                            webLogin = JuickComAuthorizer.getJuickAccountName(activity);
+                            webLogin = JuickComAPIAuthorizer.getJuickAccountName(activity);
                         }
                         if (webPassword == null) {
                             webPassword = juickComPassword;
@@ -249,14 +249,20 @@ public class DevJuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url, boolean wasForcedAuth) {
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
-        if (o.getStatusLine().getStatusCode() == 404 && url.indexOf("show=my") != -1) {
-            return ReplyCode.FORBIDDEN;
+    public ReplyCode validateNon200Reply(HttpResponse o, String url, boolean wasForcedAuth) {
+        if (o.getStatusLine().getStatusCode() == 404) {
+            if (url.contains("show=my") || url.contains("show=private")) {
+                if (!wasForcedAuth) {
+                    return ReplyCode.FORBIDDEN;
+                } else {
+                    return ReplyCode.FAIL;
+                }
+            }
         }
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }

@@ -32,11 +32,11 @@ import android.text.style.*;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
+import com.juick.android.juick.JuickComAPIAuthorizer;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import com.juick.android.juick.JuickComAuthorizer;
 import com.juickadvanced.R;
 
 import java.io.*;
@@ -699,12 +699,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
     }
 
-    Rect hitRect = new Rect();
+    static Rect hitRect = new Rect();
 
-    private View findViewForCoordinates(ViewGroup listView, float x, float y) {
-        int childCount = listView.getChildCount();
+    public static View findViewForCoordinates(ViewGroup view, float x, float y) {
+        int childCount = view.getChildCount();
         for(int i=childCount-1; i>=0; i--) {
-            View child = listView.getChildAt(i);
+            View child = view.getChildAt(i);
             child.getHitRect(hitRect);
             if (hitRect.top < y && hitRect.top + hitRect.bottom > y && hitRect.left < x && hitRect.right > x) {
                 View retval = null;
@@ -835,7 +835,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
         // Highlight nick
-        String accountName = JuickComAuthorizer.getJuickAccountName(ctx);
+        String accountName = JuickComAPIAuthorizer.getJuickAccountName(ctx);
         if (accountName != null) {
             accountName = accountName.toLowerCase();
             int scan = spanOffset;

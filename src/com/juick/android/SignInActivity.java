@@ -38,7 +38,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import com.juick.android.juick.JuickComAuthorizer;
+import com.juick.android.juick.JuickComAPIAuthorizer;
 import com.juickadvanced.R;
 
 import java.io.OutputStreamWriter;
@@ -77,7 +77,7 @@ public class SignInActivity extends Activity implements OnClickListener {
         bSave.setOnClickListener(this);
         bCancel.setOnClickListener(this);
 
-        if (JuickComAuthorizer.getJuickAccountName(this) != null) {
+        if (JuickComAPIAuthorizer.getJuickAccountName(this) != null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setNeutralButton(R.string.OK, new android.content.DialogInterface.OnClickListener() {
 

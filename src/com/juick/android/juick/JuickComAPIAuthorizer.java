@@ -35,7 +35,7 @@ import java.net.*;
  * Time: 12:03 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JuickComAuthorizer extends Utils.URLAuth {
+public class JuickComAPIAuthorizer extends Utils.URLAuth {
     static String accountName;
 
     public static String getJuickAccountName(Context context) {
@@ -61,13 +61,13 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public void authorize(final Context act, final boolean forceOptionalAuth, final String url, final Utils.Function<Void, String> withCookie) {
-        if (!authNeeded(url)) {
+    public void authorize(final Context act, final boolean forceLoginDialog, boolean forceAttachCredentials, final String url, final Utils.Function<Void, String> withCookie) {
+        if (!authNeeded(url) && !forceAttachCredentials) {
             withCookie.apply(null);
             return;
         }
         final String basicAuthString = getBasicAuthString(act.getApplicationContext());
-        if (getPassword(act.getApplicationContext()) == null || basicAuthString.length() == 0 || forceOptionalAuth) {
+        if (getPassword(act.getApplicationContext()) == null || basicAuthString.length() == 0 || forceLoginDialog) {
             final Activity activity = (Activity)act;
             activity.runOnUiThread(new Runnable() {
                 @Override
@@ -88,7 +88,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
                     }
                     insecure.setEnabled(true);
                     final EditText password = (EditText)content.findViewById(R.id.password);
-                    login.setText(JuickComAuthorizer.getJuickAccountName(activity));
+                    login.setText(JuickComAPIAuthorizer.getJuickAccountName(activity));
                     login.setHint("JuickUser");
                     AlertDialog dlg = new AlertDialog.Builder(activity)
                             .setTitle("Juick.com API login")
@@ -147,7 +147,7 @@ public class JuickComAuthorizer extends Utils.URLAuth {
                                                     @Override
                                                     public void run() {
                                                         Toast.makeText(activity, "auth: HTTP status: " + finalStatus, Toast.LENGTH_LONG);
-                                                        authorize(act, forceOptionalAuth, url, withCookie);
+                                                        authorize(act, forceLoginDialog, false, url, withCookie);
                                                     }
                                                 });
                                             }
@@ -239,12 +239,21 @@ public class JuickComAuthorizer extends Utils.URLAuth {
     }
 
     @Override
-    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url) {
+    public ReplyCode validateNon200Reply(HttpURLConnection conn, String url, boolean wasForcedAuth) {
         return ReplyCode.FAIL;
     }
 
     @Override
-    public ReplyCode validateNon200Reply(HttpResponse o, String url) {
+    public ReplyCode validateNon200Reply(HttpResponse o, String url, boolean wasForcedAuth) {
+        if (o.getStatusLine().getStatusCode() == 404) {
+            if (url.contains("thread?mid=")) {
+                if (!wasForcedAuth) {
+                    return ReplyCode.FORBIDDEN;
+                } else {
+                    return ReplyCode.FAIL;
+                }
+            }
+        }
         return ReplyCode.FAIL;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

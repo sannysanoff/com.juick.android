@@ -96,7 +96,7 @@ public class PstoMicroBlog implements MicroBlog {
 
     private void runAuthorized(final Runnable runWithLogin, final MainActivity mainActivity) {
         Utils.URLAuth authorizer = Utils.getAuthorizer("http://psto.net/");
-        authorizer.authorize(mainActivity, true, "http://psto.net/", new Utils.Function<Void, String>() {
+        authorizer.authorize(mainActivity, true, false, "http://psto.net/", new Utils.Function<Void, String>() {
             @Override
             public Void apply(final String s) {
                 mainActivity.runOnUiThread(new Runnable() {

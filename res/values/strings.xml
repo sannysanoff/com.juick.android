@@ -217,7 +217,7 @@
     <string name="WarnRepliesWithoutReplyTo2">Сheck respondent before sending comment</string>
     <string name="CapitalizeReplyText">Auto-capitalize text</string>
     <string name="AccuracyOfLocation">Accuracy of location</string>
-    <string name="WhenReplying">..when replying</string>
+    <string name="WhenReplying">..when typing in reply</string>
     <string name="CameraCapture">Camera capture</string>
     <string name="CaptureIntoTempFile">Capture into temp file (bugfix)</string>
     <string name="Debug">Debug</string>

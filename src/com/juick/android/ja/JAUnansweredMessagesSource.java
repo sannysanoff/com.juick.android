@@ -1,24 +1,18 @@
 package com.juick.android.ja;
 
-import android.app.Activity;
 import android.content.Context;
-import android.util.Pair;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
-import com.juick.android.juick.JuickComAuthorizer;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 /**

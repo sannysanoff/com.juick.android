@@ -5,7 +5,7 @@ import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
 import com.juick.android.Utils;
-import com.juick.android.juick.JuickComAuthorizer;
+import com.juick.android.juick.JuickComAPIAuthorizer;
 import com.juick.android.juick.JuickMicroBlog;
 
 import java.io.InputStream;
@@ -66,7 +66,7 @@ public class Network {
                         new Thread("JAHTTPS API fetch") {
                             @Override
                             public void run() {
-                                final String password = URLEncoder.encode(JuickComAuthorizer.getPassword(ctx));
+                                final String password = URLEncoder.encode(JuickComAPIAuthorizer.getPassword(ctx));
                                 final Utils.RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
                                         + "&password=" + password, notifications);
                                 then.apply(response);

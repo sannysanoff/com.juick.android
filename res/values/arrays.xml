@@ -168,10 +168,14 @@
     <string-array name="navigation_menu_start">
         <item>start editing</item>
         <item>restore default order</item>
+        <item>wider</item>
+        <item>narrower</item>
     </string-array>
     <string-array name="navigation_menu_end">
         <item>finish editing</item>
         <item>restore default order</item>
+        <item>wider</item>
+        <item>narrower</item>
     </string-array>
     <string-array name="back_button">
         <item>default exit sequence</item>

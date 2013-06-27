@@ -57,6 +57,18 @@
         <item>вниз по сообщениям</item>
         <item>вниз по страницам</item>
     </string-array>
+    <string-array name="navigation_menu_start">
+        <item>редактировать источники</item>
+        <item>стандартный порядок</item>
+        <item>шире</item>
+        <item>уже</item>
+    </string-array>
+    <string-array name="navigation_menu_end">
+        <item>закончить редактировать</item>
+        <item>стандартный порядок</item>
+        <item>шире</item>
+        <item>уже</item>
+    </string-array>
 
 
 </resources>

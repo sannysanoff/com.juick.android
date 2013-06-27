@@ -74,6 +74,7 @@
             android:layout_height="fill_parent"
             android:id="@+id/imagepreview_container"
             android:visibility="gone"
+            android:tag="horizontal-slider"
             >
         <include layout="@layout/image_preview"
                 />

@@ -42,7 +42,7 @@
                   android:paddingLeft="6dip"
                   android:layout_toRightOf="@android:id/icon"
                   android:layout_alignParentRight="true"
-                  android:textSize="16sp"
+                  android:textSize="@dimen/initialNavigationFontSize"
                   android:minHeight="36sp"
                   android:background="@drawable/navigation_list_background"
                 />
