@@ -80,7 +80,7 @@ public class BNWMicroBlog implements MicroBlog {
     }
 
     @Override
-    public void postReply(final Activity context, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(final Activity context, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         new Thread("postReply") {
             @Override
             public void run() {
@@ -125,6 +125,12 @@ public class BNWMicroBlog implements MicroBlog {
                 }
             }
         }.start();
+        return new OperationInProgress() {
+            @Override
+            public void preliminarySuccess() {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        };
     }
 
     @Override

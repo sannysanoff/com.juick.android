@@ -1112,6 +1112,9 @@
     <string name="ThisWillRemoveAuth">This will remove all saved logins and passwords from application. Continue?
     </string>
     <string name="ClearAllAuth">Clear all saved auth</string>
+    <string name="MinimalisticViewer">Minimalistic article viewer for reading links posted via juick only
+        (experimental)
+    </string>
 
 
 </resources>

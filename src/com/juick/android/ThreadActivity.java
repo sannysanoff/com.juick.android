@@ -70,12 +70,12 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     private Button showThread;
     private Button draftsButton;
     private boolean enableDrafts;
-    private EditText etMessage;
+    EditText etMessage;
     private String pulledDraft;        // originally pulled draft text, saved to compare and ignore save question
     private String pulledDraftMid;
     private long pulledDraftRid;
     private long pulledDraftTs;
-    private ImageButton bSend;
+    public ImageButton bSend;
     private ImageButton bAttach;
     private MessageID mid = null;
     private int rid = 0;
@@ -287,7 +287,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         }
     }
 
-    private void doCancel() {
+    public void doCancel() {
         etMessage.clearFocus();
         InputMethodManager imm = (InputMethodManager)getSystemService(
               Context.INPUT_METHOD_SERVICE);
@@ -305,8 +305,9 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         });
     }
 
-    private void resetForm() {
+    void resetForm() {
         rid = 0;
+        replyInProgress = null;
         selectedReply = null;
         setHeight(replyToContainer, 0);
         etMessage.setText("");
@@ -335,9 +336,13 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         new WhatsNew(this).increaseUsage(this, "activity_time_"+messagesSource.getKind()+"_thread", usedTime);
     }
 
-    private void setFormEnabled(boolean state) {
+    public void setFormEnabled(boolean state) {
         etMessage.setEnabled(state);
         bSend.setEnabled(state);
+    }
+
+    public boolean isFormEnabled() {
+        return bSend.isEnabled();
     }
 
     boolean focusedOnceOnPrefetched = false;
@@ -548,25 +553,17 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         }
     }
 
+
+    public MicroBlog.OperationInProgress replyInProgress;
+
     private void sendReplyMain(String msg) {
         setFormEnabled(false);
-        MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
+        replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
             @Override
             public Void apply(String error) {
+                replyInProgress = null;
                 if (error == null) {
-                    resetForm();
-                    if (attachmentUri == null) {
-                        Toast.makeText(ThreadActivity.this, R.string.Message_posted, Toast.LENGTH_LONG).show();
-                    } else {
-                        NewMessageActivity.getPhotoCaptureFile().delete(); // if any
-                        AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
-                        builder.setNeutralButton(R.string.OK, null);
-                        builder.setIcon(android.R.drawable.ic_dialog_info);
-                        builder.setMessage(R.string.Message_posted);
-                        AlertDialog alertDialog = builder.create();
-                        alertDialog.show();
-                    }
-                    doCancel();
+                    sendMessageSucceed();
                 } else {
                     setFormEnabled(true);
                     if (attachmentUri != null) {
@@ -588,6 +585,21 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         });
     }
 
+    public void sendMessageSucceed() {
+        resetForm();
+        if (attachmentUri == null) {
+            Toast.makeText(this, R.string.Message_posted, Toast.LENGTH_LONG).show();
+        } else {
+            NewMessageActivity.getPhotoCaptureFile().delete(); // if any
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setNeutralButton(R.string.OK, null);
+            builder.setIcon(android.R.drawable.ic_dialog_info);
+            builder.setMessage(R.string.Message_posted);
+            AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+        }
+        doCancel();
+    }
 
 
     public void onClick(DialogInterface dialog, int which) {

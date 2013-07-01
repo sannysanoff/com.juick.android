@@ -97,6 +97,12 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference
+                android:key="enableBrowserComponent"
+                android:title="Juick Simple Browser"
+                android:summary="@string/MinimalisticViewer"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
                 android:key="turnOffButtons"
                 android:title="Turn off buttons light"
                 android:defaultValue="false"

@@ -3,15 +3,18 @@ package com.juick.android;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import com.juickadvanced.R;
 import org.apache.http.client.HttpClient;
 import org.json.JSONException;
@@ -58,7 +61,7 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
         currentURL = uri.toString();
         webView = (WebView) findViewById(R.id.webview);
         button = (Button) findViewById(R.id.button);
-        button.setEnabled(false);
+        button.setVisibility(View.GONE);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,7 +70,7 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                     currentBody = historyCache.remove(historyCache.size()-1);
                     setupWebView(webView, currentBody);
                 }
-                button.setEnabled(history.size() > 0);
+                button.setVisibility(history.size() > 0? View.VISIBLE: View.GONE);
             }
         });
         webView.setWebViewClient(new WebViewClient() {
@@ -97,14 +100,14 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                     if (!currentURL.equals(oldURL)) {
                         history.add(oldURL);
                         historyCache.add(currentBody);
-                        button.setEnabled(true);
+                        button.setVisibility(View.VISIBLE);
                     }
                     reload();
                 }
                 return true;
             }
         });
-        Button browser = (Button) findViewById(R.id.browser);
+        View browser = findViewById(R.id.browser);
         browser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,6 +131,54 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                 //To change body of implemented methods use File | Settings | File Templates.
             }
 
+        });
+        final SpinnerAdapter oldAdapter = modeWidget.getAdapter();
+        modeWidget.setAdapter(new SpinnerAdapter() {
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                return oldAdapter.getDropDownView(position, convertView, parent);
+            }
+
+            public void registerDataSetObserver(DataSetObserver observer) {
+                oldAdapter.registerDataSetObserver(observer);
+            }
+
+            public void unregisterDataSetObserver(DataSetObserver observer) {
+                oldAdapter.unregisterDataSetObserver(observer);
+            }
+
+            public int getCount() {
+                return oldAdapter.getCount();
+            }
+
+            public Object getItem(int position) {
+                return oldAdapter.getItem(position);
+            }
+
+            public long getItemId(int position) {
+                return oldAdapter.getItemId(position);
+            }
+
+            public boolean hasStableIds() {
+                return oldAdapter.hasStableIds();
+            }
+
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = oldAdapter.getView(position, convertView, parent);
+                MainActivity.restyleChildrenOrWidget(view, false);
+                return view;
+            }
+
+            public int getItemViewType(int position) {
+                return oldAdapter.getItemViewType(position);
+            }
+
+            public int getViewTypeCount() {
+                return oldAdapter.getViewTypeCount();
+            }
+
+            public boolean isEmpty() {
+                return oldAdapter.isEmpty();
+            }
         });
         reload();
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());

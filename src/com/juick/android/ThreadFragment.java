@@ -24,7 +24,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.*;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.SupportActivity;
+import android.text.Editable;
 import android.view.*;
 import android.view.animation.*;
 import android.widget.*;
@@ -531,6 +533,17 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 }
                 if (listAdapter.getCount() > 0) {
                     listAdapter.addAllMessages(messages);
+                    if (getActivity() instanceof ThreadActivity) {
+                        ThreadActivity ta = (ThreadActivity)getActivity();
+                        Editable text = ta.etMessage.getText();
+                        for (JuickMessage message : messages) {
+                            if (message.Text.contains(text)) {
+                                if (ta.replyInProgress != null) {
+                                    ta.replyInProgress.preliminarySuccess();
+                                }
+                            }
+                        }
+                    }
                 }
                 xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override

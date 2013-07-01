@@ -178,7 +178,7 @@ public class PstoMicroBlog implements MicroBlog {
     }
 
     @Override
-    public void postReply(final Activity context_, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(final Activity context_, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         final ThreadActivity context = (ThreadActivity)context_;
         new Thread("Post reply") {
             @Override
@@ -241,7 +241,12 @@ public class PstoMicroBlog implements MicroBlog {
                 }
             }
         }.start();
-        then.apply("Not implemented yet");
+        return new OperationInProgress() {
+            @Override
+            public void preliminarySuccess() {
+                //To change body of implemented methods use File | Settings | File Templates.
+            }
+        };
     }
 
     @Override

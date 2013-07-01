@@ -77,7 +77,7 @@ public class JuickMicroBlog implements MicroBlog {
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Connection", "Keep-Alive");
             conn.setRequestProperty("Charset", "UTF-8");
-            conn.setRequestProperty("Authorization", JuickComAPIAuthorizer.getBasicAuthString(context.getApplicationContext()));
+            conn.setRequestProperty("Authorization", JuickAPIAuthorizer.getBasicAuthString(context.getApplicationContext()));
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
             String outStr = twoHyphens + boundary + end;
@@ -170,8 +170,8 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public void initialize() {
-        Utils.authorizers.add(0, new JuickComAPIAuthorizer());
-        Utils.authorizers.add(0, new JuickComWebAuthorizer());
+        Utils.authorizers.add(0, new JuickAPIAuthorizer());
+        Utils.authorizers.add(0, new JuickWebAuthorizer());
     }
 
     @Override
@@ -223,16 +223,16 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     @Override
-    public void postReply(Activity context, MessageID mid, JuickMessage selectedReply, String msg, String attachmentUri, String attachmentMime, Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(Activity context, MessageID mid, JuickMessage selectedReply, String msg, String attachmentUri, String attachmentMime, Utils.Function<Void, String> then) {
         String msgnum = "#" + ((JuickMessageID)mid).getMid();
         if (selectedReply != null && selectedReply.getRID() > 0) {
             msgnum += "/" + selectedReply.getRID();
         }
         final String body = msgnum + " " + msg;
         if (attachmentUri == null) {
-            postText(context, body, then);
+            return postText(context, body, then);
         } else {
-            postMedia(context, body, attachmentUri, attachmentMime, then);
+            return postMedia(context, body, attachmentUri, attachmentMime, then);
         }
     }
 
@@ -516,15 +516,18 @@ public class JuickMicroBlog implements MicroBlog {
         return JuickAdvancedApplication.instance.getString(id);
     }
 
-    public void postText(final Activity context, final String body, final Utils.Function<Void, String> then) {
+    public OperationInProgress postText(final Activity context, final String body, final Utils.Function<Void, String> then) {
         try {
             final String encode = URLEncoder.encode(body, "utf-8");
+            final boolean[] handled = new boolean[] { false };
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
                     final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://api.juick.com/post", "body=" + encode);
                     final String ret = restResponse.getResult();
-                    context.runOnUiThread(new Runnable() {
+                    if (!handled[0])
+                        handled[0] = true;
+                        context.runOnUiThread(new Runnable() {
 
                         public void run() {
                             then.apply(restResponse.errorText);
@@ -533,13 +536,29 @@ public class JuickMicroBlog implements MicroBlog {
                 }
             },"Post comment");
             thr.start();
+            return new OperationInProgress() {
+                @Override
+                public void preliminarySuccess() {
+                    if (!handled[0]) {
+                        handled[0] = true;
+                        context.runOnUiThread(new Runnable() {
+
+                            public void run() {
+                                then.apply(null);
+                            }
+                        });
+                    }
+                }
+            };
         } catch (UnsupportedEncodingException e) {
             Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show();
             then.apply(e.toString());
+            return null;
         }
     }
 
-    public void postMedia(final Activity context, final String body, final String attachmentUri, final String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postMedia(final Activity context, final String body, final String attachmentUri, final String attachmentMime, final Utils.Function<Void, String> then) {
+        final boolean handled[] = new boolean[] { false };
         final ProgressDialog progressDialog = new ProgressDialog(context);
         final NewMessageActivity.BooleanReference progressDialogCancel = new NewMessageActivity.BooleanReference(false);
         progressDialogCancel.bool = false;
@@ -567,22 +586,46 @@ public class JuickMicroBlog implements MicroBlog {
 
             public void run() {
                 final Utils.RESTResponse res = sendMessage(context, body, 0, 0, 0, 0, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
-                context.runOnUiThread(new Runnable() {
+                if (!handled[0]) {
+                    handled[0] = true;
+                    context.runOnUiThread(new Runnable() {
 
-                    public void run() {
-                        if (progressDialog != null && progressDialog.isShowing()) {
-                            try {
-                                progressDialog.dismiss();
-                            } catch (Exception e) {
-                                //
+                        public void run() {
+                            if (progressDialog != null && progressDialog.isShowing()) {
+                                try {
+                                    progressDialog.dismiss();
+                                } catch (Exception e) {
+                                    //
+                                }
                             }
+                            then.apply(res.errorText);
                         }
-                        then.apply(res.errorText);
-                    }
-                });
+                    });
+                }
             }
         },"Post media");
         thr.start();
+        return new OperationInProgress() {
+            @Override
+            public void preliminarySuccess() {
+                if (!handled[0]) {
+                    handled[0] = true;
+                    context.runOnUiThread(new Runnable() {
+
+                        public void run() {
+                            if (progressDialog != null && progressDialog.isShowing()) {
+                                try {
+                                    progressDialog.dismiss();
+                                } catch (Exception e) {
+                                    //
+                                }
+                            }
+                            then.apply(null);
+                        }
+                    });
+                }
+            }
+        };
     }
 
     public static void withUserId(final Activity activity, final Utils.Function<Void,Pair<Integer, String>> action) {
@@ -592,13 +635,13 @@ public class JuickMicroBlog implements MicroBlog {
                 final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
                 final String myUserId = atoi(sp.getString("myUserId", ""));
                 final String myUserName;
-                String pass = JuickComAPIAuthorizer.getPassword(activity);
-                if (pass == null || pass.length() == 0) myUserName = ""; else myUserName = JuickComAPIAuthorizer.getJuickAccountName(activity);
+                String pass = JuickAPIAuthorizer.getPassword(activity);
+                if (pass == null || pass.length() == 0) myUserName = ""; else myUserName = JuickAPIAuthorizer.getJuickAccountName(activity);
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (myUserId.equals("") || myUserName.equals("")) {
-                            final String userName = JuickComAPIAuthorizer.getJuickAccountName(activity.getApplicationContext());
+                            final String userName = JuickAPIAuthorizer.getJuickAccountName(activity.getApplicationContext());
                             if (userName == null) {
                                 // get some stuff
                                 class MyDownloadErrorNotification implements Utils.DownloadErrorNotification {

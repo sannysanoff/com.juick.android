@@ -39,7 +39,7 @@ import java.util.List;
  * Time: 12:03 AM
  * To change this template use File | Settings | File Templates.
  */
-public class JuickComWebAuthorizer extends Utils.URLAuth {
+public class JuickWebAuthorizer extends Utils.URLAuth {
     @Override
     public boolean acceptsURL(String url) {
         return url.indexOf("//juick.com/") != -1;
@@ -59,7 +59,7 @@ public class JuickComWebAuthorizer extends Utils.URLAuth {
         if (myCookie == null) {
             if (ctx instanceof Activity) {
                 final Activity activity = (Activity)ctx;
-                final String juickComPassword = JuickComAPIAuthorizer.getPassword(activity);
+                final String juickComPassword = JuickAPIAuthorizer.getPassword(activity);
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -67,7 +67,7 @@ public class JuickComWebAuthorizer extends Utils.URLAuth {
                         String webPassword = sp.getString("web_password",null);
                         final Runnable thiz = this;
                         if (webLogin == null) {
-                            webLogin = JuickComAPIAuthorizer.getJuickAccountName(activity);
+                            webLogin = JuickAPIAuthorizer.getJuickAccountName(activity);
                         }
                         if (webPassword == null) {
                             webPassword = juickComPassword;

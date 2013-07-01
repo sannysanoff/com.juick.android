@@ -14,7 +14,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
-import com.juick.android.juick.JuickComAPIAuthorizer;
+import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
@@ -527,7 +527,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     int totalCount = 0;
                     MessageID topicMessageId = null;
                     int toYouCount = 0;
-                    String accountName = JuickComAPIAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext());
+                    String accountName = JuickAPIAuthorizer.getJuickAccountName(XMPPIncomingMessagesActivity.this.getApplicationContext());
                     if (accountName != null) {
                         for (XMPPService.IncomingMessage incomingMessage : messagesItem.messages) {
                             XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)incomingMessage;

@@ -21,10 +21,8 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.*;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -279,7 +277,7 @@ public class MainActivity extends JuickFragmentActivity implements
         startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
         if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
-            ACRA.getErrorReporter().putCustomData("juick_user", JuickComAPIAuthorizer.getJuickAccountName(this));
+            ACRA.getErrorReporter().putCustomData("juick_user", JuickAPIAuthorizer.getJuickAccountName(this));
         }
         if (sp.getBoolean("fullScreenMessages", false)) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -1223,6 +1221,10 @@ public class MainActivity extends JuickFragmentActivity implements
                     shouldRecolor = true;
                     break;
                 }
+                if ("shouldRecolor".equals(scan.getTag())) {
+                    shouldRecolor = true;
+                    break;
+                }
                 try {
                     scan = (View)scan.getParent();
                 } catch (Exception e) {
@@ -1310,6 +1312,12 @@ public class MainActivity extends JuickFragmentActivity implements
         if (s.equals("googlePlusNavigation")) {
             updateActionBarMode();
         }
+        if (s.equals("enableBrowserComponent")) {
+            ComponentName cn = new ComponentName("com.juickadvanced", "com.juick.android.SimpleBrowser");
+            getPackageManager().setComponentEnabledSetting(cn,
+                    sp.getBoolean(s, true) ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP);
+        }
         boolean dontWatchPreferences = sp.getBoolean("dontWatchPreferences", false);
         if (dontWatchPreferences) return;
         if (s.startsWith("msrc")) {
@@ -1339,7 +1347,7 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         if (s.equals("enableLoginNameWithCrashReport")) {
             if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
-                ACRA.getErrorReporter().putCustomData("juick_user", JuickComAPIAuthorizer.getJuickAccountName(this));
+                ACRA.getErrorReporter().putCustomData("juick_user", JuickAPIAuthorizer.getJuickAccountName(this));
             } else {
                 ACRA.getErrorReporter().putCustomData("juick_user", "");
             }

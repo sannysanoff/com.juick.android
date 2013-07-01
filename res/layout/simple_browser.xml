@@ -13,26 +13,28 @@
         <Button
                 android:id="@+id/button"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48sp"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:text="Back"
                 />
-        <Button
+        <ImageView
                 android:id="@+id/browser"
-                android:layout_width="wrap_content"
+                android:layout_width="48sp"
                 android:layout_height="48sp"
                 android:layout_alignParentRight="true"
-                android:drawableTop="@android:drawable/ic_menu_view"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_view"
                 />
         <Spinner
                 android:id="@+id/mode"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48sp"
                 android:entries="@array/simpleWebBrowserMode"
                 android:layout_toRightOf="@id/button"
                 android:layout_toLeftOf="@id/browser"
                 android:layout_alignParentTop="@id/button"
+                android:tag="shouldRecolor"
                 >
 
         </Spinner>

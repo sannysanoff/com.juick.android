@@ -32,7 +32,7 @@ import android.text.style.*;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
-import com.juick.android.juick.JuickComAPIAuthorizer;
+import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
@@ -835,7 +835,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
 
         // Highlight nick
-        String accountName = JuickComAPIAuthorizer.getJuickAccountName(ctx);
+        String accountName = JuickAPIAuthorizer.getJuickAccountName(ctx);
         if (accountName != null) {
             accountName = accountName.toLowerCase();
             int scan = spanOffset;

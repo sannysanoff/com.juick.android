@@ -467,6 +467,7 @@
     <string name="AllAuthHasBeenCleared">Все сохраненные логины и пароли удалены</string>
     <string name="ThisWillRemoveAuth">Вы действительно хотите удалить созраненные логины и пароли из программы?</string>
     <string name="ClearAllAuth">Удалить сохраненные логины</string>
+    <string name="MinimalisticViewer">Минималистический бровзер для просмотра статей, проходящих в жуйке (экспериментальный)</string>
 
 
 </resources>
