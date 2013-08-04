@@ -96,8 +96,6 @@ public class DatabaseService extends Service {
 
     }
 
-
-
     public void saveRecentThread(final JuickMessage messag, final String table) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
