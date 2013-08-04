@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-
-
-
-
-
     <string name="Loading___">Загрузка...</string>
     <string name="Loading___report">Загрузка... Сложный график может считаться долго...</string>
     <string name="LoadingBackup___">Загрузка (резервный)...</string>
@@ -152,6 +147,8 @@
     <string name="navigationUnread">Все нечитанные</string>
     <string name="navigationUnanswered">Неотвеченные</string>
     <string name="navigationSaved">Сохраненные</string>
+    <string name="navigationRecentlyOpened">Недавно читал</string>
+    <string name="navigationRecentlyCommented">Недавно писал</string>
     <string name="XMPP_client">XMPP/Jabber клиент</string>
     <string name="XMPPControl">XMPP статус</string>
     <string name="XMPP_config">XMPP/Jabber конфиг</string>

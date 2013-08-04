@@ -466,6 +466,8 @@ public class MainActivity extends JuickFragmentActivity implements
 
     public static final int NAVITEM_UNREAD = 1001;
     public static final int NAVITEM_SAVED = 1002;
+    public static final int NAVITEM_RECENT_READ = 1003;
+    public static final int NAVITEM_RECENT_WRITE = 1004;
 
 
 
@@ -558,6 +560,22 @@ public class MainActivity extends JuickFragmentActivity implements
             public void action() {
                 final Bundle args = new Bundle();
                 args.putSerializable("messagesSource", new SavedMessagesSource(MainActivity.this));
+                runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new NavigationItem(NAVITEM_RECENT_READ, R.string.navigationRecentlyOpened, R.drawable.navicon_juickadvanced, "msrcRecentOpen") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                args.putSerializable("messagesSource", new RecentlyOpenedMessagesSource(MainActivity.this));
+                runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new NavigationItem(NAVITEM_RECENT_WRITE, R.string.navigationRecentlyCommented, R.drawable.navicon_juickadvanced, "msrcRecentComment") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                args.putSerializable("messagesSource", new RecentlyCommentedMessagesSource(MainActivity.this));
                 runDefaultFragmentWithBundle(args, this);
             }
         });

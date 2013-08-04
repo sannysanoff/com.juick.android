@@ -180,6 +180,8 @@
     <string name="navigationUnread">All-unread</string>
     <string name="navigationUnanswered">Unanswered</string>
     <string name="navigationSaved">Saved messages</string>
+    <string name="navigationRecentlyOpened">Recent read</string>
+    <string name="navigationRecentlyCommented">Recent write</string>
     <string name="SingleLine_Menu">Single line menu items</string>
     <string name="SingleLine_Menu_Summary">Menu will be even more compact</string>
     <string name="XMPP_client">XMPP (Jabber) client</string>

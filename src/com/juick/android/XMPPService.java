@@ -440,64 +440,70 @@ public class XMPPService extends Service {
             @Override
             public void withService(DatabaseService service) {
                 ArrayList<String> storedThread = service.getStoredThread(topicMessageId);
+                boolean foundSomething = false;
                 if (storedThread != null && storedThread.size() > 0) {
                     String msg = "[" + storedThread.get(0) + "]";
                     final ArrayList<JuickMessage> juickMessages = JuickCompatibleURLMessagesSource.parseJSONpure(msg, false);
                     if (juickMessages != null && juickMessages.size() == 1 && juickMessages.get(0) instanceof JuickMessage) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                JuickMessage juickMessage = juickMessages.get(0);
-                                JuickSubscriptionIncomingMessage jsim = new JuickSubscriptionIncomingMessage(
-                                        juickMessage.User.UName,
-                                        juickMessage.Text,
-                                        juickMessage.getDisplayMessageNo(),
-                                        juickMessage.Timestamp
-                                );
-                                handleObtainedTopicStarter(jsim);
-                            }
-                        });
-                    }
-                }
-                new Thread() {
-                    @Override
-                    public void run() {
-                        boolean success = false;
-                        try {
-                            Utils.RESTResponse json = Utils.getJSON(XMPPService.this, "http://" + Utils.JA_ADDRESS + "/api/thread?mid=" + mid + "&onlybody=true", null);
-                            if (json.getResult() != null) {
-                                ArrayList<JuickMessage> messages = JuickCompatibleURLMessagesSource.parseJSONpure(json.getResult(), false);
-                                if (messages != null && messages.size() > 0) {
-                                    JuickMessage juickMessage = messages.get(0);
-                                    final JuickSubscriptionIncomingMessage obtained = new JuickSubscriptionIncomingMessage(
+                        if (juickMessages.get(0).getRID() == 0) {   // have full thread from the start
+                            foundSomething = true;
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    JuickMessage juickMessage = juickMessages.get(0);
+                                    JuickSubscriptionIncomingMessage jsim = new JuickSubscriptionIncomingMessage(
                                             juickMessage.User.UName,
                                             juickMessage.Text,
-                                            "#" + mid,
+                                            juickMessage.getDisplayMessageNo(),
                                             juickMessage.Timestamp
                                     );
-                                    obtained.tags.addAll(juickMessage.tags);
-                                    handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            handleObtainedTopicStarter(obtained);
-                                        }
-                                    });
-                                    // requested topic starter obtained, now just repaint messages
-                                    handler.removeCallbacks(broadcastSender);
-                                    handler.postDelayed(broadcastSender, 3000);
-                                    success = true;
+                                    handleObtainedTopicStarter(jsim);
                                 }
-                            }
-                        } finally {
-                            if (!success) {
-                                if (currentThread instanceof ExternalXMPPThread) {
-                                    ExternalXMPPThread externalXMPPThread = (ExternalXMPPThread) currentThread;
-                                    externalXMPPThread.client.sendMessage(JUICK_ID, messageRequest);
+                            });
+                        }
+                    }
+                }
+                if (!foundSomething) {
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            boolean success = false;
+                            try {
+                                Utils.RESTResponse json = Utils.getJSON(XMPPService.this, "http://" + Utils.JA_ADDRESS + "/api/thread?mid=" + mid + "&onlybody=true", null);
+                                if (json.getResult() != null) {
+                                    ArrayList<JuickMessage> messages = JuickCompatibleURLMessagesSource.parseJSONpure(json.getResult(), false);
+                                    if (messages != null && messages.size() > 0) {
+                                        JuickMessage juickMessage = messages.get(0);
+                                        final JuickSubscriptionIncomingMessage obtained = new JuickSubscriptionIncomingMessage(
+                                                juickMessage.User.UName,
+                                                juickMessage.Text,
+                                                "#" + mid,
+                                                juickMessage.Timestamp
+                                        );
+                                        obtained.tags.addAll(juickMessage.tags);
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                handleObtainedTopicStarter(obtained);
+                                            }
+                                        });
+                                        // requested topic starter obtained, now just repaint messages
+                                        handler.removeCallbacks(broadcastSender);
+                                        handler.postDelayed(broadcastSender, 3000);
+                                        success = true;
+                                    }
+                                }
+                            } finally {
+                                if (!success) {
+                                    if (currentThread instanceof ExternalXMPPThread) {
+                                        ExternalXMPPThread externalXMPPThread = (ExternalXMPPThread) currentThread;
+                                        externalXMPPThread.client.sendMessage(JUICK_ID, messageRequest);
+                                    }
                                 }
                             }
                         }
-                    }
-                }.start();
+                    }.start();
+                }
             }
         });
     }
@@ -992,27 +998,36 @@ public class XMPPService extends Service {
                 @Override
                 public void withService(DatabaseService service) {
                     JuickMessageID mid = jim.getMID();
-                    JsonObject obj = new JsonObject();
-                    obj.addProperty("mid", mid.getMid());
-                    if (jim.getTags() != null && jim.getTags().size() > 0) {
-                        JsonArray tags = new JsonArray();
-                        for (String t : jim.getTags()) {
-                            tags.add(new JsonPrimitive(t));
-                        }
-                        obj.add("tags", tags);
-                    }
-                    obj.addProperty("body", jim.getBody());
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-                    obj.addProperty("timestamp", sdf.format(new Date()));
-                    JsonObject user = new JsonObject();
-                    user.addProperty("uname", jim.getFrom());
-                    obj.add("user", user);
+                    JsonObject obj = convertIncomingMessageToJSON(mid, jim);
                     String string = new Gson().toJson(obj);
+
                     service.appendToStoredThread(mid, string);
                 }
             });
         }
+    }
+
+    private JsonObject convertIncomingMessageToJSON(JuickMessageID mid, JuickIncomingMessage jim) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("mid", mid.getMid());
+        if (jim instanceof JuickThreadIncomingMessage) {
+            obj.addProperty("rid", jim.getRID());
+        }
+        if (jim.getTags() != null && jim.getTags().size() > 0) {
+            JsonArray tags = new JsonArray();
+            for (String t : jim.getTags()) {
+                tags.add(new JsonPrimitive(t));
+            }
+            obj.add("tags", tags);
+        }
+        obj.addProperty("body", jim.getBody());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        obj.addProperty("timestamp", sdf.format(new Date()));
+        JsonObject user = new JsonObject();
+        user.addProperty("uname", jim.getFrom());
+        obj.add("user", user);
+        return obj;
     }
 
 

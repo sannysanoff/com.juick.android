@@ -193,9 +193,13 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                                 // parse
                                 ArrayList<JuickMessage> alt = pureDownloader.parseJSONpure(sb.toString());
                                 if (retrieved[0]) return;
-                                // notify
-                                retrieved[0] = true;        // debug
-                                ((Utils.HasCachedCopyNotification)notifications).onCachedCopyObtained(alt);
+                                if (alt.size() > 0 && alt.get(0).getRID() == 0) {
+                                    // notify
+                                    retrieved[0] = true;        // debug
+                                    ((Utils.HasCachedCopyNotification)notifications).onCachedCopyObtained(alt);
+                                } else {
+                                    // incomplete thread (no beginning)
+                                }
                             }
                         }
                     }.start();

@@ -21,9 +21,12 @@ import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.*;
 import com.juick.android.api.MessageIDAdapter;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -44,6 +47,10 @@ public class DatabaseService extends Service {
     Handler handler;
     SharedPreferences sp;
 
+    /**
+     * save to user's "Saved messages list"
+     * @param messag
+     */
     public void saveMessage(final JuickMessage messag) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
@@ -58,6 +65,65 @@ public class DatabaseService extends Service {
                         cv.put("save_date", System.currentTimeMillis());
                         cv.put("body", compressGZIP(value));
                         db.insert("saved_message2", null, cv);   // failed uniq constraint is handled here.
+                        db.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                    return Boolean.TRUE;
+                }
+            });
+            writeJobs.notify();
+        }
+    }
+
+    public void saveRecentlyOpenedThread(final JuickMessage messag) {
+        saveRecentThread(messag, "recent_threads_opened");
+    }
+
+    public void saveRecentlyCommentedThread(final JuickMessage messag) {
+        saveRecentThread(messag, "recent_threads_wrote");
+    }
+
+    public ArrayList<JuickMessage> getRecentlyOpenedThreads() {
+        Cursor cursor = db.rawQuery("select * from recent_threads_opened order by save_date desc", new String[]{});
+        return convertFromSavedMessages(cursor);
+
+    }
+
+    public ArrayList<JuickMessage> getRecentlyCommentedThreads() {
+        Cursor cursor = db.rawQuery("select * from recent_threads_wrote order by save_date desc", new String[]{});
+        return convertFromSavedMessages(cursor);
+
+    }
+
+
+
+    public void saveRecentThread(final JuickMessage messag, final String table) {
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    Gson gson = getGson();
+                    final String value = gson.toJson(messag);
+                    try {
+                        db.delete(table, "msgid = ?", new String[] {messag.getMID().toString()});
+                        Cursor cursor = db.rawQuery("select count(*) cnt from "+table, new String[]{});
+                        cursor.moveToNext();
+                        int count = cursor.getInt(0);
+                        cursor.close();
+                        for(int i=49; i<count; i++) {
+                            // cleanup
+                            cursor = db.rawQuery("select msgid from "+table+" order by save_date asc limit 1", new String[]{});
+                            cursor.moveToNext();
+                            String msgid = cursor.getString(0);
+                            cursor.close();
+                            db.delete(table, "msgid = ?", new String[]{msgid});  // opened most recently
+                        }
+                        ContentValues cv = new ContentValues();
+                        cv.put("msgid", messag.getMID().toString());
+                        cv.put("save_date", System.currentTimeMillis());
+                        cv.put("body", compressGZIP(value));
+                        db.insert(table, null, cv);
                         db.setTransactionSuccessful();
                     } catch (Exception e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -127,6 +193,10 @@ public class DatabaseService extends Service {
         }
     }
 
+    /**
+     * remove from user's "Saved messages list"
+     * @param message
+     */
     public void unsaveMessage(final JuickMessage message) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
@@ -146,9 +216,23 @@ public class DatabaseService extends Service {
     }
 
 
-
+    /**
+     * get list of user "Saved" messages
+     * @param afterSavedDate
+     * @return
+     */
     public ArrayList<JuickMessage> getSavedMessages(long afterSavedDate) {
         Cursor cursor = db.rawQuery("select * from saved_message2 where save_date < ? order by save_date desc limit 20", new String[]{"" + afterSavedDate});
+        return convertFromSavedMessages(cursor);
+
+    }
+
+    /**
+     *
+     * @param cursor
+     * @return
+     */
+    private ArrayList<JuickMessage> convertFromSavedMessages(Cursor cursor) {
         ArrayList<JuickMessage> retval = new ArrayList<JuickMessage>();
         cursor.moveToFirst();
         int blobIndex = cursor.getColumnIndex("body");
@@ -173,7 +257,6 @@ public class DatabaseService extends Service {
         }
         cursor.close();
         return retval;
-
     }
 
     public void reportFeature(String feature_name, String feature_value) {
@@ -244,7 +327,35 @@ public class DatabaseService extends Service {
                 @Override
                 public Boolean apply(Void aVoid) {
                     ArrayList<String> storedThread = getStoredThread(mid);
-                    if (storedThread == null) return true;
+                    if (storedThread == null) {
+                        storedThread = new ArrayList<String>();
+                    } else {
+                        int myrid = -1;
+                        int lastrid = -1;
+                        try {
+                            JSONObject jsonObject = new JSONObject(raw);
+                            if (jsonObject.has("rid")) {
+                                myrid = jsonObject.getInt("rid");
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                        try {
+                            if (storedThread.size() > 0) {
+                                JSONObject jsonObject = new JSONObject(storedThread.get(storedThread.size()-1));
+                                if (jsonObject.has("rid")) {
+                                    lastrid = jsonObject.getInt("rid");
+                                }
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                        if (myrid != -1 && lastrid != -1 && myrid <= lastrid) {
+                            // already there.
+                            db.setTransactionSuccessful();
+                            return true;
+                        }
+                    }
                     storedThread.add(raw);
                     try {
                         insertOrUpdateThread(true, storedThread, mid);
@@ -286,10 +397,23 @@ public class DatabaseService extends Service {
         }
     }
 
+    public void maybeSaveMessages(ArrayList<JuickMessage> messages) {
+        boolean messageDB = sp.getBoolean("enableMessageDB", false);
+        if (messageDB) {
+            for (JuickMessage message : messages) {
+                if (message.getMID() instanceof JuickMessageID) {
+                    JuickMessageID mid = (JuickMessageID)message.getMID();
+                    JsonObject obj = JuickMicroBlog.convertJuickMessageToJSON(message);
+                    appendToStoredThread(message.getMID(), new Gson().toJson(obj));
+                }
+            }
+        }
+    }
+
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 11;
+        public final static int CURRENT_VERSION = 12;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -373,6 +497,11 @@ public class DatabaseService extends Service {
                 sqLiteDatabase.execSQL("create index if not exists ix_savedmessage_savedate on saved_message2(save_date)");
                 sqLiteDatabase.execSQL("insert into saved_message2 select * from saved_message");
                 sqLiteDatabase.execSQL("drop table saved_message");
+                from++;
+            }
+            if (from == 11) {
+                sqLiteDatabase.execSQL("create table recent_threads_wrote(msgid textnot null primary key, body blob not null, save_date integer not null)");
+                sqLiteDatabase.execSQL("create table recent_threads_opened(msgid textnot null primary key, body blob not null, save_date integer not null)");
                 from++;
             }
         }

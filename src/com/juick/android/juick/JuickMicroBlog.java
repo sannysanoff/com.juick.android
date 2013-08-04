@@ -21,6 +21,9 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.juick.android.*;
 import com.juick.android.ja.JAUnansweredMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -34,7 +37,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Created with IntelliJ IDEA.
@@ -880,5 +886,32 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
 
-
+    public static JsonObject convertJuickMessageToJSON(JuickMessage message) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("mid", ((JuickMessageID)message.getMID()).getMid());
+        if (message.getRID() != 0) {
+            obj.addProperty("rid", message.getRID());
+            if (message.getReplyTo() != 0) {
+                obj.addProperty("replyto", message.getReplyTo());
+            }
+        }
+        if (message.tags != null && message.tags.size() > 0) {
+            JsonArray tags = new JsonArray();
+            for (String t : message.tags) {
+                tags.add(new JsonPrimitive(t));
+            }
+            obj.add("tags", tags);
+        }
+        obj.addProperty("body", message.Text);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        obj.addProperty("timestamp", sdf.format(message.Timestamp));
+        JsonObject user = new JsonObject();
+        user.addProperty("uname", message.User.UName);
+        if (message.User.UID > 0) {
+            user.addProperty("uid", message.User.UID);
+        }
+        obj.add("user", user);
+        return obj;
+    }
 }

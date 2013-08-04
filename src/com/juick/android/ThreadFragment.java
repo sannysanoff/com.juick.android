@@ -399,7 +399,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
                             Activity activity = getActivity();
                             if (activity != null) {
-                                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
                                 if (!XMPPIncomingMessagesActivity.editMode) {
                                     xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                                         @Override
@@ -408,10 +407,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                         }
                                     });
                                 }
+                                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
                                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                     @Override
                                     public void withService(DatabaseService service) {
                                         service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size() - 1, messages.get(0).Timestamp.getDate()));
+                                        service.saveRecentlyOpenedThread(messages.get(0));
                                     }
 
                                     @Override
@@ -551,6 +552,14 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         for (JuickMessage message : messages) {
                             service.removeMessages(message.getMID(), false);
                         }
+                    }
+                });
+                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
+                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                    @Override
+                    public void withService(DatabaseService service) {
+                        service.maybeSaveMessages(messages);
+                        super.withService(service);
                     }
                 });
                 try {
