@@ -16,7 +16,7 @@
                 android:background="#E0E0E0"
                 android:textSize="18sp"
                 android:padding="3sp"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentLeft="true"
                 />
         <TextView
                 android:id="@+id/old_title"
@@ -28,7 +28,7 @@
                 android:singleLine="true"
                 android:textSize="18sp"
                 android:padding="3sp"
-                android:layout_toLeftOf="@id/gotoMain"
+                android:layout_toRightOf="@id/gotoMain"
                 />
     </RelativeLayout>
     <com.juick.android.MyListView

@@ -374,6 +374,16 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }, null);
     }
 
+    public void setupSubscriptions(final ArrayList<String> subscriptions) {
+        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+            @Override
+            public Void apply(ClientToServer clientToServer) {
+                clientToServer.setSetupSubscriptions(new SetupSubscriptions(subscriptions));
+                return null;
+            }
+        }, null);
+    }
+
     public void unsubscribeMessage(final String mid) {
         callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
             @Override

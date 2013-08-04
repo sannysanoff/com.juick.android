@@ -520,51 +520,31 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                         } catch (Exception ex) {
                                             // sorry
                                         }
-                                        tmpfile.delete();
+                                        if (deleteFile != null) tmpfile.delete();
                                         int sourceWidth = bitmap.getWidth();
                                         int sourceHeight = bitmap.getHeight();
                                         int destWidth, destHeight;
+                                        float angle = 0;
                                         switch(orientation) {
                                             case ExifInterface.ORIENTATION_ROTATE_90: {
-                                                destHeight = sourceWidth;
-                                                destWidth = sourceHeight;
-                                                Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
-                                                Canvas canvas = new Canvas(targetBitmap);
-                                                Matrix matrix = new Matrix();
-                                                matrix.setRotate(90,sourceWidth/2,sourceHeight/2);
-                                                canvas.drawBitmap(bitmap, matrix, new Paint());
-                                                bitmap.recycle();
-                                                bitmap = targetBitmap;
+                                                angle = 90;
                                                 break;
                                             }
                                             case ExifInterface.ORIENTATION_ROTATE_270: {
-                                                destHeight = sourceWidth;
-                                                destWidth = sourceHeight;
-                                                Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
-                                                Canvas canvas = new Canvas(targetBitmap);
-                                                Matrix matrix = new Matrix();
-                                                matrix.setRotate(270,sourceWidth/2,sourceHeight/2);
-                                                canvas.drawBitmap(bitmap, matrix, new Paint());
-                                                bitmap.recycle();
-                                                bitmap = targetBitmap;
+                                                angle = 270;
                                                 break;
                                             }
                                             case ExifInterface.ORIENTATION_ROTATE_180: {
-                                                destHeight = sourceHeight;
-                                                destWidth = sourceWidth;
-                                                Bitmap targetBitmap = Bitmap.createBitmap(destWidth, destHeight, bitmap.getConfig());
-                                                Canvas canvas = new Canvas(targetBitmap);
-                                                Matrix matrix = new Matrix();
-                                                matrix.setRotate(180,sourceWidth/2,sourceHeight/2);
-                                                canvas.drawBitmap(bitmap, matrix, new Paint());
-                                                bitmap.recycle();
-                                                bitmap = targetBitmap;
+                                                angle = 180;
                                                 break;
                                             }
 
                                         }
-
-
+                                        Matrix matrix = new Matrix();
+                                        matrix.postRotate(angle);
+                                        Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, sourceWidth, sourceHeight, matrix, true);
+                                        bitmap.recycle();
+                                        bitmap = newBitmap;
 
                                         final File outFile = new File(parent.getCacheDir(), "juick_capture_resized.jpg");
                                         outFile.delete();

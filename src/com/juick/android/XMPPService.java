@@ -842,6 +842,9 @@ public class XMPPService extends Service {
                 } else if (isFromJuick && body.startsWith("Your blacklist:")) {
                     parseJuickBlacklist(body);
                     skipUpdateNotification = true;
+                } else if (isFromJuick && body.startsWith("You are subscribed to users:")) {
+                    parseJuickSubscriptions(body);
+                    skipUpdateNotification = true;
                 } else {
                     JabberIncomingMessage messag = new JabberIncomingMessage(from, body, new Date());
                     saveMessage(messag);
@@ -924,6 +927,26 @@ public class XMPPService extends Service {
         }
         if (!skipUpdateNotification)
             sendMyBroadcast((handled != DUMMY && !skipSoundInNotification) || handledTopicStarterThatMustNotify);
+    }
+
+    /**
+     * @param body incoming juick message with tag list
+     * @return list of tags (with leading '*'s)
+     */
+    private ArrayList<String> parseJuickSubscriptions(String body) {
+        String[] lines = body.split("\n");
+        boolean inTags = true;
+        ArrayList<String> retval = new ArrayList<String>();
+        for (String line : lines) {
+            if (line.equals("Tags:")) {
+                inTags = true;
+                continue;
+            }
+            if (inTags && line.startsWith("*")) {
+                retval.add(line);
+            }
+        }
+        return retval;
     }
 
     private boolean isMessageToMe(IncomingMessage handled) {
@@ -1332,6 +1355,8 @@ public class XMPPService extends Service {
                             }
                             localClient.sendMessage(JUICK_ID, "BL");
                             log("Sent BL command to juick");
+                            localClient.sendMessage(JUICK_ID, "S");
+                            log("Sent S command to juick");
                         }
                     }
                 }

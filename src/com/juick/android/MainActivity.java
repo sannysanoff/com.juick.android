@@ -35,6 +35,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.*;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
@@ -679,11 +680,18 @@ public class MainActivity extends JuickFragmentActivity implements
                 return position;
             }
 
+            float textSize = -1;
+
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 if (position == -1) {
                     // NOOK is funny
                     return convertView;
+                }
+                if (textSize < 0) {
+                    View inflate = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                    TextView text = (TextView)inflate.findViewById(android.R.id.text1);
+                    textSize = text.getTextSize();
                 }
                 final int layoutId = R.layout.navigation_list_item;
                 final PressableLinearLayout retval = convertView != null ?
@@ -709,7 +717,7 @@ public class MainActivity extends JuickFragmentActivity implements
                     }
                 });
                 int spacing = sp.getInt("navigation_spacing", 0);
-                tv.setTextSize(getResources().getDimension(R.dimen.initialNavigationFontSize) + spacing);
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize + spacing);
                 retval.setPadding(0, spacing, 0, spacing);
                 return retval;
             }

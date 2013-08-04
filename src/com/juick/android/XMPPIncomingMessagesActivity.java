@@ -251,14 +251,16 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     private void launchMainMessagesEnabler() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
-                if (resumed)
-                    handler.postDelayed(this, 1000);
-            }
-        });
+        // show always here.
+
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                findViewById(R.id.gotoMain).setVisibility(MainActivity.nActiveMainActivities == 0 ? View.VISIBLE : View.GONE);
+//                if (resumed)
+//                    handler.postDelayed(this, 1000);
+//            }
+//        });
     }
     @Override
     protected void onRestart() {
