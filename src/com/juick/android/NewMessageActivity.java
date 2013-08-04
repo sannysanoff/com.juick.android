@@ -540,11 +540,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                             }
 
                                         }
-                                        Matrix matrix = new Matrix();
-                                        matrix.postRotate(angle);
-                                        Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, sourceWidth, sourceHeight, matrix, true);
-                                        bitmap.recycle();
-                                        bitmap = newBitmap;
+
+                                        if (angle != 0) {
+                                            Matrix matrix = new Matrix();
+                                            matrix.postRotate(angle);
+                                            Bitmap newBitmap = Bitmap.createBitmap(bitmap, 0, 0, sourceWidth, sourceHeight, matrix, true);
+                                            bitmap.recycle();
+                                            bitmap = newBitmap;
+                                        }
 
                                         final File outFile = new File(parent.getCacheDir(), "juick_capture_resized.jpg");
                                         outFile.delete();
