@@ -30,7 +30,6 @@ public class XMPPService extends Service {
     public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
     public static final String ACTION_LAUNCH_MESSAGELIST = "com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
-    int messagesReceived = 0;
     public boolean botOnline;
     public boolean juboOnline;
     static HashMap<MessageID, JuickIncomingMessage> cachedTopicStarters = new HashMap<MessageID, XMPPService.JuickIncomingMessage>();
@@ -49,6 +48,9 @@ public class XMPPService extends Service {
     static public long lastAlarmFired;
     public static int nGCMMessages;
     public static int nWSMessages;
+    public static String juickGCMStatus = "no juick gcm";
+    public static int juickGCMReceived = 0;
+    public static Date juickGCMKLasReceived;
 
     public static ArrayList<String> log = new ArrayList<String>();
 
@@ -674,6 +676,7 @@ public class XMPPService extends Service {
 
     public static class JuickThreadIncomingMessage extends JuickIncomingMessage {
         private JuickIncomingMessage originalMessage;
+        int replyto;
 
         public JuickThreadIncomingMessage(String from, String body, String messageNo, Date date) {
             super(from, body, messageNo, date);
@@ -706,7 +709,7 @@ public class XMPPService extends Service {
     // duplicates from various sources
     ArrayList<String> recentlyReceivedMessages = new ArrayList<String>();
 
-    public void handleJuickMessage(String from, String body) {
+    public void handleJuickMessage(String from, String body, IncomingMessage preparsed) {
         IncomingMessage handled = null;
         JuickIncomingMessage topicStarter = null;
         boolean receiveOnlyPersonal = sp.getBoolean("receive_only_personal", false);
@@ -715,119 +718,83 @@ public class XMPPService extends Service {
         boolean skipSoundInNotification = false;
         boolean handledTopicStarterThatMustNotify = false;
         synchronized (incomingMessages) {
-            boolean isFromJuBo = JUBO_ID.equalsIgnoreCase(from);
-            boolean isFromJuick = JUICK_ID.equals(from);
-            if (body.startsWith("Найденные") && isFromJuBo || body.startsWith("Recommended by @") && isFromJuick) {
-                int cr = body.indexOf("\n");
-                if (cr != -1 && body.length() > cr) {
-                    body = body.substring(cr + 1);
-                }
-            }
-            String[] split = body.split("\n");
-            String head = split[0];
-            if (head.startsWith("Reply by @")) {
-                int colon = head.indexOf(":");
-                String username = head.substring(10, colon);
-                try {
-                    String msgno = split[split.length - 1].trim().split(" ")[0].trim();
-                    if (msgno.startsWith("#")) {
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 3; i < split.length - 1; i++) {
-                            if (split[i].indexOf("" + msgno) == 0)
-                                break;
-                            sb.append(split[i]);
-                            sb.append("\n");
-                        }
-                        final JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno, new Date());
-                        XMPPService.JuickIncomingMessage existingTopicStarter = cachedTopicStarters.get(threadIncomingMessage.getMID());
-                        if (existingTopicStarter == null) {
-                            // reply; no master message found ;-(
-                            existingTopicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID().getMid(), new Date());    // put placeholder for details
-                            cachedTopicStarters.put(threadIncomingMessage.getMID(), existingTopicStarter);
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // make it later than saveMessage below.
-                                    requestMessageBody(threadIncomingMessage.getMID());
-                                }
-                            });
-                        } else {
-                            // reply; master message found !
-                            threadIncomingMessage.setOriginalMessage(existingTopicStarter);
-                        }
-                        saveMessage(threadIncomingMessage);
-                        incomingMessages.add(threadIncomingMessage);
-                        handled = threadIncomingMessage;
+            boolean isFromJuBo;
+            boolean isFromJuick;
+            if (preparsed != null) {
+                handled = preparsed;
+                isFromJuBo = false;
+                isFromJuick = true;
+            } else {
+                isFromJuBo = JUBO_ID.equalsIgnoreCase(from);
+                isFromJuick = JUICK_ID.equals(from);
+                if (body.startsWith("Найденные") && isFromJuBo || body.startsWith("Recommended by @") && isFromJuick) {
+                    int cr = body.indexOf("\n");
+                    if (cr != -1 && body.length() > cr) {
+                        body = body.substring(cr + 1);
                     }
-                } catch (Exception ex) {
-                    //
                 }
-            }
-            if (head.startsWith("@") && head.contains(":")) {
-                int colon = head.indexOf(":");
-                if (colon != -1) {
-                    String username = head.substring(0, colon);
-                    if (head.contains("*private")) {
-                        if (split.length >= 7) {
-                            try {
-                                String msgno = split[split.length - 1].trim().split(" ")[0].trim();
-                                if (msgno.startsWith("#")) {
+                String[] split = body.split("\n");
+                String head = split[0];
+                if (head.startsWith("Reply by @")) {
+                    int colon = head.indexOf(":");
+                    String username = head.substring(10, colon);
+                    try {
+                        String msgno = split[split.length - 1].trim().split(" ")[0].trim();
+                        if (msgno.startsWith("#")) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 3; i < split.length - 1; i++) {
+                                if (split[i].indexOf("" + msgno) == 0)
+                                    break;
+                                sb.append(split[i]);
+                                sb.append("\n");
+                            }
+                            final JuickThreadIncomingMessage threadIncomingMessage = new JuickThreadIncomingMessage(username, sb.toString(), msgno, new Date());
+                            handled = threadIncomingMessage;
+                        }
+                    } catch (Exception ex) {
+                        //
+                    }
+                }
+                if (head.startsWith("@") && head.contains(":")) {
+                    int colon = head.indexOf(":");
+                    if (colon != -1) {
+                        String username = head.substring(0, colon);
+                        if (head.contains("*private")) {
+                            if (split.length >= 7) {
+                                try {
+                                    String msgno = split[split.length - 1].trim().split(" ")[0].trim();
+                                    if (msgno.startsWith("#")) {
+                                        StringBuilder sb = new StringBuilder();
+                                        for (int i = 1; i < split.length - 4; i++) {
+                                            sb.append(split[i]);
+                                            sb.append("\n");
+                                        }
+                                        if (sb.length() > 1 && sb.charAt(sb.length() - 2) == '\n') {
+                                            sb.setLength(sb.length() - 1);       // remove last empty line
+
+                                        }
+                                        JuickPrivateIncomingMessage object = new JuickPrivateIncomingMessage(username, sb.toString(), msgno, new Date());
+                                        handled = object;
+                                    }
+                                } catch (Exception ex) {
+                                    //
+                                }
+                            }
+                        } else {
+                            String last = split[split.length - 1];
+                            String[] msgNoAndURL = last.trim().split(" ");
+                            if (msgNoAndURL.length >= 2 && msgNoAndURL[0].trim().startsWith("#")) {
+                                String msgNo = msgNoAndURL[0].trim();
+                                String url = msgNoAndURL[msgNoAndURL.length - 1].trim();
+                                if (url.equals("http://juick.com/" + msgNo.substring(1))) {
                                     StringBuilder sb = new StringBuilder();
-                                    for (int i = 1; i < split.length - 4; i++) {
+                                    for (int i = 1; i < split.length - 1; i++) {
                                         sb.append(split[i]);
                                         sb.append("\n");
                                     }
-                                    if (sb.length() > 1 && sb.charAt(sb.length() - 2) == '\n') {
-                                        sb.setLength(sb.length() - 1);       // remove last empty line
-
-                                    }
-                                    JuickPrivateIncomingMessage object = new JuickPrivateIncomingMessage(username, sb.toString(), msgno, new Date());
-                                    saveMessage(object);
-                                    handled = object;
-                                    incomingMessages.add(object);
-                                }
-                            } catch (Exception ex) {
-                                //
-                            }
-                        }
-                    } else {
-                        String last = split[split.length - 1];
-                        String[] msgNoAndURL = last.trim().split(" ");
-                        if (msgNoAndURL.length >= 2 && msgNoAndURL[0].trim().startsWith("#")) {
-                            String msgNo = msgNoAndURL[0].trim();
-                            String url = msgNoAndURL[msgNoAndURL.length - 1].trim();
-                            if (url.equals("http://juick.com/" + msgNo.substring(1))) {
-                                StringBuilder sb = new StringBuilder();
-                                for (int i = 1; i < split.length - 1; i++) {
-                                    sb.append(split[i]);
-                                    sb.append("\n");
-                                }
-                                String[] tags = head.substring(colon + 1).split(" ");
-                                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, new Date());
-                                subscriptionIncomingMessage.tags.addAll(Arrays.asList(tags));
-                                topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getMID());
-                                if (topicStarter != null && topicStarter.getBody().length() == 0) {
-                                    // this message was requested to obtain /0 body for some reply!
-                                    switch (handleIncomingTopicStarter(subscriptionIncomingMessage)) {
-                                        case DELAYED_FOUND_NO_PERSONALS:
-                                            if (receiveOnlyPersonal)
-                                                removeMessages(subscriptionIncomingMessage.getMID(), false);
-                                            if (notifyOnlyPersonal)
-                                                skipSoundInNotification = true;
-                                            break;
-                                        case DELAYED_FOUND_PERSONALS:
-                                            if (receiveOnlyPersonal || notifyOnlyPersonal) {
-                                                handledTopicStarterThatMustNotify = true;
-                                            }
-                                            break;
-                                        case NO_DELAYED_MESSAGES_FOUND:
-                                            break;
-
-                                    }
-                                    handled = DUMMY;
-                                } else {
-                                    saveMessage(subscriptionIncomingMessage);
-                                    incomingMessages.add(subscriptionIncomingMessage);
+                                    String[] tags = head.substring(colon + 1).split(" ");
+                                    JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, new Date());
+                                    subscriptionIncomingMessage.tags.addAll(Arrays.asList(tags));
                                     handled = subscriptionIncomingMessage;
                                 }
                             }
@@ -835,6 +802,46 @@ public class XMPPService extends Service {
                     }
                 }
             }
+
+            if (handled instanceof JuickThreadIncomingMessage) {
+                maybeRequestTopicStarter((JuickThreadIncomingMessage) handled);
+                saveMessage(handled);
+                incomingMessages.add(handled);
+
+            }
+            if (handled instanceof JuickPrivateIncomingMessage) {
+                saveMessage(handled);
+                incomingMessages.add(handled);
+            }
+            if (handled instanceof JuickSubscriptionIncomingMessage) {
+                JuickSubscriptionIncomingMessage subscriptionIncomingMessage = (JuickSubscriptionIncomingMessage)handled;
+                topicStarter = cachedTopicStarters.get(subscriptionIncomingMessage.getMID());
+                if (topicStarter != null && topicStarter.getBody().length() == 0) {
+                    // this message was requested to obtain /0 body for some reply!
+                    switch (handleIncomingTopicStarter(subscriptionIncomingMessage)) {
+                        case DELAYED_FOUND_NO_PERSONALS:
+                            if (receiveOnlyPersonal)
+                                removeMessages(subscriptionIncomingMessage.getMID(), false);
+                            if (notifyOnlyPersonal)
+                                skipSoundInNotification = true;
+                            break;
+                        case DELAYED_FOUND_PERSONALS:
+                            if (receiveOnlyPersonal || notifyOnlyPersonal) {
+                                handledTopicStarterThatMustNotify = true;
+                            }
+                            break;
+                        case NO_DELAYED_MESSAGES_FOUND:
+                            break;
+
+                    }
+                    handled = DUMMY;
+                } else {
+                    saveMessage(subscriptionIncomingMessage);
+                    incomingMessages.add(subscriptionIncomingMessage);
+                }
+
+            }
+
             if (from.equals(JUICK_ID)) {
                 if (body.toLowerCase().contains("delivery of messages is")) {
                     skipUpdateNotification = true;
@@ -935,6 +942,25 @@ public class XMPPService extends Service {
             sendMyBroadcast((handled != DUMMY && !skipSoundInNotification) || handledTopicStarterThatMustNotify);
     }
 
+    private void maybeRequestTopicStarter(final JuickThreadIncomingMessage threadIncomingMessage) {
+        JuickIncomingMessage existingTopicStarter = cachedTopicStarters.get(threadIncomingMessage.getMID());
+        if (existingTopicStarter == null) {
+            // reply; no master message found ;-(
+            existingTopicStarter = new JuickThreadIncomingMessage("@???", "", "#" + threadIncomingMessage.getMID().getMid(), new Date());    // put placeholder for details
+            cachedTopicStarters.put(threadIncomingMessage.getMID(), existingTopicStarter);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    // make it later than saveMessage below.
+                    requestMessageBody(threadIncomingMessage.getMID());
+                }
+            });
+        } else {
+            // reply; master message found !
+            threadIncomingMessage.setOriginalMessage(existingTopicStarter);
+        }
+    }
+
     /**
      * @param body incoming juick message with tag list
      * @return list of tags (with leading '*'s)
@@ -1019,6 +1045,10 @@ public class XMPPService extends Service {
                 tags.add(new JsonPrimitive(t));
             }
             obj.add("tags", tags);
+        }
+        if (jim instanceof JuickThreadIncomingMessage) {
+            JuickThreadIncomingMessage tim = (JuickThreadIncomingMessage)jim;
+            obj.addProperty("replyto", tim.replyto);
         }
         obj.addProperty("body", jim.getBody());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -1330,9 +1360,9 @@ public class XMPPService extends Service {
                         return true;
                     }
                 }
-                handleJuickMessage(jid, message);
+                handleJuickMessage(jid, message, null);
             } else if (jid.equals(JUICK_ID)) {
-                handleJuickMessage(jid, message);
+                handleJuickMessage(jid, message, null);
             } else {
                 handleTextMessage(jid, message);
             }

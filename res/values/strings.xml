@@ -158,7 +158,7 @@
     <string name="Such_as_blacklist_recommend">...such as blacklist, recommend etc</string>
     <string name="TranslateToRussian">Translate to Russian</string>
     <string name="Incoming_Events">Incoming events</string>
-    <string name="XMPPControl">XMPP control...</string>
+    <string name="XMPPControl">Notifications control...</string>
     <string name="Compressed_Menu_Summary">More items in message menu will fit on the screen</string>
     <string name="Your_User_Name">Your Juick Username</string>
     <string name="Your_User_Name_Explain">Juick API does not provide means to know your Nickname. Please enter the
@@ -1048,7 +1048,7 @@
     <string name="ThreadComments">Thread comments:</string>
     <string name="Total">total</string>
     <string name="JAMessaging">J.A.-messaging</string>
-    <string name="NotificationsSummary">You can enable either Non-Jabber notifications or Jabber notifications or both to receive new Juick Items. If both transports are active, duplicate notifications will be filtered.</string>
+    <string name="NotificationsSummary">You can enable any combination of notifications to receive new Juick Items. If multiple transports are active, duplicate notifications will be filtered. (click here for control panel)</string>
     <string name="WillCheckForNewVersion">Checking for new version...</string>
     <string name="NewVersionNotFound">No new version found</string>
     <string name="NowUsesServerSideXMPPClient">Juick Advanced now uses server-side XMPP client. Privacy policy describes
@@ -1117,6 +1117,11 @@
     <string name="MinimalisticViewer">Minimalistic article viewer for reading links posted via juick only
         (experimental)
     </string>
+    <string name="JuickGCMNotifications">Juick Official Notifications</string>
+    <string name="JuickGCM">Enable notifications</string>
+    <string name="JuickGCM___">Recently introduced GCM notifications from juick.com. Only public subscriptions at the moment.</string>
+    <string name="XMPPJabberNotifications">XMPP / Jabber Notifications</string>
+    <string name="XMPPIsIndirect">XMPP is indirect: via J.A. server using own protocol.</string>
 
 
 </resources>

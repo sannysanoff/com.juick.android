@@ -379,7 +379,7 @@
     <string name="SubCommentsNotification___">Уведомления обо всех подписках и ответах через Juick Advanced server
         (исключая приватные)
     </string>
-    <string name="JAMNotEnabledEnable">У вас не включена подписка на не-XMPP Juick-нотификации. Включить и продолжить?</string>
+    <string name="JAMNotEnabledEnable">У вас не включена подписка на не-XMPP Juick-уведомления. Включить и продолжить?</string>
     <string name="JuickAdvancedFunctionality">Спец. функция Juick Advanced</string>
     <string name="WaitingForService">Ожидаем запуска сервиса...</string>
     <string name="UserCenter">О пользователе</string>
@@ -409,7 +409,7 @@
     <string name="ThreadComments">Комментарии:</string>
     <string name="Total">всего</string>
     <string name="JAMessaging">J.A.-уведомления</string>
-    <string name="NotificationsSummary">Можно включить или не-жабберные или жабберные нотификации, или всё сразу. Дублирующиеся нотификации в таком случае будут корректно учитываться.</string>
+    <string name="NotificationsSummary">Можно включить любую комбинацию уведомлений. Дублирующиеся приходящие в таком случае будут корректно учитываться. (кликабельно) </string>
     <string name="WillCheckForNewVersion">Проверяем на наличие...</string>
     <string name="NewVersionNotFound">Новой версии не найдено: </string>
     <string name="NowUsesServerSideXMPPClient">Juick Advanced теперь подключает к Жабберу с использованием своего промежуточного сервера.
@@ -420,7 +420,7 @@
     <string name="UserIconsWillBeShown">Пользовательские иконки в начале сообщения (андроид 2.2+)</string>
     <string name="FilterNonRussianMessages">Скрывать нерусские сообщения</string>
     <string name="FilterNonRussianMessages2">Будут отфильтровываться сообщения не содержащие ни одной русской буквы</string>
-    <string name="NotifyOnlyPersonal">Нотиф. только личные</string>
+    <string name="NotifyOnlyPersonal">Увед. только личные</string>
     <string name="ReceiveOnlyPersonal">Получать только личные</string>
     <string name="WillNotifyOnlyPersonal">Будет индикация только ответов вам или комментариев на ваши посты</string>
     <string name="WillReceiveOnlyPersonal">Будут показываться в списке только ответы вам или комментарии на ваши посты</string>
@@ -432,7 +432,7 @@
     <string name="FullsizeDownloadOverMobile">Большие файлы по моб.сети</string>
     <string name="WhenDownloading___">Разрешать использование мобильной сети для скачивания оригиналов изображений? Если нет, то только через Wi-Fi.</string>
     <string name="SlideToDeleteItems">Пальцем направо выкидывать</string>
-    <string name="UnneededItems_">(ненужные нотификации)</string>
+    <string name="UnneededItems_">(ненужные уведомления)</string>
     <string name="PrivacyWarning">Требуется подтверждение</string>
     <string name="PressOkToTrust">Нажмите OK если вы доверяете Juick Advanced проверить ваш аккаунт Juick на сервере juick advanced. Ваш пароль отправляется
         туда при необходимости (по https), но не сохраняется в файлах или БД. См. пункт 8.1 политики конфиденциальности.</string>
@@ -465,6 +465,11 @@
     <string name="ThisWillRemoveAuth">Вы действительно хотите удалить созраненные логины и пароли из программы?</string>
     <string name="ClearAllAuth">Удалить сохраненные логины</string>
     <string name="MinimalisticViewer">Минималистический бровзер для просмотра статей, проходящих в жуйке (экспериментальный)</string>
+    <string name="JuickGCMNotifications">Стандартные уведомления</string>
+    <string name="JuickGCM">Официальный канал</string>
+    <string name="JuickGCM___">Недавно представленные GCM уведомления с juick.com. На данный момент только публичные подписки.</string>
+    <string name="XMPPJabberNotifications">XMPP / Jabber уведомления</string>
+    <string name="XMPPIsIndirect">XMPP клиент находится на J.A. сервере, а не прямо на устройстве.</string>
 
 
 </resources>

@@ -923,6 +923,20 @@ public class MainActivity extends JuickFragmentActivity implements
         }
     }
 
+    private void toggleJuickGCM(MainActivity activity) {
+        new Thread("toggleJuickGCM") {
+            @Override
+            public void run() {
+                boolean useJuickGCM = sp.getBoolean("juick_gcm", false);
+                if (useJuickGCM) {
+                    JuickAdvancedApplication.instance.juickGCMClient.start();
+                } else {
+                    JuickAdvancedApplication.instance.juickGCMClient.stop();
+                }
+            }
+        }.start();
+    }
+
     public static void toggleXMPP(Context ctx) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
         boolean useXMPP = sp.getBoolean("useXMPP", false);
@@ -1331,6 +1345,9 @@ public class MainActivity extends JuickFragmentActivity implements
         if (s == null) return;
         if (s.equals("useXMPP")) {
             toggleXMPP(this);
+        }
+        if (s.equals("juick_gcm")) {
+            toggleJuickGCM(this);
         }
         if (s.equals("enableJAMessaging")) {
             toggleJAMessaging();

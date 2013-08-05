@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -45,7 +46,11 @@ public abstract class JuickMessagesSource extends MessagesSource {
         try {
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            jmsg.Timestamp = df.parse(json.getString("timestamp"));
+            if (json.has("timestamp")) {
+                jmsg.Timestamp = df.parse(json.getString("timestamp"));
+            } else {
+                jmsg.Timestamp = new Date();
+            }
         } catch (ParseException e) {
         }
 

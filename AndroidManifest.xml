@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced"
-          android:versionCode="2013080502" android:versionName="20.1.4">
+          android:versionCode="2013080503" android:versionName="20.1.5">
 
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -23,6 +23,7 @@
 
     <permission android:name="com.juickadvanced.permission.C2D_MESSAGE" android:protectionLevel="signature"/>
     <uses-permission android:name="com.juickadvanced.permission.C2D_MESSAGE"/>
+
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
 
 
@@ -149,9 +150,6 @@
                     android:name="android.app.searchable"
                     android:resource="@xml/searchable"/>
         </activity>
-
-        <receiver android:name="com.google.android.gcm.GCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND">
-        </receiver>
 
         <receiver android:name="com.google.android.gcm.GCMBroadcastReceiver" android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>

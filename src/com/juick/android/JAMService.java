@@ -96,7 +96,7 @@ public class JAMService extends Service {
                                         boolean useJAM = sp.getBoolean("enableJAMessaging", false);
                                         if (useJAM) {
                                             if (jid.equals(XMPPService.JUICKADVANCED_ID)) {
-                                                service.handleJuickMessage(XMPPService.JUICK_ID, message);
+                                                service.handleJuickMessage(XMPPService.JUICK_ID, message, null);
                                             }
                                         }
                                     }

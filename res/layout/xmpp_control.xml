@@ -145,7 +145,7 @@
                 <TextView
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:text="Last GCM:"
+                        android:text="Last JAMGCM:"
                         android:textStyle="bold"
                         >
 
@@ -162,7 +162,7 @@
                 <TextView
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:text="Last GCM ID:"
+                        android:text="Its ID:"
                         android:textStyle="bold"
                         >
 
@@ -179,7 +179,7 @@
                 <TextView
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:text="Last WS:"
+                        android:text="Last JAM WS:"
                         android:textStyle="bold"
                         >
 
@@ -196,13 +196,47 @@
                 <TextView
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:text="Last WS ID:"
+                        android:text="Its ID:"
                         android:textStyle="bold"
                         >
 
                 </TextView>
                 <TextView
                         android:id="@+id/last_ws_id"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JGCM status:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/juick_gcm_status"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="JGCM rcvd:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/juick_gcm_received"
                         android:layout_height="wrap_content"
                         android:paddingLeft="5sp"
                         android:text=""
@@ -305,23 +339,6 @@
                 </TextView>
                 <TextView
                         android:id="@+id/xmpp_juboblacklist"
-                        android:layout_height="wrap_content"
-                        android:paddingLeft="5sp"
-                        android:text=""
-                        >
-                </TextView>
-            </TableRow>
-            <TableRow>
-                <TextView
-                        android:layout_height="wrap_content"
-                        android:text="Msgs recvd:"
-                        android:layout_gravity="right"
-                        android:textStyle="bold"
-                        >
-
-                </TextView>
-                <TextView
-                        android:id="@+id/messages_received"
                         android:layout_height="wrap_content"
                         android:paddingLeft="5sp"
                         android:text=""

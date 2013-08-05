@@ -37,8 +37,9 @@ public class XMPPControlActivity extends Activity {
         final TextView lastWSId = (TextView) findViewById(R.id.last_ws_id);
         final TextView lastException = (TextView) findViewById(R.id.last_exception);
         final TextView exceptionTime = (TextView) findViewById(R.id.exception_time);
-        final TextView messagesReceived = (TextView) findViewById(R.id.messages_received);
         final TextView alarmScheduled = (TextView) findViewById(R.id.alarm_scheduled);
+        final TextView juickGCMStatus = (TextView) findViewById(R.id.juick_gcm_status);
+        final TextView juickGCMReceived = (TextView) findViewById(R.id.juick_gcm_received);
         final TextView alarmFired = (TextView) findViewById(R.id.alarm_fired);
         final TextView juickbot = (TextView) findViewById(R.id.xmpp_juickbot);
         final TextView jubobot = (TextView) findViewById(R.id.xmpp_jubobot);
@@ -148,7 +149,6 @@ public class XMPPControlActivity extends Activity {
                         xmppStatus.setText(status);
 
                         lastException.setText(XMPPService.lastException != null ? XMPPService.lastException : " --- ");
-                        messagesReceived.setText("" + service.messagesReceived);
                         juickbot.setText(service.botOnline ? "ONLINE" : "offline");
                         jubobot.setText(service.juboOnline ? "ONLINE" : "offline");
                         if (XMPPService.juickBlacklist != null) {
@@ -174,6 +174,8 @@ public class XMPPControlActivity extends Activity {
                         exceptionTime.setText(XMPPService.lastExceptionTime != 0 ? "" + sdf.format(new Date(XMPPService.lastExceptionTime)) : " --- ");
                         lastGCMId.setText(XMPPService.lastGCMMessageID + " count=" + XMPPService.nGCMMessages);
                         lastWSId.setText(XMPPService.lastWSMessageID + " count=" + XMPPService.nWSMessages);
+                        juickGCMStatus.setText(XMPPService.juickGCMStatus);
+                        juickGCMReceived.setText("cnt="+XMPPService.juickGCMReceived+" last="+sdf.format(XMPPService.juickGCMKLasReceived));
                         handler.postDelayed(thiz, 2000);
                     }
                 });

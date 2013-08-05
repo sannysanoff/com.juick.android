@@ -20,10 +20,7 @@ import com.juickadvanced.xmpp.messages.TimestampedMessage;
 import org.acra.ACRA;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -565,9 +562,15 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         this.xmppClientListener = xmppClientListener;
     }
 
+
     @Override
-    public void onGCMMessage(String message) {
+    public void onGCMMessage(String message, Set<String> categories) {
         handleGCMessageFromServer(message);
+    }
+
+    @Override
+    public void onUnregistration(String registrationId) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

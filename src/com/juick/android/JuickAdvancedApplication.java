@@ -10,9 +10,6 @@ import android.graphics.Typeface;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.Window;
-import android.util.DisplayMetrics;
-import android.view.WindowManager;
 import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
 import com.juickadvanced.R;
@@ -48,6 +45,7 @@ public class JuickAdvancedApplication extends Application {
     final private Object savedListLock = new Object();
     public static String version = "unknown";
     Activity currentActivity;
+    JuickGCMClient juickGCMClient;
 
     static HashMap<String, Integer> themesMap = new HashMap<String, Integer>() {{
         put("Theme_Sherlock_Light",R.style.Theme_Sherlock_Light);
@@ -91,7 +89,7 @@ public class JuickAdvancedApplication extends Application {
         try {
             GCMRegistrar.checkDevice(getApplicationContext());
             GCMRegistrar.checkManifest(getApplicationContext());
-            GCMRegistrar.register(getApplicationContext(), GCMIntentService.SENDER_ID);
+            GCMRegistrar.register(getApplicationContext(), GCMIntentService.SENDER_ID, "314097120259");
             supportsGCM = true;
         } catch (Throwable th) {
         }
@@ -106,8 +104,15 @@ public class JuickAdvancedApplication extends Application {
         }
         GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
         startService(new Intent(this, XMPPService.class));
-
-
+        juickGCMClient = new JuickGCMClient(this);
+        if (sp.getBoolean("juick_gcm", false)) {
+            new Thread("start juickGCMClient on startup") {
+                @Override
+                public void run() {
+                    juickGCMClient.start();
+                }
+            }.start();
+        }
 
     }
 

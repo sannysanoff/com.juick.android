@@ -8,13 +8,15 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.net.URLEncoder;
 import java.util.*;
 
 public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentService {
 
     public interface GCMMessageListener {
-        public void onGCMMessage(String message);
+        public void onGCMMessage(String message, Set<String> categories);
         public void onRegistration(String regid);
+        public void onUnregistration(String registrationId);
     }
 
     static ArrayList<GCMMessageListener> listeners = new ArrayList<GCMMessageListener>();
@@ -69,15 +71,14 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     @Override
     protected void onMessage(final Context context, final Intent intent) {
         final Object msg = intent.getExtras().get("message");
+        final Set<String> categories = intent.getCategories();
         if (msg != null && msg instanceof String) {
             final String messag = (String)msg;
             handler.post(new Runnable() {
                 @Override
                 public void run() {
                     for (GCMMessageListener listener : (List<GCMMessageListener>)listeners.clone()) {
-                        XMPPService.lastGCMMessage = new Date();
-                        XMPPService.nGCMMessages++;
-                        listener.onGCMMessage(messag);
+                        listener.onGCMMessage(messag, categories);
                     }
                 }
             });
@@ -100,8 +101,16 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     }
 
     @Override
-    protected void onUnregistered(Context context, String registrationId) {
-
+    protected void onUnregistered(Context context, final String registrationId) {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                for (GCMMessageListener listener : (List<GCMMessageListener>)listeners.clone()) {
+                    listener.onUnregistration(registrationId);
+                }
+            }
+        }, 10000);
+        JuickAdvancedApplication.registrationId = null;
     }
 
     private static final String CATEGORY_HARDWARE_ALARM = "HARDWARE_ALARM";

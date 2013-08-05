@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference android:summary="@string/NotificationsSummary">
+        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
     </Preference>
     <PreferenceCategory android:title="@string/NonJabberNotifications">
         <CheckBoxPreference
@@ -10,11 +11,18 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="XMPP / Jabber">
-        <Preference android:title="@string/XMPPControl">
-            <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
-        </Preference>
-        <Preference android:title="@string/XMPPLoginInfo">
+    <PreferenceCategory android:title="@string/JuickGCMNotifications">
+        <CheckBoxPreference
+                android:key="juick_gcm"
+                android:title="@string/JuickGCM"
+                android:summary="@string/JuickGCM___"
+                android:defaultValue="false"
+                android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/XMPPJabberNotifications">
+        <Preference android:title="@string/XMPPLoginInfo"
+                    android:summary="@string/XMPPIsIndirect"
+                >
             <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPPreferenceActivity"/>
         </Preference>
         <CheckBoxPreference
