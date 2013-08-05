@@ -73,7 +73,7 @@ public class Network {
                                             + "&password=" + password, notifications);
                                     then.apply(response);
                                 } else {
-                                    then.apply(new Utils.RESTResponse("Not authorized (empty password)", false, null))
+                                    then.apply(new Utils.RESTResponse("Not authorized (empty password)", false, null));
                                 }
                             }
                         }.start();
