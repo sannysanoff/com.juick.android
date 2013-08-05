@@ -964,6 +964,8 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "msrcSaved", false);
         copyBoolean(jo, sp, "msrcPrivate", false);
         copyBoolean(jo, sp, "msrcDiscuss", false);
+        copyBoolean(jo, sp, "msrcRecentOpen", false);
+        copyBoolean(jo, sp, "msrcRecentComment", false);
 
         jo.addProperty("manufacturer", Build.MANUFACTURER);
         jo.addProperty("model", Build.MODEL);

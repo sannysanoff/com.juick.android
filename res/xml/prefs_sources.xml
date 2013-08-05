@@ -83,10 +83,20 @@
             android:defaultValue="false"
             android:persistent="true"/>
         <CheckBoxPreference
-            android:key="msrcSaved"
-            android:title="@string/navigationSaved"
-            android:defaultValue="false"
-            android:persistent="true"/>
+                android:key="msrcSaved"
+                android:title="@string/navigationSaved"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="msrcRecentOpen"
+                android:title="@string/navigationRecentlyOpened"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="msrcRecentComment"
+                android:title="@string/navigationRecentlyCommented"
+                android:defaultValue="false"
+                android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="BnW sources">
         <CheckBoxPreference
