@@ -565,7 +565,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                     @Override
                     public void withService(DatabaseService service) {
-                        service.saveRecentlyCommentedThread(mf.listAdapter.getItem(0));
+                        service.saveRecentlyCommentedThread(tf.listAdapter.getItem(0));
                     }
 
                 });
