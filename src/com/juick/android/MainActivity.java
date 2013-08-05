@@ -1407,12 +1407,17 @@ public class MainActivity extends JuickFragmentActivity implements
         super.onBackPressed();
     }
 
+    long lastNPE = 0;
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         try {
             return super.dispatchTouchEvent(ev);
         } catch (Exception e) {
-            ACRA.getErrorReporter().handleException(new RuntimeException("Handled NPE in alcatel", e), false);
+            if (System.currentTimeMillis() - lastNPE > 5*60*1000L) {
+                lastNPE = System.currentTimeMillis();
+                ACRA.getErrorReporter().handleException(new RuntimeException("Handled NPE in alcatel", e), false);
+            }
             return true;
         }
     }

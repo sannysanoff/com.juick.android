@@ -66,10 +66,15 @@ public class Network {
                         new Thread("JAHTTPS API fetch") {
                             @Override
                             public void run() {
-                                final String password = URLEncoder.encode(JuickAPIAuthorizer.getPassword(ctx));
-                                final Utils.RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
-                                        + "&password=" + password, notifications);
-                                then.apply(response);
+                                String pass = JuickAPIAuthorizer.getPassword(ctx);
+                                if (pass != null) {
+                                    final String password = URLEncoder.encode(pass);
+                                    final Utils.RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
+                                            + "&password=" + password, notifications);
+                                    then.apply(response);
+                                } else {
+                                    then.apply(new Utils.RESTResponse("Not authorized (empty password)", false, null))
+                                }
                             }
                         }.start();
                         return null;

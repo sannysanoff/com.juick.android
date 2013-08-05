@@ -579,6 +579,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             Log.w("JAGP","rightScrollBound == 0");
             return null;
         }
+        if (getActivity() == null) return null;
         int action = event.getAction();
         int actionMasked = event.getActionMasked();
         final View frag = getActivity().findViewById(R.id.messagesfragment);
@@ -1231,7 +1232,12 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     Runnable reenabler = new Runnable() {
         @Override
         public void run() {
-            setListActionsEnabled(true);
+            try {
+                getListView().getCount();
+                setListActionsEnabled(true);
+            } catch (Exception e) {
+                handler.postDelayed(reenabler, 500);
+            }
         }
     };
 

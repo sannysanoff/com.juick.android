@@ -603,99 +603,103 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     float initNavMenuTranslationX;
 
     public boolean onTouch(View view, MotionEvent event) {
-        MotionEvent.PointerCoords pc = new MotionEvent.PointerCoords();
-        event.getPointerCoords(0, pc);
         if (mScaleDetector != null) {
             mScaleDetector.onTouchEvent(event);
         }
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                if (navMenu != null && navMenu.getVisibility() == View.VISIBLE) {
-                    int[] listViewLocation = new int[2];
-                    int[] imageLocation = new int[2];
-                    getListView().getLocationOnScreen(listViewLocation);
-                    navMenu.getLocationOnScreen(imageLocation);
-                    imageLocation[0] += navMenu.initialTranslationX;
-                    float touchX = pc.x + listViewLocation[0] - imageLocation[0];
-                    float touchY = pc.y + listViewLocation[1] - imageLocation[1];
-                    System.out.println("TOUCH: ACTION_DOWN: x=" + pc.x + " y=" + pc.y);
-                    if (touchX > -20 && touchX < navMenu.getWidth()
-                            && touchY > 0 && touchY < navMenu.getHeight()*1.5) {  // extra Y pixels due to picture not balanced
-                        touchOriginX = pc.x;
-                        touchOriginY = pc.y;
-                        System.out.println("TOUCH: OK TOUCH NAVMENU");
+        try {
+            MotionEvent.PointerCoords pc = new MotionEvent.PointerCoords();
+            event.getPointerCoords(0, pc);
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (navMenu != null && navMenu.getVisibility() == View.VISIBLE) {
+                        int[] listViewLocation = new int[2];
+                        int[] imageLocation = new int[2];
+                        getListView().getLocationOnScreen(listViewLocation);
+                        navMenu.getLocationOnScreen(imageLocation);
+                        imageLocation[0] += navMenu.initialTranslationX;
+                        float touchX = pc.x + listViewLocation[0] - imageLocation[0];
+                        float touchY = pc.y + listViewLocation[1] - imageLocation[1];
+                        System.out.println("TOUCH: ACTION_DOWN: x=" + pc.x + " y=" + pc.y);
+                        if (touchX > -20 && touchX < navMenu.getWidth()
+                                && touchY > 0 && touchY < navMenu.getHeight()*1.5) {  // extra Y pixels due to picture not balanced
+                            touchOriginX = pc.x;
+                            touchOriginY = pc.y;
+                            System.out.println("TOUCH: OK TOUCH NAVMENU");
+                            return true;
+                        }
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (!ignoreMove && !isNavigationMenuShown())
+                        resetMainMenuButton(false);
+                    if (touchOriginX > 0 || ignoreMove) {
+                        touchOriginX = -1;
+                        ignoreMove = false;
                         return true;
                     }
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                if (!ignoreMove && !isNavigationMenuShown())
-                    resetMainMenuButton(false);
-                if (touchOriginX > 0 || ignoreMove) {
-                    touchOriginX = -1;
-                    ignoreMove = false;
-                    return true;
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (ignoreMove || navMenu == null)
-                    return true;
-                event.getPointerCoords(0, pc);
-                double travelledDistance = Math.sqrt(Math.pow(touchOriginX - pc.x, 2) + Math.pow(touchOriginY - pc.y, 2));
-                boolean inZone = false;
-                if (!isNavigationMenuShown()) {
-                    if (touchOriginX >= 0) {
-                        // detect angle where finger moves
-                        if (travelledDistance < 10) {   // grace period
-                            inZone = true;
-                        } else {
-                            float dx = Math.abs(touchOriginX - pc.x);
-                            float dy = Math.abs(touchOriginY - pc.y);
-                            if (dx > dy) {
-                                // movement in 45 degree zone
-                                if (touchOriginX > pc.x) {
-                                    // towards left
-                                    inZone = true;
-                                    double neededDistance = 1.5 / 2.54 * getResources().getDisplayMetrics().xdpi;
-                                    if (travelledDistance > neededDistance) {
-                                        // moved 1.5 centimeters
-                                        System.out.println("TOUCH: OPEN MENU");
-                                        ignoreMove = true;
-                                        openNavigationMenu(pc.x-touchOriginX+initNavMenuTranslationX);
-                                        touchOriginX = -1;
-                                    }
-                                }
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (ignoreMove || navMenu == null)
+                        return true;
+                    event.getPointerCoords(0, pc);
+                    double travelledDistance = Math.sqrt(Math.pow(touchOriginX - pc.x, 2) + Math.pow(touchOriginY - pc.y, 2));
+                    boolean inZone = false;
+                    if (!isNavigationMenuShown()) {
+                        if (touchOriginX >= 0) {
+                            // detect angle where finger moves
+                            if (travelledDistance < 10) {   // grace period
+                                inZone = true;
                             } else {
-                                System.out.println("TOUCH: LEAVING ZONE: dx=" + dx + " dy=" + dy);
+                                float dx = Math.abs(touchOriginX - pc.x);
+                                float dy = Math.abs(touchOriginY - pc.y);
+                                if (dx > dy) {
+                                    // movement in 45 degree zone
+                                    if (touchOriginX > pc.x) {
+                                        // towards left
+                                        inZone = true;
+                                        double neededDistance = 1.5 / 2.54 * getResources().getDisplayMetrics().xdpi;
+                                        if (travelledDistance > neededDistance) {
+                                            // moved 1.5 centimeters
+                                            System.out.println("TOUCH: OPEN MENU");
+                                            ignoreMove = true;
+                                            openNavigationMenu(pc.x-touchOriginX+initNavMenuTranslationX);
+                                            touchOriginX = -1;
+                                        }
+                                    }
+                                } else {
+                                    System.out.println("TOUCH: LEAVING ZONE: dx=" + dx + " dy=" + dy);
+                                }
+                            }
+                            if (inZone && !ignoreMove) {
+                                TranslateAnimation immediate = new TranslateAnimation(
+                                        Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX, Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX,
+                                        Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
+                                immediate.setDuration(5);
+                                immediate.setFillAfter(true);
+                                immediate.setFillBefore(true);
+                                immediate.setFillEnabled(true);
+                                navMenu.startAnimation(immediate);
                             }
                         }
-                        if (inZone && !ignoreMove) {
-                            TranslateAnimation immediate = new TranslateAnimation(
-                                    Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX, Animation.ABSOLUTE, pc.x-touchOriginX+initNavMenuTranslationX,
-                                    Animation.ABSOLUTE, 0, Animation.ABSOLUTE, 0);
-                            immediate.setDuration(5);
-                            immediate.setFillAfter(true);
-                            immediate.setFillBefore(true);
-                            immediate.setFillEnabled(true);
-                            navMenu.startAnimation(immediate);
+                        if (!inZone) {
+                            resetMainMenuButton(false);
+                            if (touchOriginX >= 0) {
+                                System.out.println("TOUCH: ACTION_MOVE: x=" + pc.x + " y=" + pc.y);
+                                System.out.println("TOUCH: LEFT ZONE");
+                                touchOriginX = -1;
+                            }
+                        }
+                        if (inZone) {
+                            return true;
+                        }
+                        if (doOnClick != null || ignoreMove) {
+                            return true;
                         }
                     }
-                    if (!inZone) {
-                        resetMainMenuButton(false);
-                        if (touchOriginX >= 0) {
-                            System.out.println("TOUCH: ACTION_MOVE: x=" + pc.x + " y=" + pc.y);
-                            System.out.println("TOUCH: LEFT ZONE");
-                            touchOriginX = -1;
-                        }
-                    }
-                    if (inZone) {
-                        return true;
-                    }
-                    if (doOnClick != null || ignoreMove) {
-                        return true;
-                    }
-                }
-                break;
+                    break;
+            }
+        } catch (NoClassDefFoundError err) {
+            // so be it.
         }
         return false;
     }

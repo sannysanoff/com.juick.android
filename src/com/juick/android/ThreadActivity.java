@@ -333,7 +333,9 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         super.onPause();
         resumed = false;
         long usedTime = System.currentTimeMillis() - usageStart;
-        new WhatsNew(this).increaseUsage(this, "activity_time_"+messagesSource.getKind()+"_thread", usedTime);
+        if (messagesSource != null) {
+            new WhatsNew(this).increaseUsage(this, "activity_time_"+messagesSource.getKind()+"_thread", usedTime);
+        }
     }
 
     public void setFormEnabled(boolean state) {

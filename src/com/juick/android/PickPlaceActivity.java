@@ -187,23 +187,27 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                                 public void run() {
                                     final String jsonStr = Utils.postJSON(PickPlaceActivity.this, "http://api.juick.com/place_add", dataf).getResult();
                                     String error = null;
-                                    try {
-                                        JSONObject json = new JSONObject(jsonStr);
-                                        if (json.has("pid")) {
-                                            jplace.pid = json.getInt("pid");
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    dialogInterface.dismiss();
-                                                    pd.dismiss();
-                                                    finishWithPlace(jplace);
-                                                }
-                                            });
-                                        } else {
-                                            error = "Juick was unable to store this place: "+jsonStr;
+                                    if (jsonStr != null) {
+                                        try {
+                                            JSONObject json = new JSONObject(jsonStr);
+                                            if (json.has("pid")) {
+                                                jplace.pid = json.getInt("pid");
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        dialogInterface.dismiss();
+                                                        pd.dismiss();
+                                                        finishWithPlace(jplace);
+                                                    }
+                                                });
+                                            } else {
+                                                error = "Juick was unable to store this place: "+jsonStr;
+                                            }
+                                        } catch (JSONException e) {
+                                            error = "Juick server could not process request: "+jsonStr;
                                         }
-                                    } catch (JSONException e) {
-                                        error = "Juick server could not process request: "+jsonStr;
+                                    } else {
+                                        error = "place_add returned NULL from server";
                                     }
                                     if (error != null) {
                                         final String finalError = error;
