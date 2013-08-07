@@ -175,7 +175,7 @@ public class XMPPControlActivity extends Activity {
                         lastGCMId.setText(XMPPService.lastGCMMessageID + " count=" + XMPPService.nGCMMessages);
                         lastWSId.setText(XMPPService.lastWSMessageID + " count=" + XMPPService.nWSMessages);
                         juickGCMStatus.setText(XMPPService.juickGCMStatus);
-                        juickGCMReceived.setText("cnt="+XMPPService.juickGCMReceived+" last="+sdf.format(XMPPService.juickGCMKLasReceived));
+                        juickGCMReceived.setText("cnt="+XMPPService.juickGCMReceived+" last="+(XMPPService.juickGCMKLasReceived != null ? sdf.format(XMPPService.juickGCMKLasReceived) : "never"));
                         handler.postDelayed(thiz, 2000);
                     }
                 });
