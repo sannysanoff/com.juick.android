@@ -147,6 +147,12 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference
+                android:key="skip_dont_kill_app"
+                android:title="Skip DONT_KILL_APP"
+                android:summary="When using setComponentEnabledSetting()"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
                 android:key="dontKeepParsed"
                 android:title="Dont keep parsed messages"
                 android:summary="Saves memory at expense of smoothness"

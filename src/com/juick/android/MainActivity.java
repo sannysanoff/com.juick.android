@@ -1357,9 +1357,10 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         if (s.equals("enableBrowserComponent")) {
             ComponentName cn = new ComponentName("com.juickadvanced", "com.juick.android.SimpleBrowser");
+            boolean skipDontKillApp = sp.getBoolean("skip_dont_kill_app", false);
             getPackageManager().setComponentEnabledSetting(cn,
                     sp.getBoolean(s, true) ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP);
+                    skipDontKillApp ? 0 : PackageManager.DONT_KILL_APP);
         }
         boolean dontWatchPreferences = sp.getBoolean("dontWatchPreferences", false);
         if (dontWatchPreferences) return;
