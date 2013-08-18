@@ -484,9 +484,9 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             public void run() {
                 doneWebSocket();
                 initWebSocket();
-                handler.postDelayed(this, 60000);
+                handler.postDelayed(this, 3*60000);
             }
-        }, 60000);
+        }, 3*60000);
     }
 
     @Override

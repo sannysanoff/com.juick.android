@@ -42,7 +42,8 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
         instanceCount++;
     }
 
-    static final byte keepAlive[] = {(byte) 0x00, (byte) 0x20, (byte) 0xFF};
+    static final byte keepAlive[] = {(byte) 0x81, (byte) 0x01, (byte) 0x20};
+    static final byte closeConnection[] = {(byte) 0x88, (byte) 0x00};
     Socket sock;
     InputStream is;
     OutputStream os;
@@ -57,6 +58,7 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
     public void terminate() {
         terminated = true;
         setPaused(false);   // these are various means to terminate socket
+        disconnect();
         listener = null;        // these are measures to unreference gui if sockets stuck anyway
         ctx = null;
         Log.w("UgnichWS", "inst="+toString()+": terminated="+terminated);
@@ -78,7 +80,7 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
 
             public void run() {
                 while (!terminated) {
-                    if (connect("api.juick.com", 8080, "/replies/" + mid.getMid(), null)) {
+                    if (connect("ws.juick.com", 80, "/" + mid.getMid(), null)) {
                         readLoop();
                     }
                 }
@@ -94,18 +96,20 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
             is = sock.getInputStream();
             os = sock.getOutputStream();
 
-            String handshake = "GET " + location + " HTTP/1.1\r\n" +
-                    "Host: " + host + "\r\n" +
-                    "Connection: Upgrade\r\n" +
-                    "Upgrade: WebSocket\r\n" +
-                    "Origin: http://juick.com/\r\n" +
-                    "Sec-WebSocket-Key1: 9 9 9 9\r\n" +
-                    "Sec-WebSocket-Key2: 8 8 8 8 8\r\n" +
-                    "Sec-WebSocket-Protocol: sample\r\n";
+            String handshake = "GET " + location + " HTTP/1.1\r\n"
+                    + "Host: " + host + "\r\n"
+                    + "Connection: Upgrade\r\n"
+                    + "Upgrade: websocket\r\n"
+                    + "Origin: http://juick.com/\r\n"
+                    + "User-Agent: JuickAndroid\r\n"
+                    + "Sec-WebSocket-Key: SomeKey\r\n"
+                    + "Sec-WebSocket-Version: 13\r\n"
+                    + "Pragma: no-cache\r\n"
+                    + "Cache-Control: no-cache\r\n";
             if (headers != null) {
                 handshake += headers;
             }
-            handshake += "\r\n" + "12345678";
+            handshake += "\r\n";
             os.write(handshake.getBytes());
 
             return true;
@@ -120,29 +124,13 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
         return sock.isConnected();
     }
 
-    public void sendTextFrame(String str) throws IOException {
-        int len = str.getBytes().length;
-        byte buf[] = new byte[len + 2];
-        buf[0] = 0x00;
-        System.arraycopy(str.getBytes(), 0, buf, 1, len);
-        buf[len + 1] = (byte) 0xFF;
-        os.write(buf);
-        os.flush();
-    }
-
-    public void sendKeepAlive() {
-        try {
-            os.write(keepAlive);
-            os.flush();
-        } catch (IOException e) {
-            //disconnect();
-            }
-    }
 
     public void readLoop() {
         try {
             int b;
-            //StringBuilder buf = new StringBuilder();
+            int byteCnt = 0;
+            boolean bigPacket = false;
+            int PacketLength = 0;
             ByteArrayBuffer buf = new ByteArrayBuffer(16);
             boolean flagInside = false;
             while (!terminated) {
@@ -157,20 +145,48 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                     Log.w("UgnichWS", "inst="+toString()+": sotimeout, terminated="+terminated);
                     continue;
                 }
-                if (b == 0x00 && !flagInside) {
-                    //buf = new StringBuilder();
+
+                if (flagInside) {
+                    byteCnt++;
+                    if (byteCnt == 1) {
+                        if (b < 126) {
+                            PacketLength = b + 1;
+                            bigPacket = false;
+                        } else {
+                            bigPacket = true;
+                        }
+                    } else {
+                        if (byteCnt == 2 && bigPacket) {
+                            PacketLength = b << 8;
+                        }
+                        if (byteCnt == 3 && bigPacket) {
+                            PacketLength |= b;
+                            PacketLength += 3;
+                        }
+
+                        if (byteCnt > 3 || !bigPacket) {
+                            buf.append((char) b);
+                        }
+                    }
+
+                    if (byteCnt == PacketLength && listener != null) {
+                        if (PacketLength > 2) {
+                            if (listener != null) {
+                                String incomingData = new String(buf.toByteArray(), "utf-8");
+                                JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx, "dummy");
+                                final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + incomingData + "]");
+                                listener.onNewMessages(messages);
+                            }
+                        } else {
+                            os.write(keepAlive);
+                            os.flush();
+                        }
+                        flagInside = false;
+                    }
+                } else if (b == 0x81) {
                     buf.clear();
                     flagInside = true;
-                } else if (b == 0xFF && flagInside) {
-                    if (listener != null) {
-                        String incomingData = new String(buf.toByteArray(), "utf-8");
-                        JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx, "dummy");
-                        final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + incomingData + "]");
-                        listener.onNewMessages(messages);
-                    }
-                    flagInside = false;
-                } else if (flagInside) {
-                    buf.append((char) b);
+                    byteCnt = 0;
                 }
             }
         } catch (Exception e) {
@@ -182,6 +198,11 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
     }
 
     public void disconnect() {
+        try {
+            os.write(closeConnection);
+            os.flush();
+        } catch (Exception e) {
+        }
         try {
             is.close();
             os.close();

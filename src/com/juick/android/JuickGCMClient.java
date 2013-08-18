@@ -105,13 +105,16 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
         Utils.RESTResponse json = Utils.getJSON(context, "http://api.juick.com/android/register?regid=" + registrationId, null);
         if (json.getResult() != null) {
             XMPPService.juickGCMStatus = "Registered";
+            JuickAdvancedApplication.showXMPPToast("JuickGCMClient register success");
         } else {
             XMPPService.juickGCMStatus = "Failed at "+new Date();
+            JuickAdvancedApplication.showXMPPToast("JuickGCMClient register FAIL");
         }
     }
 
     private void unregisterOnServer(String registrationId) {
         Utils.getJSON(context, "http://api.juick.com/android/unregister?regid=" + registrationId, null);
+        JuickAdvancedApplication.showXMPPToast("JuickGCMClient unregistered");
     }
 
     // must be called in thread
