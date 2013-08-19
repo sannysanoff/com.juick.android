@@ -1191,7 +1191,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     int currentScrollX = 0;
 
-    Integer lastToXDelta;
+    Integer lastToXDelta = 0;
     public void scrollToX(int scrollX, long duration) {
         currentScrollX = scrollX;
         final View frag = getActivity().findViewById(R.id.messagesfragment);
@@ -1363,7 +1363,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     public void clearSavedPosition(Context context) {
         topMessageId = null;
-        messagesSource.resetSavedPosition();
+        if (messagesSource != null) messagesSource.resetSavedPosition();
     }
 
 
