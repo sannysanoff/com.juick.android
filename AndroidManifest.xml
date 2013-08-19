@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced"
-          android:versionCode="2013081902" android:versionName="20.2.2">
+          android:versionCode="2013081903" android:versionName="20.2.2">
 
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>
