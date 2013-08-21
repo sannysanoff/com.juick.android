@@ -241,7 +241,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         installDividerColor(listView);
         MainActivity.restyleChildrenOrWidget(listView);
 
-
         listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
 
         listAdapter.setOnForgetListener(new Utils.Function<Void,JuickMessage>() {
@@ -250,22 +249,24 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
                     @Override
                     public Void apply(final Utils.RESTResponse response) {
+                        final Activity activity = getActivity();
+                        if (activity == null) return null; // gone.
                         if (response.getErrorText() != null) {
-                            getActivity().runOnUiThread(new Runnable() {
+                            activity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(getActivity(), response.getErrorText(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(activity, response.getErrorText(), Toast.LENGTH_SHORT).show();
                                 }
                             });
                         } else {
-                            getActivity().runOnUiThread(new Runnable() {
+                            activity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     listAdapter.remove(jm);
                                     //To change body of implemented methods use File | Settings | File Templates.
                                     if (listAdapter.getCount() == 0) {
-                                        if ((getActivity() instanceof MainActivity)) {
-                                            ((MainActivity)getActivity()).doReload();
+                                        if ((activity instanceof MainActivity)) {
+                                            ((MainActivity) activity).doReload();
                                         }
                                     }
                                 }
@@ -550,8 +551,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     }
 
     public void scrollMessages(int delta) {
+        if (getActivity() == null) return;
+        if (sp == null) sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String scollMode = sp.getString("keyScrollMode", "page");
         ListView lv = getListView();
+        if (lv == null) return;
         if (lv.getChildCount() == 1 && scollMode.equals("message")) scollMode = "page";
         if (scollMode.equals("message")) {
             int firstVisiblePosition = lv.getFirstVisiblePosition();
@@ -624,23 +628,26 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 int pointerIndex = MotionEventCompat.findPointerIndex(event, activePointerId);
                 if (pointerIndex == event.getActionIndex()) {
                     if (!navigationOpenMode) {
-                        if (Math.abs(lastToXDelta) < rightScrollBound/2) {
-                            Log.w("JAGP","action_up 1");
-                            setScrollState(SCROLL_STATE_SETTLING);
-                            scrollToX(0, 500);
-                        } else {
-                            Log.w("JAGP","action_up 2");
-                            setScrollState(SCROLL_STATE_SETTLING);
-                            scrollToX((int) -rightScrollBound, 200);
-                            handler.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.w("JAGP","action_up 3");
-                                    ((MainActivity) getActivity()).openNavigationMenu(false);
-                                    lastToXDelta = 0;
-                                    frag.clearAnimation();
-                                }
-                            }, 200);
+                        // commenting needed.
+                        if (lastToXDelta != null) {
+                            if (Math.abs(lastToXDelta) < rightScrollBound/2) {
+                                Log.w("JAGP","action_up 1");
+                                setScrollState(SCROLL_STATE_SETTLING);
+                                scrollToX(0, 500);
+                            } else {
+                                Log.w("JAGP","action_up 2");
+                                setScrollState(SCROLL_STATE_SETTLING);
+                                scrollToX((int) -rightScrollBound, 200);
+                                handler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.w("JAGP","action_up 3");
+                                        ((MainActivity) getActivity()).openNavigationMenu(false);
+                                        lastToXDelta = 0;
+                                        frag.clearAnimation();
+                                    }
+                                }, 200);
+                            }
                         }
                     } else {
                         Log.w("JAGP","action_up 4");

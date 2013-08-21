@@ -560,6 +560,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
 
     private void sendReplyMain(String msg) {
         setFormEnabled(false);
+        final JuickMessage threadStarter = tf.listAdapter.getItem(0);
         replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
             @Override
             public Void apply(String error) {
@@ -567,7 +568,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                     @Override
                     public void withService(DatabaseService service) {
-                        service.saveRecentlyCommentedThread(tf.listAdapter.getItem(0));
+                        service.saveRecentlyCommentedThread(threadStarter);
                     }
 
                 });
