@@ -62,6 +62,8 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
         return url.indexOf("api.juick.com") != -1;
     }
 
+    String lastLoginName;
+
     @Override
     public void authorize(final Context act, final boolean forceLoginDialog, boolean forceAttachCredentials, final String url, final Utils.Function<Void, String> withCookie) {
         if (!authNeeded(url) && !forceAttachCredentials) {
@@ -90,7 +92,9 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                     }
                     insecure.setEnabled(true);
                     final EditText password = (EditText)content.findViewById(R.id.password);
-                    login.setText(JuickAPIAuthorizer.getJuickAccountName(activity));
+                    String loginName = JuickAPIAuthorizer.getJuickAccountName(activity);
+                    if (lastLoginName != null) loginName = lastLoginName;
+                    login.setText(loginName);
                     login.setHint("JuickUser");
                     AlertDialog dlg = new AlertDialog.Builder(activity)
                             .setTitle("Juick.com API login")
@@ -99,6 +103,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     final String loginS = login.getText().toString().trim();
+                                    lastLoginName = loginS;
                                     final String passwordS = password.getText().toString().trim();
                                     final boolean insecureB = insecure.isChecked();
                                     if (insecureB) {
@@ -206,6 +211,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
         if (url.contains("popular=1")) return false;
         if (url.contains("media=all")) return false;
         if (url.contains("/messages")) return false;
+        if (url.contains("users?uname")) return false;
         return true;
     }
 

@@ -3,6 +3,7 @@ package com.juick.android;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +13,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
+import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.R;
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
@@ -102,18 +105,23 @@ public class JuickAdvancedApplication extends Application {
         } catch (Throwable e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
-        GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext())*60);
+        GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext()) * 60);
         startService(new Intent(this, XMPPService.class));
-        juickGCMClient = new JuickGCMClient(this);
-        if (sp.getBoolean("juick_gcm", false)) {
-            new Thread("start juickGCMClient on startup") {
-                @Override
-                public void run() {
-                    juickGCMClient.start();
-                }
-            }.start();
-        }
 
+    }
+
+    public void maybeStartJuickGCMClient(Context context) {
+        if (juickGCMClient == null && JuickAPIAuthorizer.getJuickAccountName(context) != null) {
+            juickGCMClient = new JuickGCMClient(context);
+            if (sp.getBoolean("juick_gcm", false)) {
+                new Thread("start juickGCMClient on startup") {
+                    @Override
+                    public void run() {
+                        juickGCMClient.start();
+                    }
+                }.start();
+            }
+        }
     }
 
     public static void showXMPPToast(final String msg) {

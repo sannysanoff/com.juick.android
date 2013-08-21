@@ -1208,6 +1208,7 @@ public class MainActivity extends JuickFragmentActivity implements
         restyle();
         resumed = true;
         super.onResume();
+        JuickAdvancedApplication.instance.maybeStartJuickGCMClient(this);
         if (reloadOnResume) {
             reloadOnResume = false;
             doReload();
