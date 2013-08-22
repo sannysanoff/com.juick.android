@@ -27,6 +27,7 @@ public class XMPPService extends Service {
     private static final IncomingMessage DUMMY = new IncomingMessage("", "", null) {
     };
     Handler handler;
+    public static XMPPService instance;
     public static final String ACTION_MESSAGE_RECEIVED = "com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED";
     public static final String ACTION_LAUNCH_MESSAGELIST = "com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST";
     private final IBinder mBinder = new Utils.ServiceGetter.LocalBinder<XMPPService>(this);
@@ -1208,6 +1209,7 @@ public class XMPPService extends Service {
     @Override
     public void onCreate() {
         handler = new Handler();
+        instance = this;
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         String cachedJubo = readFile(getCachedJuboFile());
         if (cachedJubo != null) {

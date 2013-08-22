@@ -178,6 +178,11 @@ public class XMPPControlActivity extends Activity {
                         juickGCMReceived.setText("cnt="+XMPPService.juickGCMReceived+" last="+(XMPPService.juickGCMKLasReceived != null ? sdf.format(XMPPService.juickGCMKLasReceived) : "never"));
                         handler.postDelayed(thiz, 2000);
                     }
+
+                    @Override
+                    public void withoutService() {
+                        super.withoutService();
+                    }
                 });
 
 

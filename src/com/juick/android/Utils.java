@@ -327,6 +327,22 @@ public class Utils {
                 getServiceStatus.inProgress++;
             }
 
+            if (serviceClass == XMPPService.class) {
+                if (XMPPService.instance != null) {
+                    XMPPService.instance.handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            receive.withService((T)XMPPService.instance);
+                            synchronized (getServiceQueue) {
+                                getServiceStatus.inProgress--;
+                                getServiceStatus.tryNext();
+                            }
+                        }
+                    });
+                    return;
+                }
+            }
+
             final Exception where = new Exception("This is the stack trace of call");
             ServiceConnection mConnection = new ServiceConnection() {
 
