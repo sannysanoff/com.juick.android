@@ -7,6 +7,7 @@
                 android:background="#FF003000"
                 android:orientation="vertical"
         >
+
     <TextView
             android:id="@+id/versionCode"
             android:layout_width="fill_parent"
@@ -17,6 +18,7 @@
             android:textColor="#FFFFFFFF"
             android:text="12345"
             />
+
     <TextView
             android:id="@+id/text"
             android:layout_width="fill_parent"
@@ -26,6 +28,7 @@
             android:textColor="#FFFFFFFF"
             android:text="@string/NewVersionIsAvailable"
             />
+
     <TextView
             android:id="@+id/text2"
             android:layout_width="fill_parent"
@@ -35,14 +38,22 @@
             android:textColor="#FFFFFFFF"
             android:text="@string/RecentChanges"
             />
-    <TextView
-            android:id="@+id/changes"
+
+    <ScrollView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/text2"
-            android:gravity="center"
-            android:textColor="#FFFFFFFF"
-            android:background="#FF004000"
-            android:text=""
-            />
+            >
+
+        <TextView
+                android:id="@+id/changes"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:autoLink="all"
+                android:textColor="#FFFFFFFF"
+                android:background="#FF004000"
+                android:text="Something new was added"
+                />
+    </ScrollView>
 </RelativeLayout>

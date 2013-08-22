@@ -1131,7 +1131,7 @@ public class XMPPService extends Service {
         sendBroadcast(intent);
     }
 
-    private void handleTextMessage(String from, String body) {
+    public void handleTextMessage(String from, String body) {
         if (body == null || body.length() == 0) {
             // other, non-text, transport-related messages
             return;

@@ -2,6 +2,7 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,8 +10,10 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.method.LinkMovementMethod;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
@@ -212,9 +215,33 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         if (incomingMessage instanceof XMPPService.JabberIncomingMessage) {
             xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                 @Override
-                public void withService(XMPPService service) {
-                    service.removeMessage(incomingMessage);
-                    refreshList();
+                public void withService(final XMPPService service) {
+                    ScrollView sv = new ScrollView(XMPPIncomingMessagesActivity.this);
+                    final TextView tv = new TextView(XMPPIncomingMessagesActivity.this);
+                    tv.setText(incomingMessage.body);
+                    tv.setAutoLinkMask(Linkify.ALL);
+                    tv.setMovementMethod(LinkMovementMethod.getInstance());
+                    sv.addView(tv);
+                    final ViewGroup.LayoutParams lp = tv.getLayoutParams();
+                    lp.width = ViewGroup.LayoutParams.FILL_PARENT;
+                    lp.height = ViewGroup.LayoutParams.FILL_PARENT;
+                    tv.setLayoutParams(lp);
+                    new AlertDialog.Builder(XMPPIncomingMessagesActivity.this)
+                            .setView(sv)
+                            .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    service.removeMessage(incomingMessage);
+                                    refreshList();
+                                    dialog.cancel();
+                                }
+                            }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    }).setTitle(incomingMessage.from)
+                    .show();
                 }
             });
             return;

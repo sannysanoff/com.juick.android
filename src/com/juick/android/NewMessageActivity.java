@@ -24,7 +24,9 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.*;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -45,7 +47,6 @@ import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
-import org.acra.ACRA;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -68,14 +69,25 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     public ImageButton bAttachment;
     private ImageButton bSend;
     private ProgressBar progressSend;
-    private int pid = 0;
-    public int pidHint = 0;
-    private String pname = null;
-    private double lat = 0;
-    private double lon = 0;
-    private int acc = 0;
-    private String attachmentUri = null;
-    private String attachmentMime = null;
+
+    public static class DialogData implements Serializable {
+
+        public DialogData() {
+        }
+
+        private int pid = 0;
+        public int pidHint = 0;
+        private String pname = null;
+        private double lat = 0;
+        private double lon = 0;
+        private int acc = 0;
+        private String attachmentUri = null;
+        private String attachmentMime = null;
+        public MessagesSource messagesSource;
+    }
+
+    public DialogData data = new DialogData();
+
     private ProgressDialog progressDialog = null;
     private BooleanReference progressDialogCancel = new BooleanReference(false);
     private Handler progressHandler = new Handler() {
@@ -89,7 +101,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             }
         }
     };
-    public MessagesSource messagesSource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +112,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
         setContentView(R.layout.newmessage);
 
-        messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
+        data.messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
         checkMessagesSource();
 
 
@@ -123,12 +134,29 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         resetForm();
         handleIntent(getIntent());
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+
     }
 
     private void checkMessagesSource() {
-        if (messagesSource == null) {
-            messagesSource = new JuickCompatibleURLMessagesSource("X", "dummy", this, "http://nonsense.x/");
+        if (data.messagesSource == null) {
+            data.messagesSource = new JuickCompatibleURLMessagesSource("X", "dummy", this, "http://nonsense.x/");
         }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);    //To change body of overridden methods use File | Settings | File Templates.
+        if (savedInstanceState != null && savedInstanceState.containsKey("dialogData")) {
+            data = (DialogData)savedInstanceState.getSerializable("dialogData");
+        }
+
+        bAttachment.setSelected(data.attachmentUri != null);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("dialogData", data);
     }
 
     private void resetForm() {
@@ -137,21 +165,21 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         bLocationHint.setVisibility(View.GONE);
         bLocation.setSelected(false);
         bAttachment.setSelected(false);
-        pid = 0;
-        pidHint = 0;
-        pname = null;
-        lat = 0;
-        lon = 0;
-        acc = 0;
-        attachmentUri = null;
-        attachmentMime = null;
+        data.pid = 0;
+        data.pidHint = 0;
+        data.pname = null;
+        data.lat = 0;
+        data.lon = 0;
+        data.acc = 0;
+        data.attachmentUri = null;
+        data.attachmentMime = null;
         progressDialog = null;
         progressDialogCancel.bool = false;
         etMessage.requestFocus();
         checkMessagesSource();
-        messagesSource.getMicroBlog().decorateNewMessageActivity(this);
+        data.messagesSource.getMicroBlog().decorateNewMessageActivity(this);
         TextView oldTitle = (TextView)findViewById(R.id.old_title);
-        oldTitle.setText(messagesSource.getMicroBlog().getMicroblogName(this));
+        oldTitle.setText(data.messagesSource.getMicroBlog().getMicroblogName(this));
 
     }
 
@@ -188,21 +216,21 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             if (mime.equals("text/plain")) {
                 etMessage.append(extras.getString(Intent.EXTRA_TEXT));
             } else if (mime.equals("image/jpeg") || mime.equals("video/3gpp") || mime.equals("video/mp4")) {
-                attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
-                attachmentMime = mime;
+                data.attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
+                data.attachmentMime = mime;
                 bAttachment.setSelected(true);
                 if (mime.equals("image/jpeg")) {
-                    maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
+                    maybeResizePicture(this, data.attachmentUri, new Utils.Function<Void, String>() {
                         @Override
                         public Void apply(String s) {
-                            attachmentUri = s;
-                            bAttachment.setSelected(attachmentUri != null);
+                            data.attachmentUri = s;
+                            bAttachment.setSelected(data.attachmentUri != null);
                             return null;
                         }
                     });
                 }
             } else {
-                String errorMessage = null;
+                String errorMessage;
                 try {
                     errorMessage = String.format(getString(R.string.JuickBadMimetype)+" - "+extras.get(Intent.EXTRA_STREAM), mime);
                 } catch (Exception ex) {
@@ -215,14 +243,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                         .setPositiveButton(getString(R.string.AsJPEG), new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
-                                attachmentMime = "image/jpeg";
+                                data.attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
+                                data.attachmentMime = "image/jpeg";
                                 bAttachment.setSelected(true);
-                                maybeResizePicture(NewMessageActivity.this, attachmentUri, new Utils.Function<Void, String>() {
+                                maybeResizePicture(NewMessageActivity.this, data.attachmentUri, new Utils.Function<Void, String>() {
                                     @Override
                                     public Void apply(String s) {
-                                        attachmentUri = s;
-                                        bAttachment.setSelected(attachmentUri != null);
+                                        data.attachmentUri = s;
+                                        bAttachment.setSelected(data.attachmentUri != null);
                                         return null;
                                     }
                                 });
@@ -231,8 +259,8 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                         .setNeutralButton(getString(R.string.AsMP4Video), new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
-                                attachmentMime = "video/mp4";
+                                data.attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
+                                data.attachmentMime = "video/mp4";
                                 bAttachment.setSelected(true);
                             }
                         })
@@ -261,33 +289,33 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             });
         } else if (v == bLocationHint) {
             bLocationHint.setVisibility(View.GONE);
-            pid = pidHint;
-            pname = null;
-            lat = 0;
-            lon = 0;
-            acc = 0;
+            data.pid = data.pidHint;
+            data.pname = null;
+            data.lat = 0;
+            data.lon = 0;
+            data.acc = 0;
             bLocation.setSelected(true);
         } else if (v == bLocation) {
             bLocationHint.setVisibility(View.GONE);
-            if (pid == 0 && lat == 0) {
+            if (data.pid == 0 && data.lat == 0) {
                 startActivityForResult(new Intent(this, PickPlaceActivity.class), ACTIVITY_LOCATION);
             } else {
-                pid = 0;
-                pname = null;
-                lat = 0;
-                lon = 0;
-                acc = 0;
+                data.pid = 0;
+                data.pname = null;
+                data.lat = 0;
+                data.lon = 0;
+                data.acc = 0;
                 bLocation.setSelected(false);
             }
         } else if (v == bAttachment) {
-            if (attachmentUri == null) {
+            if (data.attachmentUri == null) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(R.string.Attach);
                 builder.setAdapter(new AttachAdapter(this), this);
                 builder.show();
             } else {
-                attachmentUri = null;
-                attachmentMime = null;
+                data.attachmentUri = null;
+                data.attachmentMime = null;
                 bAttachment.setSelected(false);
             }
         } else if (v == bSend) {
@@ -297,7 +325,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 return;
             }
             setFormEnabled(false);
-            if (attachmentUri != null) {
+            if (data.attachmentUri != null) {
                 progressDialog = new ProgressDialog(this);
                 progressDialogCancel.bool = false;
                 progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -313,7 +341,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    messagesSource.getMicroBlog().postNewMessage(NewMessageActivity.this, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel, new Utils.Function<Void, String>() {
+                    data.messagesSource.getMicroBlog().postNewMessage(NewMessageActivity.this, msg, data.pid, data.lat, data.lon, data.acc, data.attachmentUri, data.attachmentMime, progressDialog, progressHandler, progressDialogCancel, new Utils.Function<Void, String>() {
                         @Override
                         public Void apply(String errorText) {
                             if (progressDialog != null) {
@@ -328,7 +356,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 resetForm();
                                 getPhotoCaptureFile().delete(); // if any
                             }
-                            if (attachmentUri == null) {
+                            if (data.attachmentUri == null) {
                                 Toast.makeText(NewMessageActivity.this, errorText == null ? getString(R.string.Message_posted) : errorText, Toast.LENGTH_LONG).show();
                             } else {
                                 try {
@@ -402,32 +430,32 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 if (!tag.startsWith("*")) tag = "*"+tag; // compatible
                 etMessage.setText(tag + " " + etMessage.getText());
             } else if (requestCode == ACTIVITY_LOCATION) {
-                pid = data.getIntExtra("pid", 0);
-                lat = data.getDoubleExtra("lat", 0);
-                lon = data.getDoubleExtra("lon", 0);
-                acc = data.getIntExtra("acc", 0);
-                pname = data.getStringExtra("pname");
-                if ((pid > 0 || lat != 0) && pname != null) {
+                this.data.pid = data.getIntExtra("pid", 0);
+                this.data.lat = data.getDoubleExtra("lat", 0);
+                this.data.lon = data.getDoubleExtra("lon", 0);
+                this.data.acc = data.getIntExtra("acc", 0);
+                this.data.pname = data.getStringExtra("pname");
+                if ((this.data.pid > 0 || this.data.lat != 0) && this.data.pname != null) {
                     bLocation.setSelected(true);
                 }
             } else if ((requestCode == ACTIVITY_ATTACHMENT_IMAGE || requestCode == ACTIVITY_ATTACHMENT_VIDEO)) {
                 if (data != null) {
-                    attachmentUri = data.getDataString();
+                    this.data.attachmentUri = data.getDataString();
                 } else if (getPhotoCaptureFile().exists()) {
-                    attachmentUri = Uri.fromFile(getPhotoCaptureFile()).toString();
+                    this.data.attachmentUri = Uri.fromFile(getPhotoCaptureFile()).toString();
                 }
                 if (requestCode == ACTIVITY_ATTACHMENT_IMAGE) {
-                    maybeResizePicture(this, attachmentUri, new Utils.Function<Void, String>() {
+                    maybeResizePicture(this, this.data.attachmentUri, new Utils.Function<Void, String>() {
                         @Override
                         public Void apply(String s) {
-                            attachmentUri = s;
-                            bAttachment.setSelected(attachmentUri != null);
+                            NewMessageActivity.this.data.attachmentUri = s;
+                            bAttachment.setSelected(NewMessageActivity.this.data.attachmentUri != null);
                             return null;
                         }
                     });
                 }
-                attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
-                bAttachment.setSelected(attachmentUri != null);
+                this.data.attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
+                bAttachment.setSelected(this.data.attachmentUri != null);
             }
         }
     }
@@ -475,7 +503,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                         rb.setText(parent.getString(R.string.Resize__)+" " + nw + " x " + nh);
                         rbs.add(rb);
                         rg.addView(rb);
-                        rb.setTag(new Integer(i));
+                        rb.setTag(i);
                         if (i == 2) {
                             rb.setChecked(true);
                         }
@@ -523,7 +551,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                         if (deleteFile != null) tmpfile.delete();
                                         int sourceWidth = bitmap.getWidth();
                                         int sourceHeight = bitmap.getHeight();
-                                        int destWidth, destHeight;
                                         float angle = 0;
                                         switch(orientation) {
                                             case ExifInterface.ORIENTATION_ROTATE_90: {
@@ -599,12 +626,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     });
                     MainActivity.restyleChildrenOrWidget(ll);
                     final AlertDialog alertDialog = builder.create();
-                    alertDialog.setOnShowListener(new DialogInterface.OnShowListener() {
-                        @Override
-                        public void onShow(DialogInterface dialog) {
-                            MainActivity.restyleChildrenOrWidget(alertDialog.getWindow().getDecorView());
-                        }
-                    });
                     alertDialog.show();
                 } else {
                     Toast.makeText(parent, String.format(parent.getString(R.string.SkippingResize), tmpfile.length()/1024, outWidth, outHeight),Toast.LENGTH_LONG).show();

@@ -459,7 +459,7 @@ public class JuickMicroBlog implements MicroBlog {
     @Override
     public void decorateNewMessageActivity(final NewMessageActivity newMessageActivity) {
         newMessageActivity.setTitle(R.string.Juick__New_message);
-        if (newMessageActivity.messagesSource instanceof JuickMessagesSource) {
+        if (newMessageActivity.data.messagesSource instanceof JuickMessagesSource) {
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
@@ -488,7 +488,7 @@ public class JuickMicroBlog implements MicroBlog {
                                     }
                                     if (json.has("place")) {
                                         JSONObject jsonPlace = json.getJSONObject("place");
-                                        newMessageActivity.pidHint = jsonPlace.getInt("pid");
+                                        newMessageActivity.data.pidHint = jsonPlace.getInt("pid");
                                         newMessageActivity.bLocationHint.setVisibility(View.VISIBLE);
                                         newMessageActivity.bLocationHint.setText(jsonPlace.getString("name"));
                                     }

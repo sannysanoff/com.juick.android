@@ -12,6 +12,8 @@ import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.RadioButton;
@@ -27,6 +29,8 @@ import org.acra.ACRA;
 import org.apache.http.client.HttpClient;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,12 +59,69 @@ public class WhatsNew {
     public static String updateDescription;
     static File updatesDir;
     public final static long UPDATE_CHECK_INTERVAL = 60 * 60 * 1000L;
+    public final static long NEWS_CHECK_INTERVAL = 60 * 60 * 1000L;
 
     public static File getUpdateAPK() {
         return new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
     }
 
-    public static void checkForUpdates(final IRunningActivity runningActivity, final Utils.Function<Void,String> notRunning, final boolean force) {
+    static class News {
+        String code;
+        String body = "";
+    }
+
+    public static void checkForNews(final IRunningActivity runningActivity, final Utils.Function<Void, ArrayList<News>> notRunning) {
+        final Activity activity = runningActivity.getActivity();
+        final File last_news_check = getLastNewsCheck(activity);
+        if (last_news_check.exists()) {
+            if (System.currentTimeMillis() - last_news_check.lastModified() < NEWS_CHECK_INTERVAL) {
+                return;
+            }
+        }
+        new Thread() {
+            @Override
+            public void run() {
+                boolean found = false;
+                String reasonNotFound = "other reason";
+                final Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_news", null);
+                try {
+                    last_news_check.createNewFile();
+                } catch (IOException e) {
+                    //
+                }
+                last_news_check.setLastModified(System.currentTimeMillis());
+                if (json.getResult() != null) {
+                    final ArrayList<News> newsList = new ArrayList<News>();
+                    News news = new News();
+                    final String[] lines = json.getResult().split("\n");
+                    for(int i=0; i<lines.length; i++) {
+                        final String ln = lines[i];
+                        if (ln.startsWith("#")) {
+                            if (news.body != null && news.body.replace("\n"," ").trim().length() > 0) {
+                                newsList.add(news);
+                                news = new News();
+                            }
+                            news.code = ln.substring(1).trim();
+                            news.body = "";
+                        } else {
+                            news.body = news.body + ln + "\n";
+                        }
+                    }
+                    if (news.body != null && news.body.replace("\n"," ").trim().length() > 0) {
+                        newsList.add(news);
+                    }
+                    runningActivity.getHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (notRunning != null) notRunning.apply(newsList);
+                        }
+                    });
+                }
+            }
+        }.start();
+    }
+
+    public static void checkForUpdates(final IRunningActivity runningActivity, final Utils.Function<Void, String> notRunning, final boolean force) {
         final Activity activity = runningActivity.getActivity();
         final File last_check = getLastCheck(activity);
         if (last_check.exists()) {
@@ -111,6 +172,7 @@ public class WhatsNew {
                         } catch (IOException e) {
                             //
                         }
+                        last_check.setLastModified(System.currentTimeMillis());
                         if (json.getResult() != null) {
                             Matcher matcher = Pattern.compile("com.juickadvanced-(\\d+).apk").matcher(json.getResult());
                             if (matcher.find()) {
@@ -118,11 +180,11 @@ public class WhatsNew {
                                 try {
                                     int updateVersionCode = Integer.parseInt(version);
                                     if (updateVersionCode > currentVersionCode) {
-                                        if (!new File(updatesDir, "ignore-"+version).exists() || force) {
-                                            JsonObject jsonElement = (JsonObject)new Gson().fromJson(json.getResult(), JsonElement.class);
-                                            JsonPrimitive url = (JsonPrimitive)jsonElement.get("url");
+                                        if (!new File(updatesDir, "ignore-" + version).exists() || force) {
+                                            JsonObject jsonElement = (JsonObject) new Gson().fromJson(json.getResult(), JsonElement.class);
+                                            JsonPrimitive url = (JsonPrimitive) jsonElement.get("url");
                                             updateURL = url.getAsString();
-                                            JsonPrimitive desc = (JsonPrimitive)jsonElement.get("description");
+                                            JsonPrimitive desc = (JsonPrimitive) jsonElement.get("description");
                                             updateDescription = desc.getAsString();
                                             MainActivity.updateAvailable = version;
                                             found = true;
@@ -134,7 +196,7 @@ public class WhatsNew {
                                             });
                                         }
                                     } else {
-                                        reasonNotFound = "server version: "+updateVersionCode+" current version: "+currentVersionCode;
+                                        reasonNotFound = "server version: " + updateVersionCode + " current version: " + currentVersionCode;
                                         File file = getUpdateAPK();
                                         if (file.exists()) {
                                             file.delete();
@@ -174,6 +236,12 @@ public class WhatsNew {
         return new File(updatesDir, "last_check");
     }
 
+    public static File getLastNewsCheck(Activity activity) {
+        updatesDir = new File(activity.getFilesDir(), "updates");
+        updatesDir.mkdirs();
+        return new File(updatesDir, "last_news_check");
+    }
+
     public static void setUpdateVisible(final IRunningActivity runningActivity) {
         final Activity activity = runningActivity.getActivity();
         if (MainActivity.updateAvailable != null) {
@@ -181,9 +249,10 @@ public class WhatsNew {
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 builder.setTitle("New Beta available");
                 View view = activity.getLayoutInflater().inflate(R.layout.update_dialog, null);
-                TextView changes = (TextView)view.findViewById(R.id.changes);
+                TextView changes = (TextView) view.findViewById(R.id.changes);
+                changes.setMovementMethod(LinkMovementMethod.getInstance());
                 changes.setText(updateDescription);
-                TextView versionCode = (TextView)view.findViewById(R.id.versionCode);
+                TextView versionCode = (TextView) view.findViewById(R.id.versionCode);
                 versionCode.setText(MainActivity.updateAvailable);
 
                 builder.setView(view);
@@ -216,10 +285,10 @@ public class WhatsNew {
                                                 fos.close();
                                                 installUpdate(activity);
                                             } catch (Exception e) {
-                                                Toast.makeText(activity, "Store Juick Advanced update: "+e.toString(), Toast.LENGTH_LONG).show();
+                                                Toast.makeText(activity, "Store Juick Advanced update: " + e.toString(), Toast.LENGTH_LONG).show();
                                             }
                                         } else {
-                                            Toast.makeText(activity, "Download Juick Advanced update: "+binary.getErrorText(), Toast.LENGTH_LONG).show();
+                                            Toast.makeText(activity, "Download Juick Advanced update: " + binary.getErrorText(), Toast.LENGTH_LONG).show();
                                         }
                                     }
                                 };
@@ -250,7 +319,7 @@ public class WhatsNew {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         try {
-                            new File(updatesDir, "ignore-"+ MainActivity.updateAvailable).createNewFile();
+                            new File(updatesDir, "ignore-" + MainActivity.updateAvailable).createNewFile();
                         } catch (IOException e) {
                             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                         }
@@ -273,7 +342,7 @@ public class WhatsNew {
     public static void collectUsage(Context ctx, JsonObject jo) {
         //To change body of created methods use File | Settings | File Templates.
         final SharedPreferences sp = ctx.getSharedPreferences("activity_time", Context.MODE_PRIVATE);
-        final Map<String,?> all = sp.getAll();
+        final Map<String, ?> all = sp.getAll();
         for (Map.Entry<String, ?> stringEntry : all.entrySet()) {
             jo.addProperty(stringEntry.getKey(), stringEntry.getValue().toString());
         }
@@ -329,6 +398,7 @@ public class WhatsNew {
         if (currentSetting.length() == 0) {
             Runnable loop = new Runnable() {
                 Runnable thiz = this;
+
                 @Override
                 public void run() {
                     AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -685,9 +755,9 @@ public class WhatsNew {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     if (context instanceof MainActivity) {
-                        MainActivity ma = (MainActivity)context;
+                        MainActivity ma = (MainActivity) context;
                         try {
-                            new File(new File(context.getFilesDir(),"updates"), "ignore-"+ma.updateAvailable).createNewFile();
+                            new File(new File(context.getFilesDir(), "updates"), "ignore-" + ma.updateAvailable).createNewFile();
                         } catch (IOException e) {
                             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                         }

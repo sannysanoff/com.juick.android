@@ -327,6 +327,33 @@ public class MainActivity extends JuickFragmentActivity implements
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
 
         WhatsNew.checkForUpdates(this, null, false);
+        WhatsNew.checkForNews(this, new Utils.Function<Void, ArrayList<WhatsNew.News>>() {
+            @Override
+            public Void apply(final ArrayList<WhatsNew.News> newses) {
+                if (newses == null) return null;
+                Utils.ServiceGetter<XMPPService> xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(MainActivity.this, XMPPService.class);
+                xmppServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                    @Override
+                    public void withService(XMPPService service) {
+                        final SharedPreferences rdnews = getSharedPreferences("read_news", MODE_PRIVATE);
+                        for(int i=0; i< newses.size(); i++) {
+                            final WhatsNew.News news = newses.get(i);
+                            if (news.code.equals("critical")) {
+                                if ("SannySanoff".equals(JuickAPIAuthorizer.getJuickAccountName(MainActivity.this))) {
+                                    service.handleTextMessage("critical@ja_server",news.body);
+                                }
+                                continue;
+                            }
+                            if (!rdnews.getBoolean("reported_"+news.code, false)) {
+                                rdnews.edit().putBoolean("reported_"+news.code, true).commit();
+                                service.handleTextMessage("news@ja_server",news.body);
+                            }
+                        }
+                    }
+                });
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
         updateNavigation();
 
     }
