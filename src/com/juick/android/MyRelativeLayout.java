@@ -40,9 +40,13 @@ public class MyRelativeLayout extends RelativeLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-        if (listener != null) {
-            listener.onLayout();
+        try {
+            super.onLayout(changed, l, t, r, b);
+            if (listener != null) {
+                listener.onLayout();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

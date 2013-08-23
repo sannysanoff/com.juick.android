@@ -1130,6 +1130,9 @@
     <string name="JuickGCM___">Recently introduced GCM notifications from juick.com. Only public subscriptions at the moment.</string>
     <string name="XMPPJabberNotifications">XMPP / Jabber Notifications</string>
     <string name="XMPPIsIndirect">XMPP is indirect: via J.A. server using own protocol.</string>
+    <string name="DontProxyOverWifi">Don\'t proxy while on Wi-Fi</string>
+    <string name="HideGifPictures">Ignore GIFs</string>
+    <string name="BecauseNoNeedToSave">Because there\'s no need to save on traffic</string>
 
 
 </resources>

@@ -1299,9 +1299,11 @@ public class XMPPService extends Service {
         XMPPConnectionSetup connectionArgs;
         JAXMPPClient client;
 
+
+
         public ExternalXMPPThread(XMPPConnectionSetup connectionArgs) {
             this.connectionArgs = connectionArgs;
-
+            setName("ExternalXMPPThread");
         }
 
         @Override

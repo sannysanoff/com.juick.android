@@ -59,7 +59,7 @@ public class TagsFragment extends Fragment  {
      * whether it should persist mine/all selection
      */
     public boolean saveMineAll = false;
-    private Button myAll;
+    private View myAll;
     SharedPreferences sp;
 
     @Override
@@ -116,7 +116,7 @@ public class TagsFragment extends Fragment  {
         super.onViewCreated(view, savedInstanceState);
         myView = view;
         Bundle args = getArguments();
-        myAll = (Button)view.findViewById(R.id.myAll);
+        myAll = (View)view.findViewById(R.id.myAll);
         myAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

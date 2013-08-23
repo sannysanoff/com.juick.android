@@ -39,6 +39,13 @@
                 android:layout_height="fill_parent"
                 android:visibility="gone"
                 />
+        <jp.tomorrowkey.android.gifplayer.GifView
+                android:id="@+id/gif_view2"
+                android:layout_alignParentTop="true"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:visibility="gone"
+                />
 
     </RelativeLayout>
 

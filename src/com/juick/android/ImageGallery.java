@@ -148,6 +148,9 @@ public class ImageGallery extends Gallery {
                 ((GIFView)view).setMovieFile(null);
                 view.setTag(MyImageView.DESTROYED_TAG, Boolean.FALSE);
             }
+            if (view instanceof IGifView) {
+                ((IGifView)view).release();
+            }
         }
         views.clear();
         //removeAllViewsInLayout();

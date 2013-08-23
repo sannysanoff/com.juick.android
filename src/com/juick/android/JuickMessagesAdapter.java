@@ -47,6 +47,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.juickadvanced.imaging.*;
+import jp.tomorrowkey.android.gifplayer.GifView;
 import org.acra.ACRA;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
@@ -424,6 +425,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             gallery.addInitializedView(wv);
                             GIFView gv = (GIFView) view.findViewById(R.id.gif_view);
                             gallery.addInitializedView(gv);
+                            GifView gv2 = (GifView) view.findViewById(R.id.gif_view2);
+                            gallery.addInitializedView(gv2);
                         } else {
                             cleanupRow(view);
                         }
@@ -1202,6 +1205,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     imageView.setVisibility(View.INVISIBLE);
                     final GIFView gifView = (GIFView) imageHolder.findViewById(R.id.gif_view);
                     gifView.setVisibility(View.GONE);
+                    final GifView gifView2 = (GifView) imageHolder.findViewById(R.id.gif_view2);
+                    gifView2.setVisibility(View.GONE);
                     new Thread("Image downloadhttpGeter") {
                         @Override
                         public void run() {
@@ -1400,7 +1405,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         private void updateImageView(final File destFile, Bitmap bitmap) {
             final ImageView imageView = (ImageView) imageHolder.findViewById(R.id.non_webview);
-            final GIFView gifView = (GIFView) imageHolder.findViewById(R.id.gif_view);
+            final IGifView gifView = sp.getBoolean("use_handmade_gifviewer", false) ? (IGifView) imageHolder.findViewById(R.id.gif_view) : (IGifView) imageHolder.findViewById(R.id.gif_view2);
             if (imageView != null) {      // concurrent remove
                 if (destFile.getPath().equals(imageView.getTag())) return;    // already there
                 imageView.setTag(destFile.getPath());

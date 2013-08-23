@@ -778,6 +778,7 @@ public class DatabaseService extends Service {
     private class WriterThread extends Thread {
         @Override
         public void run() {
+            setName("DatabaseService.writer");
             while (true) {
                 ArrayList<Utils.Function<Boolean, Void>> jobs = new ArrayList<Utils.Function<Boolean, Void>>();
                 synchronized (writeJobs) {

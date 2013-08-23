@@ -59,8 +59,8 @@
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="imageproxy.skipOnWifi"
-                android:title="Don't proxy while on Wi-Fi"
-                android:summary="Because there's no need to save on traffic"
+                android:title="@string/DontProxyOverWifi"
+                android:summary="@string/BecauseNoNeedToSave"
                 android:defaultValue="false"
                 android:persistent="true"/>
         <EditTextPreference
@@ -76,7 +76,7 @@
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="image.hide_gif"
-                android:title="Hide GIF pictures"
+                android:title="@string/HideGifPictures"
                 android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference

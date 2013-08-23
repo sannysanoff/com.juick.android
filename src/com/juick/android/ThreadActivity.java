@@ -564,16 +564,16 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
             @Override
             public Void apply(String error) {
-                Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ThreadActivity.this, DatabaseService.class);
-                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                    @Override
-                    public void withService(DatabaseService service) {
-                        service.saveRecentlyCommentedThread(threadStarter);
-                    }
-
-                });
                 replyInProgress = null;
                 if (error == null) {
+                    Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ThreadActivity.this, DatabaseService.class);
+                    databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                        @Override
+                        public void withService(DatabaseService service) {
+                            service.saveRecentlyCommentedThread(threadStarter);
+                        }
+
+                    });
                     sendMessageSucceed();
                 } else {
                     setFormEnabled(true);

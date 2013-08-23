@@ -263,7 +263,7 @@
     <string name="ReadPrivacyPolicy">Подробнее...</string>
     <string name="ChooseFirstOption">Если вы без понятия о чем речь, выбирайте первую опцию.</string>
     <string name="IndirectImages">Грузить непрямые ссылки</string>
-    <string name="Gelbooru">..с некоторых сайтов (например gelbooru.com). Если без JA proxy, то кушает лишний траффик, размером с HTML страницу. </string>
+    <string name="Gelbooru">..с некоторых сайтов (например gelbooru.com). Без JA proxy кушает лишний траффик, размером с HTML страницу. </string>
     <string name="UseBackupServer">Пользовать запасной сервер</string>
     <string name="Usage_Report">Анон. стат.</string>
     <string name="EnableHttpCompression">Сжатие HTTP трафика</string>
@@ -470,6 +470,9 @@
     <string name="JuickGCM___">Недавно представленные GCM уведомления с juick.com. На данный момент только публичные подписки.</string>
     <string name="XMPPJabberNotifications">XMPP / Jabber уведомления</string>
     <string name="XMPPIsIndirect">XMPP клиент находится на J.A. сервере, а не прямо на устройстве.</string>
+    <string name="DontProxyOverWifi">Wi-Fi ==&gt; тянуть оригиналы</string>
+    <string name="HideGifPictures">Не качать GIF-ы</string>
+    <string name="BecauseNoNeedToSave">Потому что с Wi-Fi не экономят на трафике</string>
 
 
 </resources>

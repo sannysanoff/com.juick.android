@@ -158,6 +158,18 @@
                 android:summary="Saves memory at expense of smoothness"
                 android:defaultValue="false"
                 android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="use_handmade_gifviewer"
+                android:title="Use Own GIF decoder"
+                android:summary="(requires memory)"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="use_handmade_gifviewer_downscale"
+                android:title="Own GIF decoder 2x Downscale"
+                android:summary="(uses less memory)"
+                android:defaultValue="true"
+                android:persistent="true"/>
     </PreferenceCategory>
 
 

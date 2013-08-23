@@ -15,7 +15,7 @@ import java.io.IOException;
  * User: san
  */
 
-public class GIFView extends View {
+public class GIFView extends View implements IGifView {
 
     private Movie mMovie;
     long movieStart;
@@ -38,10 +38,12 @@ public class GIFView extends View {
     private void initializeView() {
         //R.drawable.loader - our animated GIF
 //        InputStream is = getContext().getResources().openRawResource(R.drawable.loader);
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }
 
     File file;
 
+    @Override
     public void setMovieFile(File file)  {
         if (this.file != null && file != null && file.getPath().equals(this.file.getPath())) return;
         this.file = file;
@@ -69,6 +71,11 @@ public class GIFView extends View {
             }
             this.invalidate();
         }
+    }
+
+    @Override
+    public void release() {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

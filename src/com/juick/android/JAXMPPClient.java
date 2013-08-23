@@ -84,7 +84,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             return;
         }
         myClient.send(createClientPing());
-        (wsclientLoop = new Thread() {
+        (wsclientLoop = new Thread("JAXMPPClient restarter ("+setup.jid+")") {
             long connectTime = System.currentTimeMillis();
             @Override
             public void run() {
