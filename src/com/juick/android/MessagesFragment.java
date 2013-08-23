@@ -659,7 +659,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             @Override
                             public void run() {
                                 Log.w("JAGP","action_up 5");
-                                ((MainActivity) getActivity()).closeNavigationMenu(false);
+                                ((MainActivity) getActivity()).closeNavigationMenu(false, true);
+
                                 lastToXDelta = 0;
                                 frag.clearAnimation();
                             }
@@ -1208,6 +1209,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         ta.setDuration(duration);
         ta.setFillAfter(true);
         ta.setFillBefore(true);
+        if (parent instanceof MainActivity) {
+            final View navPanel = parent.findViewById(R.id.navigation_panel);
+            navPanel.setVisibility(View.VISIBLE);
+        }
         if (duration > 2) {
             ta.setAnimationListener(new Animation.AnimationListener() {
                 @Override

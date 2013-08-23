@@ -142,6 +142,7 @@ public class MainActivity extends JuickFragmentActivity implements
         if (isNavigationMenuShown()) return;
         navigationMenuShown = true;
         final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
+        navigationPanel.setVisibility(View.VISIBLE);
         final View frag = (ViewGroup)findViewById(R.id.messagesfragment);
         if (animate) {
             AnimationSet set = new AnimationSet(true);
@@ -173,7 +174,7 @@ public class MainActivity extends JuickFragmentActivity implements
         }
     }
 
-    public void closeNavigationMenu(boolean animate) {
+    public void closeNavigationMenu(boolean animate, boolean immediate) {
         if (!isNavigationMenuShown()) return;
         final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
         final View frag = findViewById(R.id.messagesfragment);
@@ -200,6 +201,7 @@ public class MainActivity extends JuickFragmentActivity implements
                     navigationMenuShown = false;
                     frag.clearAnimation();
                     layoutNavigationPane();
+                    //navigationPanel.setVisibility(View.INVISIBLE);
                 }
 
                 @Override
@@ -213,7 +215,7 @@ public class MainActivity extends JuickFragmentActivity implements
                     frag.startAnimation(set);
                     getActivity().findViewById(R.id.layout_container).invalidate();
                 }
-            }, 800); // without this animation does not always run if launched by list item click (back button ok). Investigate
+            }, immediate ? 1: 200); // to smooth the slide
 
         } else {
             navigationMenuShown = false;
@@ -393,7 +395,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 @Override
                 public void onClick(View v) {
                     if (isNavigationMenuShown()) {
-                        closeNavigationMenu(true);
+                        closeNavigationMenu(true, true);
                     } else {
                         openNavigationMenu(true);
                     }
@@ -776,7 +778,7 @@ public class MainActivity extends JuickFragmentActivity implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 setSelectedNavigationItem(position);
-                closeNavigationMenu(true);
+                closeNavigationMenu(true, false);
             }
         });
         navigationList.setDropListener(new DragSortListView.DropListener() {
@@ -1084,6 +1086,7 @@ public class MainActivity extends JuickFragmentActivity implements
             mf.setArguments(args);
             ft.replace(R.id.messagesfragment, mf);
             ft.commit();
+            getSupportFragmentManager().executePendingTransactions();
         } catch (Exception e) {
             // tanunax
         }
@@ -1446,7 +1449,7 @@ public class MainActivity extends JuickFragmentActivity implements
     @Override
     public void onBackPressed() {
         if (isNavigationMenuShown()) {
-            closeNavigationMenu(true);
+            closeNavigationMenu(true, true);
             return;
         }
         if (mf != null && mf.listAdapter != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack()) return;
