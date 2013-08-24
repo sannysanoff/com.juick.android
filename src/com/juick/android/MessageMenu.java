@@ -328,7 +328,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                             } else {
                                 successes++;
                                 sb.append(s);
-                                sb.append("\n");
+                                sb.append(". ");
                             }
                         } else {
                             sb.append("[error]");
@@ -928,7 +928,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         mDialog.setCanceledOnTouchOutside(true);
         final ArrayList<HttpGet> actions = new ArrayList<HttpGet>();
 
-        final String[] split = body.split("\n");
+        final String[] split = body.split("\\.");
         final String[] results = new String[split.length];
         final int[] pieces = new int[]{0};
         for (int i = 0; i < split.length; i++) {

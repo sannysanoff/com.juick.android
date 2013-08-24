@@ -38,7 +38,11 @@ public class GIFView extends View implements IGifView {
     private void initializeView() {
         //R.drawable.loader - our animated GIF
 //        InputStream is = getContext().getResources().openRawResource(R.drawable.loader);
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        try {
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        } catch (Exception e) {
+            //
+        }
     }
 
     File file;

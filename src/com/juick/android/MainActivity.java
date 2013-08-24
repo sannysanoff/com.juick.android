@@ -953,14 +953,22 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void toggleJuickGCM(MainActivity activity) {
+        JuickAdvancedApplication.instance.maybeStartJuickGCMClient(activity);
         new Thread("toggleJuickGCM") {
             @Override
             public void run() {
+                try {
+                    Thread.sleep(500);  // another start may run
+                } catch (InterruptedException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
                 boolean useJuickGCM = sp.getBoolean("juick_gcm", false);
-                if (useJuickGCM) {
-                    JuickAdvancedApplication.instance.juickGCMClient.start();
-                } else {
-                    JuickAdvancedApplication.instance.juickGCMClient.stop();
+                if (JuickAdvancedApplication.instance.juickGCMClient != null) {
+                    if (useJuickGCM) {
+                        JuickAdvancedApplication.instance.juickGCMClient.start();
+                    } else {
+                        JuickAdvancedApplication.instance.juickGCMClient.stop();
+                    }
                 }
             }
         }.start();
