@@ -35,13 +35,18 @@ public class GIFView extends View implements IGifView {
         initializeView();
     }
 
+    static boolean callLayerTypeSoftwate = true;
+
     private void initializeView() {
         //R.drawable.loader - our animated GIF
 //        InputStream is = getContext().getResources().openRawResource(R.drawable.loader);
-        try {
-            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        } catch (Exception e) {
-            //
+        if (callLayerTypeSoftwate) {
+            try {
+                setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            } catch (Throwable e) {
+                //
+                callLayerTypeSoftwate = false;
+            }
         }
     }
 

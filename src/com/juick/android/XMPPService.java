@@ -710,6 +710,29 @@ public class XMPPService extends Service {
     // duplicates from various sources
     ArrayList<String> recentlyReceivedMessages = new ArrayList<String>();
 
+    Runnable saveRecentlyReceivedMessages = new Runnable() {
+        @Override
+        public void run() {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        synchronized (incomingMessages) {
+                            try {
+                                final File newFile = new File(getCacheDir(), "recentlyReceivedMessages.ser.new");
+                                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(newFile));
+                                oos.writeObject(recentlyReceivedMessages);
+                                oos.close();
+                                final File oldFile = new File(getCacheDir(), "recentlyReceivedMessages.ser");
+                                newFile.renameTo(oldFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            }
+                        }
+                    }
+                }.start();
+        }
+    };
+
     public void handleJuickMessage(String from, String body, IncomingMessage preparsed) {
         IncomingMessage handled = null;
         JuickIncomingMessage topicStarter = null;
@@ -905,10 +928,12 @@ public class XMPPService extends Service {
 
                             maybeSaveInDatabase(jim);
 
-                            if (recentlyReceivedMessages.size() > 500) {    // that big!
+                            if (recentlyReceivedMessages.size() > 800) {    // that big!
                                 recentlyReceivedMessages.remove(0);
                             }
                         }
+                        handler.removeCallbacks(saveRecentlyReceivedMessages);
+                        handler.postDelayed(saveRecentlyReceivedMessages, 5000);
                     }
                 }
             }
@@ -1257,6 +1282,14 @@ public class XMPPService extends Service {
                     Log.e("com.juickadvanced", "restoreMessages", e);
                 }
                 synchronized (incomingMessages) {
+                    final File oldFile = new File(getCacheDir(), "recentlyReceivedMessages.ser");
+                    try {
+                        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(oldFile));
+                        recentlyReceivedMessages = (ArrayList<String>)ois.readObject();
+                        ois.close();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
                     incomingMessages.addAll(readMessages);
                     if (incomingMessages.size() > 0) {
                         handler.post(new Runnable() {
