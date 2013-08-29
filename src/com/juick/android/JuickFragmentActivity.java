@@ -80,7 +80,11 @@ public class JuickFragmentActivity extends FragmentActivity {
     @Override
     protected void onPause() {
         JuickAdvancedApplication.instance.setActiveActivity(null);
-        unregisterReceiver(downloadCompleteReceiver);
+        try {
+            unregisterReceiver(downloadCompleteReceiver);
+        } catch (Exception e) {
+            //
+        }
         super.onPause();
     }
 

@@ -99,6 +99,7 @@ public class JuickAdvancedApplication extends Application {
         try {
             version = ""+getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode;
         } catch (Exception ex) {
+
         }
         try {
             dinWebPro = Typeface.createFromAsset(this.getAssets(), "fonts/DINWebPro-CondensedMedium.ttf");

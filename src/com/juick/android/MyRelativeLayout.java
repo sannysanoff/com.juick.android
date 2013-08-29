@@ -14,14 +14,20 @@ import android.widget.RelativeLayout;
 public class MyRelativeLayout extends RelativeLayout {
     public MyRelativeLayout(Context context) {
         super(context);
+        init();
+    }
+
+    private void init() {
     }
 
     public MyRelativeLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public MyRelativeLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
     }
 
     public boolean blockLayoutRequests;

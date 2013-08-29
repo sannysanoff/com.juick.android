@@ -22,33 +22,17 @@ public class GIFView extends View implements IGifView {
 
     public GIFView(Context context) {
         super(context);
-        initializeView();
     }
 
     public GIFView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initializeView();
     }
 
     public GIFView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        initializeView();
     }
 
     static boolean callLayerTypeSoftwate = true;
-
-    private void initializeView() {
-        //R.drawable.loader - our animated GIF
-//        InputStream is = getContext().getResources().openRawResource(R.drawable.loader);
-        if (callLayerTypeSoftwate) {
-            try {
-                setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-            } catch (Throwable e) {
-                //
-                callLayerTypeSoftwate = false;
-            }
-        }
-    }
 
     File file;
 

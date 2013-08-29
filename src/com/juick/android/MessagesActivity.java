@@ -20,15 +20,13 @@ package com.juick.android;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBar;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.view.KeyEvent;
-import android.view.MenuInflater;
-import android.view.View;
-import android.view.Window;
+import android.view.*;
 import android.widget.TextView;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
@@ -50,6 +48,13 @@ public class MessagesActivity extends JuickFragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
+
+        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("hardware_accelerated", true)) {
+            getWindow().setFlags(
+                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        }
+
         super.onCreate(savedInstanceState);
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) supportActionBar.hide();

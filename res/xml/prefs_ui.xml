@@ -56,8 +56,8 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference
-                android:key="enableScaleByGesture"
-                android:title="@string/EnableFontScaleByGesture"
+                android:key="enable_pull_to_refresh"
+                android:title="Enable pull to refresh"
                 android:defaultValue="true"
                 android:persistent="true"/>
         <ListPreference
@@ -136,6 +136,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Debug/Tuning">
+        <CheckBoxPreference
+                android:key="hardware_accelerated"
+                android:title="Hardware Accelerated"
+                android:summary="(May require restart)"
+                android:defaultValue="true"
+                android:persistent="true"/>
         <CheckBoxPreference
                 android:key="alternativeLongClick"
                 android:title="Alternative long click"

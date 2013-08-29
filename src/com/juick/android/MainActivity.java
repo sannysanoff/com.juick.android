@@ -24,6 +24,7 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -260,11 +261,17 @@ public class MainActivity extends JuickFragmentActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        nActiveMainActivities++;
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (sp.getBoolean("hardware_accelerated", true)) {
+            getWindow().setFlags(
+                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        }
         JuickAdvancedApplication.setupTheme(this);
         XMPPService.log("MainActivity.create()");
 
-        nActiveMainActivities++;
-        sp = PreferenceManager.getDefaultSharedPreferences(this);
         handler = new Handler();
         super.onCreate(savedInstanceState);
         displayWidth = getWindow().getWindowManager().getDefaultDisplay().getWidth();
@@ -1426,7 +1433,8 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         }
         if (invalidateRendering) {
-            mf.listAdapter.notifyDataSetInvalidated();
+            if (mf != null && mf.listAdapter != null)
+                mf.listAdapter.notifyDataSetInvalidated();
         }
         if (s.equals("enableLoginNameWithCrashReport")) {
             if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {

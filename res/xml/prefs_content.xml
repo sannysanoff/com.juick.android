@@ -31,6 +31,11 @@
             android:defaultValue="1.0"
             android:persistent="true"/>
     <CheckBoxPreference
+            android:key="enableScaleByGesture"
+            android:title="@string/EnableFontScaleByGesture"
+            android:defaultValue="true"
+            android:persistent="true"/>
+    <CheckBoxPreference
             android:key="feedlyFonts"
             android:title="@string/UseAlternativeFontForTags"
             android:summary="@string/UseAlternativeFontForTags2"

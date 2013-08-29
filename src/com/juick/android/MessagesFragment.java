@@ -80,8 +80,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private ImageView mRefreshViewImage;
     private ProgressBar mRefreshViewProgress;
     private int mCurrentScrollState;
-    private int mRefreshState;
     private RotateAnimation mFlipAnimation;
+    private int mRefreshState;
     private RotateAnimation mReverseFlipAnimation;
     private int mRefreshViewHeight;
     private int mRefreshOriginalTopPadding;
@@ -488,7 +488,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             topMessageId = null;
         }
 
-        if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh()) {
+        if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh() && sp.getBoolean("enable_pull_to_refresh", false)) {
             getListView().addHeaderView(mRefreshView, null, false);
             mRefreshViewHeight = mRefreshView.getMeasuredHeight();
         }
