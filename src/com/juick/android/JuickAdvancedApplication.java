@@ -9,17 +9,21 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.view.WindowManager;
 import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
 import com.juick.android.juick.JuickAPIAuthorizer;
-import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.R;
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 
 import static org.acra.ReportField.*;
@@ -49,6 +53,7 @@ public class JuickAdvancedApplication extends Application {
     public static String version = "unknown";
     Activity currentActivity;
     JuickGCMClient juickGCMClient;
+    public static final int MAX_LOG_FOR_SEND = 200000;
 
     static HashMap<String, Integer> themesMap = new HashMap<String, Integer>() {{
         put("Theme_Sherlock_Light",R.style.Theme_Sherlock_Light);
@@ -78,6 +83,7 @@ public class JuickAdvancedApplication extends Application {
 
     @Override
     public void onCreate() {
+        long l = System.currentTimeMillis();
         if (instance == null)
             ACRA.init(this);
         instance = this;
@@ -108,7 +114,14 @@ public class JuickAdvancedApplication extends Application {
         }
         GCMIntentService.rescheduleAlarm(this, ConnectivityChangeReceiver.getMaximumSleepInterval(getApplicationContext()) * 60);
         startService(new Intent(this, XMPPService.class));
-
+        l = System.currentTimeMillis() - l;
+        int currentVersionCode = 0;
+        try {
+            currentVersionCode = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+        } catch (Exception ex) {
+            //
+        }
+        addToGlobalLog("Application onCreate: "+l+" msec, app version: "+currentVersionCode, null);
     }
 
     public void maybeStartJuickGCMClient(Context context) {
@@ -238,4 +251,107 @@ public class JuickAdvancedApplication extends Application {
     public void setActiveActivity(Activity a) {
         currentActivity = a;
     }
+
+    public static void maybeEnableAcceleration(Activity a) {
+        try {
+            if (PreferenceManager.getDefaultSharedPreferences(a).getBoolean("hardware_accelerated", true)) {
+                a.getWindow().setFlags(
+                        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+            } else {
+                a.getWindow().setFlags(
+                        WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                        0);
+            }
+        } catch (Throwable e) {
+            // missing API
+        }
+    }
+
+    public static void addToGlobalLog(String message, Throwable th) {
+        final Context context = JuickAdvancedApplication.instance.getApplicationContext();
+        final File file = new File(context.getFilesDir(), "global.log");
+        try {
+            if (file.length() > 2000000) {
+                file.delete();
+            }
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            final FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+            SimpleDateFormat df = new SimpleDateFormat("yyMMddHHmmssZ");
+            StringBuilder sb = new StringBuilder();
+            sb.append(df.format(new Date()));
+            if (message != null) {
+                sb.append(" "+message);
+            }
+            sb.append("\n");
+            if (th != null) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final PrintWriter err = new PrintWriter(baos);
+                th.printStackTrace(err);
+                err.println("\n");
+                err.flush();
+                sb.append(baos.toString());
+            }
+            sb.append("\n");
+            fileOutputStream.write(sb.toString().getBytes());
+            fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+
+    }
+
+    // ui thread optional
+    public static void sendGlobalLog() {
+        boolean uiThread = Looper.getMainLooper().getThread() == Thread.currentThread();
+        final Handler handler = uiThread ? new Handler() : null;
+        final String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(instance);
+        final Context context = JuickAdvancedApplication.instance.getApplicationContext();
+        final File file = new File(context.getFilesDir(), "global.log");
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            final byte[] arr = new byte[(int)file.length()];
+            int ix = 0;
+            while(ix < arr.length) {
+                int rd = fis.read(arr, ix, arr.length - ix);
+                if (rd < 1) {
+                    break;
+                }
+                ix += rd;
+            }
+            int start = 0;
+            if (ix > MAX_LOG_FOR_SEND) {
+                start = ix - MAX_LOG_FOR_SEND;
+                ix = MAX_LOG_FOR_SEND;
+            }
+            final String str = new String(arr, start, ix);
+            new Thread("sending errlog") {
+                @Override
+                public void run() {
+                    //final Utils.RESTResponse restResponse = Utils.postJSON(instance, "http://ja.ip.rt.ru:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), str);
+                    final Utils.RESTResponse restResponse = Utils.postJSON(instance, "http://192.168.1.77:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), str, "text/plain");
+                    if (restResponse.getErrorText() == null) {
+                        file.delete();
+                    }
+                    if (handler != null) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (restResponse.getErrorText() == null) {
+                                    Toast.makeText(context, "OK, Sent "+str.length()/1024+" kBytes of log", Toast.LENGTH_LONG).show();
+                                } else {
+                                    Toast.makeText(context, "Error sending log:"+restResponse.getErrorText(), Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+                }
+            }.start();
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
 }

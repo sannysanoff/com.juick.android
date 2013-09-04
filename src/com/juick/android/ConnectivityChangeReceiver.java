@@ -45,7 +45,8 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
-        getCurrentConnectivityTypeKey(context);
+        final String ky = getCurrentConnectivityTypeKey(context);
+        JuickAdvancedApplication.addToGlobalLog("ConnChange: "+ky, null);
         boolean newConnectivity = connectivity;
         Bundle extras = intent.getExtras();
         if (extras.getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {

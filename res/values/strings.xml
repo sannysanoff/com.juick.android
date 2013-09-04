@@ -845,7 +845,8 @@
               туда уходит ваша жуйковская авторизация. Во время логина на ja.ip.rt.ru происходит проверка на возможность
               залогиниться на juick.com с этими данными, и затем эта информация не хранится.
               Это нужно для того, чтобы сторонний Вася не мог назваться вами и получить сформированные для вас данные
-              (ваши подписки, и, в будущем, ваши букмарки или что там еще будет за функциональность). Используется
+              (ваши подписки, и, в будущем, ваши букмарки или что там еще будет за функциональность). Используется HTTPS.
+              Кроме того, туда может уходить диагностическая информация и логи о состоянии канала связи - как оно видится со стороны клиента.
               <br>
               <br>
             7.2 <b>А если</b> вы еще и используете XMPP/Jabber, то ваши jabber-пароли хранятся в ОЗУ сервера, с целью восстановления соединения
@@ -1133,6 +1134,10 @@
     <string name="DontProxyOverWifi">Don\'t proxy while on Wi-Fi</string>
     <string name="HideGifPictures">Ignore GIFs</string>
     <string name="BecauseNoNeedToSave">Because there\'s no need to save on traffic</string>
+    <string name="AttachYourIdToReport">Attach your microblog ID to crash report</string>
+    <string name="TwoWayContact">Two-way contact with developer</string>
+    <string name="SendAppLogToDeveloper">Send app log to developer</string>
+    <string name="ContainsMinor__">Contains minor errors and performance metrics</string>
 
 
 </resources>

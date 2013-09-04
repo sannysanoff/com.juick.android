@@ -74,6 +74,7 @@ import javax.net.ssl.*;
  */
 public class Utils {
 
+    public static final String NO_AUTH = "NO AUTH";
     public static ArrayList<URLAuth> authorizers = new ArrayList<URLAuth>();
 
     public static Throwable getRootException(Throwable e, int maxLoop) {
@@ -86,6 +87,7 @@ public class Utils {
 
     public static abstract class URLAuth {
 
+        public static String REFUSED_AUTH = "___refused__auth____!!!";
 
         public enum ReplyCode {
             FORBIDDEN,
@@ -437,7 +439,7 @@ public class Utils {
         RESTResponse retval = null;
         for (int i = 0; i < 5; i++) {
             retval = getJSON(context, url, notification instanceof DownloadProgressNotification ? (DownloadProgressNotification) notification : null);
-            if (retval.result == null) {
+            if (retval.result == null && !NO_AUTH.equals(retval.getErrorText())) {
                 if (notification instanceof RetryNotification) {
                     ((RetryNotification) notification).notifyRetryIsInProgress(i + 1);
                 }
@@ -469,15 +471,18 @@ public class Utils {
         authorizer.authorize(context, false, forceAttachCredentials, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
+                final boolean noAuthRequested = myCookie.equals(URLAuth.REFUSED_AUTH);
+                if (noAuthRequested) myCookie = null;
                 final DefaultHttpClient client = getNewHttpClient();
                 try {
                     final Function<Void, String> thiz = this;
-                    boolean compression = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("http_compression", false);
+                    final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                    boolean compression = sp.getBoolean("http_compression", false);
                     long l = System.currentTimeMillis();
                     if (compression)
                         initCompressionSupport(client);
                     HttpGet httpGet = new HttpGet(authorizer.authorizeURL(url, myCookie));
-                    Integer timeoutForConnection = timeout > 0 ? timeout : 2222000;
+                    Integer timeoutForConnection = timeout > 0 ? timeout : (sp.getBoolean("use_timeouts_json", false ) ? 10000 : 2222000);
                     client.getParams().setParameter("http.connection.timeout", timeoutForConnection);
                     httpGet.getParams().setParameter("http.socket.timeout", timeoutForConnection);
                     httpGet.getParams().setParameter("http.protocol.head-body-timeout", timeoutForConnection);
@@ -499,6 +504,10 @@ public class Utils {
                                 ret[0] = streamToString(content, progressNotification);
                                 content.close();
                             } else {
+                                if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && noAuthRequested) {
+                                    ret[0] = new RESTResponse(NO_AUTH, false, null);
+                                    return o;
+                                }
                                 if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !forceAttachCredentials) {
                                     ret[0] = getJSON(context, url, progressNotification, timeout, true);
                                     return o;
@@ -519,7 +528,6 @@ public class Utils {
                                             activity.runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
                                                     sp.edit().remove("web_cookie").commit();
                                                     reloginTried = 0;
                                                 }
@@ -806,26 +814,33 @@ public class Utils {
     }
 
     public static RESTResponse postJSON(final Context context, final String url, final String data) {
+        return postJSON(context, url, data, null);
+    }
+
+    public static RESTResponse postJSON(final Context context, final String url, final String data, final String contentType) {
         final URLAuth authorizer = getAuthorizer(url);
         final RESTResponse[] ret = new RESTResponse[]{null};
         final boolean[] cookieCleared = new boolean[]{false};
         authorizer.authorize(context, false, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
+                final boolean noAuthRequested = myCookie.equals(URLAuth.REFUSED_AUTH);
+                if (noAuthRequested) myCookie = null;
                 HttpURLConnection conn = null;
                 try {
 
                     String nurl = authorizer.authorizeURL(url, myCookie);
                     URL jsonURL = new URL(nurl);
                     conn = (HttpURLConnection) jsonURL.openConnection();
-
+                    if (contentType != null) {
+                        conn.addRequestProperty("Content-Type", contentType);
+                    }
                     authorizer.authorizeRequest(context, conn, myCookie, nurl);
 
                     conn.setUseCaches(false);
                     conn.setDoInput(true);
                     conn.setDoOutput(true);
-                    conn.setRequestMethod("POST");
-                    conn.connect();
+                    //conn.setRequestMethod("POST");
 
                     OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
                     wr.write(data);
@@ -833,7 +848,9 @@ public class Utils {
 
                     URLAuth.ReplyCode authReplyCode = authorizer.validateNon200Reply(conn, url, false);
                     try {
-                        if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
+                        if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && noAuthRequested) {
+                            ret[0] = new RESTResponse(NO_AUTH, false, null);
+                        } else if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && !cookieCleared[0]) {
                             cookieCleared[0] = true;    // don't enter loop
                             final Function<Void, String> thiz = this;
                             authorizer.clearCookie(context, new Runnable() {

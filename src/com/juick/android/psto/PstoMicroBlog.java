@@ -244,7 +244,7 @@ public class PstoMicroBlog implements MicroBlog {
         return new OperationInProgress() {
             @Override
             public void preliminarySuccess() {
-                //To change body of implemented methods use File | Settings | File Templates.
+
             }
         };
     }

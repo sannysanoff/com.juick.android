@@ -677,34 +677,7 @@ public class DatabaseService extends Service {
         }
     }
 
-    ArrayList<MessageReadStatus> cachedMRS = new ArrayList<MessageReadStatus>();
-
-    public void getMessageReadStatus(final MessageID messageId, final Utils.Function<Void,MessageReadStatus> callback) {
-        synchronized (cachedMRS) {
-            for (MessageReadStatus messageReadStatus : cachedMRS) {
-                if (messageReadStatus.messageId.equals(messageId)) {
-                    callback.apply(messageReadStatus);
-                    return;
-                }
-            }
-        }
-        new Thread("getMessageReadStatus: "+messageId) {
-            @Override
-            public void run() {
-                MessageReadStatus mrs = getMessageReadStatus0(messageId);
-                synchronized (cachedMRS) {
-                    if (cachedMRS.size() > 10) {
-                        cachedMRS.remove(0);
-                    }
-                    cachedMRS.add(mrs);
-                }
-                callback.apply(mrs);
-                super.run();    //To change body of overridden methods use File | Settings | File Templates.
-            }
-        }.start();
-    }
-
-    private MessageReadStatus getMessageReadStatus0(MessageID messageId) {
+    public MessageReadStatus getMessageReadStatus0(MessageID messageId) {
         Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{messageId.toString()});
         MessageReadStatus mrs = new MessageReadStatus();
         if (cursor.getCount() > 0) {
@@ -736,14 +709,6 @@ public class DatabaseService extends Service {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
                 @Override
                 public Boolean apply(Void aVoid) {
-                    synchronized (cachedMRS) {
-                        for (MessageReadStatus messageReadStatus : cachedMRS) {
-                            if (messageReadStatus.messageId.equals(marker.mid)) {
-                                messageReadStatus.read = true;
-                                break;
-                            }
-                        }
-                    }
                     ReadMarker readMarker = marker;
                     Cursor cursor = db.rawQuery("select * from message_read where msgid=?", new String[]{readMarker.mid.toString()});
                     if (cursor.getCount() == 0) {
@@ -779,6 +744,7 @@ public class DatabaseService extends Service {
         @Override
         public void run() {
             setName("DatabaseService.writer");
+            setPriority(MIN_PRIORITY);
             while (true) {
                 ArrayList<Utils.Function<Boolean, Void>> jobs = new ArrayList<Utils.Function<Boolean, Void>>();
                 synchronized (writeJobs) {

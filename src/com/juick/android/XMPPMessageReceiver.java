@@ -45,6 +45,9 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
+        if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+            context.startService(new Intent(context, XMPPService.class));
+        }
         if (intent.getAction().equals(XMPPService.ACTION_MESSAGE_RECEIVED)) {
             int nMessages = intent.getIntExtra("messagesCount", 0);
             boolean sound = intent.getBooleanExtra("sound", true);

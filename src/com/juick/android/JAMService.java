@@ -24,8 +24,13 @@ public class JAMService extends Service {
         instance = this;
         handler = new Handler();
         super.onCreate();    //To change body of overridden methods use File | Settings | File Templates.
-        XMPPService.log("JAM.onCreate()");
+        log("JAM.onCreate()");
         startup();
+    }
+
+    void log(String str) {
+        XMPPService.log(str);
+        JuickAdvancedApplication.addToGlobalLog("JAMService: "+str, null);
     }
 
     @Override
@@ -34,7 +39,7 @@ public class JAMService extends Service {
         JAXMPPClient clientLocal = client;
         if (intent != null && intent.getBooleanExtra("terminate", false)) {
             if (clientLocal != null) {
-                XMPPService.log("Sent client disconnect (JAM)");
+                log("terminate; sent client disconnect (JAM)");
                 clientLocal.sendDisconnect(new Utils.Function<Void, ServerToClient>() {
                     @Override
                     public Void apply(ServerToClient serverToClient) {
@@ -103,6 +108,7 @@ public class JAMService extends Service {
 
                                     @Override
                                     public void withoutService() {
+                                        log("XMPPServiceGetter:withoutService");
                                     }
                                 });
                                 return false;
@@ -133,6 +139,7 @@ public class JAMService extends Service {
     }
 
     private void cleanup() {
+        log("cleanup");
         final JAXMPPClient clientLocal = client;
         if (clientLocal != null) {
             client = null;
@@ -162,7 +169,7 @@ public class JAMService extends Service {
         cleanup();
         instance = null;
         handler.removeCallbacksAndMessages(null);
-        super.onDestroy();    //To change body of overridden methods use File | Settings | File Templates.
-        XMPPService.log("JAM.onCreate()");
+        super.onDestroy();
+        log("JAM.onDestroy()");
     }
 }

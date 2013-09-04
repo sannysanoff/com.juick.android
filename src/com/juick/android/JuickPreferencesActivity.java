@@ -129,6 +129,9 @@ public class JuickPreferencesActivity extends PreferencesActivity implements IRu
                     .setCancelable(true)
                     .show();
         }
+        if (intent.getAction().equals("sendlog")) {
+            JuickAdvancedApplication.sendGlobalLog();
+        }
         if (intent.getAction().equals("whatsnew")) {
             final WhatsNew whatsNew = new WhatsNew(this);
             ListView lv = new ListView(this);

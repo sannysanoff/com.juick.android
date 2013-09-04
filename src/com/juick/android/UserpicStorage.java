@@ -86,7 +86,10 @@ public class UserpicStorage {
                 listeners1.add(toAdd);
             }
         }
-        new Thread() {
+        new Thread("getUserpic:"+id) {
+            {
+                setPriority(MIN_PRIORITY);
+            }
             @Override
             public void run() {
                 final Utils.ServiceGetter<DatabaseService> dbs = new Utils.ServiceGetter<DatabaseService>(ctx, DatabaseService.class);
@@ -98,7 +101,10 @@ public class UserpicStorage {
                             synchronized (loadingImages) {
                                 if (!loadingImages.contains(key)) {
                                     loadingImages.add(key);
-                                    new Thread() {
+                                    new Thread("getUserpic(inner):"+id) {
+                                        {
+                                            setPriority(MIN_PRIORITY);
+                                        }
                                         @Override
                                         public void run() {
                                             try {

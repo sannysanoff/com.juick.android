@@ -180,7 +180,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                                         new Thread() {
                                             @Override
                                             public void run() {
-                                                withCookie.apply(null);
+                                                withCookie.apply(REFUSED_AUTH);
                                             }
                                         }.start();
                                     }
@@ -268,6 +268,9 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
 
     @Override
     public ReplyCode validateNon200Reply(HttpResponse o, String url, boolean wasForcedAuth) {
+        if (o.getStatusLine().getStatusCode() == 403) {
+            return ReplyCode.FORBIDDEN;
+        }
         if (o.getStatusLine().getStatusCode() == 404) {
             if (url.contains("thread?mid=")) {
                 if (!wasForcedAuth) {

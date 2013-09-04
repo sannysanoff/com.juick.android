@@ -140,7 +140,13 @@
                 android:key="hardware_accelerated"
                 android:title="Hardware Accelerated"
                 android:summary="(May require restart)"
-                android:defaultValue="true"
+                android:defaultValue="false"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="text_accelerated"
+                android:title="Early text render"
+                android:summary="Render text in BG thread"
+                android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="alternativeLongClick"
@@ -175,6 +181,12 @@
                 android:title="Own GIF decoder 2x Downscale"
                 android:summary="(uses less memory)"
                 android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="use_timeouts_json"
+                android:title="10 sec timeout on getJSON "
+                android:summary="Maybe less freezes on msg get"
+                android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
 

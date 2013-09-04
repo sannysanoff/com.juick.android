@@ -12,4 +12,6 @@ import java.io.IOException;
 public interface JASocketClientListener {
 
     public void onWebSocketTextFrame(String data) throws IOException;
+
+    boolean onNoDataFromSocket();   // true = keep running
 }

@@ -1,7 +1,9 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.ViewParent;
 import android.widget.RelativeLayout;
 
 /**

@@ -88,8 +88,26 @@ public class MyImageView extends ImageView  {
         if (drawable instanceof BitmapDrawable) {
             BitmapDrawable bd = (BitmapDrawable)drawable;
             BitmapCounts.releaseBitmap(bd.getBitmap());
+            disableInvalidate = true;
             setImageDrawable(null);
+            disableInvalidate = false;
         }
+    }
+
+    boolean disableInvalidate = false;
+
+    @Override
+    public void invalidate() {
+        if (disableInvalidate)
+            return;
+        super.invalidate();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void requestLayout() {
+        if (disableInvalidate)
+            return;
+        super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override

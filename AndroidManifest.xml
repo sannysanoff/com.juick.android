@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced" android:hardwareAccelerated="true"
-          android:versionCode="2013082901" android:versionName="20.2.11">
+          android:versionCode="2013082801" android:versionName="20.2.10">
 
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -166,6 +166,7 @@
             <intent-filter>
                 <action android:name="com.juickadvanced.android.action.ACTION_MESSAGE_RECEIVED"/>
                 <action android:name="com.juickadvanced.android.action.ACTION_LAUNCH_MESSAGELIST"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
 
@@ -174,6 +175,13 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
             </intent-filter>
         </receiver>
+
+        <receiver android:name="com.juick.android.DownloadCompleteReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
+            </intent-filter>
+        </receiver>
+
         <service android:name="com.juick.android.AuthenticationService" android:exported="true" android:process=":auth">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator"/>

@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class JASocketClient {
 
@@ -49,7 +50,8 @@ public class JASocketClient {
             markActivity();
             return true;
         } catch (IOException e) {
-            System.out.println("WS send:" +e.toString());
+            log("WS send:" + e.toString());
+            disconnect();   // will iterate loop
             return false;
         }
     }
@@ -76,6 +78,7 @@ public class JASocketClient {
         try {
             log("JASocketClient:"+name+": new");
             sock = new Socket();
+            sock.setSoTimeout(60000);   // 1 minute timeout; to check missing pongs and drop connection
             sock.connect(new InetSocketAddress(host, port));
             is = sock.getInputStream();
             os = sock.getOutputStream();
@@ -89,37 +92,67 @@ public class JASocketClient {
         }
     }
 
+    public boolean isConnected() {
+        return sock != null;
+    }
+
     public void readLoop() {
+        long l = System.currentTimeMillis();
+        String cause = "??";
         try {
             int b;
             //StringBuilder buf = new StringBuilder();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            while ((b = is.read()) != -1) {
-                if (shuttingDown) break;
-                markActivity();
-                if (b == '\n') {
-                    if (listener != null) {
-                        listener.onWebSocketTextFrame(new String(baos.toByteArray(), "utf-8"));
-                        baos.reset();
+            final InputStream stream = is;
+            if (stream != null) {
+                while (true) {
+                    try {
+                        b = stream.read();
+                        if (b == -1) {
+                            cause = "short read";
+                            break;
+                        }
+                    } catch (SocketTimeoutException e) {
+                        if (listener != null) {
+                            if (!listener.onNoDataFromSocket()) {
+                                cause = "no pong reply withing interval";
+                                break;
+                            }
+                        }
+                        continue;
                     }
-                } else {
-                    baos.write(b);
+                    if (shuttingDown) {
+                        cause = "shut down client";
+                        break;
+                    }
+                    markActivity();
+                    if (b == '\n') {
+                        if (listener != null) {
+                            listener.onWebSocketTextFrame(new String(baos.toByteArray(), "utf-8"));
+                            baos.reset();
+                        }
+                    } else {
+                        baos.write(b);
+                    }
                 }
             }
-            log("JAMSocket: DISCONNECTED readLoop");
-            disconnect();
         } catch (Exception e) {
-            System.err.println(e);
+            cause = e.toString();
+        } finally {
+            l = System.currentTimeMillis() - l;
+            log("DISCONNECT readLoop: "+l+" msec worked, cause="+cause);
+            disconnect();
         }
     }
 
     private void log(String s) {
-        XMPPService.log("JASocketClient:"+name+":"+s);
+        final String logString = "JASocketClient:" + name + ":" + s;
+        XMPPService.log(logString);
+        JuickAdvancedApplication.addToGlobalLog(logString, null);
     }
 
     public void disconnect() {
         try {
-
             if (is != null) is.close();
             if (os != null) os.close();
             if (sock != null) sock.close();

@@ -106,6 +106,31 @@ public class PressableLinearLayout extends LinearLayout {
         super.requestLayout();    //To change body of overridden methods use File | Settings | File Templates.
     }
 
+    static long measureTimes = 0;
+    static long measureCount = 0;
+    long lastReport = System.currentTimeMillis();
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        measureCount++;
+        long l = System.currentTimeMillis();
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        final long ctm = System.currentTimeMillis();
+        l = ctm - l;
+        if (ctm - lastReport > 100) {
+            System.out.println("PLL relayout: "+measureCount+","+measureTimes);
+            lastReport = ctm;
+        }
+        measureTimes+=l;
+    }
 
+    public static boolean isOtherRelayout() {
+        final StackTraceElement[] tests = new Exception("test").getStackTrace();
+        for (StackTraceElement test : tests) {
+            final String methodName = test.getMethodName();
+            if (methodName.contains("onTouchEvent")) return false;
+            if (methodName.contains("trackMotionScroll")) return false;
+        }
+        return true;
+    }
 }

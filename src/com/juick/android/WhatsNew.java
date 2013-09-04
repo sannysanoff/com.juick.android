@@ -2,6 +2,7 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,6 +30,8 @@ import org.acra.ACRA;
 import org.apache.http.client.HttpClient;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -261,45 +264,19 @@ public class WhatsNew {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
                         Toast.makeText(activity, activity.getString(R.string.DownloadWillStartNow), Toast.LENGTH_LONG).show();
-                        new Thread() {
-                            @Override
-                            public void run() {
-                                final Utils.BINResponse binary = Utils.getBinary(activity, updateURL, new Utils.DownloadProgressNotification() {
-                                    @Override
-                                    public void notifyDownloadProgress(int progressBytes) {
-                                    }
+                        final DownloadManager mgr = (DownloadManager) runningActivity.getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
+                        final Uri parse = Uri.parse(updateURL);
+                        final DownloadManager.Request req = new DownloadManager.Request(parse);
 
-                                    @Override
-                                    public void notifyHttpClientObtained(HttpClient client) {
-                                        //To change body of implemented methods use File | Settings | File Templates.
-                                    }
-                                }, -1);
-
-                                Runnable afterDownload = new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (binary.getErrorText() == null) {
-                                            try {
-                                                FileOutputStream fos = new FileOutputStream(getUpdateAPK());
-                                                fos.write(binary.getResult());
-                                                fos.close();
-                                                installUpdate(activity);
-                                            } catch (Exception e) {
-                                                Toast.makeText(activity, "Store Juick Advanced update: " + e.toString(), Toast.LENGTH_LONG).show();
-                                            }
-                                        } else {
-                                            Toast.makeText(activity, "Download Juick Advanced update: " + binary.getErrorText(), Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                };
-                                if (runningActivity.isRunning()) {
-                                    runningActivity.getHandler().post(afterDownload);
-                                } else {
-                                    MainActivity.installerOnResume = afterDownload;
-                                }
-                                super.run();    //To change body of overridden methods use File | Settings | File Templates.
-                            }
-                        }.start();
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                                .mkdirs();
+                        String name = new File(parse.getPath()).getName();
+                        req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI|DownloadManager.Request.NETWORK_MOBILE)
+                                .setAllowedOverRoaming(true)
+                                .setTitle(name)
+                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+                                .setDescription("Juick Advanced update");
+                        mgr.enqueue(req);
                     }
                 });
                 builder.setNeutralButton(activity.getString(R.string.AskLater), new DialogInterface.OnClickListener() {
@@ -710,21 +687,28 @@ public class WhatsNew {
         return "???";
     }
 
-
-    private static void doLocalInstall(final Activity context) {
-        File file = new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
-        Intent promptInstall = new Intent(Intent.ACTION_VIEW)
-                .setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
-        promptInstall.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(promptInstall);
+    private static void doLocalInstall(final Context context, String maybeLocalURI) {
+        try {
+            File file;
+            if (maybeLocalURI != null)
+                file = new File(new URI(maybeLocalURI).getPath());
+            else
+                file = new File(Environment.getExternalStorageDirectory(), "juick-advanced-update.apk");
+            Intent promptInstall = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+            promptInstall.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(promptInstall);
+        } catch (URISyntaxException e) {
+            Toast.makeText(context, "Failed launch update install.", Toast.LENGTH_LONG).show();
+        }
     }
 
-    private static void launchApplicationSettingsForUnknownSources(final Context context) {
+    private static void launchApplicationSettingsForUnknownSources(final Context context, final String maybeLocalURI) {
         if (context instanceof MainActivity) {
             ((MainActivity) context).installerOnResume = new Runnable() {
                 @Override
                 public void run() {
-                    installUpdate((MainActivity) context);
+                    installUpdate((MainActivity) context, maybeLocalURI);
                 }
             };
         }
@@ -738,17 +722,17 @@ public class WhatsNew {
         }
     }
 
-    public static void installUpdate(final Activity context) {
+    public static void installUpdate(final Context context, final String maybeLocalURI) {
         String string = Settings.System.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS);
         if ("1".equals(string)) {
-            doLocalInstall(context);
+            doLocalInstall(context, maybeLocalURI);
         } else {
             new AlertDialog.Builder(context)
                     .setMessage("You must allow 'unknown sources' to install update")
                     .setPositiveButton("Enable unknown sources", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            launchApplicationSettingsForUnknownSources(context);
+                            launchApplicationSettingsForUnknownSources(context, maybeLocalURI);
                             //To change body of implemented methods use File | Settings | File Templates.
                         }
                     }).setNegativeButton("Skip update", new DialogInterface.OnClickListener() {

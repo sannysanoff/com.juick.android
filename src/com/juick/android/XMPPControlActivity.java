@@ -25,6 +25,7 @@ public class XMPPControlActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.maybeEnableAcceleration(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xmpp_control);
         final TextView xmppStatus = (TextView) findViewById(R.id.xmpp_status);
@@ -49,6 +50,7 @@ public class XMPPControlActivity extends Activity {
         final TextView memoryTotal = (TextView) findViewById(R.id.memory_total);
         final TextView memoryUsed = (TextView) findViewById(R.id.memory_used);
         final TextView instCount = (TextView) findViewById(R.id.inst_count);
+        final TextView hardwareAcceleration = (TextView) findViewById(R.id.hardware_acceleration);
         final TextView infoDate = (TextView) findViewById(R.id.info_date);
         final Utils.ServiceGetter<XMPPService> xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final Utils.ServiceGetter<JAMService> jamServiceServiceGetter = new Utils.ServiceGetter<JAMService>(this, JAMService.class);
@@ -176,6 +178,11 @@ public class XMPPControlActivity extends Activity {
                         lastWSId.setText(XMPPService.lastWSMessageID + " count=" + XMPPService.nWSMessages);
                         juickGCMStatus.setText(XMPPService.juickGCMStatus);
                         juickGCMReceived.setText("cnt="+XMPPService.juickGCMReceived+" last="+(XMPPService.juickGCMKLasReceived != null ? sdf.format(XMPPService.juickGCMKLasReceived) : "never"));
+                        try {
+                            hardwareAcceleration.setText(""+getWindow().getDecorView().isHardwareAccelerated());
+                        } catch (Throwable th) {
+                            hardwareAcceleration.setText("not supported in API");
+                        }
                         handler.postDelayed(thiz, 2000);
                     }
 

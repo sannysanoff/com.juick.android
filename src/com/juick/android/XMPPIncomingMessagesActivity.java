@@ -74,6 +74,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     protected void onCreate(Bundle savedInstanceState) {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        JuickAdvancedApplication.maybeEnableAcceleration(this);
         super.onCreate(savedInstanceState);
 
         overridePendingTransition(R.anim.enter_slide_to_bottom, android.R.anim.fade_out);

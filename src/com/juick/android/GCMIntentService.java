@@ -116,6 +116,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     private static final String CATEGORY_HARDWARE_ALARM = "HARDWARE_ALARM";
 
     public static void rescheduleAlarm(Context ctx, int seconds) {
+        JuickAdvancedApplication.addToGlobalLog("Sched: alarm scheduled in "+seconds+" seconds", null);
         Intent intent = new Intent(ctx, com.juickadvanced.GCMIntentService.class);
         intent.addCategory(CATEGORY_HARDWARE_ALARM);
         PendingIntent scheduledAlarm = PendingIntent.getService(ctx, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT);

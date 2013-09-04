@@ -2,6 +2,8 @@ package com.juick.android;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
@@ -13,6 +15,8 @@ import android.widget.TextView;
  * To change this template use File | Settings | File Templates.
  */
 public class MyTextView extends TextView {
+
+
     public MyTextView(Context context) {
         super(context);
     }
@@ -25,9 +29,25 @@ public class MyTextView extends TextView {
         super(context, attrs, defStyle);
     }
 
+    public JuickMessagesAdapter.RenderedText content;
+
     @Override
     protected void onDraw(Canvas canvas) {
+        canvas.save();
         super.onDraw(canvas);
+        if (content != null) {
+            for (JuickMessagesAdapter.CanvasPainter canvasPainter : content.data) {
+                canvasPainter.paintOnCanvas(canvas, null);
+            }
+        }
+        canvas.restore();
+        if (content != null) {
+            final Paint paint = new Paint();
+            paint.setColor(Color.BLUE);
+            paint.setStrokeWidth(2);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(80, 5, 3, paint);
+        }
     }
 
     public boolean blockLayoutRequests;

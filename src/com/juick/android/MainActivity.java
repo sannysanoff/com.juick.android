@@ -263,12 +263,7 @@ public class MainActivity extends JuickFragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         nActiveMainActivities++;
         sp = PreferenceManager.getDefaultSharedPreferences(this);
-
-        if (sp.getBoolean("hardware_accelerated", true)) {
-            getWindow().setFlags(
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        }
+        JuickAdvancedApplication.maybeEnableAcceleration(this);
         JuickAdvancedApplication.setupTheme(this);
         XMPPService.log("MainActivity.create()");
 
@@ -292,6 +287,9 @@ public class MainActivity extends JuickFragmentActivity implements
         if (sp.getBoolean("fullScreenMessages", false)) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
+        if (sp.getBoolean("hardware_accelerated", false)) {
+            JuickAdvancedApplication.maybeEnableAcceleration(this);
         }
         toggleXMPP(this);
         toggleJAMessaging();
@@ -1491,5 +1489,7 @@ public class MainActivity extends JuickFragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
+
+
 
 }

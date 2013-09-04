@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -49,11 +50,7 @@ public class MessagesActivity extends JuickFragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
 
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("hardware_accelerated", true)) {
-            getWindow().setFlags(
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        }
+        JuickAdvancedApplication.maybeEnableAcceleration(this);
 
         super.onCreate(savedInstanceState);
         ActionBar supportActionBar = getSupportActionBar();
@@ -71,6 +68,7 @@ public class MessagesActivity extends JuickFragmentActivity {
             initWithMessagesSource();
         }
     }
+
 
     protected void initWithMessagesSource() {
         setContentView(R.layout.messages);

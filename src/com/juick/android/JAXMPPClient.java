@@ -42,11 +42,13 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     private Handler handler;
     XMPPConnectionSetup setup;
     String username;
-    JASocketClient wsClient;
+    volatile JASocketClient wsClient;
     Thread wsclientLoop;
     public boolean loggedIn;
     private boolean someMessages;
     private String socketName;
+    private long lastPongFromServer;
+    private long expectPongFromServer;
 
     public JAXMPPClient() {
     }
@@ -59,8 +61,11 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         socketName = "xmppSocket";
         String retval = performLogin(context, setup);
         if (retval == null) {
+            log("loginXMPP success: "+setup.jid);
             loggedIn = true;
             addListeners();
+        } else {
+            log("loginXMPP error: "+setup.jid+": "+retval);
         }
         return retval;
     }
@@ -79,16 +84,18 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         final JASocketClient myClient = wsClient = new JASocketClient(socketName);
         boolean connected = wsClient.connect(jahost, jaSocketPort);
         if (!connected) {
+            log("could not connect, schedule retry");
             wsClient = null;
             scheduleRetryConnection();
             return;
         }
+        increasingReconnectDelay = 15;
         myClient.send(createClientPing());
         (wsclientLoop = new Thread("JAXMPPClient restarter ("+setup.jid+")") {
             long connectTime = System.currentTimeMillis();
             @Override
             public void run() {
-                while(!myClient.shuttingDown) {
+                if(!myClient.shuttingDown) {
                     if (myClient != wsClient) {
                         // replaced by another one
                         myClient.disconnect();
@@ -103,7 +110,6 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                     someMessages = false;
                     wsClient = null;        // something goes wrong, will try later
                     scheduleRetryConnection();
-                    return;
                 }
             }
         }).start();
@@ -114,6 +120,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         HashMap<String,Long> bestPeriods = ConnectivityChangeReceiver.getBestPeriods(context);
         ping.setConnectivityInfoStatistics(new Gson().toJson(bestPeriods));
         ping.setConnectivityInfo(ConnectivityChangeReceiver.getCurrentConnectivityTypeKey(context));
+        expectPongFromServer = System.currentTimeMillis() + 60000;
+        lastPongFromServer = -1;
         return new Gson().toJson(ping);
     }
 
@@ -123,12 +131,16 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         if (activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting()) {
             GCMIntentService.rescheduleAlarm(context, increasingReconnectDelay);
             increasingReconnectDelay *= 2;
+            if (increasingReconnectDelay > 10*60) {       // max 10 minutes
+                increasingReconnectDelay = 10*60;
+            }
         }
     }
 
     public String loginLocal(Context context, Handler handler, String username, String cookie) {
         this.context = context;
         JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal");
+        log("loginLocal: "+username);
         this.handler = handler;
         this.username = username;
         socketName = "jamSocket";
@@ -322,9 +334,25 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                 if (pongFromServer.getAdjustSleepInterval() != 0) {
                     ConnectivityChangeReceiver.adjustMaximumSleepInterval(context, pongFromServer.getAdjustSleepInterval());
                 }
+                log("pong from server ok");
+                lastPongFromServer = System.currentTimeMillis();
             }
         }
     }
+
+    @Override
+    public boolean onNoDataFromSocket() {
+        if (expectPongFromServer > 0) {
+            if (System.currentTimeMillis() > expectPongFromServer && lastPongFromServer == -1) {
+                return false;
+            }
+            expectPongFromServer = 0;
+            log("pong time check ok");
+        }
+        return true;
+    }
+
+
 
     private void callXMPPControlSafeWithArgs(Utils.Function<Void, ClientToServer> configurer, final Utils.Function<Void, ServerToClient> then) {
         ClientToServer clientToServer = new ClientToServer(sessionId);
@@ -460,7 +488,6 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             if (localWSClient != null) {
                                 localWSClient.send(createClientPing());
                             }
-                            XMPPService.log("Poll: "+setup.getJid());
                             ClientToServer c2s = new ClientToServer(sessionId);
                             c2s.setPoll(new Poll(since));
                             final ServerToClient serverToClient = callXmppControl(context, c2s);
@@ -492,6 +519,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                                         hasSomething = true;
                                     }
                                 }
+                                log("Poll: smth="+hasSomething);
                                 if (hasSomething) {
                                     c2s = new ClientToServer(sessionId);
                                     c2s.setConfirmPoll(new ConfirmPoll(since));
@@ -500,8 +528,12 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                                         continue;
                                     }
                                 }
+                                if (serverToClient.getLogreq()) {
+                                    JuickAdvancedApplication.sendGlobalLog();
+                                }
                             } else {
                                 String error = serverToClient.getErrorMessage();
+                                log("Poll: "+error);
                                 if (error.equals(ServerToClient.NO_SUCH_SESSION)) {
                                     error = relogin();
                                 }
@@ -579,7 +611,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         new Thread("SendGCMReg") {
             @Override
             public void run() {
-                Log.i("JA.SendGCMReg", "sending reg, sessionId="+sessionId);
+                log("sending reg, sessionId="+sessionId);
                 if (sessionId != null) {
                     ClientToServer c2s = new ClientToServer(sessionId);
                     c2s.setSendGCMRegistration(new SendGCMRegistration(regid));
@@ -594,20 +626,22 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             @Override
             public void run() {
                 if (wsClient == null) {
-                    XMPPService.log("onKeepAlive: restarting");
+                    log("onKeepAlive: restarting");
                     maybeStartWSClient();
                 } else {
                     try {
-                        if (!wsClient.send(createClientPing())) {
-                            XMPPService.log("onKeepAlive: send failed");
+                        final String clientPing = createClientPing();
+                        log("onKeepAlive: sending "+clientPing);
+                        if (!wsClient.send(clientPing)) {
+                            log("onKeepAlive: send failed");
                             wsClient.disconnect();
                             wsClient = null;
                             maybeStartWSClient();
                         } else {
-                            XMPPService.log("onKeepAlive: send ok");
+                            log("onKeepAlive: send ok");
                         }
                     } catch (Exception e) {
-                        XMPPService.log("onKeepAlive: "+e.toString());
+                        log("onKeepAlive: " + e.toString());
                         if (wsClient != null) {
                             wsClient.disconnect();
                             wsClient = null;
@@ -621,6 +655,13 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             public void run() {
             }
         });
+    }
+
+    private void log(String s) {
+        XMPPService.log(s);
+        String jid = setup != null ? setup.jid : "null";
+        if (jid == null) jid="null";
+        JuickAdvancedApplication.addToGlobalLog("JXC"+(jid.contains("@local")?"(L)":"")+": "+s, null);
     }
 
 

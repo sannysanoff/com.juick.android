@@ -462,7 +462,7 @@
     <string name="TooManyTags">Слишком много тегов, максимум 5.</string>
     <string name="StorePlainTextPassword">Сохранить пароль рядом с программой</string>
     <string name="AllAuthHasBeenCleared">Все сохраненные логины и пароли удалены</string>
-    <string name="ThisWillRemoveAuth">Вы действительно хотите удалить созраненные логины и пароли из программы?</string>
+    <string name="ThisWillRemoveAuth">Вы действительно хотите удалить сохраненные логины и пароли из программы?</string>
     <string name="ClearAllAuth">Удалить сохраненные логины</string>
     <string name="MinimalisticViewer">Минималистический бровзер для просмотра статей, проходящих в жуйке (экспериментальный)</string>
     <string name="JuickGCMNotifications">Стандартные уведомления</string>
@@ -473,6 +473,12 @@
     <string name="DontProxyOverWifi">Wi-Fi ==&gt; тянуть оригиналы</string>
     <string name="HideGifPictures">Не качать GIF-ы</string>
     <string name="BecauseNoNeedToSave">Потому что с Wi-Fi не экономят на трафике</string>
+    <string name="AttachYourIdToReport">Присовокуплять ваш ID</string>
+    <string name="TwoWayContact">..к отчетам об ошибках. Для лучшей связи с рарзаботчиком</string>
+    <string name="SendAppLogToDeveloper">Отправить лог</string>
+    <string name="ContainsMinor__">Отправить журнал некритических ошибок и метрику производительности приложения разработчику</string>
+    <string name="VariousInfo">Разное...</string>
+    <string name="VariousInfo2">Диаграммы / статистика</string>
 
 
 </resources>

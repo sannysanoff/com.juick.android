@@ -101,12 +101,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("hardware_accelerated", true)) {
-            getWindow().setFlags(
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        }
-
+        JuickAdvancedApplication.maybeEnableAcceleration(this);
         JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);

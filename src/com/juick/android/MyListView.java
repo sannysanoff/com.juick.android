@@ -57,7 +57,11 @@ public class MyListView extends ListView {
                 shouldReset = true;
                 break;
         }
-        return super.onTouchEvent(ev);
+        try {
+            return super.onTouchEvent(ev);
+        } finally {
+
+        }
     }
 
     @Override

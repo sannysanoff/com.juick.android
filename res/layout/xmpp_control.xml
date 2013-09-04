@@ -436,6 +436,23 @@
                         >
                 </TextView>
             </TableRow>
+            <TableRow>
+                <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="right"
+                        android:text="HW Accel:"
+                        android:textStyle="bold"
+                        >
+
+                </TextView>
+                <TextView
+                        android:id="@+id/hardware_acceleration"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="5sp"
+                        android:text=""
+                        >
+                </TextView>
+            </TableRow>
         </TableLayout>
     </ScrollView>
 </RelativeLayout>

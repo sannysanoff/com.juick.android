@@ -22,15 +22,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.*;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Parcelable;
+import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ListFragment;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewConfigurationCompat;
+import android.text.TextPaint;
 import android.util.Log;
 import android.view.*;
 import android.view.animation.Animation;
@@ -49,10 +48,9 @@ import com.juickadvanced.data.juick.JuickMessageID;
 import org.acra.ACRA;
 import org.apache.http.client.HttpClient;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -241,7 +239,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         installDividerColor(listView);
         MainActivity.restyleChildrenOrWidget(listView);
 
-        listAdapter = new JuickMessagesAdapter(getActivity(), JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
+        listAdapter = new JuickMessagesAdapter(getActivity(), this, JuickMessagesAdapter.TYPE_MESSAGES, allMessages ? JuickMessagesAdapter.SUBTYPE_ALL : JuickMessagesAdapter.SUBTYPE_OTHER);
 
         listAdapter.setOnForgetListener(new Utils.Function<Void,JuickMessage>() {
             @Override
@@ -408,23 +406,28 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                         public void run() {
                                             try {
                                                 if (isAdded()) {
-                                                    initListWithMessages(messages);
-                                                    if (moveToTop) {
-                                                        lv.setSelection(0);
-                                                    } else {
-                                                        if (finalListPosition != null) {
-                                                            lv.onRestoreInstanceState(finalListPosition);
-                                                        } else {
-                                                            setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
-                                                        }
-                                                    }
-                                                    Log.w("com.juick.advanced", "getFirst: end.");
-                                                    handler.postDelayed(new Runnable() {
+                                                    lastPrepareMessages(messages, new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            onListLoaded();
+                                                            initListWithMessages(messages);
+                                                            if (moveToTop) {
+                                                                lv.setSelection(0);
+                                                            } else {
+                                                                if (finalListPosition != null) {
+                                                                    lv.onRestoreInstanceState(finalListPosition);
+                                                                } else {
+                                                                    setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                                }
+                                                            }
+                                                            Log.w("com.juick.advanced", "getFirst: end.");
+                                                            handler.postDelayed(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    onListLoaded();
+                                                                }
+                                                            }, 10);
                                                         }
-                                                    }, 10);
+                                                    });
                                                 }
                                             } catch (IllegalStateException e) {
                                                 Toast.makeText(activity, e.toString(), Toast.LENGTH_LONG).show();
@@ -453,6 +456,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     }
                 }
             };
+            thr.setPriority(Thread.MIN_PRIORITY);
             thr.start();
         }
     }
@@ -578,6 +582,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     boolean navigationOpenMode = false;
 
+    View fragInParent;      // optimized speed
+
     public Boolean maybeInterceptTouchEventFromActivity(MotionEvent event) {
         if (rightScrollBound == 0) {
             Log.w("JAGP","rightScrollBound == 0");
@@ -586,16 +592,17 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         if (getActivity() == null) return null;
         int action = event.getAction();
         int actionMasked = event.getActionMasked();
-        final View frag = getActivity().findViewById(R.id.messagesfragment);
+        if (fragInParent == null)
+            fragInParent = getActivity().findViewById(R.id.messagesfragment);
         if (action == MotionEvent.ACTION_DOWN || actionMasked == MotionEvent.ACTION_POINTER_DOWN) {
-            if (mScrollState == SCROLL_STATE_IDLE && frag.getAnimation() == null) {
+            if (mScrollState == SCROLL_STATE_IDLE && fragInParent.getAnimation() == null) {
                 if (!canStartScroll(event)) {
                     mIsUnableToDrag = true;
                     return null;
                 }
                 if (event.getPointerCount() == 1) {
                     Log.w("JAGP","action_down 1");
-                    navigationOpenMode = frag.getLeft() > 0;
+                    navigationOpenMode = fragInParent.getLeft() > 0;
                     mLastMotionX = mInitialMotionX = event.getX();
                     mLastMotionY = event.getY();
                     currentScrollX = 0;
@@ -614,7 +621,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                     mIsUnableToDrag = true;
                 }
             } else {
-                Log.w("JAGP","!(mScrollState == SCROLL_STATE_IDLE && frag.getAnimation() == null)");
+                Log.w("JAGP","!(mScrollState == SCROLL_STATE_IDLE && fragInParent.getAnimation() == null)");
             }
         }
         if (action == MotionEvent.ACTION_UP || actionMasked == MotionEvent.ACTION_POINTER_UP) {
@@ -644,7 +651,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                         Log.w("JAGP","action_up 3");
                                         ((MainActivity) getActivity()).openNavigationMenu(false);
                                         lastToXDelta = 0;
-                                        frag.clearAnimation();
+                                        fragInParent.clearAnimation();
                                     }
                                 }, 200);
                             }
@@ -662,7 +669,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                 ((MainActivity) getActivity()).closeNavigationMenu(false, true);
 
                                 lastToXDelta = 0;
-                                frag.clearAnimation();
+                                fragInParent.clearAnimation();
                             }
                         }, 200);
 
@@ -864,6 +871,167 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
     }
 
+    static Method drawTextRun = null;
+    static {
+        try {
+            drawTextRun = Canvas.class.getMethod("drawTextRun", new Class[] {CharSequence.class, int.class, int.class, int.class, int.class, float.class, float.class, int.class, Paint.class});
+        } catch (Throwable t) {
+
+        }
+    }
+
+    static HashMap<String, Paint> paintCache = new HashMap<String, Paint>();
+
+    class PaintCacheKey {
+        int color;
+        float fontSize;
+    }
+
+    public Paint getPaintFromCache(Paint original) {
+        if (original instanceof TextPaint) {
+            return new TextPaint(original);
+        } else {
+            return new Paint(original);
+        }
+    }
+
+
+
+    public void lastPrepareMessages(final List<JuickMessage> list, final Runnable then) {
+        databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+            @Override
+            public void withService(final DatabaseService service) {
+                new Thread("processLastReads cont") {
+                    @Override
+                    public void run() {
+                        for (JuickMessage juickMessage : list) {
+                            // we can use service inside here, because getMessageReadStatus0 is thread-safe
+                            final DatabaseService.MessageReadStatus messageReadStatus0 = service.getMessageReadStatus0(juickMessage.getMID());
+                            if (messageReadStatus0.read) {
+                                juickMessage.read = true;
+                                juickMessage.readComments = messageReadStatus0.nreplies;
+                            }
+                        }
+
+                        final Activity act = getActivity();
+
+                        if (act != null) {
+                            if (sp.getBoolean("text_accelerated", false)) {
+                                // accelerate text draw
+
+                                final Bitmap bm = Bitmap.createBitmap(10, 10, Bitmap.Config.ALPHA_8);
+                                while(MessagesFragment.this.getView().getMeasuredWidth() == 0) {
+                                    try {
+                                        Thread.sleep(100);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                    }
+                                }
+
+                                TextView tv = new TextView(act);
+                                tv.setTextSize(JuickMessagesAdapter.getTextSize(act));
+                                MainActivity.restyleChildrenOrWidget(tv);
+                                final int outerViewWidth = MessagesFragment.this.getView().getMeasuredWidth();
+                                final int width = outerViewWidth - 6;
+                                tv.setWidth(width);
+                                tv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                                final ArrayList<JuickMessagesAdapter.CanvasPainter> stuff = new ArrayList<JuickMessagesAdapter.CanvasPainter>();
+
+                                Canvas canvas = new Canvas(bm) {
+                                    @Override
+                                    public void drawText(char[] text, int index, int count, float x, float y, Paint paint) {
+                                        super.drawText(text, index, count, x, y, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawText(String text, float x, float y, Paint paint) {
+                                        super.drawText(text, x, y, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawText(String text, int start, int end, float x, float y, Paint paint) {
+                                        super.drawText(text, start, end, x, y, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawText(CharSequence text, int start, int end, float x, float y, Paint paint) {
+                                        super.drawText(text, start, end, x, y, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawVertices(VertexMode mode, int vertexCount, float[] verts, int vertOffset, float[] texs, int texOffset, int[] colors, int colorOffset, short[] indices, int indexOffset, int indexCount, Paint paint) {
+                                        super.drawVertices(mode, vertexCount, verts, vertOffset, texs, texOffset, colors, colorOffset, indices, indexOffset, indexCount, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawPosText(char[] text, int index, int count, float[] pos, Paint paint) {
+                                        super.drawPosText(text, index, count, pos, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawPosText(String text, float[] pos, Paint paint) {
+                                        super.drawPosText(text, pos, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawTextOnPath(char[] text, int index, int count, Path path, float hOffset, float vOffset, Paint paint) {
+                                        super.drawTextOnPath(text, index, count, path, hOffset, vOffset, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    @Override
+                                    public void drawTextOnPath(String text, Path path, float hOffset, float vOffset, Paint paint) {
+                                        super.drawTextOnPath(text, path, hOffset, vOffset, paint);    //To change body of overridden methods use File | Settings | File Templates.
+                                    }
+
+                                    public void drawTextRun(final CharSequence text, final int start, final int end,
+                                                            final int contextStart, final int contextEnd, final float x, final float y, final int dir,
+                                                            final Paint paint) {
+                                        stuff.add(new JuickMessagesAdapter.CanvasPainter() {
+
+
+                                            Paint paintClone = getPaintFromCache(paint);
+
+                                            @Override
+                                            public void paintOnCanvas(Canvas c, Paint workPaint) {
+                                                try {
+                                                    drawTextRun.invoke(c, text, start, end, contextStart, contextEnd, x, y, dir, paintClone);
+                                                } catch (Throwable t) {
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public boolean getClipBounds(Rect bounds) {
+                                        bounds.top = 0;
+                                        bounds.bottom = 100000;
+                                        bounds.left = 0;
+                                        bounds.right = width;
+                                        return true;
+                                    }
+                                };
+
+                                for (JuickMessage juickMessage : list) {
+                                    JuickMessagesAdapter.ParsedMessage pm = (JuickMessagesAdapter.ParsedMessage)juickMessage.parsedText;
+                                    tv.setText(pm.textContent);
+                                    stuff.clear();
+                                    tv.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                                    tv.draw(canvas);
+                                    if (stuff.size() > 0) {
+                                        juickMessage.parsedUI = new JuickMessagesAdapter.RenderedText(outerViewWidth, tv.getMeasuredHeight(), new ArrayList<JuickMessagesAdapter.CanvasPainter>(stuff));
+                                    } else {
+                                        juickMessage.parsedUI = null;
+                                    }
+                                }
+                            }
+                            act.runOnUiThread(then);
+                        }
+                    }
+                }.start();
+            }
+        });
+    }
+
     private void loadMore() {
 
         if (getView() == null) {
@@ -892,23 +1060,36 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                 activity.runOnUiThread(new Runnable() {
 
                                     public void run() {
-                                        progressNotification.loadingg.setVisibility(View.GONE);
-                                        progressNotification.progressBar.setVisibility(View.GONE);
-                                        if (messages.size() == 0) {
-                                            progressNotification.progress.setText(progressNotification.lastError);
-                                        }
-                                        if (getView() == null) return;  // already closed?
-                                        MyListView parent = (MyListView) getListView();
 
-                                        if (getListView().getAdapter().getCount() - (recentFirstVisibleItem + recentVisibleItemCount) > 3) {
-                                            parent.blockLayoutRequests = true;  // a nafig nam layout, at least 3 items below?
-                                        }
-                                        try {
-                                            listAdapter.addAllMessages(messagesFiltered);
-                                        } finally {
-                                            parent.blockLayoutRequests = false;
-                                        }
-                                        loading = false;
+
+                                        lastPrepareMessages(messagesFiltered, new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progressNotification.loadingg.setVisibility(View.GONE);
+                                                progressNotification.progressBar.setVisibility(View.GONE);
+                                                if (messages.size() == 0) {
+                                                    progressNotification.progress.setText(progressNotification.lastError);
+                                                }
+                                                if (getView() == null) return;  // already closed?
+                                                MyListView parent = (MyListView) getListView();
+
+                                                if (getListView().getAdapter().getCount() - (recentFirstVisibleItem + recentVisibleItemCount) > 3) {
+                                                    parent.blockLayoutRequests = true;  // a nafig nam layout, at least 3 items below?
+                                                }
+                                                try {
+                                                    listAdapter.addAllMessages(messagesFiltered);
+                                                } finally {
+                                                    parent.blockLayoutRequests = false;
+                                                }
+                                                handler.postDelayed(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        loading = false;
+                                                    }
+                                                }, 1000);
+                                            }
+                                        });
+
                                     }
                                 });
                                 return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -1051,7 +1232,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         recentFirstVisibleItem = firstVisibleItem;
         recentVisibleItemCount = visibleItemCount;
         int prefetchMessagesSize = prefetchMessages ? 20 : 0;
-        if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && loading == false) {
+        if (visibleItemCount < totalItemCount && (firstVisibleItem + visibleItemCount >= totalItemCount - prefetchMessagesSize) && !loading) {
             if (messagesSource.canNext()) {
                 loadMore();
             }
@@ -1069,6 +1250,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             final int itemToSave = lastItemReported;
                             if (itemToSave - 1 < listAdapter.getCount()) {  // some async delete could happen
                                 final JuickMessage item = (JuickMessage) listAdapter.getItem(itemToSave - 1);
+                                item.read = true;
                                 databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
                                     @Override
                                     public void withService(DatabaseService service) {

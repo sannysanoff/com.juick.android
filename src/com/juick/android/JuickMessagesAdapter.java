@@ -26,6 +26,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.text.Layout;
 import android.text.Layout.Alignment;
 import android.text.style.*;
@@ -105,6 +106,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     private Utils.Function<Void, JuickMessage> onForgetListener;
+    private Fragment fragment;
 
 
     public static Set<String> getFilteredOutUsers(Context ctx) {
@@ -158,8 +160,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public static float defaultTextSize;
     public static float textScale;
 
-    public JuickMessagesAdapter(Context context, int type, int subtype) {
+    public JuickMessagesAdapter(Context context, Fragment fragment, int type, int subtype) {
         super(context, R.layout.listitem_juickmessage);
+        this.fragment = fragment;
         sp = PreferenceManager.getDefaultSharedPreferences(context);
         mUiThread = Thread.currentThread();
         if (Replies == null) {
@@ -223,264 +226,36 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         final JuickMessage jmsg = getItem(position);
-        View v = convertView;
-        if (v != null) {
-            v.requestLayout();
-        }
-
-        float neededTextSize = getDefaultTextSize(getContext()) * textScale;
+        final Context context = getContext();
+        View v1 = convertView;
         if (jmsg.User != null && jmsg.Text != null) {
-            if (v == null || !(v instanceof LinearLayout)) {
-                LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = vi.inflate(R.layout.listitem_juickmessage, null);
-//                v.setWillNotCacheDrawing(true);       78 msec/iter with cache turned off (40 msec with on)
-                final PressableLinearLayout sll = (PressableLinearLayout)v;
-                sll.setPressedListener(new PressableLinearLayout.PressedListener() {
-                    @Override
-                    public void onPressStateChanged(boolean selected) {
-                        MainActivity.restyleChildrenOrWidget(sll, true);
-                    }
-
-                    @Override
-                    public void onSelectStateChanged(boolean selected) {
-                        MainActivity.restyleChildrenOrWidget(sll, true);
-                    }
-                });
+            MessageViewPreparer messageViewPreparer = new MessageViewPreparer(handler, jmsg, context, v1, getTextSize(context)).invoke();
+            v1 = messageViewPreparer.getV1();
+            startLoadUserPic(jmsg, messageViewPreparer.getT(), messageViewPreparer.getLrr(), messageViewPreparer.getParsedMessage(), messageViewPreparer.getUserPic());
+            if (messageViewPreparer.getParsedPreMessage() != null) {
+                startLoadUserPic(jmsg.contextPost, messageViewPreparer.getPret(), messageViewPreparer.getPrelrr(), messageViewPreparer.getParsedPreMessage(), messageViewPreparer.getPreuserPic());
             }
-            final LinearLayout ll = (LinearLayout)v;
-            final MyTextView t = (MyTextView) v.findViewById(R.id.text);
-            final TextView compactDate = (TextView) v.findViewById(R.id.compactDate);
-            final Button forget = (Button) v.findViewById(R.id.forget_button);
-            final MyTextView pret = (MyTextView) v.findViewById(R.id.pretext);
-            final ListRowRuntime lrr = new ListRowRuntime(jmsg, null, 0);
-            final ListRowRuntime prelrr = jmsg.contextPost != null ? new ListRowRuntime(jmsg.contextPost, null, 0) : null;
-            ListRowRuntime oldlrr = (ListRowRuntime)t.getTag();
-            if (oldlrr != null) {
-                oldlrr.removeListenerIfExists();
-            }
-            t.setTag(lrr);
-            t.setTextSize(neededTextSize);
-            pret.setTag(prelrr);
-            pret.setTextSize(neededTextSize);
-
-            final ParsedMessage parsedMessage;
-            ParsedMessage parsedPreMessage = null;
-            if (type == TYPE_THREAD && jmsg.getRID() == 0) {
-                parsedMessage = formatFirstMessageText(jmsg);
-            } else {
-                parsedMessage = formatMessageText(getContext(), jmsg, false);
-            }
-            if (jmsg.contextPost != null) {
-                String savedText = jmsg.contextPost.Text;
-                if (savedText.length() > 200) {
-                    jmsg.contextPost.Text = savedText.substring(0, 200)+".......";
-                }
-                parsedPreMessage = formatMessageText(getContext(), jmsg.contextPost, false);
-                jmsg.contextPost.Text = savedText;
-            }
-
-            final ImageView userPic = (ImageView) v.findViewById(R.id.userpic);
-            final ImageView preuserPic = (ImageView) v.findViewById(R.id.preuserpic);
-            startLoadUserPic(jmsg, t, lrr, parsedMessage, userPic);
-            if (parsedPreMessage != null) {
-                startLoadUserPic(jmsg.contextPost, pret, prelrr, parsedPreMessage, preuserPic);
-            }
-            if (type != TYPE_THREAD && trackLastRead && jmsg.getRID() < 1) {
-                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                    @Override
-                    public void withService(DatabaseService service) {
-                        service.getMessageReadStatus(jmsg.getMID(), new Utils.Function<Void, DatabaseService.MessageReadStatus>() {
-                            @Override
-                            public Void apply(DatabaseService.MessageReadStatus messageReadStatus) {
-                                if (messageReadStatus.read) {
-                                    handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            ListRowRuntime tag = (ListRowRuntime)t.getTag();
-                                            if (tag.jmsg.getMID() == jmsg.getMID()) {
-                                                // still valid
-                                                parsedMessage.markAsRead(getContext());
-//                                                t.blockLayoutRequests = true;
-                                                t.setText(parsedMessage.textContent);
-//                                                t.layout(t.getLeft(), t.getTop(), t.getRight(), t.getBottom());
-//                                                t.blockLayoutRequests = false;
-                                            }
-                                        }
-                                    });
-                                }
-                                return null;
-                            }
-                        });
-                    }
-                });
-                xmppServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
-                    @Override
-                    public void withService(XMPPService service) {
-                        service.removeMessages(jmsg.getMID(), true);
-                    }
-                });
-
-            }
-            if (!parsedMessage.read) {  // could be set synchronously by the getMessageReadStatus, above
-                t.setText(parsedMessage.textContent);
-                compactDate.setText(parsedMessage.compactDate);
-            }
-            if (parsedPreMessage != null) {
-                pret.setText(parsedPreMessage.textContent);
-                pret.setVisibility(View.VISIBLE);
-                preuserPic.setVisibility(View.VISIBLE);
-                if (jmsg.myFoundCount != 0 || jmsg.hisFoundCount != 0) {
-                    // other case
-                } else {
-                    forget.setVisibility(View.VISIBLE);
-                }
-                forget.setEnabled(true);
-                forget.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (onForgetListener != null) {
-                            forget.setEnabled(false);
-                            onForgetListener.apply(jmsg);
-                        }
-                    }
-                });
-            } else {
-                pret.setVisibility(View.GONE);
-                preuserPic.setVisibility(View.GONE);
-                forget.setVisibility(View.GONE);
-            }
-            final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
-            if (images.size() > 0 && !imageLoadMode.equals("off")) {
-                final ImageGallery gallery = new ImageGallery(getContext());
-                gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                gallery.setSpacing(20);
-                gallery.setVisibility(View.VISIBLE);
-                ((LinearLayout) v).addView(gallery);
-                gallery.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-                    long lastClick = 0;
-                    @Override
-                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                        Object tag = gallery.getTag();
-                        if (tag instanceof HashMap) {
-                            HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
-                            final ImageLoaderConfiguration imageLoader = loaders.get(i);
-                            if (imageLoader != null && imageLoader.loader != null) {
-                                // Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
-                                if (System.currentTimeMillis() - lastClick < 500) {
-                                    if (imagePreviewHelper != null) {
-                                        MyImageView myImageView = (MyImageView)gallery.getSelectedView().findViewById(R.id.non_webview);
-                                        if (myImageView.getVisibility() == View.VISIBLE) {
-                                            imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url, false);
-                                        }
-                                    }
-                                    lastClick = 0;  // triple click prevention
-                                    return;
-                                }
-                                lastClick = System.currentTimeMillis();
-                            }
-                        }
-                        //To change body of implemented methods use File | Settings | File Templates.
-                    }
-                });
-                final HashMap<Integer, ImageLoaderConfiguration> imageLoaders = new HashMap<Integer, ImageLoaderConfiguration>();
-                gallery.setTag(imageLoaders);
-                final Display dd = ((Activity) getContext()).getWindow().getWindowManager().getDefaultDisplay();
-                final int HEIGHT = (int)(Math.max(dd.getHeight(), dd.getWidth()) * imageHeightPercent);
-                gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, HEIGHT + 20));
-                gallery.setAdapter(new BaseAdapter() {
-
-                    LRUCache<Integer, View> views = new LRUCache<Integer, View>(5, gallery) {
-
-                        @Override
-                        void cleanupValue(View view) {
-                            cleanupRow(view);
-                        }
-
-                    };
-
-                    @Override
-                    public int getCount() {
-                        return images.size();
-                    }
-
-                    @Override
-                    public Object getItem(int i) {
-                        return i;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public long getItemId(int i) {
-                        return i;  //To change body of implemented methods use File | Settings | File Templates.
-                    }
-
-                    @Override
-                    public View getView(int i, View view, ViewGroup viewGroup) {
-                        final View cached = views.get(i);
-                        if (cached != null) return cached;
-                        if (view == null) {
-                            view = ((Activity) getContext()).getLayoutInflater().inflate(R.layout.image_holder, null);
-                            views.put(i, view);
-                            ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
-                            gallery.addInitializedView(wv);
-                            GIFView gv = (GIFView) view.findViewById(R.id.gif_view);
-                            gallery.addInitializedView(gv);
-                            GifView gv2 = (GifView) view.findViewById(R.id.gif_view2);
-                            gallery.addInitializedView(gv2);
-                        } else {
-                            cleanupRow(view);
-                        }
-                        view.setMinimumHeight(HEIGHT);
-                        ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
-                        if (imageLoader == null) {
-                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(gallery, images.get(i), view, HEIGHT, ll, false, images.size() > 1), false);
-                            imageLoaders.put(i, imageLoader);
-                        } else if (imageLoader.loader == null) {
-                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(gallery, images.get(i), view, HEIGHT, ll, imageLoader.useOriginal, images.size() > 1), imageLoader.useOriginal);
-                            imageLoaders.put(i, imageLoader);
-                        } else {
-                            imageLoader.loader.setDestinationView(view);
-                        }
-                        if (view == null) {
-                            System.out.println("oh");
-                        }
-                        //view.measure(2000, 2000);
-                        MainActivity.restyleChildrenOrWidget(view, true);
-                        return view;
-                    }
-
-                    private void cleanupRow(View view) {
-                        ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
-                        if (wv != null) {
-                            final Drawable drawable = wv.getDrawable();
-                            if (drawable instanceof BitmapDrawable) {
-                                BitmapDrawable bd = (BitmapDrawable)drawable;
-                                BitmapCounts.releaseBitmap(bd.getBitmap());
-                                wv.setImageDrawable(null);
-                            }
-                        }
-                    }
-                });
-            }
-
-
         } else {
-            if (v == null || !(v instanceof TextView)) {
+            if (v1 == null || !(v1 instanceof TextView)) {
                 LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = vi.inflate(R.layout.preference_category, null);
+                v1 = vi.inflate(R.layout.preference_category, null);
             }
 
-            ((TextView) v).setTextSize(neededTextSize);
+            ((TextView) v1).setTextSize(getTextSize(context));
 
             if (jmsg.Text != null) {
-                ((TextView) v).setText(jmsg.Text);
+                ((TextView) v1).setText(jmsg.Text);
             } else {
-                ((TextView) v).setText("");
+                ((TextView) v1).setText("");
             }
         }
+        View v = v1;
         MainActivity.restyleChildrenOrWidget(v, true);
-
         return v;
+    }
+
+    public static float getTextSize(Context context) {
+        return getDefaultTextSize(context) * textScale;
     }
 
     static boolean useDirectImageMode(Context ctx) {
@@ -495,7 +270,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return false;
     }
 
-    private void startLoadUserPic(final JuickMessage jmsg, final MyTextView t, final ListRowRuntime lrr, ParsedMessage parsedMessage, final ImageView userPic) {
+    private void startLoadUserPic(final JuickMessage jmsg, final MyTextView t, final ListRowRuntime lrr, ParsedMessage parsedMessage, final View userPic) {
         if (parsedMessage.userpicSpan != null) {
             lrr.pictureSize = (int)(parsedMessage.userpicSpan.getLeadingMargin(true) * 0.9);
             userPic.getLayoutParams().width = lrr.pictureSize;
@@ -517,7 +292,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                             public void run() {
                                 ListRowRuntime tag = (ListRowRuntime)t.getTag();
                                 if (tag.jmsg.getMID() == jmsg.getMID()) {
-                                    userPic.setImageBitmap(userpic);
+                                    updateUserpicView(userPic, userpic);
                                 }
                                 //To change body of implemented methods use File | Settings | File Templates.
                             }
@@ -525,14 +300,25 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     }
                 }
             };
-            Bitmap userpic = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
-            if (userpic == null) {
+            Bitmap bitmap = UserpicStorage.instance.getUserpic(getContext(), avatarId, lrr.pictureSize, lrr.userpicListener);
+            if (bitmap == null) {
                 // until it loads, we will put proper size placeholder (later re-layout minimization)
-                userpic = UserpicStorage.instance.getUserpic(getContext(), UserpicStorage.NO_AVATAR, lrr.pictureSize, null);
+                bitmap = UserpicStorage.instance.getUserpic(getContext(), UserpicStorage.NO_AVATAR, lrr.pictureSize, null);
             }
-            userPic.setImageBitmap(userpic);    // can be null
+            updateUserpicView(userPic, bitmap);
         } else {
-            userPic.setImageBitmap(null);
+            updateUserpicView(userPic, null);
+        }
+    }
+
+    private void updateUserpicView(View userPic, final Bitmap bitmap) {
+        if (userPic instanceof MyImageView) {
+            final MyImageView miv = (MyImageView) userPic;
+            miv.disableInvalidate = true;
+            miv.setImageBitmap(bitmap);
+            miv.disableInvalidate = false;
+        } else if (userPic instanceof ImageView) {
+            ((ImageView)userPic).setImageBitmap(bitmap);
         }
     }
 
@@ -660,6 +446,22 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 vg.layout(vg.getLeft(), vg.getTop(), vg.getRight(), vg.getTop() + vg.getMeasuredHeight());
                 pll.blockLayoutRequests = false;
             }
+        }
+    }
+
+    public static interface CanvasPainter {
+        public void paintOnCanvas(Canvas c, Paint workPaint);
+    }
+
+    public static class RenderedText {
+        int outerViewWidth;
+        int height;
+        ArrayList<CanvasPainter> data;
+
+        public RenderedText(int outerViewWidth, int height, ArrayList<CanvasPainter> data) {
+            this.outerViewWidth = outerViewWidth;
+            this.height = height;
+            this.data = data;
         }
     }
 
@@ -823,26 +625,37 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
         }
         ssb.append(txt);
+        boolean ssbChanged = false; // allocation optimization
         // Highlight links http://example.com/
         ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
         ArrayList<String> urls = new ArrayList<String>();
         for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
             setSSBSpan(ssb, new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             urls.add(foundURL.getUrl());
+            ssbChanged = true;
         }
         // bold italic underline
-        setStyleSpans(ssb, spanOffset, Typeface.BOLD, "*");
-        setStyleSpans(ssb, spanOffset, Typeface.ITALIC, "/");
-        setStyleSpans(ssb, spanOffset, UnderlineSpan.class, "_");
-        txt = ssb.subSequence(spanOffset, ssb.length()).toString(); // ssb was modified in between
-
+        if (jmsg.Text.indexOf("*") != -1) {
+            setStyleSpans(ssb, spanOffset, Typeface.BOLD, "*");
+            ssbChanged = true;
+        }
+        if (jmsg.Text.indexOf("/") != 0) {
+            setStyleSpans(ssb, spanOffset, Typeface.ITALIC, "/");
+            ssbChanged = true;
+        }
+        if (jmsg.Text.indexOf("_") != 0) {
+            setStyleSpans(ssb, spanOffset, UnderlineSpan.class, "_");
+            ssbChanged = true;
+        }
+        if (ssbChanged) {
+            txt = ssb.subSequence(spanOffset, ssb.length()).toString(); // ssb was modified in between
+        }
 
         // Highlight nick
         String accountName = JuickAPIAuthorizer.getJuickAccountName(ctx);
         if (accountName != null) {
-            accountName = accountName.toLowerCase();
             int scan = spanOffset;
-            String nickScanArea = ssb.toString().toLowerCase()+" ";
+            String nickScanArea = ssb+" ";
             while(true) {
                 int myNick = nickScanArea.indexOf("@" + accountName, scan);
                 if (myNick != -1) {
@@ -981,8 +794,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     private static void setStyleSpans(SpannableStringBuilder ssb, int ssbOffset, Object what, String styleChar) {
-        // easing bounds checking
-        String txt = ssb.subSequence(ssbOffset, ssb.length()).toString();
+        String txt;
+        txt = ssb.subSequence(ssbOffset, ssb.length()).toString();
         txt = " "+txt+" ";
         ssbOffset-=1;
         //
@@ -1033,7 +846,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return Character.isLetterOrDigit(c) || c == '_' || c == '-' || c == '@';
     }
 
-    private ParsedMessage formatFirstMessageText(JuickMessage jmsg) {
+    private static ParsedMessage formatFirstMessageText(JuickMessage jmsg) {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         String tags = jmsg.getTags();
         if (feedlyFonts) {
@@ -1087,12 +900,14 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 toAdd.add(message);
             }
         }
-        try {
-            addAll(toAdd);
-        } catch (Throwable th) {
-            // unimplemented?
-            for (JuickMessage juickMessage : toAdd) {
-                add(juickMessage);
+        if (toAdd.size() > 0) {
+            try {
+                addAll(toAdd);
+            } catch (Throwable th) {
+                // unimplemented?
+                for (JuickMessage juickMessage : toAdd) {
+                    add(juickMessage);
+                }
             }
         }
     }
@@ -1138,12 +953,15 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             updateUIBindings();
             final File destFile = getDestFile(getContext(), url);
             suffix = getSuffix(destFile);
-            loadFromFileOrNetwork(url, imageHolder, forceOriginalImage, destFile);
+            loadFromFileOrNetwork(handler, getContext(), url, imageHolder, forceOriginalImage, destFile);
         }
 
-        private void loadFromFileOrNetwork(final String url, final View imageHolder, final boolean forceOriginalImage, final File destFile) {
+        private void loadFromFileOrNetwork(final Handler handler, final Context context, final String url, final View imageHolder, final boolean forceOriginalImage, final File destFile) {
             if (destFile.exists() && destFile.length() > 1024) {
                 new Thread() {
+                    {
+                        setPriority(MIN_PRIORITY);
+                    }
                     @Override
                     public void run() {
                         try {
@@ -1156,7 +974,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                     handler.post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            loadFromFileOrNetwork(url, imageHolder, forceOriginalImage, destFile);
+                                            loadFromFileOrNetwork(handler, context, url, imageHolder, forceOriginalImage, destFile);
                                         }
                                     });
                                 } else {
@@ -1186,7 +1004,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 httpClient = new DefaultHttpClient();
                 String loadURl = url;
 
-                if (!forceOriginalImage && !isHTMLSource(getContext(), url)) {
+                if (!forceOriginalImage && !isHTMLSource(context, url)) {
                     loadURl = setupProxyForURL(url);
                 }
                 try {
@@ -1207,7 +1025,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     gifView.setVisibility(View.GONE);
                     final GifView gifView2 = (GifView) imageHolder.findViewById(R.id.gif_view2);
                     gifView2.setVisibility(View.GONE);
-                    new Thread("Image downloadhttpGeter") {
+                    new Thread("Image downloadHttpGetter") {
+                        {
+                            setPriority(MIN_PRIORITY);
+                        }
                         @Override
                         public void run() {
                             try {
@@ -1314,6 +1135,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                             httpGet = new HttpGet(imageURL);
                                                             httpClient.execute(httpGet, this);
                                                         } catch (IOException e) {
+                                                            JuickAdvancedApplication.addToGlobalLog("get image: "+imageURL, e);
                                                             updateStatus("Error: " + e);
                                                         }
                                                         return null;
@@ -1567,9 +1389,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
     }
 
-    private void handleOOM(final Activity activity, OutOfMemoryError e) {
+    static private void handleOOM(final Activity activity, OutOfMemoryError e) {
         ACRA.getErrorReporter().handleException(new RuntimeException("OOM: " + XMPPControlActivity.getMemoryStatusString(), e));
-        handler.post(new Runnable() {
+        activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Toast.makeText(activity, "Out of memory", Toast.LENGTH_SHORT).show();
@@ -1657,5 +1479,269 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
 
+    public class MessageViewPreparer {
+        private final JuickMessage jmsg;
+        private final Context context;
+        private View v1;
+        private float neededTextSize;
+        private MyTextView t;
+        private MyTextView pret;
+        private ListRowRuntime lrr;
+        private ListRowRuntime prelrr;
+        private ParsedMessage parsedMessage;
+        private ParsedMessage parsedPreMessage;
+        private View userPic;
+        private ImageView preuserPic;
 
+        public MessageViewPreparer(Handler handler, JuickMessage jmsg, Context context, View v1, float neededTextSize) {
+            this.jmsg = jmsg;
+            this.context = context;
+            this.v1 = v1;
+            this.neededTextSize = neededTextSize;
+        }
+
+        public View getV1() {
+            return v1;
+        }
+
+        public MyTextView getT() {
+            return t;
+        }
+
+        public MyTextView getPret() {
+            return pret;
+        }
+
+        public ListRowRuntime getLrr() {
+            return lrr;
+        }
+
+        public ListRowRuntime getPrelrr() {
+            return prelrr;
+        }
+
+        public ParsedMessage getParsedMessage() {
+            return parsedMessage;
+        }
+
+        public ParsedMessage getParsedPreMessage() {
+            return parsedPreMessage;
+        }
+
+        public View getUserPic() {
+            return userPic;
+        }
+
+        public ImageView getPreuserPic() {
+            return preuserPic;
+        }
+
+        public MessageViewPreparer invoke() {
+            if (v1 == null || !(v1 instanceof LinearLayout)) {
+                LayoutInflater vi = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v1 = vi.inflate(R.layout.listitem_juickmessage, null);
+//                v.setWillNotCacheDrawing(true);       78 msec/iter with cache turned off (40 msec with on)
+                final PressableLinearLayout sll = (PressableLinearLayout) v1;
+                sll.setPressedListener(new PressableLinearLayout.PressedListener() {
+                    @Override
+                    public void onPressStateChanged(boolean selected) {
+                        MainActivity.restyleChildrenOrWidget(sll, true);
+                    }
+
+                    @Override
+                    public void onSelectStateChanged(boolean selected) {
+                        MainActivity.restyleChildrenOrWidget(sll, true);
+                    }
+                });
+            }
+            final LinearLayout ll = (LinearLayout) v1;
+            t = (MyTextView) v1.findViewById(R.id.text);
+            final TextView compactDate = (TextView) v1.findViewById(R.id.compactDate);
+            final Button forget = (Button) v1.findViewById(R.id.forget_button);
+            pret = (MyTextView) v1.findViewById(R.id.pretext);
+            lrr = new ListRowRuntime(jmsg, null, 0);
+            prelrr = jmsg.contextPost != null ? new ListRowRuntime(jmsg.contextPost, null, 0) : null;
+            ListRowRuntime oldlrr = (ListRowRuntime)t.getTag();
+            if (oldlrr != null) {
+                oldlrr.removeListenerIfExists();
+            }
+            t.setTag(lrr);
+            t.setTextSize(neededTextSize);
+            pret.setTag(prelrr);
+            pret.setTextSize(neededTextSize);
+
+            parsedPreMessage = null;
+            parsedMessage = formatMessageText(context, jmsg, false);
+            if (jmsg.contextPost != null) {
+                String savedText = jmsg.contextPost.Text;
+                if (savedText.length() > 200) {
+                    jmsg.contextPost.Text = savedText.substring(0, 200)+".......";
+                }
+                parsedPreMessage = formatMessageText(context, jmsg.contextPost, false);
+                jmsg.contextPost.Text = savedText;
+            }
+
+            userPic = (View) v1.findViewById(R.id.userpic);
+            preuserPic = (ImageView) v1.findViewById(R.id.preuserpic);
+            if (jmsg.getRID() < 1 && jmsg.read) {
+                parsedMessage.markAsRead(context);
+            }
+            boolean disableTextAccel = false;
+            if (jmsg.parsedUI != null) {
+                t.setText("");
+                t.content = (RenderedText) jmsg.parsedUI;
+                if (t.content.outerViewWidth != fragment.getView().getMeasuredWidth()) {
+                    disableTextAccel = true;
+                } else {
+                    t.getLayoutParams().height = t.content.height;
+                }
+            } else {
+                disableTextAccel = true;
+            }
+            if (disableTextAccel) {
+                t.getLayoutParams().height = AbsListView.LayoutParams.WRAP_CONTENT;
+                t.content = null;
+                t.setText(parsedMessage.textContent);
+            }
+            compactDate.setText(parsedMessage.compactDate);
+            if (parsedPreMessage != null) {
+                pret.setText(parsedPreMessage.textContent);
+                pret.setVisibility(View.VISIBLE);
+                preuserPic.setVisibility(View.VISIBLE);
+                if (jmsg.myFoundCount != 0 || jmsg.hisFoundCount != 0) {
+                    // other case
+                } else {
+                    forget.setVisibility(View.VISIBLE);
+                }
+                forget.setEnabled(true);
+                forget.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v11) {
+                        if (onForgetListener != null) {
+                            forget.setEnabled(false);
+                            onForgetListener.apply(jmsg);
+                        }
+                    }
+                });
+            } else {
+                pret.setVisibility(View.GONE);
+                preuserPic.setVisibility(View.GONE);
+                forget.setVisibility(View.GONE);
+            }
+            final ArrayList<String> images = filterImagesUrls(parsedMessage.urls);
+            if (images.size() > 0 && !imageLoadMode.equals("off")) {
+                final ImageGallery gallery = new ImageGallery(context);
+                gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                gallery.setSpacing(20);
+                gallery.setVisibility(View.VISIBLE);
+                ((LinearLayout) v1).addView(gallery);
+                gallery.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    long lastClick = 0;
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Object tag = gallery.getTag();
+                        if (tag instanceof HashMap) {
+                            HashMap<Integer, ImageLoaderConfiguration> loaders = (HashMap<Integer, ImageLoaderConfiguration>)tag;
+                            final ImageLoaderConfiguration imageLoader = loaders.get(i);
+                            if (imageLoader != null && imageLoader.loader != null) {
+                                // Toast.makeText(getContext(), imageLoader.loader.info(), Toast.LENGTH_SHORT).show();
+                                if (System.currentTimeMillis() - lastClick < 500) {
+                                    if (imagePreviewHelper != null) {
+                                        MyImageView myImageView = (MyImageView)gallery.getSelectedView().findViewById(R.id.non_webview);
+                                        if (myImageView.getVisibility() == View.VISIBLE) {
+                                            imagePreviewHelper.startWithImage(myImageView.getDrawable(), imageLoader.loader.info().toString(), imageLoader.loader.url, false);
+                                        }
+                                    }
+                                    lastClick = 0;  // triple click prevention
+                                    return;
+                                }
+                                lastClick = System.currentTimeMillis();
+                            }
+                        }
+                        //To change body of implemented methods use File | Settings | File Templates.
+                    }
+                });
+                final HashMap<Integer, ImageLoaderConfiguration> imageLoaders = new HashMap<Integer, ImageLoaderConfiguration>();
+                gallery.setTag(imageLoaders);
+                final Display dd = ((Activity) context).getWindow().getWindowManager().getDefaultDisplay();
+                final int HEIGHT = (int)(Math.max(dd.getHeight(), dd.getWidth()) * imageHeightPercent);
+                gallery.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, HEIGHT + 20));
+                gallery.setAdapter(new BaseAdapter() {
+
+                    LRUCache<Integer, View> views = new LRUCache<Integer, View>(5, gallery) {
+
+                        @Override
+                        void cleanupValue(View view) {
+                            cleanupRow(view);
+                        }
+
+                    };
+
+                    @Override
+                    public int getCount() {
+                        return images.size();
+                    }
+
+                    @Override
+                    public Object getItem(int i) {
+                        return i;  //To change body of implemented methods use File | Settings | File Templates.
+                    }
+
+                    @Override
+                    public long getItemId(int i) {
+                        return i;  //To change body of implemented methods use File | Settings | File Templates.
+                    }
+
+                    @Override
+                    public View getView(int i, View view, ViewGroup viewGroup) {
+                        final View cached = views.get(i);
+                        if (cached != null) return cached;
+                        if (view == null) {
+                            view = ((Activity) context).getLayoutInflater().inflate(R.layout.image_holder, null);
+                            views.put(i, view);
+                            ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
+                            gallery.addInitializedView(wv);
+                            GIFView gv = (GIFView) view.findViewById(R.id.gif_view);
+                            gallery.addInitializedView(gv);
+                            GifView gv2 = (GifView) view.findViewById(R.id.gif_view2);
+                            gallery.addInitializedView(gv2);
+                        } else {
+                            cleanupRow(view);
+                        }
+                        view.setMinimumHeight(HEIGHT);
+                        ImageLoaderConfiguration imageLoader = imageLoaders.get(i);
+                        if (imageLoader == null) {
+                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(gallery, images.get(i), view, HEIGHT, ll, false, images.size() > 1), false);
+                            imageLoaders.put(i, imageLoader);
+                        } else if (imageLoader.loader == null) {
+                            imageLoader = new ImageLoaderConfiguration(new ImageLoader(gallery, images.get(i), view, HEIGHT, ll, imageLoader.useOriginal, images.size() > 1), imageLoader.useOriginal);
+                            imageLoaders.put(i, imageLoader);
+                        } else {
+                            imageLoader.loader.setDestinationView(view);
+                        }
+                        if (view == null) {
+                            System.out.println("oh");
+                        }
+                        //view.measure(2000, 2000);
+                        MainActivity.restyleChildrenOrWidget(view, true);
+                        return view;
+                    }
+
+                    private void cleanupRow(View view) {
+                        ImageView wv = (ImageView) view.findViewById(R.id.non_webview);
+                        if (wv != null) {
+                            final Drawable drawable = wv.getDrawable();
+                            if (drawable instanceof BitmapDrawable) {
+                                BitmapDrawable bd = (BitmapDrawable)drawable;
+                                BitmapCounts.releaseBitmap(bd.getBitmap());
+                                wv.setImageDrawable(null);
+                            }
+                        }
+                    }
+                });
+            }
+            return this;
+        }
+    }
 }
