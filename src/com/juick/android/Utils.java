@@ -471,7 +471,7 @@ public class Utils {
         authorizer.authorize(context, false, forceAttachCredentials, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
-                final boolean noAuthRequested = myCookie.equals(URLAuth.REFUSED_AUTH);
+                final boolean noAuthRequested = myCookie != null && myCookie.equals(URLAuth.REFUSED_AUTH);
                 if (noAuthRequested) myCookie = null;
                 final DefaultHttpClient client = getNewHttpClient();
                 try {
@@ -824,11 +824,10 @@ public class Utils {
         authorizer.authorize(context, false, false, url, new Function<Void, String>() {
             @Override
             public Void apply(String myCookie) {
-                final boolean noAuthRequested = myCookie.equals(URLAuth.REFUSED_AUTH);
+                final boolean noAuthRequested = myCookie != null && myCookie.equals(URLAuth.REFUSED_AUTH);
                 if (noAuthRequested) myCookie = null;
                 HttpURLConnection conn = null;
                 try {
-
                     String nurl = authorizer.authorizeURL(url, myCookie);
                     URL jsonURL = new URL(nurl);
                     conn = (HttpURLConnection) jsonURL.openConnection();
