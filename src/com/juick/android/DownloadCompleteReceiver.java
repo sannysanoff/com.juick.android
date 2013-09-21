@@ -36,7 +36,7 @@ public class DownloadCompleteReceiver extends BroadcastReceiver {
                             // dup in 30 seconds
                         } else {
                             whenDownloaded.put(uri, System.currentTimeMillis());
-                            if (localURI.contains("com.juickadvanced-20")) {
+                            if (localURI != null && localURI.contains("com.juickadvanced-20")) {
                                 WhatsNew.installUpdate(context, localURI);
                             }
                         }
