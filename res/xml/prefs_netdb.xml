@@ -25,6 +25,12 @@
             android:defaultValue="30"
             android:persistent="false"/>
     <CheckBoxPreference
+            android:key="enableSynchronization"
+            android:title="@string/SynchronizeOnJAServer"
+            android:summary="@string/WillSynchronize"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <CheckBoxPreference
             android:key="downloadImagesOverMobile"
             android:title="@string/FullsizeDownloadOverMobile"
             android:summary="@string/WhenDownloading___"

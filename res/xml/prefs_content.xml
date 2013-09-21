@@ -41,6 +41,12 @@
             android:summary="@string/UseAlternativeFontForTags2"
             android:defaultValue="false"
             android:persistent="true"/>
+    <CheckBoxPreference
+            android:key="helvNueFonts"
+            android:title="@string/UseAlternativeFontForText"
+            android:summary="@string/UseAlternativeFontForText2"
+            android:defaultValue="false"
+            android:persistent="true"/>
     <PreferenceCategory android:title="@string/LoadImages">
         <ListPreference
                 android:key="image.loadMode"

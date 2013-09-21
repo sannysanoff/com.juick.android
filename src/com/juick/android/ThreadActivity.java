@@ -132,6 +132,15 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         bAttach = (ImageButton) findViewById(R.id.buttonAttachment);
         bAttach.setOnClickListener(this);
         etMessage = (EditText) findViewById(R.id.editMessage);
+
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sp.getBoolean("helvNueFonts", false)) {
+            etMessage.setTypeface(JuickAdvancedApplication.helvNue);
+            TextView oldTitle = (TextView)findViewById(R.id.old_title);
+            oldTitle.setTypeface(JuickAdvancedApplication.helvNue);
+        }
+
+
         Button cancel = (Button) findViewById(R.id.buttonCancel);
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override

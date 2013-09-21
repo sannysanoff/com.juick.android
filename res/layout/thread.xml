@@ -46,7 +46,7 @@
             >
         <ImageButton
                 android:id="@+id/buttonSend"
-                android:layout_width="wrap_content"
+                android:layout_width="68sp"
                 android:layout_height="48sp"
                 android:paddingLeft="30sp"
                 android:paddingRight="30sp"
@@ -54,15 +54,16 @@
                 android:src="@drawable/send36"/>
         <ImageButton
                 android:id="@+id/buttonAttachment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="68sp"
+                android:layout_height="48sp"
                 android:layout_toLeftOf="@id/buttonSend"
                 android:src="@drawable/ic_button_attachment_small"/>
         <Button
                 android:id="@+id/buttonCancel"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48sp"
                 android:layout_toLeftOf="@id/buttonAttachment"
+                android:textColor="#FF808080"
                 android:text="@android:string/cancel"/>
 
     </RelativeLayout>

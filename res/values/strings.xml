@@ -1110,6 +1110,8 @@
     <string name="SaveChangedDraft">Save changed draft</string>
     <string name="UseAlternativeFontForTags">Use alternative fonts for tags</string>
     <string name="UseAlternativeFontForTags2">(slim font)</string>
+    <string name="UseAlternativeFontForText">Use alternative fonts for content</string>
+    <string name="UseAlternativeFontForText2">(helv nue font)</string>
     <string name="VolumeKeysScrolling">Volume Keys Scrolling</string>
     <string name="General">General</string>
     <string name="NavigationMode">Navigation</string>
@@ -1138,6 +1140,11 @@
     <string name="TwoWayContact">Two-way contact with developer</string>
     <string name="SendAppLogToDeveloper">Send app log to developer</string>
     <string name="ContainsMinor__">Contains minor errors and performance metrics</string>
+    <string name="EnableSavingDrafts">Enable saving drafts</string>
+    <string name="SynchronizeOnJAServer">Synchronize on JA Server</string>
+    <string name="WillSynchronize">Will synchronize message read markers and Saved Messages. Across devices and
+        reinstalls.
+    </string>
 
 
 </resources>

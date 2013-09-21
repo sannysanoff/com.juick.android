@@ -21,16 +21,19 @@ import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.*;
 import com.juick.android.api.MessageIDAdapter;
+import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -49,6 +52,7 @@ public class DatabaseService extends Service {
 
     /**
      * save to user's "Saved messages list"
+     *
      * @param messag
      */
     public void saveMessage(final JuickMessage messag) {
@@ -104,14 +108,14 @@ public class DatabaseService extends Service {
                     Gson gson = getGson();
                     final String value = gson.toJson(messag);
                     try {
-                        db.delete(table, "msgid = ?", new String[] {messag.getMID().toString()});
-                        Cursor cursor = db.rawQuery("select count(*) cnt from "+table, new String[]{});
+                        db.delete(table, "msgid = ?", new String[]{messag.getMID().toString()});
+                        Cursor cursor = db.rawQuery("select count(*) cnt from " + table, new String[]{});
                         cursor.moveToNext();
                         int count = cursor.getInt(0);
                         cursor.close();
-                        for(int i=49; i<count; i++) {
+                        for (int i = 49; i < count; i++) {
                             // cleanup
-                            cursor = db.rawQuery("select msgid from "+table+" order by save_date asc limit 1", new String[]{});
+                            cursor = db.rawQuery("select msgid from " + table + " order by save_date asc limit 1", new String[]{});
                             cursor.moveToNext();
                             String msgid = cursor.getString(0);
                             cursor.close();
@@ -134,6 +138,7 @@ public class DatabaseService extends Service {
     }
 
     static GsonBuilder gsonBuilder = new GsonBuilder();
+
     {
         gsonBuilder.registerTypeAdapter(MessageID.class, new MessageIDAdapter());
     }
@@ -193,6 +198,7 @@ public class DatabaseService extends Service {
 
     /**
      * remove from user's "Saved messages list"
+     *
      * @param message
      */
     public void unsaveMessage(final JuickMessage message) {
@@ -216,6 +222,7 @@ public class DatabaseService extends Service {
 
     /**
      * get list of user "Saved" messages
+     *
      * @param afterSavedDate
      * @return
      */
@@ -226,7 +233,6 @@ public class DatabaseService extends Service {
     }
 
     /**
-     *
      * @param cursor
      * @return
      */
@@ -236,7 +242,7 @@ public class DatabaseService extends Service {
         int blobIndex = cursor.getColumnIndex("body");
         int saveDateIndex = cursor.getColumnIndex("save_date");
         MessageIDAdapter tmp = new MessageIDAdapter();
-        while(!cursor.isAfterLast()) {
+        while (!cursor.isAfterLast()) {
             byte[] blob = cursor.getBlob(blobIndex);
             String str = decompressGZIP(blob);
             Gson gson = getGson();
@@ -340,7 +346,7 @@ public class DatabaseService extends Service {
                         }
                         try {
                             if (storedThread.size() > 0) {
-                                JSONObject jsonObject = new JSONObject(storedThread.get(storedThread.size()-1));
+                                JSONObject jsonObject = new JSONObject(storedThread.get(storedThread.size() - 1));
                                 if (jsonObject.has("rid")) {
                                     lastrid = jsonObject.getInt("rid");
                                 }
@@ -375,13 +381,13 @@ public class DatabaseService extends Service {
         try {
             cursor.moveToFirst();
             int blobIndex = cursor.getColumnIndex("body");
-            if(!cursor.isAfterLast()) {
+            if (!cursor.isAfterLast()) {
                 byte[] blob = cursor.getBlob(blobIndex);
                 blob = decompressGZIPArr(blob);
                 try {
                     ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(blob));
                     try {
-                        return (ArrayList<String>)ois.readObject();
+                        return (ArrayList<String>) ois.readObject();
                     } finally {
                         ois.close();
                     }
@@ -400,7 +406,7 @@ public class DatabaseService extends Service {
         if (messageDB) {
             for (JuickMessage message : messages) {
                 if (message.getMID() instanceof JuickMessageID) {
-                    JuickMessageID mid = (JuickMessageID)message.getMID();
+                    JuickMessageID mid = (JuickMessageID) message.getMID();
                     JsonObject obj = JuickMicroBlog.convertJuickMessageToJSON(message);
                     appendToStoredThread(message.getMID(), new Gson().toJson(obj));
                 }
@@ -411,7 +417,7 @@ public class DatabaseService extends Service {
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 12;
+        public final static int CURRENT_VERSION = 13;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -491,7 +497,7 @@ public class DatabaseService extends Service {
                 sqLiteDatabase.execSQL("drop table msg");
                 sqLiteDatabase.execSQL("create index ixmsg2_mid  on msg2(mid)");
                 sqLiteDatabase.execSQL("create index ixmsg2_savedate on msg2(save_date)");
-                sqLiteDatabase.execSQL("create table saved_message2(msgid textnot null primary key, tm integer not null, body blob not null, save_date integer not null)");
+                sqLiteDatabase.execSQL("create table saved_message2(msgid text not null primary key, tm integer not null, body blob not null, save_date integer not null)");
                 sqLiteDatabase.execSQL("create index if not exists ix_savedmessage_savedate on saved_message2(save_date)");
                 sqLiteDatabase.execSQL("insert into saved_message2 select * from saved_message");
                 sqLiteDatabase.execSQL("drop table saved_message");
@@ -500,6 +506,11 @@ public class DatabaseService extends Service {
             if (from == 11) {
                 sqLiteDatabase.execSQL("create table recent_threads_wrote(msgid textnot null primary key, body blob not null, save_date integer not null)");
                 sqLiteDatabase.execSQL("create table recent_threads_opened(msgid textnot null primary key, body blob not null, save_date integer not null)");
+                from++;
+            }
+            if (from == 12) {
+                sqLiteDatabase.execSQL("alter table message_read add checkpoint integer");
+                sqLiteDatabase.execSQL("alter table saved_message2 add checkpoint integer");
                 from++;
             }
         }
@@ -528,8 +539,9 @@ public class DatabaseService extends Service {
         }
     }
 
-    public ArrayList<Utils.Function<Boolean, Void>> writeJobs = new ArrayList<Utils.Function<Boolean,Void>>();
+    public ArrayList<Utils.Function<Boolean, Void>> writeJobs = new ArrayList<Utils.Function<Boolean, Void>>();
     Thread writerThread;
+    Thread syncerThread;
     static SQLiteDatabase db;
 
     public static class MessageReadStatus {
@@ -549,18 +561,20 @@ public class DatabaseService extends Service {
                 db = database.getWritableDatabase();
             writerThread = new WriterThread();
             writerThread.start();
+            syncerThread = new SyncThread();
+            syncerThread.start();
             synchronized (writeJobs) {
                 writeJobs.add(new Utils.Function<Boolean, Void>() {
                     @Override
                     public Boolean apply(Void aVoid) {
                         int messageDBperiod = 30;
                         try {
-                            messageDBperiod = Integer.parseInt(sp.getString("messageDBperiod","30"));
+                            messageDBperiod = Integer.parseInt(sp.getString("messageDBperiod", "30"));
                         } catch (Exception e) {
                             //
                         }
-                        String oldDate = ""+(System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
-                        db.delete("msg2","save_date < ?",new String[] {oldDate});
+                        String oldDate = "" + (System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
+                        db.delete("msg2", "save_date < ?", new String[]{oldDate});
                         db.setTransactionSuccessful();
                         return Boolean.TRUE;
                     }
@@ -574,6 +588,7 @@ public class DatabaseService extends Service {
     public void onDestroy() {
         synchronized (writeJobs) {
             writerThread.interrupt();
+            syncerThread.interrupt();
         }
         handler.removeCallbacksAndMessages(null);
         super.onDestroy();
@@ -585,9 +600,9 @@ public class DatabaseService extends Service {
                 @Override
                 public Boolean apply(Void aVoid) {
                     if (parsed.getRID() > 0) {
-                        Cursor cursor = db.rawQuery("select * from message_reply where msgid=? and rid=?", new String[]{"" + parsed.getMID(), ""+ parsed.getRID()});
+                        Cursor cursor = db.rawQuery("select * from message_reply where msgid=? and rid=?", new String[]{"" + parsed.getMID(), "" + parsed.getRID()});
                         if (cursor.getCount() == 0) {
-                            db.execSQL("insert into message_reply (msgid, rid, body) values(?,?,?)", new Object[] {parsed.getMID(), parsed.getRID(), compressGZIP(json)});
+                            db.execSQL("insert into message_reply (msgid, rid, body) values(?,?,?)", new Object[]{parsed.getMID(), parsed.getRID(), compressGZIP(json)});
                         }
                         cursor.close();
                     } else {
@@ -648,7 +663,7 @@ public class DatabaseService extends Service {
             GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(gzipped));
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] arr = new byte[1024];
-            while(true) {
+            while (true) {
                 int rd = gzis.read(arr);
                 if (rd < 1) break;
                 baos.write(arr, 0, rd);
@@ -665,7 +680,7 @@ public class DatabaseService extends Service {
             GZIPInputStream gzis = new GZIPInputStream(new ByteArrayInputStream(gzipped));
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] arr = new byte[1024];
-            while(true) {
+            while (true) {
                 int rd = gzis.read(arr);
                 if (rd < 1) break;
                 baos.write(arr, 0, rd);
@@ -704,6 +719,7 @@ public class DatabaseService extends Service {
     }
 
     long lastDBReport = 0;
+
     public void markAsRead(final ReadMarker marker) {
         synchronized (writeJobs) {
             writeJobs.add(new Utils.Function<Boolean, Void>() {
@@ -726,7 +742,7 @@ public class DatabaseService extends Service {
                         int oldNreplies = cursor.getInt(cursor.getColumnIndex("nreplies"));
                         cursor.close();
                         if (oldNreplies != readMarker.nreplies) {
-                            db.execSQL("update message_read set nreplies=? where msgid=?",
+                            db.execSQL("update message_read set nreplies=?, checkpoint=null where msgid=?",
                                     new Object[]{readMarker.nreplies, readMarker.mid.toString()});
                         }
                     }
@@ -738,6 +754,373 @@ public class DatabaseService extends Service {
         }
     }
 
+    AtomicLong lastModify = new AtomicLong(System.currentTimeMillis());
+
+    long lastSyncIn = -1;
+
+
+    // push/pull syncable changes to/from the server
+    private class SyncThread extends Thread {
+
+        @Override
+        public void run() {
+            setName("DB SyncerThread");
+            setPriority(MIN_PRIORITY);
+            long waitDelay = 5000;
+            while (true) {
+                synchronized (lastModify) {
+                    try {
+                        if (waitDelay <= 0) {
+                            lastModify.wait(30 * 60 * 1000);    // half an hour
+                        } else {
+                            lastModify.wait(waitDelay);
+                        }
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
+                if (db == null) {
+                    continue;
+                }
+                if (!sp.getBoolean("enableSynchronization", false)) {
+                    waitDelay = -1;
+                    continue;
+                }
+                if (lastModify.get() > System.currentTimeMillis() - 5000 && waitDelay > 0) {
+                    continue;
+                }
+                String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
+                if (juickAccountName == null || juickAccountName.length() == 0) continue;
+                if (waitDelay > 0) {
+                    waitDelay = -1;
+
+                    {
+                        //
+                        //
+                        // changed something in db message_read ?
+                        //
+                        //
+                        Cursor cursor = db.rawQuery("select * from message_read where checkpoint is null", new String[0]);
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("[");
+                        int midIndex = cursor.getColumnIndex("msgid");
+                        int tmIndex = cursor.getColumnIndex("tm");
+                        int nRepliesIndex = cursor.getColumnIndex("nreplies");
+                        final ArrayList<String> updateds = new ArrayList<String>();
+                        int count = 0;
+                        while (cursor.moveToNext()) {
+                            try {
+                                JSONObject jo = new JSONObject();
+                                //midIndex integer not null primary key, tm integer not null, nreplies integer not null
+                                String key = cursor.getString(midIndex);
+                                jo.put("k", key);
+                                updateds.add(key);
+                                JSONObject v = new JSONObject();
+                                v.put("nr", cursor.getInt(nRepliesIndex));
+                                v.put("tm", cursor.getLong(tmIndex));
+                                jo.put("v", v);
+                                if (sb.length() > 1) {
+                                    sb.append(",");
+                                }
+                                sb.append(jo.toString());
+                                count++;
+                                if (count >= 1000) {
+                                    break;
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            }
+                        }
+                        cursor.close();
+                        if (count > 0) {
+                            // have some lastread markers to sync
+                            sb.append("]");
+                            final Utils.RESTResponse checkpoint = executeServerSyncCommit("last_reads", sb.toString());
+                            if (checkpoint.getErrorText() != null) {
+                                waitDelay = -1; // maybe later
+                                continue;
+                            }
+                            synchronized (writeJobs) {
+                                writeJobs.add(new Utils.Function<Boolean, Void>() {
+                                    @Override
+                                    public Boolean apply(Void aVoid) {
+                                        for (String updated : updateds) {
+                                            ContentValues cv = new ContentValues();
+                                            cv.put("checkpoint", checkpoint.getResult());
+                                            db.update("message_read", cv, "msgid=?", new String[]{updated});
+                                        }
+                                        db.setTransactionSuccessful();
+                                        return Boolean.TRUE;
+                                    }
+                                });
+                                writeJobs.notify();
+                            }
+                            if (count >= 1000) {
+                                waitDelay = 10000;
+                                continue;
+                            }
+                        }
+                    }
+
+                    {
+                        //
+                        //
+                        // changed something in db saved_messages ?
+                        //
+                        //
+                        Cursor cursor = db.rawQuery("select * from saved_message2 where checkpoint is null", new String[0]);
+                        // msgid text not null primary key, tm integer not null, body blob not null, save_date integer not null
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("[");
+                        int midIndex = cursor.getColumnIndex("msgid");
+                        int tmIndex = cursor.getColumnIndex("tm");
+                        int bodyIndex = cursor.getColumnIndex("body");
+                        int saveDateIndex = cursor.getColumnIndex("save_date");
+                        final ArrayList<String> updateds = new ArrayList<String>();
+                        int count = 0;
+                        while (cursor.moveToNext()) {
+                            try {
+                                JSONObject jo = new JSONObject();
+                                //midIndex integer not null primary key, tm integer not null, nreplies integer not null
+                                String key = cursor.getString(midIndex);
+                                jo.put("k", key);
+                                updateds.add(key);
+                                JSONObject v = new JSONObject();
+                                v.put("tm", cursor.getLong(tmIndex));
+                                v.put("sd", cursor.getLong(saveDateIndex));
+                                v.put("b", new JSONObject(decompressGZIP(cursor.getBlob(bodyIndex))));
+                                jo.put("v", v);
+                                if (sb.length() > 1) {
+                                    sb.append(",");
+                                }
+                                sb.append(jo.toString());
+                                count++;
+                                if (count >= 200) {
+                                    break;
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            }
+                        }
+                        cursor.close();
+                        if (count > 0) {
+                            // have some lastread markers to sync
+                            sb.append("]");
+                            final Utils.RESTResponse checkpoint = executeServerSyncCommit("saved_messages", sb.toString());
+                            if (checkpoint.getErrorText() != null) {
+                                waitDelay = -1; // maybe later
+                                continue;
+                            }
+                            synchronized (writeJobs) {
+                                writeJobs.add(new Utils.Function<Boolean, Void>() {
+                                    @Override
+                                    public Boolean apply(Void aVoid) {
+                                        for (String updated : updateds) {
+                                            ContentValues cv = new ContentValues();
+                                            cv.put("checkpoint", checkpoint.getResult());
+                                            db.update("saved_message2", cv, "msgid=?", new String[]{updated});
+                                        }
+                                        db.setTransactionSuccessful();
+                                        return Boolean.TRUE;
+                                    }
+                                });
+                                writeJobs.notify();
+                            }
+                            if (count >= 200) {
+                                waitDelay = 10000;
+                                continue;
+                            }
+                        }
+
+                    }
+
+                    if (System.currentTimeMillis() > lastSyncIn + 30 * 60 * 1000) {
+                        {
+                            //
+                            //
+                            // maybe something new in saved_message2 on server?
+                            //
+                            //
+                            Cursor cursor = db.rawQuery("select max(checkpoint) from saved_message2", new String[0]);
+                            cursor.moveToNext();
+                            int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
+                            cursor.close();
+                            Utils.RESTResponse somethingToSync = executeServerSyncQuery("saved_messages", lastCheckpoint);
+                            if (somethingToSync.getErrorText() != null) {
+                                waitDelay = -1; // maybe later
+                                continue;
+                            } else {
+                                try {
+                                    byte[] bytes = somethingToSync.getResult().getBytes("ISO-8859-1");
+                                    String json = decompressGZIP(bytes);
+                                    final JSONArray jo = new JSONArray(json);
+                                    if (jo.length() > 0) {
+
+                                        synchronized (writeJobs) {
+                                            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                                                @Override
+                                                public Boolean apply(Void aVoid) {
+                                                    try {
+                                                        for(int i=0; i<jo.length(); i++) {
+                                                            JSONObject row = (JSONObject)jo.get(i);
+                                                            ContentValues cv = new ContentValues();
+                                                            String msgid = row.getString("k");
+                                                            JSONObject v = row.getJSONObject("v");
+                                                            cv.put("checkpoint", row.getInt("n"));
+
+
+                                                            cv.put("tm", v.getLong("tm"));
+                                                            cv.put("save_date", v.getLong("sd"));
+                                                            cv.put("body", compressGZIP(v.getJSONObject("b").toString()));
+
+                                                            if (0 == db.update("saved_message2", cv, "msgid=?", new String[]{msgid})) {
+                                                                cv.put("msgid", msgid);
+                                                                db.insert("saved_message2", null, cv);
+                                                            }
+                                                        }
+                                                        db.setTransactionSuccessful();
+                                                    } catch (JSONException e) {
+                                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+
+                                                    }
+                                                    return Boolean.TRUE;
+                                                }
+                                            });
+                                            writeJobs.notify();
+                                        }
+                                    }
+
+                                } catch (Exception e) {
+                                    waitDelay = -1;
+                                    continue;
+                                }
+                            }
+
+                        }
+
+                        {
+                            //
+                            //
+                            // maybe something new in message_read on server?
+                            //
+                            //
+                            Cursor cursor = db.rawQuery("select max(checkpoint) from message_read", new String[0]);
+                            cursor.moveToNext();
+                            int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
+                            cursor.close();
+                            Utils.RESTResponse somethingToSync = executeServerSyncQuery("last_reads", lastCheckpoint);
+                            if (somethingToSync.getErrorText() != null) {
+                                waitDelay = -1; // maybe later
+                                continue;
+                            } else {
+                                try {
+                                    byte[] bytes = somethingToSync.getResult().getBytes("ISO-8859-1");
+                                    String json = decompressGZIP(bytes);
+                                    final JSONArray jo = new JSONArray(json);
+                                    if (jo.length() > 0) {
+
+                                        synchronized (writeJobs) {
+                                            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                                                @Override
+                                                public Boolean apply(Void aVoid) {
+                                                    try {
+                                                        for(int i=0; i<jo.length(); i++) {
+                                                            JSONObject row = (JSONObject)jo.get(i);
+                                                            ContentValues cv = new ContentValues();
+                                                            String msgid = row.getString("k");
+                                                            JSONObject v = row.getJSONObject("v");
+                                                            cv.put("checkpoint", row.getInt("n"));
+                                                            cv.put("tm", v.getLong("tm"));
+                                                            cv.put("nreplies", v.getInt("nr"));
+
+                                                            if (0 == db.update("message_read", cv, "msgid=?", new String[]{msgid})) {
+                                                                cv.put("msgid", msgid);
+                                                                db.insert("message_read", null, cv);
+                                                            }
+                                                        }
+                                                        db.setTransactionSuccessful();
+                                                    } catch (JSONException e) {
+                                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+
+                                                    }
+                                                    return Boolean.TRUE;
+                                                }
+                                            });
+                                            writeJobs.notify();
+                                        }
+                                    }
+
+                                } catch (Exception e) {
+                                    waitDelay = -1;
+                                    continue;
+                                }
+                            }
+
+                        }
+
+
+                        lastSyncIn = System.currentTimeMillis();
+                    }
+                } else {
+                    waitDelay = 5000;   // coalesce sequential changes
+                }
+
+            }
+        }
+    }
+
+    public Utils.RESTResponse executeServerSyncQuery(String db, int sinceCheckpoint) {
+        String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
+        String juickPassword = JuickAPIAuthorizer.getPassword(this);
+        ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
+        Utils.RESTResponse restResponse = Utils.postForm(this,
+                "https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
+                nvs);
+        return restResponse;
+    }
+
+    public static Utils.RESTResponse obtainSharingURL(Context context, boolean reset) {
+        String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(context);
+        String juickPassword = JuickAPIAuthorizer.getPassword(context);
+        ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
+        Utils.RESTResponse restResponse = Utils.postForm(context,
+                "https://" + Utils.JA_ADDRESS_HTTPS + "/api/share_saved?reset="+reset+"&login=" + juickAccountName + "&password=" + juickPassword,
+                nvs);
+        return restResponse;
+    }
+
+    private Utils.RESTResponse executeServerSyncCommit(String db, String json) {
+        String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
+        String juickPassword = JuickAPIAuthorizer.getPassword(this);
+        ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            GZIPOutputStream gzos = new GZIPOutputStream(baos);
+            gzos.write(json.getBytes());
+            gzos.close();
+        } catch (IOException e) {
+            return new Utils.RESTResponse(e.toString(), false, null);
+        }
+        nvs.add(new Utils.NameStreamValuePair("data", new ByteArrayInputStream(baos.toByteArray())));
+        JuickAdvancedApplication.addToGlobalLog("syncdb: commit: db="+db+" len="+baos.size(), null);
+        Utils.RESTResponse restResponse = Utils.postForm(this,
+                "https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=commit&db=" + db + "&login=" + juickAccountName + "&password=" + juickPassword,
+                nvs);
+        if (restResponse.getErrorText() != null) {
+            JuickAdvancedApplication.addToGlobalLog("syncdb: commit: "+restResponse.getErrorText(), null);
+            restResponse.mayRetry = true;
+            return restResponse;
+        }
+        String result = restResponse.getResult();
+        try {
+            JSONObject jsonObject = new JSONObject(result);
+            String revision = jsonObject.get("revision").toString();
+            JuickAdvancedApplication.addToGlobalLog("syncdb: commit OK: "+revision, null);
+            return new Utils.RESTResponse(null, false, revision);
+        } catch (Exception ex) {
+            return new Utils.RESTResponse(ex.toString(), false, null);
+        }
+    }
 
 
     private class WriterThread extends Thread {
@@ -770,6 +1153,7 @@ public class DatabaseService extends Service {
                         // bad luck.
                         break;
                     } catch (final SQLException e) {
+                        JuickAdvancedApplication.addToGlobalLog("writerThread", e);
                         synchronized (writeJobs) {
                             writeJobs.add(job);
                         }
@@ -779,6 +1163,12 @@ public class DatabaseService extends Service {
                         } catch (InterruptedException e1) {
                             e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                         }
+                    }
+                }
+                if (jobs.size() > 0) {
+                    synchronized (lastModify) {
+                        lastModify.set(System.currentTimeMillis());
+                        lastModify.notify();
                     }
                 }
             }
@@ -829,16 +1219,16 @@ public class DatabaseService extends Service {
         int messageDateIndex = cursor.getColumnIndex("message_date");
         JuickMessageID savedMsgid = newestMsgid;
         long savedMsgDate = getMessageDate(savedMsgid);
-        while(!cursor.isAfterLast()) {
+        while (!cursor.isAfterLast()) {
             JuickMessageID thisMid = JuickMessageID.fromString(cursor.getString(msgidIndex));
             long thisMessageDate = cursor.getLong(messageDateIndex);
             if (thisMessageDate > 200) {    // bug hider :-E
                 if (savedMsgid != null && Math.abs(thisMid.getMid() - savedMsgid.getMid()) > 50) {   // UNREAD HOLE
                     Period period = new Period();
-                    period.startMid = savedMsgid.getMid()-1;
-                    period.beforeMid = savedMsgid.getMid()-1;
+                    period.startMid = savedMsgid.getMid() - 1;
+                    period.beforeMid = savedMsgid.getMid() - 1;
                     period.startDate = new Date(savedMsgDate);
-                    period.endMid =thisMid.getMid()+1;
+                    period.endMid = thisMid.getMid() + 1;
                     period.endDate = new Date(thisMessageDate);
                     period.read = false;
                     if (Math.abs(period.getHours()) > days * 24) {
@@ -856,11 +1246,11 @@ public class DatabaseService extends Service {
         // coalesce periods
         for (int i = 0; i < retval.size() - 1; i++) {
             Period curr = retval.get(i);
-            Period next = retval.get(i+1);
+            Period next = retval.get(i + 1);
             if (Math.abs(next.startMid - curr.endMid) < 6) { // removing single reads
                 curr.endMid = next.endMid;
                 curr.endDate = next.endDate;
-                retval.remove(i+1);
+                retval.remove(i + 1);
                 i--;
             }
         }
@@ -869,6 +1259,7 @@ public class DatabaseService extends Service {
     }
 
     public final static long DBREPORT_PERIOD_MSEC = 2 * 60 * 1000L;     // 2 minutes
+
     private void reportDBError(final String errmsg) {
         if (System.currentTimeMillis() - lastDBReport < DBREPORT_PERIOD_MSEC) return;
         lastDBReport = System.currentTimeMillis();
@@ -900,6 +1291,7 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "wrapUserpics", true);
         copyBoolean(jo, sp, "compactComments", false);
         copyBoolean(jo, sp, "feedlyFonts", false);
+        copyBoolean(jo, sp, "helvNueFonts", false);
         copyBoolean(jo, sp, "fullScreenMessages", false);
         copyBoolean(jo, sp, "fullScreenThread", false);
         copyBoolean(jo, sp, "enableDrafts", false);
@@ -943,7 +1335,7 @@ public class DatabaseService extends Service {
         String uniqueId = getUniqueInstallationId(this, "");
         jo.addProperty("device_install_id", uniqueId);
         try {
-            jo.addProperty("ja_version", ""+getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode);
+            jo.addProperty("ja_version", "" + getApplicationContext().getPackageManager().getPackageInfo(getApplicationContext().getPackageName(), 0).versionCode);
         } catch (PackageManager.NameNotFoundException e) {
             jo.addProperty("ja_version", "unknown");
         }
@@ -955,7 +1347,7 @@ public class DatabaseService extends Service {
 
     public static String getUniqueInstallationId(Context ctx, String salt) {
         String uniqueId = "";
-        WifiManager wifiManager = (WifiManager)ctx.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) ctx.getSystemService(Context.WIFI_SERVICE);
         if (wifiManager != null) {
             String wifiMac = wifiManager.getConnectionInfo().getMacAddress();
             uniqueId += wifiMac;
@@ -976,7 +1368,7 @@ public class DatabaseService extends Service {
         if (uniqueId.length() == 0) {
             uniqueId = "UNKNOWN_ID";
         } else {
-            uniqueId = Utils.getMD5DigestForString(uniqueId+salt);
+            uniqueId = Utils.getMD5DigestForString(uniqueId + salt);
         }
         uniqueId += "__";
 
@@ -986,7 +1378,7 @@ public class DatabaseService extends Service {
             ApplicationInfo appInfo = pm.getApplicationInfo(ctx.getPackageName(), 0);
             String appFile = appInfo.sourceDir;
             long installed = new File(appFile).lastModified(); //Epoch Time
-            uniqueId += ""+installed;
+            uniqueId += "" + installed;
         } catch (PackageManager.NameNotFoundException e) {
         }
         return uniqueId;
@@ -994,17 +1386,17 @@ public class DatabaseService extends Service {
 
     private void copyBoolean(JsonObject jo, SharedPreferences sp, String prefname, boolean dflt) {
         boolean value = sp.getBoolean(prefname, dflt);
-        jo.addProperty(prefname.replace('.','_'), value);
+        jo.addProperty(prefname.replace('.', '_'), value);
     }
 
     private void copyString(JsonObject jo, SharedPreferences sp, String prefname, String dflt) {
         String value = sp.getString(prefname, dflt);
-        jo.addProperty(prefname.replace('.','_'), value);
+        jo.addProperty(prefname.replace('.', '_'), value);
     }
 
     private void copyInteger(JsonObject jo, SharedPreferences sp, String prefname, int dflt) {
         int value = sp.getInt(prefname, dflt);
-        jo.addProperty(prefname.replace('.','_'), ""+value);
+        jo.addProperty(prefname.replace('.', '_'), "" + value);
     }
 
 

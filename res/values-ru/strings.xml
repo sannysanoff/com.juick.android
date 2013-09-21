@@ -331,7 +331,7 @@
     <string name="Sources">Источники</string>
     <string name="Sources2">JuBo, jugregator.org итд.</string>
     <string name="NetworkingAndStorage">Сеть и сохранение данных</string>
-    <string name="NetworkingAndStorage2">Прокси, сжатие, кеш, БД, GPS</string>
+    <string name="NetworkingAndStorage2">Синхронизация, сжатие, кеш, БД, GPS</string>
     <string name="Other">Прочее</string>
     <string name="Other2">Всякое</string>
     <string name="WhatsNew">Что нового...</string>
@@ -450,8 +450,10 @@
     <string name="SaveChangedDraft">Заменить черновик</string>
     <string name="ReplacingText">Заменяем текст ответа</string>
     <string name="YourTextWillBeReplaced">Ваш текст не отправлен и будет заменен</string>
-    <string name="UseAlternativeFontForTags">Альтернативный шрифт для тегов</string>
+    <string name="UseAlternativeFontForTags">Альт.шрифт тегов</string>
     <string name="UseAlternativeFontForTags2">(готичненькие теги)</string>
+    <string name="UseAlternativeFontForText">Альт.шрифт контента</string>
+    <string name="UseAlternativeFontForText2">(журнальный)</string>
     <string name="VolumeKeysScrolling">Листание громкостью</string>
     <string name="General">Общее</string>
     <string name="NavigationMode">Навигация</string>
@@ -479,6 +481,10 @@
     <string name="ContainsMinor__">Отправить журнал некритических ошибок и метрику производительности приложения разработчику</string>
     <string name="VariousInfo">Разное...</string>
     <string name="VariousInfo2">Диаграммы / статистика</string>
+    <string name="EnableSavingDrafts">Сохранять черновики</string>
+    <string name="SynchronizeOnJAServer">Синхронизация на JA сервер</string>
+    <string name="WillSynchronize">Будет синхронизировать маркеры прочитанных мессаг и Сохраненные. На всех устройствах. И после свежих инсталляций."
+    </string>
 
 
 </resources>

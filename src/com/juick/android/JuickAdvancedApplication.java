@@ -23,6 +23,7 @@ import org.acra.annotation.ReportsCrashes;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -64,6 +65,8 @@ public class JuickAdvancedApplication extends Application {
         put("Theme_Translucent",android.R.style.Theme_Translucent);
     }};
     public static Typeface dinWebPro;
+    public static Typeface helvNue;
+    public static Typeface helvNueBold;
 
     public static void setupTheme(Activity activity) {
         // String nativeTheme = sp.getString("nativeTheme", "default");
@@ -109,6 +112,16 @@ public class JuickAdvancedApplication extends Application {
         }
         try {
             dinWebPro = Typeface.createFromAsset(this.getAssets(), "fonts/DINWebPro-CondensedMedium.ttf");
+        } catch (Throwable e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        try {
+            helvNue = Typeface.createFromAsset(this.getAssets(), "fonts/HelveticaNeueLTW1G-Cn.otf");
+        } catch (Throwable e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        try {
+            helvNueBold = Typeface.createFromAsset(this.getAssets(), "fonts/HelveticaNeueLTW1G-BdCn.otf");
         } catch (Throwable e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -330,8 +343,10 @@ public class JuickAdvancedApplication extends Application {
             new Thread("sending errlog") {
                 @Override
                 public void run() {
-                    //final Utils.RESTResponse restResponse = Utils.postJSON(instance, "http://ja.ip.rt.ru:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), str);
-                    final Utils.RESTResponse restResponse = Utils.postJSON(instance, "http://192.168.1.77:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), str, "text/plain");
+                    ArrayList<Utils.NameValuePair> data = new ArrayList<Utils.NameValuePair>();
+                    data.add(new Utils.NameStringValuePair("file", str));
+                    final Utils.RESTResponse restResponse = Utils.postForm(instance, "http://ja.ip.rt.ru:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
+                    //final Utils.RESTResponse restResponse = Utils.postForm(instance, "http://192.168.1.77:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
                     if (restResponse.getErrorText() == null) {
                         file.delete();
                     }

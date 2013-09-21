@@ -34,6 +34,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        JuickAdvancedApplication.maybeEnableAcceleration(this);
         super.onCreate(savedInstanceState);
         int prefs = getIntent().getIntExtra("prefs", 0);
         addPreferencesFromResource(prefs);

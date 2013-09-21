@@ -24,7 +24,6 @@ import android.app.ProgressDialog;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Canvas;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -56,13 +55,12 @@ import com.juickadvanced.data.psto.PstoMessageID;
 import com.mobeta.android.dslv.DragSortController;
 import com.mobeta.android.dslv.DragSortListView;
 import org.acra.ACRA;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.*;
 
-/**
- * @author Ugnich Anton
- */
 public class MainActivity extends JuickFragmentActivity implements
         ActionBar.OnNavigationListener,
         IRunningActivity,
@@ -132,7 +130,6 @@ public class MainActivity extends JuickFragmentActivity implements
         }
 
     }
-
 
     boolean navigationMenuShown = false;
     public boolean isNavigationMenuShown() {
@@ -444,6 +441,16 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         frag.clearAnimation();
         mll.blockLayoutRequests = oldBlockLayoutRequests;
+        visitViewHierarchy(getWindow().getDecorView(), new ViewHierarchyVisitor() {
+            @Override
+            public void visitView(View v) {
+                if (v.getClass().getName().contains("OverflowMenuButton") && v instanceof ImageButton) {
+                    ImageButton ib = (ImageButton)v;
+                    ib.setImageResource(R.drawable.ic_menu_moreoverflow);
+                }
+                //super.visitView(v);    //To change body of overridden methods use File | Settings | File Templates.
+            }
+        });
     }
 
 
@@ -1132,6 +1139,14 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        boolean savedMessagesSource = mf != null && mf.messagesSource != null && mf.messagesSource instanceof SavedMessagesSource;
+        menu.findItem(R.id.menuitem_new_saved_sharing_key).setVisible(savedMessagesSource);
+        menu.findItem(R.id.menuitem_existing_saved_sharing_key).setVisible(savedMessagesSource);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item == null) return true;
         switch (item.getItemId()) {
@@ -1157,9 +1172,98 @@ public class MainActivity extends JuickFragmentActivity implements
             case R.id.reload:
                 doReload();
                 return true;
+            case R.id.menuitem_new_saved_sharing_key:
+                new AlertDialog.Builder(this)
+                        .setTitle("New Access URL generation")
+                        .setMessage("Old URL will become onvalid. Continue?")
+                        .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                obtainSavedMessagesURL(true);
+                            }
+                        })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //To change body of implemented methods use File | Settings | File Templates.
+                            }
+                        })
+                        .setCancelable(true)
+                        .show();
+                return true;
+            case R.id.menuitem_existing_saved_sharing_key:
+                obtainSavedMessagesURL(false);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void obtainSavedMessagesURL(final boolean reset) {
+        final ProgressDialog pd = new ProgressDialog(MainActivity.this);
+        pd.setIndeterminate(true);
+        pd.setTitle("Saved Messages");
+        pd.setMessage("Waiting for server key");
+        pd.setCancelable(true);
+        pd.show();
+        new Thread("obtainSavedMessagesURL") {
+            @Override
+            public void run() {
+
+                final Utils.RESTResponse restResponse = DatabaseService.obtainSharingURL(MainActivity.this, reset);
+
+                if (restResponse.getErrorText() == null)
+                    try {
+                        new JSONObject(restResponse.getResult());
+                    } catch (JSONException e) {
+                        restResponse.errorText = e.toString();
+                    }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        pd.cancel();
+                        if (restResponse.getErrorText() != null) {
+                            Toast.makeText(MainActivity.this, restResponse.getErrorText(), Toast.LENGTH_LONG).show();
+                        } else {
+                            try {
+                                final String url = (String)new JSONObject(restResponse.getResult()).get("url");
+                                if (url.length() == 0) {
+                                    Toast.makeText(MainActivity.this, "You don't have key yet. Choose another option.", Toast.LENGTH_LONG).show();
+                                } else {
+                                    new AlertDialog.Builder(MainActivity.this)
+                                            .setTitle("You got key!")
+                                            .setMessage(url)
+                                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                }
+                                            })
+                                            .setNeutralButton("Share with..", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    Intent share = new Intent(android.content.Intent.ACTION_SEND);
+                                                    share.setType("text/plain");
+                                                    share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+
+                                                    share.putExtra(Intent.EXTRA_SUBJECT, "My Saved messages on Juick Advanced");
+                                                    share.putExtra(Intent.EXTRA_TEXT, url);
+
+                                                    startActivity(Intent.createChooser(share, "Share link"));
+                                                }
+                                            })
+                                            .setCancelable(true)
+                                            .show();
+                                }
+                            } catch (JSONException e) {
+                                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }
+                });
+            }
+        }.start();
+
     }
 
     long lastReload = System.currentTimeMillis();
@@ -1279,6 +1383,23 @@ public class MainActivity extends JuickFragmentActivity implements
 
     public static void restyleChildrenOrWidget(View view) {
         restyleChildrenOrWidget(view, false);
+    }
+
+    public static class ViewHierarchyVisitor {
+        public void visitView(View v) {
+
+        }
+    }
+
+    public static void visitViewHierarchy(View view, ViewHierarchyVisitor visitor) {
+        visitor.visitView(view);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            int childCount = group.getChildCount();
+            for(int i=0; i<childCount; i++) {
+                visitViewHierarchy(group.getChildAt(i), visitor);
+            }
+        }
     }
 
     public static void restyleChildrenOrWidget(View view, boolean dontBackground) {

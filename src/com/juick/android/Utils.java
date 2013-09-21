@@ -185,6 +185,7 @@ public class Utils {
 
     //public static final String JA_ADDRESS = "192.168.1.77:8080";
     public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
+    public static final String JA_ADDRESS_HTTPS = "ja.ip.rt.ru:8443";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
@@ -486,6 +487,7 @@ public class Utils {
                     client.getParams().setParameter("http.connection.timeout", timeoutForConnection);
                     httpGet.getParams().setParameter("http.socket.timeout", timeoutForConnection);
                     httpGet.getParams().setParameter("http.protocol.head-body-timeout", timeoutForConnection);
+
 
                     finalAuthorizer.authorizeRequest(httpGet, myCookie);
 
@@ -799,7 +801,7 @@ public class Utils {
         try {
             HttpClient client = getNewHttpClient();
             HttpPost post = new HttpPost(url);
-            List<NameValuePair> args = new ArrayList<NameValuePair>();
+            List<org.apache.http.NameValuePair> args = new ArrayList<org.apache.http.NameValuePair>();
             args.add(new BasicNameValuePair("data", dataValue));
             post.setEntity(new UrlEncodedFormEntity(args));
             HttpResponse execute = client.execute(post);
@@ -812,6 +814,114 @@ public class Utils {
             return new RESTResponse(e.toString(), false, null);
         }
     }
+
+    public abstract static class NameValuePair {
+        String name;
+
+        NameValuePair(String name) {
+            this.name = name;
+        }
+
+        String getName() {
+            return name;
+        }
+
+        public abstract InputStream getValue();
+    }
+
+    public static class NameStringValuePair extends NameValuePair {
+        private String value;
+
+        public NameStringValuePair(String name, String value) {
+            super(name);
+            this.value = value;
+        }
+
+        @Override
+        public InputStream getValue() {
+            return new ByteArrayInputStream(value.getBytes());
+        }
+    }
+
+    public static class NameStreamValuePair extends NameValuePair {
+        private InputStream is;
+
+        public NameStreamValuePair(String name, InputStream is) {
+            super(name);
+            this.is = is;
+        }
+
+        @Override
+        public InputStream getValue() {
+            return is;
+        }
+    }
+
+
+    public static RESTResponse postForm(final Context context, final String url, ArrayList<NameValuePair> data) {
+        try {
+            final String end = "\r\n";
+            final String twoHyphens = "--";
+            final String boundary = "****+++++******+++++++********";
+
+            URL apiUrl = new URL(url);
+            final HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
+            conn.setConnectTimeout(10000);
+            conn.setDoOutput(true);
+            conn.setUseCaches(false);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Connection", "Keep-Alive");
+            conn.setRequestProperty("Charset", "UTF-8");
+            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+            conn.connect();
+            OutputStream out = conn.getOutputStream();
+
+            PrintStream ps = new PrintStream(out);
+            int index = 0;
+            byte[] block = new byte[1024];
+            for (NameValuePair nameValuePair : data) {
+                ps.print(twoHyphens + boundary + end);
+                ps.print("Content-Disposition: form-data; name=\""+nameValuePair.getName()+"\"" + end + end);
+                final InputStream value = nameValuePair.getValue();
+                while(true) {
+                    final int rd = value.read(block, 0, block.length);
+                    if (rd < 1) {
+                        break;
+                    }
+                    ps.write(block, 0, rd);
+                }
+                value.close();
+                ps.print(end);
+            }
+            ps.print(twoHyphens + boundary + twoHyphens + end);
+            ps.close();
+            boolean b = conn.getResponseCode() == 200;
+            if (!b) {
+                return new RESTResponse("HTTP "+conn.getResponseCode()+": "+conn.getResponseMessage(), false, null);
+            } else {
+                InputStream inputStream = conn.getInputStream();
+                try {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] arr = new byte[1024];
+                    while(true) {
+                        int rd = inputStream.read(arr);
+                        if (rd < 1) break;
+                        baos.write(arr, 0, rd);
+                    }
+                    if (conn.getHeaderField("X-GZIPCompress") != null) {
+                        return new RESTResponse(null, false, baos.toString(0));
+                    } else {
+                        return new RESTResponse(null, false, baos.toString());
+                    }
+                } finally {
+                    inputStream.close();
+                }
+            }
+        } catch (IOException e) {
+            return new RESTResponse(e.toString(), false, null);
+        }
+    }
+
 
     public static RESTResponse postJSON(final Context context, final String url, final String data) {
         return postJSON(context, url, data, null);

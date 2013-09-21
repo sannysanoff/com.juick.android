@@ -91,6 +91,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     static boolean indirectImages;
     static boolean otherImages;
     static boolean feedlyFonts;
+    static boolean helvNueFonts;
     static boolean compactComments;
     private final boolean hideGif;
     Handler handler;
@@ -180,6 +181,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         otherImages = sp.getBoolean("image.other", true);
         hideGif = sp.getBoolean("image.hide_gif", false);
         feedlyFonts = sp.getBoolean("feedlyFonts", false);
+        helvNueFonts = sp.getBoolean("helvNueFonts", false);
         compactComments = sp.getBoolean("compactComments", false);
         russian = XMPPIncomingMessagesActivity.isRussian();
         enableScaleByGesture = sp.getBoolean("enableScaleByGesture", true);
@@ -314,9 +316,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private void updateUserpicView(View userPic, final Bitmap bitmap) {
         if (userPic instanceof MyImageView) {
             final MyImageView miv = (MyImageView) userPic;
-            miv.disableInvalidate = true;
             miv.setImageBitmap(bitmap);
-            miv.disableInvalidate = false;
         } else if (userPic instanceof ImageView) {
             ((ImageView)userPic).setImageBitmap(bitmap);
         }
@@ -563,6 +563,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ForegroundColorSpan userNameColorSpan;
         ssb.setSpan(userNameBoldSpan = new StyleSpan(Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.setSpan(userNameColorSpan = new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME, 0xFFC8934E)), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        if (helvNueFonts) {
+            ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.helvNueBold), spanOffset,
+                    ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
         ssb.append(' ');
         spanOffset = ssb.length();
 
@@ -580,7 +585,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 if (feedlyFonts) {
                     ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.dinWebPro), spanOffset,
                             ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                } else if (helvNueFonts) {
+                    ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.helvNue), spanOffset,
+                            ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
+
             }
             spanOffset = ssb.length();
         }
@@ -593,6 +602,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), spanOffset, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             spanOffset = ssb.length();
         }
+        int bodyOffset = ssb.length();
         int messageNumberStart = -1, messageNumberEnd = -1;
         if (showNumbers(ctx) && !condensed) {
             //
@@ -744,6 +754,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
         }
 
+        if (helvNueFonts) {
+            ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.helvNue), bodyOffset,
+                    ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
 
         LeadingMarginSpan.LeadingMarginSpan2 userpicSpan = null;
         if (showUserpics(ctx) && !condensed) {
@@ -814,9 +829,13 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     continue;
                 } else {
                     CharacterStyle span = null;
+                    CharacterStyle span2 = null;
                     // found needed stuff
                     if (what instanceof Integer && (((Integer)what)== Typeface.BOLD)) {
                         span = new StyleSpan(Typeface.BOLD);
+                        if (helvNueFonts) {
+                            span2 = new CustomTypefaceSpan("", JuickAdvancedApplication.helvNueBold);
+                        }
                     }
                     if (what instanceof Integer && (((Integer)what)== Typeface.ITALIC)) {
                         span = new StyleSpan(Typeface.ITALIC);
@@ -831,6 +850,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                         ssb.delete(ssbOffset + ix2, ssbOffset + ix2 + 1); // second char deleted
                         txt = stringDelete(txt, ix2, ix2 + 1);
                         ssb.setSpan(span, ssbOffset + ix, ssbOffset + ix2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        if (span2 != null) {
+                            ssb.setSpan(span2, ssbOffset + ix, ssbOffset + ix2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
                     }
                     scan = ix2;
                 }
