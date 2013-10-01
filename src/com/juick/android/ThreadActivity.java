@@ -31,7 +31,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.MenuItem;
+import android.support.v4.view.WindowCompat;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
@@ -536,7 +536,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             tv.setText(parsedMessage.textContent);
             tv.setPadding(10, 10, 10, 10);
             MainActivity.restyleChildrenOrWidget(tv);
-            final AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.Theme_Sherlock_Light))
+            final AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle("Post reply - preview")
                     .setView(tv)
                     .setCancelable(true)
@@ -684,8 +684,10 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         }
     }
 
+
+
     @Override
-    public boolean onCreateOptionsMenu(android.support.v4.view.Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.thread, menu);
         return true;
@@ -719,13 +721,13 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         instanceCount--;
     }
 
-    @Override
-    public boolean requestWindowFeature(long featureId) {
-        // actionbar sherlock deducing flag from theme id.
-        if (featureId == android.support.v4.view.Window.FEATURE_ACTION_BAR) return false;
-        return super.requestWindowFeature(featureId);
-    }
-
+//    @Override
+//    public boolean requestWindowFeature(long featureId) {
+//        // actionbar sherlock deducing flag from theme id.
+//        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
+//        return super.requestWindowFeature(featureId);
+//    }
+//
 
 
     @Override

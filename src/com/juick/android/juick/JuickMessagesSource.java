@@ -67,9 +67,15 @@ public abstract class JuickMessagesSource extends MessagesSource {
 
         if (json.has("photo")) {
             jmsg.Photo = json.getJSONObject("photo").getString("small");
+            if (jmsg.Photo.startsWith("//")) {
+                jmsg.Photo = "http:" + jmsg.Photo;
+            }
         }
         if (json.has("video")) {
             jmsg.Video = json.getJSONObject("video").getString("mp4");
+            if (jmsg.Video.startsWith("//")) {
+                jmsg.Video = "http:" + jmsg.Video;
+            }
         }
         if (json.has("context_post")) {
             jmsg.contextPost = initFromJSON(json.getJSONObject("context_post"));

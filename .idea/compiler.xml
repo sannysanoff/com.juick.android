@@ -13,6 +13,8 @@
       <directory url="file://$PROJECT_DIR$/gen/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/gen" includeSubdirectories="true" />
       <directory url="file://$PROJECT_DIR$/../com.mobeta.android.dslv/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/soft/android-sdk-linux/extras/android/support/v7/appcompat/gen" includeSubdirectories="true" />
+      <directory url="file://$USER_HOME$/tmp/platform_frameworks_support/v7/appcompat/gen" includeSubdirectories="true" />
     </excludeFromCompile>
     <resourceExtensions />
     <wildcardResourcePatterns>

@@ -3,9 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" filepath="$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" filepath="$PROJECT_DIR$/../ActionBarSherlock/library/Library.iml" />
+      <module fileurl="file://$USER_HOME$/tmp/platform_frameworks_support/v7/appcompat/appcompat.iml" filepath="$USER_HOME$/tmp/platform_frameworks_support/v7/appcompat/appcompat.iml" />
       <module fileurl="file://$PROJECT_DIR$/com.juick.android.iml" filepath="$PROJECT_DIR$/com.juick.android.iml" />
       <module fileurl="file://$PROJECT_DIR$/../../common/common.iml" filepath="$PROJECT_DIR$/../../common/common.iml" />
+      <module fileurl="file://$USER_HOME$/tmp/platform_frameworks_support/v4/v4.iml" filepath="$USER_HOME$/tmp/platform_frameworks_support/v4/v4.iml" />
     </modules>
   </component>
 </project>

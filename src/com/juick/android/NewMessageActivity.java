@@ -21,6 +21,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -37,11 +38,8 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Pair;
-import android.view.View;
+import android.view.*;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.*;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
@@ -134,6 +132,10 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         resetForm();
         handleIntent(getIntent());
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+
+        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("helvNueFonts", false)) {
+            etMessage.setTypeface(JuickAdvancedApplication.helvNue);
+        }
 
     }
 
@@ -482,13 +484,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 int outWidth = opts.outWidth;
                 LinearLayout ll = new LinearLayout(parent);
                 ll.setOrientation(LinearLayout.VERTICAL);
+                LayoutInflater vi = (LayoutInflater) parent.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 if (outHeight > 400 || outWidth > 400) {
                     AlertDialog.Builder builder =
                             new AlertDialog.Builder(parent)
                             .setView(ll)
                             .setTitle(parent.getString(R.string.ResizeImage));
 
-                    TextView tv = new TextView(parent);
+                    TextView tv = (TextView) vi.inflate(android.R.layout.simple_list_item_1, null);
                     tv.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
                     tv.setText(parent.getString(R.string.Current__) + outWidth + " x " + outHeight + " " + parent.getString(R.string.FileSize_) + " " + tmpfile.length() / 1024 + " KB");
                     ll.addView(tv);
@@ -624,7 +627,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             }
                         }
                     });
-                    MainActivity.restyleChildrenOrWidget(ll);
+                    //MainActivity.restyleChildrenOrWidget(ll);
                     final AlertDialog alertDialog = builder.create();
                     alertDialog.show();
                 } else {

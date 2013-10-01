@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -38,6 +39,8 @@ import java.util.*;
 public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessageReceiver.MessageReceiverListener{
 
     private boolean resumed;
+    private SharedPreferences xmppsp;
+    private boolean helvNueFonts;
 
     class Item {
         ArrayList<XMPPService.IncomingMessage> messages;
@@ -88,8 +91,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         });
         TextView oldTitle = (TextView)findViewById(R.id.old_title);
         oldTitle.setText(R.string.Incoming_Events);
-        SharedPreferences sp = getSharedPrefs();
-        editMode = sp.getBoolean("editMode", false);
+        xmppsp = getSharedPrefs();
+        editMode = xmppsp.getBoolean("editMode", false);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final MyListView lv = (MyListView)findViewById(R.id.list);
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -209,7 +212,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             }
         });
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-        listeningAll = sp.getBoolean("extxmpp.local.listeningAll", false);
+        listeningAll = xmppsp.getBoolean("extxmpp.local.listeningAll", false);
     }
 
     private void clickedOnMessage(final XMPPService.IncomingMessage incomingMessage) {
@@ -271,6 +274,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
     @Override
     protected void onResume() {
+        helvNueFonts = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("helvNueFonts", false);
         XMPPMessageReceiver.listeners.add(this);
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
         refreshList();
@@ -793,6 +797,24 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
             });
         }
+        if (helvNueFonts) {
+            MainActivity.visitViewHierarchy(view, new MainActivity.ViewHierarchyVisitor() {
+                @Override
+                public void visitView(View v) {
+                    if (v instanceof TextView) {
+                        TextView tv = (TextView) v;
+                        Typeface oldTypeface = tv.getTypeface();
+                        if (oldTypeface == JuickAdvancedApplication.helvNueBold || oldTypeface == JuickAdvancedApplication.helvNue) return;
+                        if (oldTypeface != null && (oldTypeface.getStyle() & Typeface.BOLD) != 0) {
+                            tv.setTypeface(JuickAdvancedApplication.helvNueBold);
+                        } else {
+                            tv.setTypeface(JuickAdvancedApplication.helvNue);
+                        }
+                    }
+                }
+            });
+        }
+
     }
 
     private void enableInternalButtons(View view, final XMPPService.IncomingMessage message) {
