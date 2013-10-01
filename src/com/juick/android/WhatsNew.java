@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 public class WhatsNew {
 
     ReleaseFeatures[] features = new ReleaseFeatures[]{
+            new ReleaseFeatures("2013100101", R.string.rf_2013100101),
             new ReleaseFeatures("2013062001", R.string.rf_2013062001),
             new ReleaseFeatures("2012121903", R.string.rf_2012121903),
             new ReleaseFeatures("2012092002", R.string.rf_2012092001),
