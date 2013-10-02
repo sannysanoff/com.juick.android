@@ -293,7 +293,7 @@
     <string name="FileSize_">Файл:</string>
     <string name="Resize__">Уменьшить:</string>
     <string name="DontAttach">Не аттачить</string>
-    <string name="KeepOrigSize">Keep orig size</string>
+    <string name="KeepOrigSize">Оригинал</string>
     <string name="Preview">Ну-ка..</string>
     <string name="ScaleResult">Результат уменьшения</string>
     <string name="NewSize__">Новый размер:</string>

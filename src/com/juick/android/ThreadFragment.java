@@ -24,7 +24,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.*;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.view.*;
 import android.view.animation.*;

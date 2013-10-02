@@ -58,7 +58,6 @@ public class AttachAdapter extends BaseAdapter {
             LayoutInflater vi = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             tv = (TextView) vi.inflate(android.R.layout.simple_list_item_1, null);
             tv.setCompoundDrawablePadding(10);
-            tv.setTextColor(Color.BLACK);
         }
         if (position >= 0 && position < 4) {
             tv.setText(labels[position]);

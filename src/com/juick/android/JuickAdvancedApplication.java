@@ -73,7 +73,6 @@ public class JuickAdvancedApplication extends Application {
         System.out.println("Oh");
         if (activity instanceof ActionBarActivity) {
             ((ActionBarActivity)activity).supportRequestWindowFeature(WindowCompat.FEATURE_ACTION_BAR);
-            //activity.setTheme(R.style.Theme_Sherlock_JustNavigation);
         }
     }
 

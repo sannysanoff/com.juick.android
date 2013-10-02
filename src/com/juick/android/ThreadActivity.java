@@ -684,6 +684,8 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         }
     }
 
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -726,8 +728,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
         return super.requestWindowFeature(featureId);
     }
-
-
 
     @Override
     public void onBackPressed() {

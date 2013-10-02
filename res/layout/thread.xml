@@ -65,6 +65,15 @@
                 android:layout_toLeftOf="@id/buttonAttachment"
                 android:textColor="#FF808080"
                 android:text="@android:string/cancel"/>
+        <Button
+                android:id="@+id/drafts"
+                android:layout_toLeftOf="@id/buttonCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FF808080"
+                android:visibility="visible"
+                android:text="@string/Drafts"
+                />
 
     </RelativeLayout>
 
@@ -108,14 +117,6 @@
                 android:focusableInTouchMode="true"
                 >
             <!-- red color will be replaced by restyle -->
-            <Button
-                    android:id="@+id/drafts"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:visibility="visible"
-                    android:text="@string/Drafts"
-                    />
             <EditText
                     android:id="@+id/editMessage"
                     android:layout_width="fill_parent"
