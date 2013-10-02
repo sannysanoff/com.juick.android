@@ -22,11 +22,10 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBar;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
+import android.support.v4.view.WindowCompat;
+import android.support.v7.app.ActionBar;
 import android.view.*;
 import android.widget.TextView;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
@@ -122,12 +121,12 @@ public class MessagesActivity extends JuickFragmentActivity {
         return super.onPrepareOptionsMenu(menu);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-    @Override
-    public boolean requestWindowFeature(long featureId) {
-        // actionbar sherlock deducing flag from theme id.
-        if (featureId == android.support.v4.view.Window.FEATURE_ACTION_BAR) return false;
-        return super.requestWindowFeature(featureId);
-    }
+//    @Override
+//    public boolean requestWindowFeature(int featureId) {
+//        // actionbar sherlock deducing flag from theme id.
+//        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
+//        return super.requestWindowFeature(featureId);
+//    }
 
     @Override
     public void onBackPressed() {

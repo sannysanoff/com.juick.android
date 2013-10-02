@@ -25,7 +25,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.SupportActivity;
 import android.text.Editable;
 import android.view.*;
 import android.view.animation.*;
@@ -145,7 +144,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     @Override
-    public void onAttach(SupportActivity activity) {
+    public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
             parentActivity = (ThreadFragmentListener) activity;

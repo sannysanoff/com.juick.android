@@ -589,7 +589,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 }
             });
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(activity, R.style.Theme_Sherlock));
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
             View dialogView = activity.getLayoutInflater().inflate(R.layout.message_menu2, null);
             builder.setView(dialogView);
             builder.setCancelable(true);
