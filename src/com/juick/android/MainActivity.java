@@ -1565,7 +1565,6 @@ public class MainActivity extends JuickFragmentActivity implements
             } else {
                 ACRA.getErrorReporter().putCustomData("juick_user", "");
             }
-
         }
     }
 
@@ -1614,7 +1613,6 @@ public class MainActivity extends JuickFragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
-
 
 
 }

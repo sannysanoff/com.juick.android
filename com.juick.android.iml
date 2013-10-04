@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="library" name="libs" level="project" />
     <orderEntry type="module" module-name="appcompat" />
+    <orderEntry type="module" module-name="viewPagerIndicator" />
   </component>
 </module>
 

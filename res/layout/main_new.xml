@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.v4.widget.DrawerLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    <!-- The main content view -->
+    <FrameLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:background="#FFFFFF00"
+            android:layout_height="match_parent" />
+    <!-- The navigation drawer -->
+
+
+    <RelativeLayout
+            android:layout_width="260sp"
+            android:layout_height="fill_parent"
+            android:id="@+id/navigation_panel"
+            android:layout_gravity="start"
+            android:background="#FF404040"
+            android:visibility="visible"
+            >
+        <TextView
+                android:layout_width="fill_parent"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:paddingBottom="4sp"
+                android:paddingTop="4sp"
+                android:layout_height="40sp"
+                android:background="#FFFFFF"
+                android:textColor="#777777"
+                android:text="Navigation"
+                android:id="@+id/navlabel"
+                android:layout_alignParentTop="true"
+                />
+        <ImageButton
+                android:layout_width="40sp"
+                android:gravity="center"
+                android:background="@drawable/white_button_background"
+                android:src="@drawable/menu_btn_bg"
+                android:layout_height="40sp"
+                android:id="@+id/navigation_menu_button"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                />
+        <com.mobeta.android.dslv.DragSortListView
+                android:id="@+id/navigation_list"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_below="@id/navlabel"
+                android:choiceMode="singleChoice"
+                />
+
+    </RelativeLayout>
+
+</android.support.v4.widget.DrawerLayout>
