@@ -335,10 +335,13 @@ public class Utils {
                     XMPPService.instance.handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            receive.withService((T)XMPPService.instance);
-                            synchronized (getServiceQueue) {
-                                getServiceStatus.inProgress--;
-                                getServiceStatus.tryNext();
+                            try {
+                                receive.withService((T)XMPPService.instance);
+                            } finally {
+                                synchronized (getServiceQueue) {
+                                    getServiceStatus.inProgress--;
+                                    getServiceStatus.tryNext();
+                                }
                             }
                         }
                     });
