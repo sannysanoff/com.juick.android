@@ -17,10 +17,7 @@
  */
 package com.juick.android;
 
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
+import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -31,6 +28,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.WindowCompat;
+import android.support.v7.app.*;
 import android.support.v7.app.ActionBar;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -381,7 +380,7 @@ public class MainActivity extends JuickFragmentActivity implements
 
     private void updateActionBarMode() {
         boolean googlePlus = sp.getBoolean("googlePlusNavigation", false);
-        ActionBar bar = getSupportActionBar();
+        android.support.v7.app.ActionBar bar = getSupportActionBar();
         bar.setDisplayShowTitleEnabled(false);
         bar.setDisplayShowHomeEnabled(false);
         bar.setDisplayHomeAsUpEnabled(false);
@@ -410,7 +409,7 @@ public class MainActivity extends JuickFragmentActivity implements
 
     private void updateNavigationBarTitle() {
         if (getSelectedNavigationIndex() != -1) {
-            ActionBar bar = getSupportActionBar();
+            android.support.v7.app.ActionBar bar = getSupportActionBar();
             String title = getString(navigationItems.get(getSelectedNavigationIndex()).labelId);
             bar.setTitle(title);
             if (bar.getCustomView() != null) {
@@ -423,6 +422,13 @@ public class MainActivity extends JuickFragmentActivity implements
     public void onFragmentCreated() {
         super.onFragmentCreated();    //To change body of overridden methods use File | Settings | File Templates.
         // ((MyListView)mf.getListView()).mindLeftFling = true;
+    }
+
+    @Override
+    public boolean supportRequestWindowFeature(int featureId) {
+        // actionbar sherlock deducing flag from theme id.
+        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
+        return super.requestWindowFeature(featureId);
     }
 
     private void layoutNavigationPane() {
@@ -779,7 +785,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 return retval;
             }
         };
-        ActionBar bar = getSupportActionBar();
+        android.support.v7.app.ActionBar bar = getSupportActionBar();
         updateActionBarMode();
         navigationList.setDragEnabled(false);
         ((DragSortController)navigationList.getFloatViewManager()).setDragHandleId(R.id.draggable);
@@ -1559,7 +1565,6 @@ public class MainActivity extends JuickFragmentActivity implements
             } else {
                 ACRA.getErrorReporter().putCustomData("juick_user", "");
             }
-
         }
     }
 
@@ -1608,7 +1613,6 @@ public class MainActivity extends JuickFragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
-
 
 
 }

@@ -721,14 +721,13 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         instanceCount--;
     }
 
-//    @Override
-//    public boolean requestWindowFeature(long featureId) {
-//        // actionbar sherlock deducing flag from theme id.
-//        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
-//        return super.requestWindowFeature(featureId);
-//    }
-//
 
+    @Override
+    public boolean supportRequestWindowFeature(int featureId) {
+        // actionbar sherlock deducing flag from theme id.
+        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
+        return super.requestWindowFeature(featureId);
+    }
 
     @Override
     public void onBackPressed() {

@@ -121,13 +121,13 @@ public class MessagesActivity extends JuickFragmentActivity {
         return super.onPrepareOptionsMenu(menu);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
-//    @Override
-//    public boolean requestWindowFeature(long featureId) {
-//        // actionbar sherlock deducing flag from theme id.
-//        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
-//        return super.requestWindowFeature(featureId);
-//    }
-//
+    @Override
+    public boolean supportRequestWindowFeature(int featureId) {
+        // actionbar sherlock deducing flag from theme id.
+        if (featureId == WindowCompat.FEATURE_ACTION_BAR) return false;
+        return super.requestWindowFeature(featureId);
+    }
+
     @Override
     public void onBackPressed() {
         if (mf != null && mf.listAdapter.imagePreviewHelper != null && mf.listAdapter.imagePreviewHelper.handleBack())

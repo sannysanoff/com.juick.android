@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.WindowCompat;
+import android.support.v7.app.ActionBarActivity;
 import android.view.WindowManager;
 import android.widget.Toast;
 import com.google.android.gcm.GCMRegistrar;
@@ -57,14 +58,6 @@ public class JuickAdvancedApplication extends Application {
     JuickGCMClient juickGCMClient;
     public static final int MAX_LOG_FOR_SEND = 200000;
 
-//    static HashMap<String, Integer> themesMap = new HashMap<String, Integer>() {{
-//        put("Theme_Sherlock_Light",R.style.Theme_Sherlock_Light);
-//        put("Theme_Black",android.R.style.Theme_Black);
-//        put("Theme_Holo",android.R.style.Theme_Holo);
-//        put("Theme_Holo_Light",android.R.style.Theme_Holo_Light);
-//        put("Theme_Light",android.R.style.Theme_Light);
-//        put("Theme_Translucent",android.R.style.Theme_Translucent);
-//    }};
     public static Typeface dinWebPro;
     public static Typeface helvNue;
     public static Typeface helvNueBold;
@@ -78,9 +71,8 @@ public class JuickAdvancedApplication extends Application {
 //        }
         boolean doit = true;
         System.out.println("Oh");
-        if (activity instanceof FragmentActivity) {
-            ((FragmentActivity)activity).requestWindowFeature(WindowCompat.FEATURE_ACTION_BAR);
-            //activity.setTheme(R.style.Theme_Sherlock_JustNavigation);
+        if (activity instanceof ActionBarActivity) {
+            ((ActionBarActivity)activity).supportRequestWindowFeature(WindowCompat.FEATURE_ACTION_BAR);
         }
     }
 
