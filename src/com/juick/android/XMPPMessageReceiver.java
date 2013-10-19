@@ -20,6 +20,7 @@ package com.juick.android;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.support.v4.app.NotificationCompat;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -75,7 +76,38 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
     public static void updateInfo(Context context, int nMessages, boolean silent) {
         NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         String tickerText = "juick: new message";
-        Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
+
+        // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
+        // Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
+        NotificationCompat.Builder notiB = new NotificationCompat.Builder(context);
+
+        int smallIcon;
+        if (nMessages >= 512) {
+            smallIcon = R.drawable.juick_message_icon_512;
+        } else if (nMessages >= 256) {
+            smallIcon = R.drawable.juick_message_icon_256;
+        } else if (nMessages >= 128) {
+            smallIcon = R.drawable.juick_message_icon_128;
+        } else if (nMessages >= 64) {
+            smallIcon = R.drawable.juick_message_icon_64;
+        } else if (nMessages >= 32) {
+            smallIcon = R.drawable.juick_message_icon_32;
+        } else if (nMessages >= 16) {
+            smallIcon = R.drawable.juick_message_icon_16;
+        } else if (nMessages >= 8) {
+            smallIcon = R.drawable.juick_message_icon_8;
+        } else if (nMessages >= 4) {
+            smallIcon = R.drawable.juick_message_icon_4;
+        } else if (nMessages >= 2) {
+            smallIcon = R.drawable.juick_message_icon_2;
+        } else {
+            smallIcon = R.drawable.juick_message_icon_1;
+        }
+        notiB.setSmallIcon(smallIcon).
+                setWhen(System.currentTimeMillis());
+
+        // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int notification = 0;
         if (!silent) {
@@ -86,7 +118,7 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 if (prefs.getBoolean("ringtone_enabled", true)) {
                     String ringtone_uri = prefs.getString("ringtone_uri", "");
                     if (ringtone_uri.length() > 0) {
-                        notif.sound = Uri.parse(ringtone_uri);
+                        notiB.setSound(Uri.parse(ringtone_uri));
                     }
                     else
                         notification |= Notification.DEFAULT_SOUND;
@@ -94,13 +126,16 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 lastVibrate = System.currentTimeMillis();
             }
         }
-        notif.defaults = silent ? 0 : notification;
+        notiB.setDefaults(silent ? 0 : notification);
         Intent intent = new Intent();
         intent.setAction(XMPPService.ACTION_LAUNCH_MESSAGELIST);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1000, intent, 0);
         //PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
-        notif.setLatestEventInfo(context, "Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : ""), tickerText, pendingIntent);
-        nm.notify("", 2, notif);
+        notiB.setContentTitle("Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : "")).
+                setContentText(tickerText).
+                setContentIntent(pendingIntent).
+                setNumber(nMessages);
+        nm.notify("", 2, notiB.build());
     }
 
     public static void cancelInfo(Context context) {
