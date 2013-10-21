@@ -14,6 +14,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.view.WindowManager;
 import android.widget.Toast;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.google.android.gcm.GCMRegistrar;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.R;
@@ -77,8 +78,8 @@ public class JuickAdvancedApplication extends Application {
 //        }
         boolean doit = true;
         System.out.println("Oh");
-        if (activity instanceof FragmentActivity) {
-            ((FragmentActivity)activity).requestWindowFeature((long)android.view.Window.FEATURE_ACTION_BAR);
+        if (activity instanceof SherlockFragmentActivity) {
+            ((SherlockFragmentActivity)activity).requestWindowFeature((long)android.view.Window.FEATURE_ACTION_BAR);
             //activity.setTheme(R.style.Theme_Sherlock_JustNavigation);
         }
     }

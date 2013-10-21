@@ -17,18 +17,15 @@
  */
 package com.juick.android;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBar;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.view.*;
+import android.view.MenuItem;
 import android.widget.TextView;
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.view.*;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
@@ -97,8 +94,8 @@ public class MessagesActivity extends JuickFragmentActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+    public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+        com.actionbarsherlock.view.MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.messages, menu);
         return true;
     }
@@ -117,16 +114,16 @@ public class MessagesActivity extends JuickFragmentActivity {
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
+    public boolean onPrepareOptionsMenu(com.actionbarsherlock.view.Menu menu) {
         menu.findItem(R.id.menuitem_search).setVisible(getUserId() > 0);
         return super.onPrepareOptionsMenu(menu);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
     @Override
-    public boolean requestWindowFeature(long featureId) {
+    public void requestWindowFeature(long featureId) {
         // actionbar sherlock deducing flag from theme id.
-        if (featureId == android.support.v4.view.Window.FEATURE_ACTION_BAR) return false;
-        return super.requestWindowFeature(featureId);
+        if (featureId == com.actionbarsherlock.view.Window.FEATURE_ACTION_BAR) return;
+        super.requestWindowFeature(featureId);
     }
 
     @Override
@@ -137,7 +134,7 @@ public class MessagesActivity extends JuickFragmentActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menuitem_search:
                 Intent intent = new Intent(this, ExploreActivity.class);

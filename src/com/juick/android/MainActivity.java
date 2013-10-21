@@ -30,17 +30,19 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBar;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.*;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.*;
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.view.*;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.juick.*;
@@ -1132,14 +1134,14 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+    public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+        com.actionbarsherlock.view.MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
+    public boolean onPrepareOptionsMenu(com.actionbarsherlock.view.Menu menu) {
         boolean savedMessagesSource = mf != null && mf.messagesSource != null && mf.messagesSource instanceof SavedMessagesSource;
         menu.findItem(R.id.menuitem_new_saved_sharing_key).setVisible(savedMessagesSource);
         menu.findItem(R.id.menuitem_existing_saved_sharing_key).setVisible(savedMessagesSource);
@@ -1147,7 +1149,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
         if (item == null) return true;
         switch (item.getItemId()) {
             case R.id.menuitem_preferences:

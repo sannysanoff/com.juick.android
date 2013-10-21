@@ -31,14 +31,18 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.MenuItem;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.view.*;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
+import com.actionbarsherlock.view.*;
+import com.actionbarsherlock.view.Menu;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
@@ -104,6 +108,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         JuickAdvancedApplication.maybeEnableAcceleration(this);
         JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getSherlock().requestFeature(Window.FEATURE_NO_TITLE);
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         super.onCreate(savedInstanceState);
         handler = new Handler();
@@ -279,7 +284,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         ft.add(R.id.threadfragment, tf);
         ft.commit();
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-
     }
 
     void saveDraft(long saveRid, String saveMid, long saveTs, String messag) {
@@ -685,14 +689,14 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     }
 
     @Override
-    public boolean onCreateOptionsMenu(android.support.v4.view.Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+    public boolean onCreateOptionsMenu(Menu menu) {
+        com.actionbarsherlock.view.MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.thread, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menuitem_preferences:
                 Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
@@ -720,10 +724,10 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     }
 
     @Override
-    public boolean requestWindowFeature(long featureId) {
+    public void requestWindowFeature(long featureId) {
         // actionbar sherlock deducing flag from theme id.
-        if (featureId == android.support.v4.view.Window.FEATURE_ACTION_BAR) return false;
-        return super.requestWindowFeature(featureId);
+        if (featureId == com.actionbarsherlock.view.Window.FEATURE_ACTION_BAR) return;
+        super.requestWindowFeature(featureId);
     }
 
 

@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.view.*;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 import java.util.HashMap;
 
@@ -17,7 +18,7 @@ import java.util.HashMap;
  * Time: 12:20 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JuickFragmentActivity extends FragmentActivity {
+public class JuickFragmentActivity extends SherlockFragmentActivity {
 
     public ThreadFragment tf;
     public MessagesFragment mf;

@@ -135,7 +135,7 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 setContentText(tickerText).
                 setContentIntent(pendingIntent).
                 setNumber(nMessages);
-        nm.notify("", 2, notiB.build());
+        nm.notify("", 2, notiB.getNotification());
     }
 
     public static void cancelInfo(Context context) {

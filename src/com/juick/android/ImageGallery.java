@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.*;
 import android.widget.Gallery;
-import android.widget.ImageView;
 
 import java.util.ArrayList;
 
