@@ -20,6 +20,8 @@ package com.juick.android;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.support.v4.app.NotificationCompat;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -79,7 +81,6 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
 
         // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
         // Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
-        NotificationCompat.Builder notiB = new NotificationCompat.Builder(context);
 
         int smallIcon;
         if (nMessages >= 512) {
@@ -103,9 +104,12 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
         } else {
             smallIcon = R.drawable.juick_message_icon_1;
         }
-        notiB.setSmallIcon(smallIcon).
-                setWhen(System.currentTimeMillis());
+        NotificationCompat.Builder notiB =
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.testdigits)
+                        .setWhen(System.currentTimeMillis());
 
+        //context.getResources().getDrawable(smallIcon)
         // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
