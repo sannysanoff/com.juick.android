@@ -1197,6 +1197,14 @@
     <string name="WillSynchronize">Will synchronize message read markers and Saved Messages. Across devices and
         reinstalls.
     </string>
+    <string name="UseWebInsteadOfJSON">Use web instead of json http-api</string>
+    <string name="WrapUserpicsWithText">Wrap userpics with text</string>
+    <string name="TurnOffToGetTwitterStyleLook">turn off to get twitter-style look</string>
+    <string name="CompactComments">Compact comments</string>
+    <string name="SendAnonUsageReports">Send anon usage reports</string>
+    <string name="Subscriptions__Web">Подписки (Сайт)</string>
+    <string name="EnablePullToRefresh">Enable pull to refresh</string>
+    <string name="TurnOffButtonsLight">Turn off buttons light</string>
 
 
 </resources>

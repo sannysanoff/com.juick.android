@@ -57,7 +57,7 @@
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="enable_pull_to_refresh"
-                android:title="Enable pull to refresh"
+                android:title="@string/EnablePullToRefresh"
                 android:defaultValue="true"
                 android:persistent="true"/>
         <ListPreference
@@ -104,7 +104,7 @@
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="turnOffButtons"
-                android:title="Turn off buttons light"
+                android:title="@string/TurnOffButtonsLight"
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>

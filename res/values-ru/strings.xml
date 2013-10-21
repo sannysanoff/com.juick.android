@@ -485,6 +485,14 @@
     <string name="SynchronizeOnJAServer">Синхронизация на JA сервер</string>
     <string name="WillSynchronize">Будет синхронизировать маркеры прочитанных мессаг и Сохраненные. На всех устройствах. И после свежих инсталляций."
     </string>
+    <string name="UseWebInsteadOfJSON">Брать с сайта а не через API</string>
+    <string name="WrapUserpicsWithText">Текст под юзерпиками</string>
+    <string name="TurnOffToGetTwitterStyleLook">Выключите чтобы показывало как в Твиттере</string>
+    <string name="CompactComments">Компактно комменты</string>
+    <string name="SendAnonUsageReports">Анонимно слать статистику</string>
+    <string name="Subscriptions__Web">Subscriptions (Web)</string>
+    <string name="EnablePullToRefresh">Потянуть для обновления</string>
+    <string name="TurnOffButtonsLight">Отключать подсветку кнопок</string>
 
 
 </resources>

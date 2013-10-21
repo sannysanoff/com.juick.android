@@ -31,10 +31,10 @@
             android:summary="@string/LeaveItEmptyIfUnknown"
             android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Use web instead of json http-api">
+    <PreferenceCategory android:title="@string/UseWebInsteadOfJSON">
         <CheckBoxPreference
                 android:key="web_for_subscriptions"
-                android:title="Subscriptions (Web)"
+                android:title="@string/Subscriptions__Web"
                 android:defaultValue="false"
                 android:persistent="true"/>
 <!--

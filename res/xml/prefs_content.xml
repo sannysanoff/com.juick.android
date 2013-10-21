@@ -14,13 +14,13 @@
             android:persistent="true"/>
     <CheckBoxPreference
             android:key="wrapUserpics"
-            android:title="Wrap userpics with text"
-            android:summary="turn off to get twitter-style look"
+            android:title="@string/WrapUserpicsWithText"
+            android:summary="@string/TurnOffToGetTwitterStyleLook"
             android:defaultValue="true"
             android:persistent="true"/>
     <CheckBoxPreference
             android:key="compactComments"
-            android:title="Compact comments"
+            android:title="@string/CompactComments"
             android:defaultValue="false"
             android:persistent="true"/>
     <ListPreference

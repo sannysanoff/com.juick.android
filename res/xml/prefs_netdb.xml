@@ -45,7 +45,7 @@
             android:persistent="true"/>
     <ListPreference
             android:key="usage_statistics"
-            android:title="Send anon usage reports"
+            android:title="@string/SendAnonUsageReports"
             android:entryValues="@array/usageStatistics"
             android:entries="@array/usageStatisticsLabels"
             android:defaultValue="no"
