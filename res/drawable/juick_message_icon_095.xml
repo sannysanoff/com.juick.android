@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap android:src="@drawable/juick_message_icon" android:gravity="left|top"/>
+    </item>
+    <item>
+        <bitmap android:src="@drawable/n090" android:gravity="left|top"/>
+    </item>
+    <item>
+        <bitmap android:src="@drawable/n005" android:gravity="left|top"/>
+    </item>
+</layer-list>
