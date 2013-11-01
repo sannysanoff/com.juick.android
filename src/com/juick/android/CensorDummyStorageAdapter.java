@@ -20,6 +20,7 @@ public class CensorDummyStorageAdapter implements CensorStorageAdapter {
         for (int i = 0; i < WORDS_PER_LEVEL; i++) {
             if (level == 1) {
                 result.add("ЖОК");
+                result.add("КАБИНЕТ");
             }
             result.add(new StringBuilder()
                     .append(WORD_PREFIX)

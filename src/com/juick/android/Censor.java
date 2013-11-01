@@ -128,8 +128,9 @@ public class Censor {
                                 // the first blacklisted token found
                                 result = new StringBuilder(textToCensor);
                             }
-                            replaceAll(result, token, (token.length() <= CENSORED_WORD.length())?
-                                    CENSORED_WORD.substring(0, token.length()) : CENSORED_WORD );
+                            int tokenLength = token.length();
+                            replaceAll(result, token, (tokenLength <= CENSORED_WORD.length())?
+                                    CENSORED_WORD.substring(0, tokenLength) : CENSORED_WORD );
                             // we have censored this token, moving on to the next one
                             break;
                         }

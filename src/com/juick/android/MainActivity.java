@@ -318,6 +318,8 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         }
 
+        initCensor();
+
         setContentView(R.layout.main);
         final MyRelativeLayout mll = (MyRelativeLayout)findViewById(R.id.layout_container);
         mll.listener = new MyRelativeLayout.Listener() {
@@ -1004,6 +1006,10 @@ public class MainActivity extends JuickFragmentActivity implements
     private void toggleJAMessaging() {
         boolean useJAM = sp.getBoolean("enableJAMessaging", false);
         toggleJAMessaging(this, useJAM);
+    }
+
+    private void initCensor() {
+        Censor.setCensorshipLevel( Integer.parseInt(sp.getString("censor", "0")));
     }
 
     public static boolean commandJAMService(Context ctx, String command) {
