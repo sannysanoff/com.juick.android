@@ -72,56 +72,144 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
 
     static long lastVibrate = 0;
 
-    static boolean firstUpdate = true;
+    public static final int[] NOTIFICATION_ICONS = {
+            R.drawable.juick_message_icon,
+            R.drawable.juick_message_icon_001,
+            R.drawable.juick_message_icon_002,
+            R.drawable.juick_message_icon_003,
+            R.drawable.juick_message_icon_004,
+            R.drawable.juick_message_icon_005,
+            R.drawable.juick_message_icon_006,
+            R.drawable.juick_message_icon_007,
+            R.drawable.juick_message_icon_008,
+            R.drawable.juick_message_icon_009,
+            R.drawable.juick_message_icon_010,
+            R.drawable.juick_message_icon_011,
+            R.drawable.juick_message_icon_012,
+            R.drawable.juick_message_icon_013,
+            R.drawable.juick_message_icon_014,
+            R.drawable.juick_message_icon_015,
+            R.drawable.juick_message_icon_016,
+            R.drawable.juick_message_icon_017,
+            R.drawable.juick_message_icon_018,
+            R.drawable.juick_message_icon_019,
+            R.drawable.juick_message_icon_020,
+            R.drawable.juick_message_icon_021,
+            R.drawable.juick_message_icon_022,
+            R.drawable.juick_message_icon_023,
+            R.drawable.juick_message_icon_024,
+            R.drawable.juick_message_icon_025,
+            R.drawable.juick_message_icon_026,
+            R.drawable.juick_message_icon_027,
+            R.drawable.juick_message_icon_028,
+            R.drawable.juick_message_icon_029,
+            R.drawable.juick_message_icon_030,
+            R.drawable.juick_message_icon_031,
+            R.drawable.juick_message_icon_032,
+            R.drawable.juick_message_icon_033,
+            R.drawable.juick_message_icon_034,
+            R.drawable.juick_message_icon_035,
+            R.drawable.juick_message_icon_036,
+            R.drawable.juick_message_icon_037,
+            R.drawable.juick_message_icon_038,
+            R.drawable.juick_message_icon_039,
+            R.drawable.juick_message_icon_040,
+            R.drawable.juick_message_icon_041,
+            R.drawable.juick_message_icon_042,
+            R.drawable.juick_message_icon_043,
+            R.drawable.juick_message_icon_044,
+            R.drawable.juick_message_icon_045,
+            R.drawable.juick_message_icon_046,
+            R.drawable.juick_message_icon_047,
+            R.drawable.juick_message_icon_048,
+            R.drawable.juick_message_icon_049,
+            R.drawable.juick_message_icon_050,
+            R.drawable.juick_message_icon_051,
+            R.drawable.juick_message_icon_052,
+            R.drawable.juick_message_icon_053,
+            R.drawable.juick_message_icon_054,
+            R.drawable.juick_message_icon_055,
+            R.drawable.juick_message_icon_056,
+            R.drawable.juick_message_icon_057,
+            R.drawable.juick_message_icon_058,
+            R.drawable.juick_message_icon_059,
+            R.drawable.juick_message_icon_060,
+            R.drawable.juick_message_icon_061,
+            R.drawable.juick_message_icon_062,
+            R.drawable.juick_message_icon_063,
+            R.drawable.juick_message_icon_064,
+            R.drawable.juick_message_icon_065,
+            R.drawable.juick_message_icon_066,
+            R.drawable.juick_message_icon_067,
+            R.drawable.juick_message_icon_068,
+            R.drawable.juick_message_icon_069,
+            R.drawable.juick_message_icon_070,
+            R.drawable.juick_message_icon_071,
+            R.drawable.juick_message_icon_072,
+            R.drawable.juick_message_icon_073,
+            R.drawable.juick_message_icon_074,
+            R.drawable.juick_message_icon_075,
+            R.drawable.juick_message_icon_076,
+            R.drawable.juick_message_icon_077,
+            R.drawable.juick_message_icon_078,
+            R.drawable.juick_message_icon_079,
+            R.drawable.juick_message_icon_080,
+            R.drawable.juick_message_icon_081,
+            R.drawable.juick_message_icon_082,
+            R.drawable.juick_message_icon_083,
+            R.drawable.juick_message_icon_084,
+            R.drawable.juick_message_icon_085,
+            R.drawable.juick_message_icon_086,
+            R.drawable.juick_message_icon_087,
+            R.drawable.juick_message_icon_088,
+            R.drawable.juick_message_icon_089,
+            R.drawable.juick_message_icon_090,
+            R.drawable.juick_message_icon_091,
+            R.drawable.juick_message_icon_092,
+            R.drawable.juick_message_icon_093,
+            R.drawable.juick_message_icon_094,
+            R.drawable.juick_message_icon_095,
+            R.drawable.juick_message_icon_096,
+            R.drawable.juick_message_icon_097,
+            R.drawable.juick_message_icon_098,
+            R.drawable.juick_message_icon_099
+    };
 
     public static void updateInfo(final Context context, int nMessages, boolean silent) {
         final NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         String tickerText = "juick: new message";
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
         // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
         // Notification notif = new Notification(R.drawable.juick_message_icon, null,System.currentTimeMillis());
 
-        int smallIcon;
-        if (nMessages >= 512) {
-            smallIcon = R.drawable.juick_message_icon_512;
-        } else if (nMessages >= 256) {
-            smallIcon = R.drawable.juick_message_icon_256;
-        } else if (nMessages >= 128) {
-            smallIcon = R.drawable.juick_message_icon_128;
-        } else if (nMessages >= 64) {
-            smallIcon = R.drawable.juick_message_icon_64;
-        } else if (nMessages >= 32) {
-            smallIcon = R.drawable.juick_message_icon_32;
-        } else if (nMessages >= 16) {
-            smallIcon = R.drawable.juick_message_icon_16;
-        } else if (nMessages >= 8) {
-            smallIcon = R.drawable.juick_message_icon_8;
-        } else if (nMessages >= 4) {
-            smallIcon = R.drawable.juick_message_icon_4;
-        } else if (nMessages >= 2) {
-            smallIcon = R.drawable.juick_message_icon_2;
+        int iconIndex;
+        if (nMessages < 1) {
+            iconIndex = 0; // to prevent out of bounds
+        } else if (nMessages > NOTIFICATION_ICONS.length - 1) {
+            iconIndex = NOTIFICATION_ICONS.length - 1; // to prevent out of bounds
         } else {
-            smallIcon = R.drawable.juick_message_icon_1;
+            iconIndex = nMessages;
         }
-        final NotificationCompat.Builder notiB =
+        boolean showNumberUnread = sp.getBoolean("show_number_unread", true);
+        NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.drawable.testdigits_basic)
+                        .setSmallIcon(showNumberUnread ? NOTIFICATION_ICONS[iconIndex] : R.drawable.juick_message_icon_plain)
                         .setWhen(System.currentTimeMillis());
 
         //context.getResources().getDrawable(smallIcon)
         // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int notification = 0;
         if (!silent) {
-            if (prefs.getBoolean("led_enabled", true)) notification |= Notification.DEFAULT_LIGHTS;
+            if (sp.getBoolean("led_enabled", true)) notification |= Notification.DEFAULT_LIGHTS;
             if (System.currentTimeMillis() - lastVibrate > 5000) {
                 // add some sound
-                if (prefs.getBoolean("vibration_enabled", true)) notification |= Notification.DEFAULT_VIBRATE;
-                if (prefs.getBoolean("ringtone_enabled", true)) {
-                    String ringtone_uri = prefs.getString("ringtone_uri", "");
+                if (sp.getBoolean("vibration_enabled", true)) notification |= Notification.DEFAULT_VIBRATE;
+                if (sp.getBoolean("ringtone_enabled", true)) {
+                    String ringtone_uri = sp.getString("ringtone_uri", "");
                     if (ringtone_uri.length() > 0) {
-                        notiB.setSound(Uri.parse(ringtone_uri));
+                        notificationBuilder.setSound(Uri.parse(ringtone_uri));
                     }
                     else
                         notification |= Notification.DEFAULT_SOUND;
@@ -129,17 +217,16 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 lastVibrate = System.currentTimeMillis();
             }
         }
-        notiB.setDefaults(silent ? 0 : notification);
+        notificationBuilder.setDefaults(silent ? 0 : notification);
         Intent intent = new Intent();
         intent.setAction(XMPPService.ACTION_LAUNCH_MESSAGELIST);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1000, intent, 0);
         //PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
-        notiB.setContentTitle("Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : "")).
+        notificationBuilder.setContentTitle("Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : "")).
                 setContentText(tickerText).
                 setContentIntent(pendingIntent).
                 setNumber(nMessages);
-        final Notification noti = notiB.getNotification();
-        nm.notify(2, noti);
+        nm.notify("", 2, notificationBuilder.getNotification());
     }
 
     public static void cancelInfo(Context context) {

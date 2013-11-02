@@ -52,6 +52,11 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/Notifications">
         <CheckBoxPreference
+                android:key="show_number_unread"
+                android:title="@string/ShowDigitsOnIcon"
+                android:defaultValue="true"
+                android:persistent="true"/>
+        <CheckBoxPreference
                 android:key="receive_only_personal"
                 android:title="@string/ReceiveOnlyPersonal"
                 android:summary="@string/WillReceiveOnlyPersonal"

@@ -1205,6 +1205,7 @@
     <string name="Subscriptions__Web">Подписки (Сайт)</string>
     <string name="EnablePullToRefresh">Enable pull to refresh</string>
     <string name="TurnOffButtonsLight">Turn off buttons light</string>
+    <string name="ShowDigitsOnIcon">Show digits on icon</string>
 
 
 </resources>
