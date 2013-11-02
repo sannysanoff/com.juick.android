@@ -56,6 +56,7 @@
                 <data android:scheme="http" android:host="bnw.im"/>
             </intent-filter>
         </activity>
+
         <activity android:name="com.juick.android.SimpleBrowser" android:label="Juick Simple Browser" android:enabled="false">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>

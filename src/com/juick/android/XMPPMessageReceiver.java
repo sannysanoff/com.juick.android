@@ -17,12 +17,8 @@
  */
 package com.juick.android;
 
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.support.v4.app.NotificationCompat;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -30,6 +26,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
@@ -75,8 +72,10 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
 
     static long lastVibrate = 0;
 
-    public static void updateInfo(Context context, int nMessages, boolean silent) {
-        NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+    static boolean firstUpdate = true;
+
+    public static void updateInfo(final Context context, int nMessages, boolean silent) {
+        final NotificationManager nm = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         String tickerText = "juick: new message";
 
         // public Notification(int icon, java.lang.CharSequence tickerText, long when) { /* compiled code */ }
@@ -104,9 +103,9 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
         } else {
             smallIcon = R.drawable.juick_message_icon_1;
         }
-        NotificationCompat.Builder notiB =
+        final NotificationCompat.Builder notiB =
                 new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.drawable.testdigits)
+                        .setSmallIcon(R.drawable.testdigits_basic)
                         .setWhen(System.currentTimeMillis());
 
         //context.getResources().getDrawable(smallIcon)
@@ -139,7 +138,8 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
                 setContentText(tickerText).
                 setContentIntent(pendingIntent).
                 setNumber(nMessages);
-        nm.notify("", 2, notiB.getNotification());
+        final Notification noti = notiB.getNotification();
+        nm.notify(2, noti);
     }
 
     public static void cancelInfo(Context context) {
