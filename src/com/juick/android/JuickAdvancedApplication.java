@@ -69,6 +69,9 @@ public class JuickAdvancedApplication extends Application {
     public static Typeface helvNue;
     public static Typeface helvNueBold;
 
+    private static float lastTouchX = 0;
+    private static float lastTouchY = 0;
+
     public static void setupTheme(Activity activity) {
         // String nativeTheme = sp.getString("nativeTheme", "default");
 //        String nativeTheme = "Theme_Sherlock_Light";
@@ -370,4 +373,16 @@ public class JuickAdvancedApplication extends Application {
         }
     }
 
+    public static float getLastTouchX() {
+        return lastTouchX;
+    }
+
+    public static float getLastTouchY() {
+        return lastTouchY;
+    }
+
+    public static void setLastTouchCoords(float x, float y) {
+        lastTouchX = x;
+        lastTouchY = y;
+    }
 }

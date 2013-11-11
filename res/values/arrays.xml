@@ -202,7 +202,7 @@
         <item>page</item>
     </string-array>
     <string-array name="censorLevels">
-        <item>off</item>
+        <item>no censorship</item>
         <item>very forgiving</item>
         <item>forgiving</item>
         <item>3</item>

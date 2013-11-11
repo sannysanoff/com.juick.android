@@ -1,5 +1,6 @@
 package com.juick.android;
 
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,9 +31,21 @@ public class Censor {
 
     private static ArrayList<Set<String>> blacklists;
 
-    public static final String TOKEN_DELIMITERS = " ,.:;\\\\\\t\\n\\r\\f\\a";
+    public static final Character CENSORED_CHAR = '*';
 
-    public static final String CENSORED_WORD = "*****************************************************************************************************************************************************************************";
+
+    public interface CensorServerAdapter {
+        public void submitForReview(int level, String token);
+    }
+
+    public interface CensorStorageAdapter {
+
+        public ArrayList<String> fetchBlacklist(int level);
+
+        public void saveBlacklist(int level, ArrayList<String> list);
+
+        public void deleteBlacklist(int level);
+    }
 
     public static CensorStorageAdapter getStorageAdapter() {
         if (storageAdapter == null) {
@@ -55,6 +68,11 @@ public class Censor {
     public static boolean isEnabled() {
         return censorshipLevel > 0;
     }
+
+    public static boolean isDisabled() {
+        return !isEnabled();
+    }
+
 
     public static void disable() {
         setCensorshipLevel(0);
@@ -83,64 +101,40 @@ public class Censor {
         }
     }
 
-    public static void setCensorshipLevel(int censorshipLevel) {
-        Censor.censorshipLevel = censorshipLevel;
+    public static void setCensorshipLevel(int newLevel) {
+        censorshipLevel = newLevel;
         // clear blacklists' memory cache, might need to optimise later
         clearBlacklistsCache();
     }
 
-    private static ArrayList<String> tokenizeString(final String text) {
-        StringTokenizer st = new StringTokenizer(text, TOKEN_DELIMITERS);
-        ArrayList<String> result = new ArrayList<String>();
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            if (token.length() > 1) {
-                result.add(token);
-            }
-        }
-        return result;
-    }
-
-    // based on of http://stackoverflow.com/a/3472705
-    private static void replaceAll(StringBuilder builder, String from, String to) {
-        int index = builder.indexOf(from);
-        while (index != -1) {
-            builder.replace(index, index + from.length(), to);
-            index += to.length(); // Move to the end of the replacement
-            index = builder.indexOf(from, index);
-        }
-    }
-
-    public static String getCensoredText(final String textToCensor) {
-        if (isEnabled()) {
-            ArrayList<String> tokens = tokenizeString(textToCensor);
-            if (tokens.isEmpty()) {
-                // No tokens found, returning the original text
-                return textToCensor;
-            } else {
-                StringBuilder result = null;
-                reloadBlacklistsCache(false);
-                for (String token: tokens) {
-                    String uppercaseToken = token.toUpperCase();
+    public static String getCensoredText(final String originalText) {
+        if (Censor.isDisabled() || originalText == null) {
+            return originalText;
+        } else {
+            BreakIterator wordIterator = BreakIterator.getWordInstance();
+            String uppercaseText = originalText.toUpperCase();
+            wordIterator.setText(uppercaseText);
+            int start = wordIterator.first();
+            StringBuilder censoredText = null;
+            for (int end = wordIterator.next(); end != BreakIterator.DONE; start = end, end = wordIterator.next()) {
+                if (end - start > 1) {
+                    String word = uppercaseText.substring(start, end);
+                    reloadBlacklistsCache(false);
                     for (Set<String> blacklist : getBlacklists()) {
-                        if (blacklist.contains(uppercaseToken)) {
-                            if (result == null) {
-                                // the first blacklisted token found
-                                result = new StringBuilder(textToCensor);
+                        if (blacklist.contains(word)) {
+                            if (censoredText == null) {
+                                censoredText = new StringBuilder(originalText);
                             }
-                            int tokenLength = token.length();
-                            replaceAll(result, token, (tokenLength <= CENSORED_WORD.length())?
-                                    CENSORED_WORD.substring(0, tokenLength) : CENSORED_WORD );
-                            // we have censored this token, moving on to the next one
+                            for (int pos = start; pos < end; pos++) {
+                                censoredText.setCharAt(pos, CENSORED_CHAR);
+                            }
+                            // we have censored this word, moving on to the next one
                             break;
                         }
                     }
                 }
-                return (result == null) ? textToCensor : result.toString();
             }
-        } else {
-            // Censor is disabled, returning the original text
-            return textToCensor;
+            return (censoredText == null) ? originalText : censoredText.toString();
         }
     }
 }

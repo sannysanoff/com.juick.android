@@ -9,7 +9,7 @@ import java.util.ArrayList;
  * Time: 5:08 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CensorDummyStorageAdapter implements CensorStorageAdapter {
+public class CensorDummyStorageAdapter implements Censor.CensorStorageAdapter {
 
     public static final int WORDS_PER_LEVEL = 300;
     public static final String WORD_PREFIX = "TEST";
@@ -19,8 +19,9 @@ public class CensorDummyStorageAdapter implements CensorStorageAdapter {
         ArrayList<String> result = new ArrayList<String>();
         for (int i = 0; i < WORDS_PER_LEVEL; i++) {
             if (level == 1) {
-                result.add("ЖОК");
-                result.add("КАБИНЕТ");
+                result.add("УВИДЕЛИ");
+                result.add("ПОКУПАЛ");
+                result.add("ДОСТАВКА");
             }
             result.add(new StringBuilder()
                     .append(WORD_PREFIX)

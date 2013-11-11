@@ -7,7 +7,7 @@ package com.juick.android;
  * Time: 8:56 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CensorDummyServerAdapter implements CensorServerAdapter {
+public class CensorDummyServerAdapter implements Censor.CensorServerAdapter {
 
     @Override
     public void submitForReview(int level, String token) {
