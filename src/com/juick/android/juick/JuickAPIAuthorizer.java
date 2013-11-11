@@ -138,7 +138,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                                                         conn.setRequestProperty("Authorization", basicAuth);
                                                         conn.connect();
                                                         OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-                                                        wr.write("body=PING");
+                                                        wr.write("body=S%20*juick_advanced");
                                                         wr.close();
                                                         status = conn.getResponseCode();
                                                         conn.disconnect();
