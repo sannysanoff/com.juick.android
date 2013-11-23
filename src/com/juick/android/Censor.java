@@ -3,8 +3,8 @@ package com.juick.android;
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,7 +29,7 @@ public class Censor {
 
     private static CensorServerAdapter serverAdapter;
 
-    private static ArrayList<Set<String>> blacklists;
+    private static List<Set<String>> blacklists;
 
     public static final Character CENSORED_CHAR = '*';
 
@@ -40,11 +40,11 @@ public class Censor {
 
     public interface CensorStorageAdapter {
 
-        public ArrayList<String> fetchBlacklist(int level);
+        public List<String> fetchBlacklist(final int level);
 
-        public void saveBlacklist(int level, ArrayList<String> list);
+        public void saveBlacklist(final int level, final List<String> list);
 
-        public void deleteBlacklist(int level);
+        public void deleteBlacklist(final int level);
     }
 
     public static CensorStorageAdapter getStorageAdapter() {
@@ -78,7 +78,7 @@ public class Censor {
         setCensorshipLevel(0);
     }
 
-    private static ArrayList<Set<String>> getBlacklists() {
+    private static List<Set<String>> getBlacklists() {
         if (blacklists == null) {
             blacklists = new ArrayList<Set<String>>(MAX_CENSORSHIP_LEVEL);
         }
@@ -112,13 +112,13 @@ public class Censor {
             return originalText;
         } else {
             BreakIterator wordIterator = BreakIterator.getWordInstance();
-            String uppercaseText = originalText.toUpperCase();
-            wordIterator.setText(uppercaseText);
+            String unicaseText = originalText.toLowerCase();
+            wordIterator.setText(unicaseText);
             int start = wordIterator.first();
             StringBuilder censoredText = null;
             for (int end = wordIterator.next(); end != BreakIterator.DONE; start = end, end = wordIterator.next()) {
                 if (end - start > 1) {
-                    String word = uppercaseText.substring(start, end);
+                    String word = unicaseText.substring(start, end);
                     reloadBlacklistsCache(false);
                     for (Set<String> blacklist : getBlacklists()) {
                         if (blacklist.contains(word)) {

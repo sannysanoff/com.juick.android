@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,7 +16,7 @@ public class CensorDummyStorageAdapter implements Censor.CensorStorageAdapter {
     public static final String WORD_PREFIX = "TEST";
 
     @Override
-    public ArrayList<String> fetchBlacklist(int level) {
+    public List<String> fetchBlacklist(final int level) {
         ArrayList<String> result = new ArrayList<String>();
         for (int i = 0; i < WORDS_PER_LEVEL; i++) {
             if (level == 1) {
@@ -33,12 +34,12 @@ public class CensorDummyStorageAdapter implements Censor.CensorStorageAdapter {
     }
 
     @Override
-    public void saveBlacklist(int level, ArrayList<String> list) {
+    public void saveBlacklist(final int level, final List<String> list) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public void deleteBlacklist(int level) {
+    public void deleteBlacklist(final int level) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 }
