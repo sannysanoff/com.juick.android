@@ -24,6 +24,8 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -219,6 +221,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 data.attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
                 data.attachmentMime = mime;
                 bAttachment.setSelected(true);
+                maybeSaveToCard(data);
                 if (mime.equals("image/jpeg")) {
                     maybeResizePicture(this, data.attachmentUri, new Utils.Function<Void, String>() {
                         @Override
@@ -245,6 +248,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             public void onClick(DialogInterface dialog, int which) {
                                 data.attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
                                 data.attachmentMime = "image/jpeg";
+                                maybeSaveToCard(data);
                                 bAttachment.setSelected(true);
                                 maybeResizePicture(NewMessageActivity.this, data.attachmentUri, new Utils.Function<Void, String>() {
                                     @Override
@@ -261,6 +265,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             public void onClick(DialogInterface dialog, int which) {
                                 data.attachmentUri = extras.get(Intent.EXTRA_STREAM).toString();
                                 data.attachmentMime = "video/mp4";
+                                maybeSaveToCard(data);
                                 bAttachment.setSelected(true);
                             }
                         })
@@ -271,6 +276,17 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                             }
                         }).show();
             }
+        }
+    }
+
+    private void maybeSaveToCard(DialogData attachment) {
+        try {
+            if (attachment.attachmentUri.startsWith("file://")) {
+                Uri uri = Uri.parse(attachment.attachmentUri);
+                MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), "Juick Capture", "");
+            }
+        } catch (FileNotFoundException e) {
+            Toast.makeText(this, "Error saving to gallery: "+e.toString(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -308,6 +324,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 bLocation.setSelected(false);
             }
         } else if (v == bAttachment) {
+            switch(getResources().getConfiguration().orientation) {
+                case Configuration.ORIENTATION_LANDSCAPE:
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    break;
+                case Configuration.ORIENTATION_PORTRAIT:
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    break;
+            }
             if (data.attachmentUri == null) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle(R.string.Attach);
@@ -328,10 +352,25 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             if (data.attachmentUri != null) {
                 progressDialog = new ProgressDialog(this);
                 progressDialogCancel.bool = false;
-                progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-                    public void onCancel(DialogInterface arg0) {
-                        NewMessageActivity.this.progressDialogCancel.bool = true;
+                progressDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new AlertDialog.Builder(NewMessageActivity.this)
+                                .setTitle("Uploading media")
+                                .setMessage("Do you want to cancel?")
+                                .setCancelable(false)
+                                .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        NewMessageActivity.this.progressDialogCancel.bool = true;
+                                    }
+                                })
+                                .setNegativeButton(getString(R.string.No), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        progressDialog.show();
+                                    }
+                                }).show();
                     }
                 });
                 progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -455,6 +494,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     });
                 }
                 this.data.attachmentMime = (requestCode == ACTIVITY_ATTACHMENT_IMAGE) ? "image/jpeg" : "video/3gpp";
+                maybeSaveToCard(this.data);
                 bAttachment.setSelected(this.data.attachmentUri != null);
             }
         }

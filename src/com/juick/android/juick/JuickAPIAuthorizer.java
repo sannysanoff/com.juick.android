@@ -66,12 +66,15 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
 
     @Override
     public void authorize(final Context act, final boolean forceLoginDialog, boolean forceAttachCredentials, final String url, final Utils.Function<Void, String> withCookie) {
-        if (!authNeeded(url) && !forceAttachCredentials) {
+        // idea is: for juick, give auth everywhere, even where not needed (remember: ogorozheny in all messages)
+        // ask password only when needed
+        final String basicAuthString = getBasicAuthString(act.getApplicationContext());
+        String password = getPassword(act.getApplicationContext());
+        if (!authNeeded(url) && !forceAttachCredentials && (password == null || basicAuthString.length() == 0)) {
             withCookie.apply(null);
             return;
         }
-        final String basicAuthString = getBasicAuthString(act.getApplicationContext());
-        if (getPassword(act.getApplicationContext()) == null || basicAuthString.length() == 0 || forceLoginDialog) {
+        if (password == null || basicAuthString.length() == 0 || forceLoginDialog) {
             final Activity activity = (Activity)act;
             activity.runOnUiThread(new Runnable() {
                 @Override

@@ -267,17 +267,21 @@ public class WhatsNew {
                         Toast.makeText(activity, activity.getString(R.string.DownloadWillStartNow), Toast.LENGTH_LONG).show();
                         final DownloadManager mgr = (DownloadManager) runningActivity.getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
                         final Uri parse = Uri.parse(updateURL);
-                        final DownloadManager.Request req = new DownloadManager.Request(parse);
+                        try {
+                            final DownloadManager.Request req = new DownloadManager.Request(parse);
 
-                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                                .mkdirs();
-                        String name = new File(parse.getPath()).getName();
-                        req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI|DownloadManager.Request.NETWORK_MOBILE)
-                                .setAllowedOverRoaming(true)
-                                .setTitle(name)
-                                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
-                                .setDescription("Juick Advanced update");
-                        mgr.enqueue(req);
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                                    .mkdirs();
+                            String name = new File(parse.getPath()).getName();
+                            req.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI|DownloadManager.Request.NETWORK_MOBILE)
+                                    .setAllowedOverRoaming(true)
+                                    .setTitle(name)
+                                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+                                    .setDescription("Juick Advanced update");
+                            mgr.enqueue(req);
+                        } catch (Exception e) {
+                            Toast.makeText(activity, "ERROR:" + e.toString(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
                 builder.setNeutralButton(activity.getString(R.string.AskLater), new DialogInterface.OnClickListener() {

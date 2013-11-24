@@ -494,6 +494,7 @@
     <string name="EnablePullToRefresh">Потянуть для обновления</string>
     <string name="TurnOffButtonsLight">Отключать подсветку кнопок</string>
     <string name="ShowDigitsOnIcon">Циферки на иконке</string>
+    <string name="No">Нет</string>
 
 
 </resources>

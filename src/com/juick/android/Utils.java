@@ -241,8 +241,9 @@ public class Utils {
 
     }
 
-    public static interface Function<T, A> {
-        T apply(A a);
+    public static abstract class Function<T, A> {
+        int retryCount = 0;
+        public abstract T apply(A a);
     }
 
 

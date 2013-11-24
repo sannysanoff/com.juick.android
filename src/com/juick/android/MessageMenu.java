@@ -238,7 +238,11 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             }
             //} else if (url.startsWith("@")) {
         } else {
-            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            try {
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (Exception e) {
+                Toast.makeText(activity, "ERROR: "+e.toString(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
