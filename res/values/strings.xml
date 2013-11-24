@@ -317,6 +317,37 @@
             <body>
 
             <form>
+            <b>Мартобрь 2014, будущий билд</b>
+            <ul>
+            <li>
+            Циферки в иконке уведомления в Juick Advanced.
+            </li>
+            <li>
+            Фотографии которые аттачатся прямо из камеры, сейчас сохраняются в альбом.
+            </li>
+            </ul>
+
+            <hr>
+            Все фичи Juick Advanced можно посмотреть в настройках, пункт \"Что Нового\".
+
+            #script#
+
+            ]]>
+    </string>
+
+    <string name="rf_2013100101"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style>
+                input {
+                    -webkit-transform: scale(1.4,1.4);
+                }
+            </style>
+            </head>
+            <body>
+
+            <form>
             <b>Октябрь 2013, зимний билд</b>
             <ul>
             <li>
