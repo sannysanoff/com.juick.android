@@ -40,6 +40,7 @@ import java.net.*;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.text.BreakIterator;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
@@ -1101,6 +1102,20 @@ public class Utils {
         }
         return sb.toString();
     }
+
+    public static String getWordAtOffset(final String text, final int offset) {
+        BreakIterator wordIterator = BreakIterator.getWordInstance();
+        wordIterator.setText(text);
+        int start = wordIterator.first();
+        for (int end = wordIterator.next(); end != BreakIterator.DONE; start = end, end = wordIterator.next()) {
+            if ((end >= offset) && (end - start > 1)) {
+                return text.substring(start, end);
+            }
+        }
+        return null;
+    }
+
+
 
 
 }

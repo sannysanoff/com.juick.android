@@ -75,6 +75,15 @@
     <string name="Are_you_sure_subscribe">Are you sure you want to subscribe?</string>
     <string name="Are_you_sure_blacklist">Are you sure you want to blacklist?</string>
 
+    <!-- Censor -->
+    <string name="CensorSubmitTokenForReview1">Submit</string>
+    <string name="CensorSubmitTokenForReview2">to censor for review</string>
+    <string name="CensorSubmitWordSelectionError">Censor: word selection error</string>
+    <string name="CensorSubmitForReviewConfirmation">Are you sure you want to submit this word to censor for review?"</string>
+    <string name="CensorSubmitForReviewChooseSuggestedLevel">Choose suggested level</string>
+    <string name="CensorSubmittedForReview">The word has been submitted to censor for review</string>
+
+
     <!-- JuickMessagesAdapter -->
     <string name="Replies_">Replies:</string>
 
@@ -1244,5 +1253,5 @@
     <string name="ShowDigitsOnIcon">Show digits on icon</string>
     <string name="No">No</string>
 
-
+    <string name="Censor">Censor</string>
 </resources>

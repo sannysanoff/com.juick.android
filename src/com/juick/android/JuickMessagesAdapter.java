@@ -625,7 +625,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         //
         // MESSAGE BODY
         //
-        String txt = jmsg.Text;
+        String txt = Censor.getCensoredText(jmsg.Text);
         if (!condensed) {
             if (jmsg.Photo != null) {
                 txt = jmsg.Photo + "\n" + txt;

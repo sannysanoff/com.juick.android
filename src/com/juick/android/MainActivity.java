@@ -33,16 +33,15 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.util.TypedValue;
-import android.view.*;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.view.*;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.juick.*;
@@ -318,6 +317,8 @@ public class MainActivity extends JuickFragmentActivity implements
                 }
             }
         }
+
+        initCensor();
 
         setContentView(R.layout.main);
         final MyRelativeLayout mll = (MyRelativeLayout)findViewById(R.id.layout_container);
@@ -1007,6 +1008,10 @@ public class MainActivity extends JuickFragmentActivity implements
         toggleJAMessaging(this, useJAM);
     }
 
+    private void initCensor() {
+        Censor.setCensorshipLevel( Integer.parseInt(sp.getString("censor", "0")));
+    }
+
     public static boolean commandJAMService(Context ctx, String command) {
         if (isJAMServiceRunning(ctx)) {
             Intent service = new Intent(ctx, JAMService.class);
@@ -1529,6 +1534,11 @@ public class MainActivity extends JuickFragmentActivity implements
                     sp.getBoolean(s, false) ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                     skipDontKillApp ? 0 : PackageManager.DONT_KILL_APP);
         }
+        boolean censorLevelChanged = false;
+        if (s.equals("censor")) {
+            censorLevelChanged = true;
+            Censor.setCensorshipLevel( Integer.parseInt(sp.getString("censor", "0")));
+        }
         boolean dontWatchPreferences = sp.getBoolean("dontWatchPreferences", false);
         if (dontWatchPreferences) return;
         if (s.startsWith("msrc")) {
@@ -1537,6 +1547,9 @@ public class MainActivity extends JuickFragmentActivity implements
             updateNavigation();
         }
         boolean invalidateRendering = false;
+        if (censorLevelChanged) {
+            invalidateRendering = true;
+        }
         if (s.startsWith("Colors.")) {
             invalidateRendering = true;
         }

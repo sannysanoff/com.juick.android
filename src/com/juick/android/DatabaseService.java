@@ -33,6 +33,7 @@ import org.json.JSONObject;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -423,7 +424,7 @@ public class DatabaseService extends Service {
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 13;
+        public final static int CURRENT_VERSION = 14;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -517,6 +518,10 @@ public class DatabaseService extends Service {
             if (from == 12) {
                 sqLiteDatabase.execSQL("alter table message_read add checkpoint integer");
                 sqLiteDatabase.execSQL("alter table saved_message2 add checkpoint integer");
+                from++;
+            }
+            if (from == 13) {
+                sqLiteDatabase.execSQL("create table censor_blacklist(level integer not null, token text not null)");
                 from++;
             }
         }
@@ -1413,5 +1418,68 @@ public class DatabaseService extends Service {
         jo.addProperty(prefname.replace('.', '_'), "" + value);
     }
 
+    public void deleteCensorBlacklist(final int level) {
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    try {
+                        db.delete("censor_blacklist", "level = ?", new String[]{String.valueOf(level)});
+                        db.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return Boolean.TRUE;
+                }
+            });
+            writeJobs.notify();
+        }
+    }
 
+    public void saveCensorBlacklist(final int level, final List<String> blacklist) {
+        if ((blacklist == null) || (blacklist.isEmpty())) {
+            return; // nothing to save to DB
+        }
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    try {
+                        for (String token : blacklist) {
+                            ContentValues cv = new ContentValues();
+                            cv.put("level", level);
+                            cv.put("token", token);
+                            db.insert("censor_blacklist", null, cv);
+                        }
+                        db.setTransactionSuccessful();
+                    } catch (Exception e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    }
+                    return Boolean.TRUE;
+                }
+            });
+            writeJobs.notify();
+        }
+    }
+
+    public List<String> getCensorBlacklist(final int level) {
+        List<String> retval = new ArrayList<String>();
+        try {
+            Cursor cursor = db.rawQuery("select token from censor_blacklist where level = ?",
+                    new String[]{String.valueOf(level)});
+            try {
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()) {
+                    retval.add(cursor.getString(0));
+                    cursor.moveToNext();
+                }
+                return retval;
+            } finally {
+                cursor.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            return null;
+        }
+    }
 }

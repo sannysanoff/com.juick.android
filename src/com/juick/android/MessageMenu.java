@@ -97,6 +97,8 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         menuActions.clear();
         listSelectedItem = (JuickMessage) parent.getAdapter().getItem(position);
         JuickMessage secondaryItem = null;
+        float x = JuickAdvancedApplication.getLastTouchX();
+        float y = JuickAdvancedApplication.getLastTouchY();
         if (listSelectedItem.contextPost != null) {
             secondaryItem = listSelectedItem.contextPost;
         }
@@ -128,6 +130,24 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
         collectMenuActions();
 
+        // Censor - Submit a token for review
+        TextView listSelectedTextView = (TextView) view.findViewById(R.id.text);
+        int offset = getOffsetForPosition(listSelectedTextView, x, y);
+        if (offset != -1) {
+            final String text = listSelectedTextView.getText().toString();
+            final String word = Utils.getWordAtOffset(text, offset);
+            if (word != null) {
+                menuActions.add(new RunnableItem(activity.getResources().getString(R.string.CensorSubmitTokenForReview1)
+                        + " \"" + word + "\" " + activity.getResources().getString(R.string.CensorSubmitTokenForReview2)) {
+                    @Override
+                    public void run() {
+                        actionSubmitTokenForReview(word);
+                    }
+                });
+            } else {
+                Toast.makeText(activity, activity.getResources().getString(R.string.CensorSubmitWordSelectionError), Toast.LENGTH_LONG).show();
+            }
+        }
         runActions();
         return true;
     }
@@ -274,6 +294,25 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         i.putExtra("messagesSource", messagesSource);
         i.putExtra("mid", listSelectedItem.getMID());
         activity.startActivity(i);
+    }
+
+    protected void actionSubmitTokenForReview(final String token) {
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.CensorSubmitForReviewChooseSuggestedLevel)
+                .setItems(R.array.censorLevels, new OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final int level = which;
+                        confirmAction(R.string.CensorSubmitForReviewConfirmation, new Runnable() {
+                            @Override
+                            public void run() {
+                                Censor.getServerAdapter().submitForReview(level, token);
+                                Toast.makeText(activity, R.string.CensorSubmittedForReview, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                })
+                .show();
     }
 
     protected void actionFilterUser(final String UName) {
@@ -1023,6 +1062,38 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
         sp.edit().putString("filteredOutUsers", Utils.set2string(filteredOutUzers)).commit();
         JuickMessagesAdapter.filteredOutUsers = null;
+    }
+
+    public int getOffsetForPosition(TextView textView, float x, float y) {
+        if (textView.getLayout() == null) {
+            return -1;
+        }
+        final int line = getLineAtCoordinate(textView, y);
+        final int offset = getOffsetAtCoordinate(textView, line, x);
+        return offset;
+    }
+
+    private int getOffsetAtCoordinate(TextView textView2, int line, float x) {
+        x = convertToLocalHorizontalCoordinate(textView2, x);
+        return textView2.getLayout().getOffsetForHorizontal(line, x);
+    }
+
+    private float convertToLocalHorizontalCoordinate(TextView textView2, float x) {
+        x -= textView2.getTotalPaddingLeft();
+        // Clamp the position to inside of the view.
+        x = Math.max(0.0f, x);
+        x = Math.min(textView2.getWidth() - textView2.getTotalPaddingRight() - 1, x);
+        x += textView2.getScrollX();
+        return x;
+    }
+
+    private int getLineAtCoordinate(TextView textView2, float y) {
+        y -= textView2.getTotalPaddingTop();
+        // Clamp the position to inside of the view.
+        y = Math.max(0.0f, y);
+        y = Math.min(textView2.getHeight() - textView2.getTotalPaddingBottom() - 1, y);
+        y += textView2.getScrollY();
+        return textView2.getLayout().getLineForVertical((int) y);
     }
 
 }
