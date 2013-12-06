@@ -1205,6 +1205,7 @@
     <string name="Subscriptions__Web">Подписки (Сайт)</string>
     <string name="EnablePullToRefresh">Enable pull to refresh</string>
     <string name="TurnOffButtonsLight">Turn off buttons light</string>
-
-
+    <string name="ColorsThemes">Colors Themes</string>
+    <string name="LoadColorsTheme">Load Colors Theme</string>
+    <string name="SaveColorsTheme">Save Colors Theme</string>
 </resources>
