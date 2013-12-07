@@ -30,6 +30,7 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juickadvanced.R;
 import java.net.URLEncoder;
 
@@ -125,7 +126,7 @@ public class PlaceEditActivity extends MapActivity implements OnClickListener, T
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    final String jsonStr = Utils.postJSON(PlaceEditActivity.this, "http://api.juick.com/place_add", dataf).getResult();
+                    final String jsonStr = Utils.postJSON(PlaceEditActivity.this, JuickHttpAPI.getAPIURL() + "place_add", dataf).getResult();
                     PlaceEditActivity.this.runOnUiThread(new Runnable() {
 
                         public void run() {

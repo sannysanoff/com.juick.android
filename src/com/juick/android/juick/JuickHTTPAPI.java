@@ -1,0 +1,34 @@
+package com.juick.android.juick;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: coderoo
+ * Date: 6/12/13
+ * Time: 9:25 PM
+ * To change this template use File | Settings | File Templates.
+ */
+public class JuickHttpAPI {
+
+    private static boolean httpsEnabled = false;
+
+    public static final String API_URL_HOST = "api.juick.com";
+    private static final String URL_SUFFIX = "://" + API_URL_HOST + "/";
+    private static final String HTTP_URL = "http" + URL_SUFFIX;
+    private static final String HTTPS_URL = "https" + URL_SUFFIX;
+
+    public static String getAPIURL() {
+        return httpsEnabled ? HTTPS_URL : HTTP_URL;
+    }
+
+    public static boolean isURLforAPIHost(String url) {
+        return url.startsWith(HTTP_URL) || url.startsWith(HTTPS_URL);
+    }
+
+    public synchronized static void setHttpsEnabled(boolean value) {
+        httpsEnabled = value;
+    }
+
+    public static boolean isHttpsEnabled() {
+        return httpsEnabled;
+    }
+}
