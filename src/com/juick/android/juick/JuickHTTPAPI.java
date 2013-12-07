@@ -12,9 +12,9 @@ public class JuickHttpAPI {
     private static boolean httpsEnabled = false;
 
     public static final String API_URL_HOST = "api.juick.com";
-    private static final String URL_SUFFIX = "://" + API_URL_HOST + "/";
-    private static final String HTTP_URL = "http" + URL_SUFFIX;
-    private static final String HTTPS_URL = "https" + URL_SUFFIX;
+    public static final String URL_SUFFIX = "://" + API_URL_HOST + "/";
+    public static final String HTTP_URL = "http" + URL_SUFFIX;
+    public static final String HTTPS_URL = "https" + URL_SUFFIX;
 
     public static String getAPIURL() {
         return httpsEnabled ? HTTPS_URL : HTTP_URL;
