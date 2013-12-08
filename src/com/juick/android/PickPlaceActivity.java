@@ -42,6 +42,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juickadvanced.data.juick.JuickPlace;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;
@@ -185,7 +186,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                             Thread thr = new Thread(new Runnable() {
 
                                 public void run() {
-                                    final String jsonStr = Utils.postJSON(PickPlaceActivity.this, "http://api.juick.com/place_add", dataf).getResult();
+                                    final String jsonStr = Utils.postJSON(PickPlaceActivity.this, JuickHttpAPI.getAPIURL() + "place_add", dataf).getResult();
                                     String error = null;
                                     if (jsonStr != null) {
                                         try {
@@ -300,7 +301,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                String url = "http://api.juick.com/places?lat=" + String.valueOf(location.getLatitude()) + "&lon=" + String.valueOf(location.getLongitude());
+                String url = JuickHttpAPI.getAPIURL() + "places?lat=" + String.valueOf(location.getLatitude()) + "&lon=" + String.valueOf(location.getLongitude());
                 if (location.hasAccuracy()) {
                     url += "&acc=" + String.valueOf(location.getAccuracy());
                 }

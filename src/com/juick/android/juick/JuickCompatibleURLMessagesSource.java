@@ -49,7 +49,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     }
 
     public JuickCompatibleURLMessagesSource(String label, String kind, Context ctx) {
-        this(label, kind, ctx, "http://api.juick.com/messages");
+        this(label, kind, ctx, JuickHttpAPI.getAPIURL() + "messages");
     }
 
     public JuickCompatibleURLMessagesSource(String title, String kind, Context ctx, String baseURL) {
@@ -141,7 +141,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
 
     public class PureDownloader {
         public ArrayList<JuickMessage> download(final MessageID mid, final Utils.Notification notifications, boolean messageDB) {
-            Utils.RESTResponse result = getJSONWithRetries(ctx, "http://api.juick.com/thread?mid=" + ((JuickMessageID) mid).getMid(), notifications);
+            Utils.RESTResponse result = getJSONWithRetries(ctx, JuickHttpAPI.getAPIURL() + "thread?mid=" + ((JuickMessageID) mid).getMid(), notifications);
             final String jsonStr = result.getResult();
             final ArrayList<JuickMessage> stuff = JuickCompatibleURLMessagesSource.parseJSONpure(jsonStr, messageDB);
             return stuff;

@@ -36,6 +36,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 import org.json.JSONArray;
@@ -179,7 +180,7 @@ public class TagsFragment extends Fragment  {
 
             public void run() {
                 final int tagsUID = showMine ? uid : 0;
-                String url = "http://api.juick.com/tags";
+                String url = JuickHttpAPI.getAPIURL() + "tags";
                 File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-" + tagsUID + ".json");
                 String cachedString = null;
                 if (tagsUID != 0) { // -1 == mine
