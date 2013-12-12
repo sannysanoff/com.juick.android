@@ -996,6 +996,8 @@
     <string name="Usage_Report">Usage Report</string>
     <string name="EnableHttpCompression">Enable HTTP compression</string>
     <string name="CompressionSlowsDown">HTTP compression may actually slow down fetch, but certainly will save traffic</string>
+    <string name="UseHttpsForJuickHttpAPI">Use HTTPS for Juick HTTP API calls</string>
+    <string name="HttpsProsAndCons">HTTPS is more secure, but slower and consumes more traffic</string>
     <string name="JustSame">No, just same</string>
     <string name="GettingYourId">Getting your UID</string>
     <string name="ConnectingToWwwJuick">Connecting to www.juick.com...</string>

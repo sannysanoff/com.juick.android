@@ -75,7 +75,7 @@ public class JuickMicroBlog implements MicroBlog {
             final String twoHyphens = "--";
             final String boundary = "****+++++******+++++++********";
 
-            URL apiUrl = new URL("http://api.juick.com/post");
+            URL apiUrl = new URL(JuickHttpAPI.getAPIURL() + "post");
             final HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
             conn.setConnectTimeout(10000);
             conn.setDoOutput(true);
@@ -257,7 +257,7 @@ public class JuickMicroBlog implements MicroBlog {
         if (activity.sp.getBoolean("web_for_subscriptions", false)) {
             return new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
         } else {
-            return new JuickCompatibleURLMessagesSource(activity.getString(labelId), "juick_api_subscriptions", activity, "http://api.juick.com/home");
+            return new JuickCompatibleURLMessagesSource(activity.getString(labelId), "juick_api_subscriptions", activity, JuickHttpAPI.getAPIURL() + "home");
         }
     }
 
@@ -463,7 +463,7 @@ public class JuickMicroBlog implements MicroBlog {
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    String jsonUrl = "http://api.juick.com/postform";
+                    String jsonUrl = JuickHttpAPI.getAPIURL() + "postform";
 
                     LocationManager lm = (LocationManager) newMessageActivity.getSystemService(Context.LOCATION_SERVICE);
                     Location loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -529,7 +529,7 @@ public class JuickMicroBlog implements MicroBlog {
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://api.juick.com/post", "body=" + encode);
+                    final Utils.RESTResponse restResponse = Utils.postJSON(context, JuickHttpAPI.getAPIURL() + "post", "body=" + encode);
                     final String ret = restResponse.getResult();
                     if (!handled[0])
                         handled[0] = true;
@@ -660,7 +660,7 @@ public class JuickMicroBlog implements MicroBlog {
                                 new Thread("Sample data fetcher") {
                                     @Override
                                     public void run() {
-                                        new JuickCompatibleURLMessagesSource("dummy", "dummy", activity, "http://api.juick.com/home").getNext(den, new Utils.Function<Void, ArrayList<JuickMessage>>() {
+                                        new JuickCompatibleURLMessagesSource("dummy", "dummy", activity, JuickHttpAPI.getAPIURL() + "home").getNext(den, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                                             @Override
                                             public Void apply(ArrayList<JuickMessage> juickMessages) {
                                                 activity.runOnUiThread(new Runnable() {

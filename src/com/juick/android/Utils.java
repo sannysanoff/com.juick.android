@@ -723,9 +723,27 @@ public class Utils {
         }
     }
 
-    static byte[][] allowedSignatures = new byte[][] {
+    static final byte[][] allowedSignatures = new byte[][] {
             /*ja.ip.rt.ru */ new byte[] {-114,53,80,-7,114,-98,6,-50,-121,-46,127,58,-64,-4,12,-125,-19,38,-31,112,-10,56,-32,-101,113,67,-84,-9,60,-70,73,73,31,-46,123,98,-23,-118,45,-37,-7,-90,-117,111,123,-66,-15,-59,-69,-108,-16,-26,18,-71,112,33,2,88,39,62,30,-40,110,119,106,-90,95,91,127,-32,-54,107,37,-118,-8,-27,57,-85,7,36,-12,81,36,103,31,29,64,31,37,77,-48,-114,-24,-101,73,98,-39,-22,41,102,58,-40,-11,-115,-26,59,110,-44,49,58,80,-128,59,106,-93,56,104,-65,25,40,-59,-21,-48,65,-78,91,-107,68,-12,-72,37,-28,-53,54,73,28,-35,-68,34,-91,32,124,57,-76,61,111,-12,-56,3,48,-68,111,121,127,28,-50,50,67,-21,15,-116,-12,7,57,31,38,29,79,45,-96,104,-1,-62,17,122,99,10,35,-60,83,38,-103,57,-81,-77,-44,52,-65,45,93,110,-59,24,2,119,5,95,-44,-51,-71,106,122,37,-14,-89,42,92,-64,71,-57,14,-44,57,-83,-30,-34,87,-119,106,41,110,-57,51,-4,32,-27,86,62,113,-35,40,108,90,-55,91,90,-89,8,-45,63,-123,-59,-108,9,100,13,68,87,-112,-19,84,-71,-17,-2,-74,40},
-            /* localhost */ new byte[] {106,51,41,24,68,-57,-20,13,-94,88,-18,-30,-127,-128,-41,56,98,-26,-49,-95,69,127,-72,-24,68,-85,46,-8,112,44,-76,51,79,25,-55,34,63,79,-85,-49,-22,44,90,-108,59,-63,96,-33,18,71,94,-58,-25,-102,30,21,-6,78,-122,-48,-7,-36,-25,-16,79,-72,-40,-17,72,-55,-122,71,2,-44,-81,-29,108,14,34,78,-3,110,9,81,21,84,-90,67,26,68,-124,-42,112,-103,-114,-15,40,-125,-60,-12,-100,102,20,87,-13,-97,71,-103,-41,-84,106,-78,-16,-35,-35,27,-37,-108,70,3,-101,78,-90,17,91,97,3,70,-68,-72,-94,19,54,117,-28,102,78,-42,13,-23,-118,12,-55,-33,-32,107,19,-32,80,-78,-42,107,94,28,-95,-123,-31,-50,58,-120,103,-100,-75,-95,-124,-121,57,-39,-40,54,-12,47,6,-106,-5,3,37,-88,-22,120,-27,117,122,114,-114,-39,-36,-89,-104,107,-32,89,7,-45,-15,117,54,-32,123,-124,46,-76,96,-35,68,28,-98,63,94,16,-43,-18,44,-120,-8,-57,52,33,66,91,21,41,-120,-29,-51,10,82,-89,65,-72,-122,103,67,8,-77,56,95,43,-128,-4,113,-23,-2,125,-68,28,-38,-7,-124,40,87,103,33,87,20,45}
+            /* localhost */ new byte[] {106,51,41,24,68,-57,-20,13,-94,88,-18,-30,-127,-128,-41,56,98,-26,-49,-95,69,127,-72,-24,68,-85,46,-8,112,44,-76,51,79,25,-55,34,63,79,-85,-49,-22,44,90,-108,59,-63,96,-33,18,71,94,-58,-25,-102,30,21,-6,78,-122,-48,-7,-36,-25,-16,79,-72,-40,-17,72,-55,-122,71,2,-44,-81,-29,108,14,34,78,-3,110,9,81,21,84,-90,67,26,68,-124,-42,112,-103,-114,-15,40,-125,-60,-12,-100,102,20,87,-13,-97,71,-103,-41,-84,106,-78,-16,-35,-35,27,-37,-108,70,3,-101,78,-90,17,91,97,3,70,-68,-72,-94,19,54,117,-28,102,78,-42,13,-23,-118,12,-55,-33,-32,107,19,-32,80,-78,-42,107,94,28,-95,-123,-31,-50,58,-120,103,-100,-75,-95,-124,-121,57,-39,-40,54,-12,47,6,-106,-5,3,37,-88,-22,120,-27,117,122,114,-114,-39,-36,-89,-104,107,-32,89,7,-45,-15,117,54,-32,123,-124,46,-76,96,-35,68,28,-98,63,94,16,-43,-18,44,-120,-8,-57,52,33,66,91,21,41,-120,-29,-51,10,82,-89,65,-72,-122,103,67,8,-77,56,95,43,-128,-4,113,-23,-2,125,-68,28,-38,-7,-124,40,87,103,33,87,20,45},
+            /* *.juick.com */ new byte[] {
+            (byte) 0x50, (byte) 0x61, (byte) 0xc0, (byte) 0x3a, (byte) 0x20, (byte) 0x76, (byte) 0x8c, (byte) 0x0e, (byte) 0xa1, (byte) 0x57, (byte) 0xcb, (byte) 0xf7, (byte) 0xac, (byte) 0xcd, (byte) 0x09, (byte) 0x08,
+            (byte) 0xa4, (byte) 0x92, (byte) 0x56, (byte) 0x00, (byte) 0x75, (byte) 0xf7, (byte) 0x7c, (byte) 0xdc, (byte) 0x6a, (byte) 0x53, (byte) 0xd7, (byte) 0x64, (byte) 0x05, (byte) 0x8c, (byte) 0x5e, (byte) 0x75,
+            (byte) 0xef, (byte) 0x38, (byte) 0x06, (byte) 0x4a, (byte) 0xce, (byte) 0x8f, (byte) 0xcd, (byte) 0x3f, (byte) 0x59, (byte) 0x3f, (byte) 0xd3, (byte) 0x88, (byte) 0x9d, (byte) 0x7f, (byte) 0x73, (byte) 0x3a,
+            (byte) 0x51, (byte) 0x0b, (byte) 0x0f, (byte) 0xaf, (byte) 0xf6, (byte) 0xfa, (byte) 0x1d, (byte) 0xb0, (byte) 0x99, (byte) 0xd3, (byte) 0xfb, (byte) 0xe2, (byte) 0xa3, (byte) 0x2d, (byte) 0xd6, (byte) 0x34,
+            (byte) 0x36, (byte) 0x06, (byte) 0x7d, (byte) 0xee, (byte) 0xa4, (byte) 0xb3, (byte) 0x8d, (byte) 0x19, (byte) 0x91, (byte) 0x44, (byte) 0x1f, (byte) 0xfa, (byte) 0x82, (byte) 0x8d, (byte) 0xf1, (byte) 0xbe,
+            (byte) 0x6f, (byte) 0xbd, (byte) 0xaf, (byte) 0x57, (byte) 0xe0, (byte) 0x1b, (byte) 0x6e, (byte) 0xfe, (byte) 0xfc, (byte) 0x6a, (byte) 0x15, (byte) 0x31, (byte) 0xae, (byte) 0xc1, (byte) 0x23, (byte) 0xda,
+            (byte) 0xbe, (byte) 0xe9, (byte) 0xf5, (byte) 0x39, (byte) 0x4c, (byte) 0x6b, (byte) 0xf3, (byte) 0x2b, (byte) 0xd1, (byte) 0x59, (byte) 0xfd, (byte) 0x09, (byte) 0x49, (byte) 0x61, (byte) 0x4f, (byte) 0x0c,
+            (byte) 0xaa, (byte) 0xef, (byte) 0x4d, (byte) 0xee, (byte) 0x3e, (byte) 0xa9, (byte) 0x33, (byte) 0x32, (byte) 0xf5, (byte) 0x3a, (byte) 0xf0, (byte) 0x65, (byte) 0xc3, (byte) 0x35, (byte) 0xf6, (byte) 0xc4,
+            (byte) 0x88, (byte) 0x9f, (byte) 0x7c, (byte) 0x31, (byte) 0x05, (byte) 0x65, (byte) 0x1b, (byte) 0xb5, (byte) 0x61, (byte) 0xba, (byte) 0x9b, (byte) 0x82, (byte) 0x7f, (byte) 0xce, (byte) 0xd4, (byte) 0xeb,
+            (byte) 0x2c, (byte) 0xab, (byte) 0x0e, (byte) 0x10, (byte) 0x0c, (byte) 0xae, (byte) 0xa0, (byte) 0xbc, (byte) 0xb5, (byte) 0xf7, (byte) 0xd4, (byte) 0x70, (byte) 0x6d, (byte) 0x76, (byte) 0x55, (byte) 0x3a,
+            (byte) 0xe9, (byte) 0x1c, (byte) 0x38, (byte) 0x90, (byte) 0xcc, (byte) 0x66, (byte) 0x11, (byte) 0x66, (byte) 0x9b, (byte) 0xc5, (byte) 0x28, (byte) 0x59, (byte) 0xe1, (byte) 0x97, (byte) 0x95, (byte) 0x56,
+            (byte) 0x16, (byte) 0xca, (byte) 0x5e, (byte) 0xfd, (byte) 0xb9, (byte) 0xc5, (byte) 0xf6, (byte) 0x2c, (byte) 0xa9, (byte) 0x43, (byte) 0xe4, (byte) 0x18, (byte) 0x41, (byte) 0x8e, (byte) 0xd0, (byte) 0xe7,
+            (byte) 0x1b, (byte) 0xbb, (byte) 0xf6, (byte) 0xd8, (byte) 0x46, (byte) 0x94, (byte) 0x91, (byte) 0x08, (byte) 0xaf, (byte) 0xe8, (byte) 0x43, (byte) 0x54, (byte) 0x4c, (byte) 0x30, (byte) 0xb3, (byte) 0x57,
+            (byte) 0x1f, (byte) 0x7b, (byte) 0xa2, (byte) 0xce, (byte) 0x59, (byte) 0xb0, (byte) 0xcb, (byte) 0xb6, (byte) 0x29, (byte) 0x6b, (byte) 0x63, (byte) 0x93, (byte) 0xea, (byte) 0x4b, (byte) 0x14, (byte) 0x48,
+            (byte) 0x90, (byte) 0x0f, (byte) 0xd7, (byte) 0x9d, (byte) 0xe8, (byte) 0x9a, (byte) 0x89, (byte) 0x5b, (byte) 0x3d, (byte) 0xeb, (byte) 0x8e, (byte) 0x7d, (byte) 0x3f, (byte) 0x27, (byte) 0x70, (byte) 0x85,
+            (byte) 0xbd, (byte) 0x2e, (byte) 0x47, (byte) 0xa7, (byte) 0xc1, (byte) 0x4e, (byte) 0x05, (byte) 0x26, (byte) 0xdb, (byte) 0x19, (byte) 0xe0, (byte) 0x27, (byte) 0x9e, (byte) 0xf3, (byte) 0x76, (byte) 0xc7
+        }
     };
 
     public static class MySSLSocketFactory extends SSLSocketFactory {
@@ -739,25 +757,15 @@ public class Utils {
                 }
 
                 public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                    boolean verified = false;
-                    if (chain.length == 1) {
-                        byte[] thisSignature = chain[0].getSignature();
+                    for (X509Certificate chainElement: chain) {
+                        byte[] thisSignature = chainElement.getSignature();
                         for (byte[] allowedSignature : allowedSignatures) {
-                            if (thisSignature.length == allowedSignature.length) {
-                                verified = true;
-                                for (int i = 0; i < allowedSignature.length; i++) {
-                                    if (thisSignature[i] != allowedSignature[i]) {
-                                        verified = false;
-                                        break;
-                                    }
-                                }
-                                if (verified)
-                                    break;
+                            if (Arrays.equals(thisSignature, allowedSignature)) {
+                                return;
                             }
                         }
                     }
-                    if (!verified)
-                        throw new CertificateException("Invalid HTTPS certificate for Juick Advanced server. Please update Juick Advanced client, this may fix it.");
+                    throw new CertificateException("Invalid HTTPS certificate. Please update Juick Advanced client, this may fix it.");
                 }
 
                 public X509Certificate[] getAcceptedIssuers() {

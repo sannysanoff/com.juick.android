@@ -41,6 +41,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickPlace;
 import org.json.JSONArray;
@@ -187,7 +188,7 @@ public class PlacesActivity extends ListActivity implements OnItemClickListener,
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                String url = "http://api.juick.com/places?lat=" + String.valueOf(location.getLatitude()) + "&lon=" + String.valueOf(location.getLongitude());
+                String url = JuickHttpAPI.getAPIURL() + "places?lat=" + String.valueOf(location.getLatitude()) + "&lon=" + String.valueOf(location.getLongitude());
                 if (location.hasAccuracy()) {
                     url += "&acc=" + String.valueOf(location.getAccuracy());
                 }

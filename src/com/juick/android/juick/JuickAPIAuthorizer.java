@@ -118,7 +118,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
 
                                             public void run() {
                                                 int status = 0;
-                                                Utils.RESTResponse json = Utils.getJSON(act, "http://api.juick.com/users?uname=" + loginS, null);
+                                                Utils.RESTResponse json = Utils.getJSON(act, JuickHttpAPI.getAPIURL() + "users?uname=" + loginS, null);
                                                 if (json.getErrorText() != null) {
                                                     Utils.verboseDebugString(activity, "Unknown username!");
                                                 } else {
@@ -132,7 +132,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                                                         String authStr = canonicalName + ":" + passwordS;
                                                         final String basicAuth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
                                                         Utils.verboseDebugString(activity, "Authorization: " + basicAuth+" Canonical name: "+canonicalName);
-                                                        URL apiUrl = new URL("http://api.juick.com/post");
+                                                        URL apiUrl = new URL(JuickHttpAPI.getAPIURL() + "post");
                                                         HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
                                                         conn.setConnectTimeout(10000);
                                                         conn.setUseCaches(false);
@@ -248,17 +248,17 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
 
     @Override
     public String authorizeURL(String url, String cookie) {
-        if (url.startsWith("http://api.juick.com/")) {
+        if (JuickHttpAPI.isURLforAPIHost(url)) {
             if (cachedIPAddress == null) {
                 try {
-                    InetAddress byName = Inet4Address.getByName("api.juick.com");
+                    InetAddress byName = Inet4Address.getByName(JuickHttpAPI.API_URL_HOST);
                     cachedIPAddress = byName.getHostAddress();
                 } catch (UnknownHostException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
             }
             if (cachedIPAddress != null && cachedIPAddress.length() > 0) {
-                url = url.replace("api.juick.com", cachedIPAddress);
+                url = url.replace(JuickHttpAPI.API_URL_HOST, cachedIPAddress);
             }
         }
         return url;
