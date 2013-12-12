@@ -864,12 +864,21 @@ public class MainActivity extends JuickFragmentActivity implements
         final SharedPreferences spn = getSharedPreferences("saved_last_navigation_type", MODE_PRIVATE);
         int restoredLastNavItem = spn.getInt("last_navigation", 0);
         if (restoredLastNavItem != 0) {
+            NavigationItem allSources = null;
             for (int i = 0; i < navigationItems.size(); i++) {
                 NavigationItem navigationItem = navigationItems.get(i);
                 if (navigationItem.labelId == restoredLastNavItem) {
                     lastNavigationItem = navigationItem;
-                    break;
                 }
+                if (navigationItem.labelId == R.string.navigationAll) {
+                    allSources = navigationItem;
+                }
+            }
+            if (lastNavigationItem == null) {
+                lastNavigationItem = allSources;    // could be null if not configured
+            }
+            if (lastNavigationItem == null && navigationItems.size() > 0) {
+                lastNavigationItem = navigationItems.get(0);    // last default
             }
             if (lastNavigationItem != null) {
                 restoreLastNavigationPosition();

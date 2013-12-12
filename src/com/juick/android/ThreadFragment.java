@@ -407,17 +407,19 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                                     });
                                 }
                                 Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
-                                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                                    @Override
-                                    public void withService(DatabaseService service) {
-                                        service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size() - 1, messages.get(0).Timestamp.getDate()));
-                                        service.saveRecentlyOpenedThread(messages.get(0));
-                                    }
+                                if (trackLastRead) {
+                                    databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                        @Override
+                                        public void withService(DatabaseService service) {
+                                            service.markAsRead(new DatabaseService.ReadMarker(mid, messages.size() - 1, messages.get(0).Timestamp.getDate()));
+                                            service.saveRecentlyOpenedThread(messages.get(0));
+                                        }
 
-                                    @Override
-                                    public void withoutService() {
-                                    }
-                                });
+                                        @Override
+                                        public void withoutService() {
+                                        }
+                                    });
+                                }
                             }
                             if (listAdapter.getCount() > 14) {
                                 resetMainMenuButton(true);

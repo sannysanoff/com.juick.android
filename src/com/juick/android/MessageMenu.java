@@ -132,6 +132,12 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
         // Censor - Submit a token for review
         TextView listSelectedTextView = (TextView) view.findViewById(R.id.text);
+        int[] loc2 = new int[2];
+        listSelectedTextView.getLocationOnScreen(loc2);
+        int[] loc1 = new int[2];
+        listView.getLocationOnScreen(loc1);
+        y -= loc2[1] - loc1[1];
+        x -= loc2[0] - loc1[0];
         int offset = getOffsetForPosition(listSelectedTextView, x, y);
         if (offset != -1) {
             final String text = listSelectedTextView.getText().toString();
@@ -297,22 +303,46 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     }
 
     protected void actionSubmitTokenForReview(final String token) {
-        new AlertDialog.Builder(activity)
-                .setTitle(R.string.CensorSubmitForReviewChooseSuggestedLevel)
-                .setItems(R.array.censorLevels, new OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        final int level = which;
-                        confirmAction(R.string.CensorSubmitForReviewConfirmation, new Runnable() {
+        Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(activity, DatabaseService.class);
+        databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+            @Override
+            public void withService(DatabaseService service) {
+                final ArrayList<DatabaseService.CensorCategory> censorCategories = service.getCensorCategories();
+                CharSequence[] items = new CharSequence[censorCategories.size()];
+                for (int i = 0; i < censorCategories.size(); i++) {
+                    items[i] = censorCategories.get(i).name;
+                }
+                new AlertDialog.Builder(activity)
+                        .setTitle(R.string.CensorSubmitForReviewChooseSuggestedLevel)
+                        .setItems(items, new OnClickListener() {
                             @Override
-                            public void run() {
-                                Censor.getServerAdapter().submitForReview(level, token);
-                                Toast.makeText(activity, R.string.CensorSubmittedForReview, Toast.LENGTH_LONG).show();
+                            public void onClick(DialogInterface dialog, int which) {
+                                final int categoryId = censorCategories.get(which).id;
+                                confirmAction(R.string.CensorSubmitForReviewConfirmation, new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Censor.getServerAdapter(activity).submitForReview(categoryId, token, new Utils.Function<Void, Utils.RESTResponse>() {
+                                            @Override
+                                            public Void apply(Utils.RESTResponse restResponse) {
+                                                if (restResponse.getErrorText() != null) {
+                                                    Toast.makeText(activity, "Censor suggest: " + restResponse.getErrorText(), Toast.LENGTH_LONG).show();
+                                                } else {
+                                                    Toast.makeText(activity, R.string.CensorSubmittedForReview, Toast.LENGTH_LONG).show();
+                                                }
+                                                return null;
+                                            }
+                                        });
+                                    }
+                                });
                             }
-                        });
-                    }
-                })
-                .show();
+                        })
+                        .show();
+            }
+
+            @Override
+            public void withoutService() {
+            }
+        });
     }
 
     protected void actionFilterUser(final String UName) {

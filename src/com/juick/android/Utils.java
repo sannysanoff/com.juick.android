@@ -68,6 +68,7 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.*;
 
 /**
@@ -186,7 +187,8 @@ public class Utils {
 
     //public static final String JA_ADDRESS = "192.168.1.77:8080";
     public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
-    public static final String JA_ADDRESS_HTTPS = "ja.ip.rt.ru:8443";
+    public static final String JA_ADDRESS_HTTPS = "https://ja.ip.rt.ru:8443";
+    //public static final String JA_ADDRESS_HTTPS = "http://192.168.1.77:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);

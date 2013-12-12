@@ -1274,6 +1274,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             }
         } catch (Exception ex) {
+            JuickAdvancedApplication.addToGlobalLog("marking read", ex);
         }
 
         if (messagesSource.supportsBackwardRefresh()) {

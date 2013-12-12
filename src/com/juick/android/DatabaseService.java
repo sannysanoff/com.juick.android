@@ -26,7 +26,6 @@ import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,6 +33,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -188,6 +188,53 @@ public class DatabaseService extends Service {
                 }
             });
             writeJobs.notify();
+        }
+    }
+
+    public void addLocalCensorWord(final int censorCategoryId, final String token) {
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    // create table censor_blacklist(censor_category_id integer not null, checkpoint integer, token text not null, status text, moderation_result text)
+                    ContentValues cv = new ContentValues();
+                    cv.put("censor_category_id", censorCategoryId);
+                    cv.put("token", token);
+                    db.insert("censor_blacklist", null, cv);   // failed uniq constraint is handled here.
+                    db.setTransactionSuccessful();
+                    return Boolean.TRUE;
+                }
+            });
+            writeJobs.notify();
+        }
+    }
+
+    public static class CensorCategory {
+        int id;
+        String name;
+
+        public CensorCategory(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+
+    public ArrayList<CensorCategory> getCensorCategories() {
+        boolean russian = Locale.getDefault().toString().toUpperCase().contains("RU");
+        Cursor cursor = db.rawQuery("select * from censor_category order by id", new String[]{});
+        ArrayList<CensorCategory> retval = new ArrayList<CensorCategory>();
+        try {
+            cursor.moveToFirst();
+            while(!cursor.isAfterLast()) {
+                retval.add(new CensorCategory(
+                        cursor.getInt(cursor.getColumnIndex("id")),
+                        cursor.getString(cursor.getColumnIndex(russian ? "description_ru" : "description_en")
+                        )));
+                cursor.moveToNext();
+            }
+            return retval;
+        } finally {
+            cursor.close();
         }
     }
 
@@ -424,7 +471,7 @@ public class DatabaseService extends Service {
 
     public static class DB extends SQLiteOpenHelper {
 
-        public final static int CURRENT_VERSION = 14;
+        public final static int CURRENT_VERSION = 15;
 
         public DB(Context context) {
             super(context, "messages_db", null, CURRENT_VERSION);
@@ -511,8 +558,8 @@ public class DatabaseService extends Service {
                 from++;
             }
             if (from == 11) {
-                sqLiteDatabase.execSQL("create table recent_threads_wrote(msgid textnot null primary key, body blob not null, save_date integer not null)");
-                sqLiteDatabase.execSQL("create table recent_threads_opened(msgid textnot null primary key, body blob not null, save_date integer not null)");
+                sqLiteDatabase.execSQL("create table recent_threads_wrote(msgid text not null primary key, body blob not null, save_date integer not null)");
+                sqLiteDatabase.execSQL("create table recent_threads_opened(msgid text not null primary key, body blob not null, save_date integer not null)");
                 from++;
             }
             if (from == 12) {
@@ -522,6 +569,22 @@ public class DatabaseService extends Service {
             }
             if (from == 13) {
                 sqLiteDatabase.execSQL("create table censor_blacklist(level integer not null, token text not null)");
+                from++;
+            }
+            if (from == 14) {
+                /*
+                db.censor_category.save({id:1, n:1, description_ru:'Сильный мат',description_en:'Strong offensive'});
+                db.censor_category.save({id:2, n:1, description_ru:'Грязные слова',description_en:'Dirty words'});
+                db.censor_category.save({id:3, n:1, description_ru:'Мелкая вонючесть',description_en:'Little stinky words'});
+                db.censor_category.save({id:4, n:1, description_ru:'Оскорбления ватников',description_en:'Offences for russian patriots'});
+                db.censor_category.save({id:5, n:1, description_ru:'Оскорбления пгм-ных',description_en:'Offences for believers'});
+                db.censor_category.save({id:6, n:1, description_ru:'Боль здравомыслящих атеистов',description_en:"Pain of atheist's mind"});
+                db.censor_category.save({id:7, n:1, description_ru:'(эксперимент) Негативные эмоции',description_en:'(experiment) Negative emotions'});
+                 */
+                sqLiteDatabase.execSQL("drop table censor_blacklist");
+                sqLiteDatabase.execSQL("create table censor_category(id integer not null primary key, checkpoint integer, description_ru text, description_en text)");
+                sqLiteDatabase.execSQL("create table censor_blacklist(censor_category_id integer not null, checkpoint integer, token text not null, status text, moderation_result text)");
+                sqLiteDatabase.execSQL("create table censor_global_blacklist(censor_category_id integer not null, checkpoint integer, token text not null, status text, replacement_regex text)");
                 from++;
             }
         }
@@ -572,7 +635,7 @@ public class DatabaseService extends Service {
                 db = database.getWritableDatabase();
             writerThread = new WriterThread();
             writerThread.start();
-            syncerThread = new SyncThread();
+            syncerThread = new SyncThread(this);
             syncerThread.start();
             synchronized (writeJobs) {
                 writeJobs.add(new Utils.Function<Boolean, Void>() {
@@ -608,42 +671,7 @@ public class DatabaseService extends Service {
         super.onDestroy();
     }
 
-    public void storeMessage(final JuickMessage parsed, final String json) {
-        synchronized (writeJobs) {
-            writeJobs.add(new Utils.Function<Boolean, Void>() {
-                @Override
-                public Boolean apply(Void aVoid) {
-                    if (parsed.getRID() > 0) {
-                        Cursor cursor = db.rawQuery("select * from message_reply where msgid=? and rid=?", new String[]{"" + parsed.getMID(), "" + parsed.getRID()});
-                        if (cursor.getCount() == 0) {
-                            db.execSQL("insert into message_reply (msgid, rid, body) values(?,?,?)", new Object[]{parsed.getMID(), parsed.getRID(), compressGZIP(json)});
-                        }
-                        cursor.close();
-                    } else {
-                        Cursor cursor = db.rawQuery("select * from message where msgid=?", new String[]{"" + parsed.getMID()});
-                        int msgCount = cursor.getCount();
-                        cursor.close();
-                        if (msgCount == 0) {
-                            ContentValues cv = new ContentValues();
-                            cv.put("msgid", parsed.getMID().toString());
-                            cv.put("tm", parsed.Timestamp.getTime());
-                            cv.put("prevmsgid", -1);
-                            cv.put("nextmsgid", -1);
-                            cv.put("body", compressGZIP(json));
-                            if (-1 == db.insert("message", null, cv)) {
-                                throw new SQLException("Insert into table MESSAGE filed");
-                            }
-                        }
-                    }
-                    db.setTransactionSuccessful();
-                    return true;
-                }
-            });
-            writeJobs.notify();
-        }
-    }
-
-    private byte[] compressGZIP(String json) {
+    static byte[] compressGZIP(String json) {
         try {
             byte[] bytes = json.getBytes();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -771,322 +799,13 @@ public class DatabaseService extends Service {
     long lastSyncIn = -1;
 
 
-    // push/pull syncable changes to/from the server
-    private class SyncThread extends Thread {
-
-        @Override
-        public void run() {
-            setName("DB SyncerThread");
-            setPriority(MIN_PRIORITY);
-            long waitDelay = 5000;
-            while (true) {
-                synchronized (lastModify) {
-                    try {
-                        if (waitDelay <= 0) {
-                            lastModify.wait(30 * 60 * 1000);    // half an hour
-                        } else {
-                            lastModify.wait(waitDelay);
-                        }
-                    } catch (InterruptedException e) {
-                        return;
-                    }
-                }
-                if (db == null) {
-                    continue;
-                }
-                if (!sp.getBoolean("enableSynchronization", false)) {
-                    waitDelay = -1;
-                    continue;
-                }
-                if (lastModify.get() > System.currentTimeMillis() - 5000 && waitDelay > 0) {
-                    continue;
-                }
-                String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
-                if (juickAccountName == null || juickAccountName.length() == 0) continue;
-                if (waitDelay > 0) {
-                    waitDelay = -1;
-
-                    {
-                        //
-                        //
-                        // changed something in db message_read ?
-                        //
-                        //
-                        Cursor cursor = db.rawQuery("select * from message_read where checkpoint is null", new String[0]);
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("[");
-                        int midIndex = cursor.getColumnIndex("msgid");
-                        int tmIndex = cursor.getColumnIndex("tm");
-                        int nRepliesIndex = cursor.getColumnIndex("nreplies");
-                        final ArrayList<String> updateds = new ArrayList<String>();
-                        int count = 0;
-                        while (cursor.moveToNext()) {
-                            try {
-                                JSONObject jo = new JSONObject();
-                                //midIndex integer not null primary key, tm integer not null, nreplies integer not null
-                                String key = cursor.getString(midIndex);
-                                jo.put("k", key);
-                                updateds.add(key);
-                                JSONObject v = new JSONObject();
-                                v.put("nr", cursor.getInt(nRepliesIndex));
-                                v.put("tm", cursor.getLong(tmIndex));
-                                jo.put("v", v);
-                                if (sb.length() > 1) {
-                                    sb.append(",");
-                                }
-                                sb.append(jo.toString());
-                                count++;
-                                if (count >= 1000) {
-                                    break;
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                            }
-                        }
-                        cursor.close();
-                        if (count > 0) {
-                            // have some lastread markers to sync
-                            sb.append("]");
-                            final Utils.RESTResponse checkpoint = executeServerSyncCommit("last_reads", sb.toString());
-                            if (checkpoint.getErrorText() != null) {
-                                waitDelay = -1; // maybe later
-                                continue;
-                            }
-                            synchronized (writeJobs) {
-                                writeJobs.add(new Utils.Function<Boolean, Void>() {
-                                    @Override
-                                    public Boolean apply(Void aVoid) {
-                                        for (String updated : updateds) {
-                                            ContentValues cv = new ContentValues();
-                                            cv.put("checkpoint", checkpoint.getResult());
-                                            db.update("message_read", cv, "msgid=?", new String[]{updated});
-                                        }
-                                        db.setTransactionSuccessful();
-                                        return Boolean.TRUE;
-                                    }
-                                });
-                                writeJobs.notify();
-                            }
-                            if (count >= 1000) {
-                                waitDelay = 10000;
-                                continue;
-                            }
-                        }
-                    }
-
-                    {
-                        //
-                        //
-                        // changed something in db saved_messages ?
-                        //
-                        //
-                        Cursor cursor = db.rawQuery("select * from saved_message2 where checkpoint is null", new String[0]);
-                        // msgid text not null primary key, tm integer not null, body blob not null, save_date integer not null
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("[");
-                        int midIndex = cursor.getColumnIndex("msgid");
-                        int tmIndex = cursor.getColumnIndex("tm");
-                        int bodyIndex = cursor.getColumnIndex("body");
-                        int saveDateIndex = cursor.getColumnIndex("save_date");
-                        final ArrayList<String> updateds = new ArrayList<String>();
-                        int count = 0;
-                        while (cursor.moveToNext()) {
-                            try {
-                                JSONObject jo = new JSONObject();
-                                //midIndex integer not null primary key, tm integer not null, nreplies integer not null
-                                String key = cursor.getString(midIndex);
-                                jo.put("k", key);
-                                updateds.add(key);
-                                JSONObject v = new JSONObject();
-                                v.put("tm", cursor.getLong(tmIndex));
-                                v.put("sd", cursor.getLong(saveDateIndex));
-                                v.put("b", new JSONObject(decompressGZIP(cursor.getBlob(bodyIndex))));
-                                jo.put("v", v);
-                                if (sb.length() > 1) {
-                                    sb.append(",");
-                                }
-                                sb.append(jo.toString());
-                                count++;
-                                if (count >= 200) {
-                                    break;
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                            }
-                        }
-                        cursor.close();
-                        if (count > 0) {
-                            // have some lastread markers to sync
-                            sb.append("]");
-                            final Utils.RESTResponse checkpoint = executeServerSyncCommit("saved_messages", sb.toString());
-                            if (checkpoint.getErrorText() != null) {
-                                waitDelay = -1; // maybe later
-                                continue;
-                            }
-                            synchronized (writeJobs) {
-                                writeJobs.add(new Utils.Function<Boolean, Void>() {
-                                    @Override
-                                    public Boolean apply(Void aVoid) {
-                                        for (String updated : updateds) {
-                                            ContentValues cv = new ContentValues();
-                                            cv.put("checkpoint", checkpoint.getResult());
-                                            db.update("saved_message2", cv, "msgid=?", new String[]{updated});
-                                        }
-                                        db.setTransactionSuccessful();
-                                        return Boolean.TRUE;
-                                    }
-                                });
-                                writeJobs.notify();
-                            }
-                            if (count >= 200) {
-                                waitDelay = 10000;
-                                continue;
-                            }
-                        }
-
-                    }
-
-                    if (System.currentTimeMillis() > lastSyncIn + 30 * 60 * 1000) {
-                        {
-                            //
-                            //
-                            // maybe something new in saved_message2 on server?
-                            //
-                            //
-                            Cursor cursor = db.rawQuery("select max(checkpoint) from saved_message2", new String[0]);
-                            cursor.moveToNext();
-                            int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
-                            cursor.close();
-                            Utils.RESTResponse somethingToSync = executeServerSyncQuery("saved_messages", lastCheckpoint);
-                            if (somethingToSync.getErrorText() != null) {
-                                waitDelay = -1; // maybe later
-                                continue;
-                            } else {
-                                try {
-                                    byte[] bytes = somethingToSync.getResult().getBytes("ISO-8859-1");
-                                    String json = decompressGZIP(bytes);
-                                    final JSONArray jo = new JSONArray(json);
-                                    if (jo.length() > 0) {
-
-                                        synchronized (writeJobs) {
-                                            writeJobs.add(new Utils.Function<Boolean, Void>() {
-                                                @Override
-                                                public Boolean apply(Void aVoid) {
-                                                    try {
-                                                        for(int i=0; i<jo.length(); i++) {
-                                                            JSONObject row = (JSONObject)jo.get(i);
-                                                            ContentValues cv = new ContentValues();
-                                                            String msgid = row.getString("k");
-                                                            JSONObject v = row.getJSONObject("v");
-                                                            cv.put("checkpoint", row.getInt("n"));
-
-
-                                                            cv.put("tm", v.getLong("tm"));
-                                                            cv.put("save_date", v.getLong("sd"));
-                                                            cv.put("body", compressGZIP(v.getJSONObject("b").toString()));
-
-                                                            if (0 == db.update("saved_message2", cv, "msgid=?", new String[]{msgid})) {
-                                                                cv.put("msgid", msgid);
-                                                                db.insert("saved_message2", null, cv);
-                                                            }
-                                                        }
-                                                        db.setTransactionSuccessful();
-                                                    } catch (JSONException e) {
-                                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-
-                                                    }
-                                                    return Boolean.TRUE;
-                                                }
-                                            });
-                                            writeJobs.notify();
-                                        }
-                                    }
-
-                                } catch (Exception e) {
-                                    waitDelay = -1;
-                                    continue;
-                                }
-                            }
-
-                        }
-
-                        {
-                            //
-                            //
-                            // maybe something new in message_read on server?
-                            //
-                            //
-                            Cursor cursor = db.rawQuery("select max(checkpoint) from message_read", new String[0]);
-                            cursor.moveToNext();
-                            int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
-                            cursor.close();
-                            Utils.RESTResponse somethingToSync = executeServerSyncQuery("last_reads", lastCheckpoint);
-                            if (somethingToSync.getErrorText() != null) {
-                                waitDelay = -1; // maybe later
-                                continue;
-                            } else {
-                                try {
-                                    byte[] bytes = somethingToSync.getResult().getBytes("ISO-8859-1");
-                                    String json = decompressGZIP(bytes);
-                                    final JSONArray jo = new JSONArray(json);
-                                    if (jo.length() > 0) {
-
-                                        synchronized (writeJobs) {
-                                            writeJobs.add(new Utils.Function<Boolean, Void>() {
-                                                @Override
-                                                public Boolean apply(Void aVoid) {
-                                                    try {
-                                                        for(int i=0; i<jo.length(); i++) {
-                                                            JSONObject row = (JSONObject)jo.get(i);
-                                                            ContentValues cv = new ContentValues();
-                                                            String msgid = row.getString("k");
-                                                            JSONObject v = row.getJSONObject("v");
-                                                            cv.put("checkpoint", row.getInt("n"));
-                                                            cv.put("tm", v.getLong("tm"));
-                                                            cv.put("nreplies", v.getInt("nr"));
-
-                                                            if (0 == db.update("message_read", cv, "msgid=?", new String[]{msgid})) {
-                                                                cv.put("msgid", msgid);
-                                                                db.insert("message_read", null, cv);
-                                                            }
-                                                        }
-                                                        db.setTransactionSuccessful();
-                                                    } catch (JSONException e) {
-                                                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-
-                                                    }
-                                                    return Boolean.TRUE;
-                                                }
-                                            });
-                                            writeJobs.notify();
-                                        }
-                                    }
-
-                                } catch (Exception e) {
-                                    waitDelay = -1;
-                                    continue;
-                                }
-                            }
-
-                        }
-
-
-                        lastSyncIn = System.currentTimeMillis();
-                    }
-                } else {
-                    waitDelay = 5000;   // coalesce sequential changes
-                }
-
-            }
-        }
-    }
-
     public Utils.RESTResponse executeServerSyncQuery(String db, int sinceCheckpoint) {
         String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
         String juickPassword = JuickAPIAuthorizer.getPassword(this);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
         Utils.RESTResponse restResponse = Utils.postForm(this,
-                "https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
+                "http://" + Utils.JA_ADDRESS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
+                //"https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         return restResponse;
     }
@@ -1096,12 +815,12 @@ public class DatabaseService extends Service {
         String juickPassword = JuickAPIAuthorizer.getPassword(context);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
         Utils.RESTResponse restResponse = Utils.postForm(context,
-                "https://" + Utils.JA_ADDRESS_HTTPS + "/api/share_saved?reset="+reset+"&login=" + juickAccountName + "&password=" + juickPassword,
+                Utils.JA_ADDRESS_HTTPS + "/api/share_saved?reset="+reset+"&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         return restResponse;
     }
 
-    private Utils.RESTResponse executeServerSyncCommit(String db, String json) {
+    Utils.RESTResponse executeServerSyncCommit(String db, String json) {
         String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
         String juickPassword = JuickAPIAuthorizer.getPassword(this);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
@@ -1116,7 +835,7 @@ public class DatabaseService extends Service {
         nvs.add(new Utils.NameStreamValuePair("data", new ByteArrayInputStream(baos.toByteArray())));
         JuickAdvancedApplication.addToGlobalLog("syncdb: commit: db="+db+" len="+baos.size(), null);
         Utils.RESTResponse restResponse = Utils.postForm(this,
-                "https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=commit&db=" + db + "&login=" + juickAccountName + "&password=" + juickPassword,
+                Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=commit&db=" + db + "&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         if (restResponse.getErrorText() != null) {
             JuickAdvancedApplication.addToGlobalLog("syncdb: commit: "+restResponse.getErrorText(), null);

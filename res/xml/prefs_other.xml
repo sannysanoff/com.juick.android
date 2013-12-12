@@ -30,11 +30,11 @@
     <Preference android:title="@string/VariousInfo" android:summary="@string/VariousInfo2">
         <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.JuickPreferencesActivity" android:action="various_info"/>
     </Preference>
-    <ListPreference
-            android:key="censor"
-            android:title="@string/Censor"
-            android:entries="@array/censorLevels"
-            android:entryValues="@array/censorLevelsValues"
-            android:defaultValue="0"
-            android:persistent="true"/>
+    <!--<ListPreference-->
+            <!--android:key="censor"-->
+            <!--android:title="@string/Censor"-->
+            <!--android:entries="@array/censorLevels"-->
+            <!--android:entryValues="@array/censorLevelsValues"-->
+            <!--android:defaultValue="0"-->
+            <!--android:persistent="true"/>-->
 </PreferenceScreen>

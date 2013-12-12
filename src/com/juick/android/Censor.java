@@ -1,5 +1,7 @@
 package com.juick.android;
 
+import android.content.Context;
+
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,7 +37,7 @@ public class Censor {
 
 
     public interface CensorServerAdapter {
-        public void submitForReview(int level, String token);
+        public void submitForReview(int censorCategoryId, String token, final Utils.Function<Void, Utils.RESTResponse> continuation);
     }
 
     public interface CensorStorageAdapter {
@@ -54,9 +56,9 @@ public class Censor {
         return storageAdapter;
     }
 
-    public static CensorServerAdapter getServerAdapter() {
+    public static CensorServerAdapter getServerAdapter(Context context) {
         if (serverAdapter == null) {
-            serverAdapter = new CensorDummyServerAdapter();
+            serverAdapter = new CensorDummyServerAdapter(context);
         }
         return serverAdapter;
     }
