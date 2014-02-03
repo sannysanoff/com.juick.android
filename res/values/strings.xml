@@ -1202,7 +1202,7 @@
     <string name="TurnOffToGetTwitterStyleLook">turn off to get twitter-style look</string>
     <string name="CompactComments">Compact comments</string>
     <string name="SendAnonUsageReports">Send anon usage reports</string>
-    <string name="Subscriptions__Web">Подписки (Сайт)</string>
+    <string name="Subscriptions__Web">Subscriptions (Web)</string>
     <string name="EnablePullToRefresh">Enable pull to refresh</string>
     <string name="TurnOffButtonsLight">Turn off buttons light</string>
     <string name="ShowDigitsOnIcon">Show digits on icon</string>
