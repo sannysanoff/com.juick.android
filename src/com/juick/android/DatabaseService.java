@@ -147,16 +147,18 @@ public class DatabaseService extends Service {
         return gsonBuilder.create();
     }
 
-    public synchronized byte[] getStoredUserpic(String uid) {
+    public synchronized byte[] getStoredUserpic(final String uid) {
         try {
             Cursor cursor = db.rawQuery("select * from userpic where uid=?", new String[]{uid});
+            byte[] body = null;
             try {
                 boolean exists = cursor.moveToFirst();
                 if (!exists) return null;
-                return cursor.getBlob(cursor.getColumnIndex("body"));
+                body = cursor.getBlob(cursor.getColumnIndex("body"));
             } finally {
                 cursor.close();
             }
+            return body;
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             return null;
@@ -164,25 +166,28 @@ public class DatabaseService extends Service {
     }
 
     public void storeUserpic(final String uid, final byte[] body) {
-        writeJobs.add(new Utils.Function<Boolean, Void>() {
-            @Override
-            public Boolean apply(Void aVoid) {
-                try {
-                    ContentValues cv = new ContentValues();
-                    cv.put("uid", uid);
-                    cv.put("body", body);
-                    cv.put("save_date", System.currentTimeMillis());
-                    long l = db.insert("userpic", null, cv);
-                    if (l != -1) {
-                        db.setTransactionSuccessful();
+        synchronized (writeJobs) {
+            writeJobs.add(new Utils.Function<Boolean, Void>() {
+                @Override
+                public Boolean apply(Void aVoid) {
+                    try {
+                        ContentValues cv = new ContentValues();
+                        cv.put("uid", uid);
+                        cv.put("body", body);
+                        cv.put("save_date", System.currentTimeMillis());
+                        long l = db.insert("userpic", null, cv);
+                        if (l != -1) {
+                            db.setTransactionSuccessful();
+                        }
+                    } catch (Exception e) {
+                        System.out.println("oh");
+                        // duplicate key
                     }
-                } catch (Exception e) {
-                    System.out.println("oh");
-                    // duplicate key
+                    return true;
                 }
-                return true;
-            }
-        });
+            });
+            writeJobs.notify();
+        }
     }
 
     public void runGenericWriteJob(final Utils.Function<Boolean, DatabaseService> job) {
@@ -193,6 +198,7 @@ public class DatabaseService extends Service {
                     return job.apply(DatabaseService.this);
                 }
             });
+            writeJobs.notify();
         }
     }
 
@@ -575,6 +581,9 @@ public class DatabaseService extends Service {
                         }
                         String oldDate = "" + (System.currentTimeMillis() - messageDBperiod * 24 * 60 * 60 * 1000L);
                         db.delete("msg2", "save_date < ?", new String[]{oldDate});
+
+                        db.execSQL("delete from userpic where save_date < ?", new String[]{""+(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L)});
+
                         db.setTransactionSuccessful();
                         return Boolean.TRUE;
                     }
@@ -635,8 +644,7 @@ public class DatabaseService extends Service {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             GZIPOutputStream gzos = new GZIPOutputStream(baos);
             gzos.write(bytes);
-            gzos.finish();
-            gzos.flush();
+            gzos.close();
             return baos.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
@@ -649,8 +657,7 @@ public class DatabaseService extends Service {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             GZIPOutputStream gzos = new GZIPOutputStream(baos);
             gzos.write(bytes);
-            gzos.finish();
-            gzos.flush();
+            gzos.close();
             return baos.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();
@@ -1128,6 +1135,7 @@ public class DatabaseService extends Service {
         public void run() {
             setName("DatabaseService.writer");
             setPriority(MIN_PRIORITY);
+
             while (true) {
                 ArrayList<Utils.Function<Boolean, Void>> jobs = new ArrayList<Utils.Function<Boolean, Void>>();
                 synchronized (writeJobs) {
@@ -1153,9 +1161,15 @@ public class DatabaseService extends Service {
                         // bad luck.
                         break;
                     } catch (final SQLException e) {
+                        db.endTransaction();
                         JuickAdvancedApplication.addToGlobalLog("writerThread", e);
-                        synchronized (writeJobs) {
-                            writeJobs.add(job);
+                        job.retryCount++;
+                        if (job.retryCount > 3) {
+                            // lost!
+                        } else {
+                            synchronized (writeJobs) {
+                                writeJobs.add(job);
+                            }
                         }
                         reportDBError("Saving read jobs: " + e.toString());
                         try {

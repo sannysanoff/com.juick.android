@@ -14,6 +14,12 @@
             android:defaultValue="false"
             android:persistent="true"/>
     <CheckBoxPreference
+            android:key="useHttpsForJuickHttpAPI"
+            android:title="@string/UseHttpsForJuickHttpAPI"
+            android:summary="@string/HttpsProsAndCons"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    <CheckBoxPreference
             android:key="enableMessageDB"
             android:title="@string/EnableLocalStorage"
             android:summary="@string/ForBetterLife"

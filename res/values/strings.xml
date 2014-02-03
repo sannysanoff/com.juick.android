@@ -317,6 +317,42 @@
             <body>
 
             <form>
+            <b>Мартобрь 2014, будущий билд</b>
+            <ul>
+            <li>
+            Циферки в иконке уведомления в Juick Advanced.
+            </li>
+            <li>
+            Фотографии которые аттачатся прямо из камеры, сейчас сохраняются в альбом.
+            </li>
+            <li>
+            Багфиксы: показываются огороженные сообщения в общей ленте и в прочих, улучшения отправки фотографии, запись ее в фотоальбом,
+            проблемы с поворотом во время аттача, уменьшен минимальный размер фонта для супер-высокого разрешения, аватары
+            в ленте обновляются, баг вылезший в Android 4.4.
+            </li>
+            </ul>
+
+            <hr>
+            Все фичи Juick Advanced можно посмотреть в настройках, пункт \"Что Нового\".
+
+            #script#
+
+            ]]>
+    </string>
+
+    <string name="rf_2013100101"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style>
+                input {
+                    -webkit-transform: scale(1.4,1.4);
+                }
+            </style>
+            </head>
+            <body>
+
+            <form>
             <b>Октябрь 2013, зимний билд</b>
             <ul>
             <li>
@@ -951,6 +987,8 @@
     <string name="Usage_Report">Usage Report</string>
     <string name="EnableHttpCompression">Enable HTTP compression</string>
     <string name="CompressionSlowsDown">HTTP compression may actually slow down fetch, but certainly will save traffic</string>
+    <string name="UseHttpsForJuickHttpAPI">Use HTTPS for Juick HTTP API calls</string>
+    <string name="HttpsProsAndCons">HTTPS is more secure, but slower and consumes more traffic</string>
     <string name="JustSame">No, just same</string>
     <string name="GettingYourId">Getting your UID</string>
     <string name="ConnectingToWwwJuick">Connecting to www.juick.com...</string>
@@ -1206,6 +1244,7 @@
     <string name="EnablePullToRefresh">Enable pull to refresh</string>
     <string name="TurnOffButtonsLight">Turn off buttons light</string>
     <string name="ShowDigitsOnIcon">Show digits on icon</string>
+    <string name="No">No</string>
 
 
 </resources>

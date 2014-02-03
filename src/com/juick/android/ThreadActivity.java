@@ -574,41 +574,45 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     public MicroBlog.OperationInProgress replyInProgress;
 
     private void sendReplyMain(String msg) {
-        setFormEnabled(false);
-        final JuickMessage threadStarter = tf.listAdapter.getItem(0);
-        replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
-            @Override
-            public Void apply(String error) {
-                replyInProgress = null;
-                if (error == null) {
-                    Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ThreadActivity.this, DatabaseService.class);
-                    databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                        @Override
-                        public void withService(DatabaseService service) {
-                            service.saveRecentlyCommentedThread(threadStarter);
-                        }
+        if (tf.listAdapter.getCount() > 0) {
+            setFormEnabled(false);
+            final JuickMessage threadStarter = tf.listAdapter.getItem(0);
+            replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
+                @Override
+                public Void apply(String error) {
+                    replyInProgress = null;
+                    if (error == null) {
+                        Utils.ServiceGetter<DatabaseService> databaseGetter = new Utils.ServiceGetter<DatabaseService>(ThreadActivity.this, DatabaseService.class);
+                        databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                            @Override
+                            public void withService(DatabaseService service) {
+                                service.saveRecentlyCommentedThread(threadStarter);
+                            }
 
-                    });
-                    sendMessageSucceed();
-                } else {
-                    setFormEnabled(true);
-                    if (attachmentUri != null) {
-                        try {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
-                            builder.setNeutralButton(R.string.OK, null);
-                            builder.setIcon(android.R.drawable.ic_dialog_alert);
-                            builder.setMessage(error);
-                            builder.show();
-                        } catch (Exception e) {
-                            // activity must be dead already
-                        }
+                        });
+                        sendMessageSucceed();
                     } else {
-                        Toast.makeText(ThreadActivity.this, error, Toast.LENGTH_LONG).show();
+                        setFormEnabled(true);
+                        if (attachmentUri != null) {
+                            try {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ThreadActivity.this);
+                                builder.setNeutralButton(R.string.OK, null);
+                                builder.setIcon(android.R.drawable.ic_dialog_alert);
+                                builder.setMessage(error);
+                                builder.show();
+                            } catch (Exception e) {
+                                // activity must be dead already
+                            }
+                        } else {
+                            Toast.makeText(ThreadActivity.this, error, Toast.LENGTH_LONG).show();
+                        }
                     }
+                    return null;
                 }
-                return null;
-            }
-        });
+            });
+        } else {
+            Toast.makeText(this, "Pardon!", Toast.LENGTH_LONG);
+        }
     }
 
     public void sendMessageSucceed() {

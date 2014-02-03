@@ -238,7 +238,11 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             }
             //} else if (url.startsWith("@")) {
         } else {
-            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            try {
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (Exception e) {
+                Toast.makeText(activity, "ERROR: "+e.toString(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -905,7 +909,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
             public void run() {
                 try {
-                    final Utils.RESTResponse restResponse = Utils.postJSON(activity, "http://api.juick.com/post", "body=" + URLEncoder.encode(body, "utf-8"));
+                    final Utils.RESTResponse restResponse = Utils.postJSON(activity, JuickHttpAPI.getAPIURL() + "post", "body=" + URLEncoder.encode(body, "utf-8"));
                     final String ret = restResponse.getResult();
                     activity.runOnUiThread(new Runnable() {
 

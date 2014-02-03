@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.view.*;
+import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 
 import java.util.HashMap;
@@ -44,10 +45,14 @@ public class JuickFragmentActivity extends SherlockFragmentActivity {
                             // dup in 30 seconds
                         } else {
                             whenDownloaded.put(uri, System.currentTimeMillis());
-                            if (imagePreviewHelper != null) {
-                                imagePreviewHelper.scheduleDownloadedImage(l, localURI);
+                            if (localURI != null) {
+                                if (imagePreviewHelper != null) {
+                                    imagePreviewHelper.scheduleDownloadedImage(l, localURI);
+                                } else {
+                                    ImagePreviewHelper.queueToDisplay.add(localURI);
+                                }
                             } else {
-                                ImagePreviewHelper.queueToDisplay.add(localURI);
+                                Toast.makeText(context, "Download: unable to obtain local URI after download.", Toast.LENGTH_LONG).show();
                             }
                         }
                     }

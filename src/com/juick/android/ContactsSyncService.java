@@ -35,6 +35,7 @@ import android.os.IBinder;
 import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.RawContacts;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juick.android.juick.JuickMessagesSource;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickUser;
@@ -100,7 +101,7 @@ public class ContactsSyncService extends Service {
             localContacts.put(c1.getString(1), c1.getLong(0));
         }
 
-        final String jsonStr = Utils.getJSON(context, "http://api.juick.com/users/friends", null).getResult();
+        final String jsonStr = Utils.getJSON(context, JuickHttpAPI.getAPIURL() + "users/friends", null).getResult();
         if (jsonStr != null && jsonStr.length() > 4) {
             try {
                 JSONArray json = new JSONArray(jsonStr);

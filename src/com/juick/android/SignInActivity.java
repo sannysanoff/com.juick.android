@@ -39,6 +39,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juickadvanced.R;
 
 import java.io.OutputStreamWriter;
@@ -140,7 +141,7 @@ public class SignInActivity extends Activity implements OnClickListener {
                     String authStr = nick + ":" + password;
                     final String basicAuth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
                     Utils.verboseDebugString(SignInActivity.this, "Authorization: " + basicAuth);
-                    URL apiUrl = new URL("http://api.juick.com/post");
+                    URL apiUrl = new URL(JuickHttpAPI.getAPIURL() + "post");
                     HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
                     conn.setConnectTimeout(10000);
                     conn.setUseCaches(false);

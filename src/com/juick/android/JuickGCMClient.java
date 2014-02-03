@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juick.android.juick.JuickMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
@@ -102,7 +103,7 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
     }
 
     private void registerOnServer(String registrationId) {
-        Utils.RESTResponse json = Utils.getJSON(context, "http://api.juick.com/android/register?regid=" + registrationId, null);
+        Utils.RESTResponse json = Utils.getJSON(context, JuickHttpAPI.getAPIURL() + "android/register?regid=" + registrationId, null);
         if (json.getResult() != null) {
             XMPPService.juickGCMStatus = "Registered";
             JuickAdvancedApplication.showXMPPToast("JuickGCMClient register success");
@@ -113,7 +114,7 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
     }
 
     private void unregisterOnServer(String registrationId) {
-        Utils.getJSON(context, "http://api.juick.com/android/unregister?regid=" + registrationId, null);
+        Utils.getJSON(context, JuickHttpAPI.getAPIURL() + "android/unregister?regid=" + registrationId, null);
         JuickAdvancedApplication.showXMPPToast("JuickGCMClient unregistered");
     }
 

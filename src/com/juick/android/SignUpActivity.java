@@ -30,6 +30,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
+import com.juick.android.juick.JuickHttpAPI;
 import com.juickadvanced.R;
 import java.net.URLEncoder;
 
@@ -82,7 +83,7 @@ public class SignUpActivity extends Activity implements View.OnClickListener {
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                String jsonStr = Utils.getJSON(SignUpActivity.this, "http://api.juick.com/captcha", null).getResult();
+                String jsonStr = Utils.getJSON(SignUpActivity.this, JuickHttpAPI.getAPIURL() + "captcha", null).getResult();
                 if (jsonStr != null) {
                     try {
                         JSONObject json = new JSONObject(jsonStr);
@@ -130,7 +131,7 @@ public class SignUpActivity extends Activity implements View.OnClickListener {
 
             public void run() {
                 try {
-                    String qs = "http://api.juick.com/signup?";
+                    String qs = JuickHttpAPI.getAPIURL() + "signup?";
                     qs += "captcha_id=" + captchaID + "&captcha_text=" + URLEncoder.encode(captcha, "utf-8");
                     qs += "&nick=" + nick + "&password=" + URLEncoder.encode(password, "utf-8");
                     int status = Utils.doHttpGetRequest(qs);

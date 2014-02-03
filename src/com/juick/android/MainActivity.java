@@ -280,6 +280,9 @@ public class MainActivity extends JuickFragmentActivity implements
     private void initStage2() {
         startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
+
+        JuickHttpAPI.setHttpsEnabled( sp.getBoolean("useHttpsForJuickHttpAPI", false) );
+
         if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
             ACRA.getErrorReporter().putCustomData("juick_user", JuickAPIAuthorizer.getJuickAccountName(this));
         }
@@ -1068,7 +1071,7 @@ public class MainActivity extends JuickFragmentActivity implements
 //            @Override
 //            public void run() {
 //                String body = "BL";
-//                String whitelist = Utils.postJSON(mainActivity, "http://api.juick.com/post", "body=" + body);
+//                String whitelist = Utils.postJSON(mainActivity, JuickHttpAPI.getAPIURL() + "post", "body=" + body);
 //                System.out.println(whitelist);
 //            }
 //        }.start();
@@ -1510,6 +1513,11 @@ public class MainActivity extends JuickFragmentActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (s == null) return;
+
+        if (s.equals("useHttpsForJuickHttpAPI")) {
+            JuickHttpAPI.setHttpsEnabled( sp.getBoolean("useHttpsForJuickHttpAPI", false) );
+        }
+
         if (s.equals("useXMPP")) {
             toggleXMPP(this);
         }
