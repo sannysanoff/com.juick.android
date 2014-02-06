@@ -364,7 +364,12 @@ public class Utils {
                     if (LocalBinder.class.isAssignableFrom(ibinder.getClass())) {
                         LocalBinder<T> binder = (LocalBinder<T>) ibinder;
                         try {
-                            receive.withService(binder.getService());
+                            T svc = binder.getService();
+                            if (svc != null) {
+                                receive.withService(svc);
+                            } else {
+                                receive.withoutService();
+                            }
                         } finally {
                             context.unbindService(this);
                             synchronized (getServiceQueue) {

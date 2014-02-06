@@ -21,7 +21,7 @@ public class DownloadCompleteReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getPackage().equals("com.juickadvanced")) {
-            Long l = (Long)intent.getExtras().get("extra_download_id");
+            Long l = intent.getExtras() != null ? (Long)intent.getExtras().get("extra_download_id"): null;
             if (l != null) {
                 final DownloadManager mgr = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
                 DownloadManager.Query q = new DownloadManager.Query();

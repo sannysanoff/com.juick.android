@@ -105,7 +105,7 @@ public class JuickAdvancedApplication extends Application {
         try {
             GCMRegistrar.checkDevice(getApplicationContext());
             GCMRegistrar.checkManifest(getApplicationContext());
-            GCMRegistrar.register(getApplicationContext(), GCMIntentService.SENDER_ID, "314097120259");
+            GCMRegistrar.register(getApplicationContext(), GCMIntentService.SENDER_ID, "284195356092");
             supportsGCM = true;
         } catch (Throwable th) {
         }

@@ -1256,4 +1256,5 @@
     <string name="No">No</string>
 
     <string name="Censor">Censor</string>
+    <string name="NewMsgTemplate">New Msg Template</string>
 </resources>

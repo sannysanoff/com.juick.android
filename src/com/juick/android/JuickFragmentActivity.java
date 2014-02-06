@@ -31,7 +31,8 @@ public class JuickFragmentActivity extends SherlockFragmentActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getPackage().equals("com.juickadvanced")) {
-                Long l = (Long)intent.getExtras().get("extra_download_id");
+                Bundle extras = intent.getExtras();
+                Long l = extras != null ? (Long) extras.get("extra_download_id") : null;
                 if (l != null) {
                     final DownloadManager mgr = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
                     DownloadManager.Query q = new DownloadManager.Query();

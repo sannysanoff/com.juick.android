@@ -71,6 +71,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     public ImageButton bAttachment;
     private ImageButton bSend;
     private ProgressBar progressSend;
+    SharedPreferences sp;
 
     public static class DialogData implements Serializable {
 
@@ -109,6 +110,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
@@ -132,6 +134,8 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         bLocation.setOnClickListener(this);
         bAttachment.setOnClickListener(this);
         bSend.setOnClickListener(this);
+
+
 
         resetForm();
         handleIntent(getIntent());
@@ -163,7 +167,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     private void resetForm() {
         setProgressBarIndeterminateVisibility(true);
-        etMessage.setText("");
+        String str = sp.getString("defaultJuickMessageTemplate", "*notag");
+        if (!str.endsWith(" ")) str += " ";
+        etMessage.setText(str);
         bLocationHint.setVisibility(View.GONE);
         bLocation.setSelected(false);
         bAttachment.setSelected(false);
@@ -206,6 +212,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         String action = i.getAction();
         if (action != null && action.equals(Intent.ACTION_SEND)) {
             String mime = i.getType();
+            if (mime == null) mime = "unknown";
             final Bundle extras = i.getExtras();
             if (mime.equals("image/*")) {
                 Object extraStream = extras.get(Intent.EXTRA_STREAM);
@@ -432,7 +439,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 break;
             case 1:
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
                 boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", true);
                 if (useTempFileForCapture) {
                     File file = getPhotoCaptureFile();

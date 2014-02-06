@@ -49,6 +49,7 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
         JuickAdvancedApplication.addToGlobalLog("ConnChange: "+ky, null);
         boolean newConnectivity = connectivity;
         Bundle extras = intent.getExtras();
+        if (extras == null) return;
         if (extras.getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY, Boolean.FALSE)) {
             newConnectivity = false;
         } else {
@@ -88,7 +89,12 @@ public class ConnectivityChangeReceiver extends BroadcastReceiver {
             } else {
                 WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
                 if (wifiManager != null) {
-                    WifiInfo info = wifiManager.getConnectionInfo();
+                    WifiInfo info = null;
+                    try {
+                        info = wifiManager.getConnectionInfo();
+                    } catch (SecurityException ex) {
+                        // shit happens: java.lang.SecurityException: WifiService: Neither user 10127 nor current process has android.permission.CHANGE_WIFI_STATE. (android '2.3.5)
+                    }
                     if (info != null) {
                         String ssid = info.getSSID();
                         currentConnectivityTypeKey = "WIFI/"+ssid;

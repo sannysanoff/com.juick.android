@@ -52,13 +52,19 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
                 errorNotification.notifyDownloadError(result.getErrorText());
             cont.apply(new ArrayList<JuickMessage>());
         } else {
-            ArrayList<JuickMessage> messages = new DevJuickComMessages().parseWebPage(jsonStr);
+            ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
+            String errorCause = "";
+            try {
+                messages = new DevJuickComMessages().parseWebPage(jsonStr);
+            } catch (Exception e) {
+                errorCause = ": "+e.toString();
+            }
             if (messages.size() > 0) {
                 JuickMessage juickMessage = messages.get(messages.size() - 1);
                 lastRetrievedMID = ((JuickMessageID)juickMessage.getMID()).getMid();
             } else {
                 if (errorNotification != null)
-                    errorNotification.notifyDownloadError("Page parse error.");
+                    errorNotification.notifyDownloadError("Page parse error"+errorCause);
             }
             cont.apply(messages);
         }

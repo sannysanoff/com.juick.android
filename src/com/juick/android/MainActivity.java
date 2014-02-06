@@ -417,7 +417,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void updateNavigationBarTitle() {
-        if (getSelectedNavigationIndex() != -1) {
+        if (getSelectedNavigationIndex() >= 0 && getSelectedNavigationIndex() < navigationItems.size()) {
             ActionBar bar = getSupportActionBar();
             String title = getString(navigationItems.get(getSelectedNavigationIndex()).labelId);
             bar.setTitle(title);
@@ -1642,7 +1642,6 @@ public class MainActivity extends JuickFragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
-
 
 
 }

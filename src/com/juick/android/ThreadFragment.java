@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -603,9 +604,14 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     float touchOriginY = -1;
     float initNavMenuTranslationX;
 
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     public boolean onTouch(View view, MotionEvent event) {
         if (mScaleDetector != null) {
-            mScaleDetector.onTouchEvent(event);
+            try {
+                mScaleDetector.onTouchEvent(event);
+            } catch (Exception e) {
+                // shit happens there inside
+            }
         }
         try {
             MotionEvent.PointerCoords pc = new MotionEvent.PointerCoords();

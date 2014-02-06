@@ -116,6 +116,8 @@ public class GifView extends View implements IGifView {
                     // no luck
                     decoder = null;
                     decodeStatus = DECODE_STATUS_OOM;
+                } catch (Throwable err) {
+                    decodeStatus = DECODE_STATUS_OOM;
                 }
                 synchronized (this) {
                     if (decoder != null) {      // release() could happen

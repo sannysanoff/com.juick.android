@@ -466,7 +466,12 @@ public class JuickMicroBlog implements MicroBlog {
                     String jsonUrl = JuickHttpAPI.getAPIURL() + "postform";
 
                     LocationManager lm = (LocationManager) newMessageActivity.getSystemService(Context.LOCATION_SERVICE);
-                    Location loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    Location loc = null;
+                    try {
+                        loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    } catch (Exception ex) {
+                        // java.lang.SecurityException: Provider network requires ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION permission
+                    }
                     if (loc != null) {
                         jsonUrl += "?lat=" + loc.getLatitude() + "&lon=" + loc.getLongitude() + "&acc=" + loc.getAccuracy() + "&fixage=" + Math.round((System.currentTimeMillis() - loc.getTime()) / 1000);
                     }

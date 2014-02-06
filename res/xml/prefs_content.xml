@@ -104,12 +104,17 @@
                 android:defaultValue="0.3"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="Other">
+    <PreferenceCategory android:title="@string/Other">
         <CheckBoxPreference
                 android:key="filterNonRussian"
                 android:title="@string/FilterNonRussianMessages"
                 android:summary="@string/FilterNonRussianMessages2"
                 android:defaultValue="false"
+                android:persistent="true"/>
+        <EditTextPreference
+                android:key="defaultJuickMessageTemplate"
+                android:title="@string/NewMsgTemplate"
+                android:defaultValue="*notag"
                 android:persistent="true"/>
         <Preference android:title="@string/Filters">
             <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.EditFiltersActivity"/>
