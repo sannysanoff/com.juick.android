@@ -32,11 +32,13 @@
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/UseWebInsteadOfJSON">
+        <!--
         <CheckBoxPreference
                 android:key="web_for_subscriptions"
                 android:title="@string/Subscriptions__Web"
                 android:defaultValue="false"
                 android:persistent="true"/>
+                -->
 <!--
         <CheckBoxPreference
                 android:key="web_for_myblog"

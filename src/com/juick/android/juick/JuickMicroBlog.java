@@ -254,7 +254,7 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     public static JuickMessagesSource getSubscriptionsMessagesSource(MainActivity activity, int labelId) {
-        if (activity.sp.getBoolean("web_for_subscriptions", false)) {
+        if (false && activity.sp.getBoolean("web_for_subscriptions", false)) {
             return new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
         } else {
             return new JuickCompatibleURLMessagesSource(activity.getString(labelId), "juick_api_subscriptions", activity, JuickHttpAPI.getAPIURL() + "home");

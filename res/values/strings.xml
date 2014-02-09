@@ -569,7 +569,7 @@
             Дискуссии (тоже раздел с сайта). Включить в список? <input type="checkbox" name="prefs.msrcDiscuss" #prefs.checked.msrcDiscuss#>
             </li>
             <li>
-            Также, и лента подписок может браться не c глючными старыми сообщениями с json api, а с сайта. Если на сайте нет глюка с датами, то значит нет глюка и в Juick Advanced.
+            (obsolete) Также, и лента подписок может браться не c глючными старыми сообщениями с json api, а с сайта. Если на сайте нет глюка с датами, то значит нет глюка и в Juick Advanced.
             Кушает немного больше трафика.
             Включить? <input type="checkbox" name="prefs.web_for_subscriptions" #prefs.checked.web_for_subscriptions#>
             </li>
