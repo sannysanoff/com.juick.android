@@ -53,6 +53,9 @@ import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.data.psto.PstoMessageID;
+/* http://code.google.com/p/android-file-dialog/ */
+import com.lamerman.FileDialog;
+import com.lamerman.SelectionMode;
 import com.mobeta.android.dslv.DragSortController;
 import com.mobeta.android.dslv.DragSortListView;
 import org.acra.ACRA;
@@ -69,6 +72,8 @@ public class MainActivity extends JuickFragmentActivity implements
 
     public static final int ACTIVITY_SIGNIN = 2;
     public static final int ACTIVITY_PREFERENCES = 3;
+    public static final int COLORS_THEME_STORAGE_ACTION_SAVE = 100;
+    public static final int COLORS_THEME_STORAGE_ACTION_LOAD = 101;
     public static final int PENDINGINTENT_CONSTANT = 713242183;
 
     public static int displayWidth;
@@ -1147,10 +1152,20 @@ public class MainActivity extends JuickFragmentActivity implements
 //                startActivity(intent);
 //
             }
+        } else if (requestCode == COLORS_THEME_STORAGE_ACTION_SAVE) {
+            if (resultCode == RESULT_OK) {
+                final String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
+                ColorsTheme.saveColorsTheme(getApplicationContext(), filePath);
+            }
+        } else if (requestCode == COLORS_THEME_STORAGE_ACTION_LOAD) {
+            if (resultCode == RESULT_OK) {
+                final String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
+                ColorsTheme.loadColorsTheme(getApplicationContext(), filePath);
+            }
         }
     }
 
-    @Override
+        @Override
     public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
         com.actionbarsherlock.view.MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.main, menu);
@@ -1213,9 +1228,29 @@ public class MainActivity extends JuickFragmentActivity implements
             case R.id.menuitem_existing_saved_sharing_key:
                 obtainSavedMessagesURL(false);
                 return true;
+            case R.id.menuitem_load_colors_theme:
+                startColorsThemeStorageAction(COLORS_THEME_STORAGE_ACTION_LOAD);
+                return true;
+            case R.id.menuitem_save_colors_theme:
+                startColorsThemeStorageAction(COLORS_THEME_STORAGE_ACTION_SAVE);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void startColorsThemeStorageAction(int storageAction) {
+        Intent intent = new Intent(this, FileDialog.class);
+        File storageDir = ColorsTheme.getStorageDir(getApplicationContext());
+        String storageDirAbsolutePath = storageDir.getAbsolutePath();
+        intent.putExtra(FileDialog.START_PATH, storageDirAbsolutePath);
+        //can user select directories or not
+        intent.putExtra(FileDialog.CAN_SELECT_DIR, false);
+        //alternatively you can set file filter
+        intent.putExtra(FileDialog.FORMAT_FILTER, ColorsTheme.FILE_DIALOG_FILE_EXTENSIONS);
+        intent.putExtra(FileDialog.SELECTION_MODE,
+                (storageAction == COLORS_THEME_STORAGE_ACTION_SAVE) ? SelectionMode.MODE_CREATE : SelectionMode.MODE_OPEN);
+        startActivityForResult(intent, storageAction);
     }
 
     private void obtainSavedMessagesURL(final boolean reset) {

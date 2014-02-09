@@ -531,6 +531,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return colorTheme;
     }
 
+    public static void clearColorTheme() {
+        colorTheme = null;
+    }
+
     public void invalidateItemsRendering() {
         for(int i=0; i<getCount(); i++) {
             getItem(i).parsedText = null;

@@ -1254,7 +1254,9 @@
     <string name="TurnOffButtonsLight">Turn off buttons light</string>
     <string name="ShowDigitsOnIcon">Show digits on icon</string>
     <string name="No">No</string>
-
     <string name="Censor">Censor</string>
     <string name="NewMsgTemplate">New Msg Template</string>
+    <string name="ColorsThemes">Colors Themes</string>
+    <string name="LoadColorsTheme">Load Colors Theme</string>
+    <string name="SaveColorsTheme">Save Colors Theme</string>
 </resources>
