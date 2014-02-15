@@ -30,6 +30,10 @@ public interface MicroBlog {
 
     MessageMenu getMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter);
 
+    String getPostNote(NewMessageActivity newMessageActivity);
+
+    void launchTagsForNewPost(NewMessageActivity newMessageActivity);
+
     interface OperationInProgress {
         public void preliminarySuccess();
     }

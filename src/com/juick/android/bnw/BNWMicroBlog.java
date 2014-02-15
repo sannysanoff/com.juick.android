@@ -80,6 +80,11 @@ public class BNWMicroBlog implements MicroBlog {
     }
 
     @Override
+    public String getPostNote(NewMessageActivity newMessageActivity) {
+        return null;
+    }
+
+    @Override
     public OperationInProgress postReply(final Activity context, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         new Thread("postReply") {
             @Override
@@ -269,4 +274,9 @@ public class BNWMicroBlog implements MicroBlog {
         return juickMessage;
     }
 
+
+    @Override
+    public void launchTagsForNewPost(NewMessageActivity newMessageActivity) {
+
+    }
 }

@@ -114,6 +114,7 @@
         <EditTextPreference
                 android:key="defaultJuickMessageTemplate"
                 android:title="@string/NewMsgTemplate"
+                android:summary="@string/NewMsgTemplateDescription"
                 android:defaultValue="*notag"
                 android:persistent="true"/>
         <Preference android:title="@string/Filters">

@@ -20,12 +20,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="AmbilWarna" />
     <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="ActionBarSherlock" />
+    <orderEntry type="module" module-name="FileExplorer" />
     <orderEntry type="library" name="libs" level="project" />
-    <orderEntry type="module" module-name="Library" />
-    <orderEntry type="library" name="gson-2.2.1" level="project" />
-    <orderEntry type="library" name="acra-4.3.0" level="project" />
-    <orderEntry type="library" name="maps" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="android-support-v4" level="project" />
   </component>
 </module>
 

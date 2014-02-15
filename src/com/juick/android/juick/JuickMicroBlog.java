@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
@@ -30,6 +31,7 @@ import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickMessageID;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -229,6 +231,27 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     @Override
+    public String getPostNote(NewMessageActivity newMessageActivity) {
+        return null;
+    }
+
+    @Override
+    public void launchTagsForNewPost(final NewMessageActivity newMessageActivity) {
+        JuickMicroBlog.withUserId(newMessageActivity, new Utils.Function<Void, Pair<Integer, String>>() {
+            @Override
+            public Void apply(Pair<Integer, String> cred) {
+                Intent i = new Intent(newMessageActivity, TagsActivity.class);
+                i.setAction(Intent.ACTION_PICK);
+                i.putExtra("uid", cred.first.intValue());
+                i.putExtra("multi", true);
+                newMessageActivity.startActivityForResult(i, NewMessageActivity.ACTIVITY_TAGS);
+                return null;
+            }
+        });
+
+    }
+
+    @Override
     public OperationInProgress postReply(Activity context, MessageID mid, JuickMessage selectedReply, String msg, String attachmentUri, String attachmentMime, Utils.Function<Void, String> then) {
         String msgnum = "#" + ((JuickMessageID)mid).getMid();
         if (selectedReply != null && selectedReply.getRID() > 0) {
@@ -254,11 +277,7 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     public static JuickMessagesSource getSubscriptionsMessagesSource(MainActivity activity, int labelId) {
-        if (false && activity.sp.getBoolean("web_for_subscriptions", false)) {
-            return new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
-        } else {
-            return new JuickCompatibleURLMessagesSource(activity.getString(labelId), "juick_api_subscriptions", activity, JuickHttpAPI.getAPIURL() + "home");
-        }
+        return new JuickCompatibleURLMessagesSource(activity.getString(labelId), "juick_api_subscriptions", activity, JuickHttpAPI.getAPIURL() + "home");
     }
 
 
@@ -291,6 +310,18 @@ public class JuickMicroBlog implements MicroBlog {
 
         };
         navigationItems.add(subscriptionsItem);
+        MainActivity.NavigationItem subscriptionsWebItem = new MainActivity.NavigationItem(10009, R.string.navigationSubscriptionsWeb, R.drawable.navicon_juick, null) {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "juick_web_subscriptions", activity, "http://juick.com/?show=my");
+                ms.setKind("homeweb");
+                args.putSerializable("messagesSource", ms);
+                activity.runDefaultFragmentWithBundle(args, this);
+            }
+
+        };
+        navigationItems.add(subscriptionsWebItem);
         navigationItems.add(new MainActivity.NavigationItem(10002, R.string.navigationUnanswered, R.drawable.navicon_juickadvanced, "msrcUnanswered") {
             MainActivity.NavigationItem thiz = this;
 
@@ -918,5 +949,26 @@ public class JuickMicroBlog implements MicroBlog {
         }
         obj.add("user", user);
         return obj;
+    }
+
+    public JSONArray getUserTags(View view, int tagsUID) {
+        String url = JuickHttpAPI.getAPIURL() + "tags";
+        File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-" + tagsUID + ".json");
+        String cachedString = null;
+        if (tagsUID != 0) { // -1 == mine
+            url += "?user_id=" + tagsUID;
+        }
+        if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {
+            cachedString = XMPPService.readFile(globalTagsCache);
+        }
+        final String jsonStr = cachedString != null ? cachedString : Utils.getJSON(view.getContext(), url, null).getResult();
+        if (jsonStr != null && cachedString == null) {
+            XMPPService.writeStringToFile(globalTagsCache, jsonStr);
+        }
+        try {
+            return  jsonStr != null ? new JSONArray(jsonStr) : null;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 }

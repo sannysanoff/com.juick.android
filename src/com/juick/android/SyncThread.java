@@ -268,7 +268,6 @@ public class SyncThread extends Thread {
 
                 }
 
-
                 if (System.currentTimeMillis() > databaseService.lastSyncIn + 30 * 60 * 1000) {
                     {
                         //

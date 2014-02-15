@@ -139,7 +139,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         y -= loc2[1] - loc1[1];
         x -= loc2[0] - loc1[0];
         int offset = getOffsetForPosition(listSelectedTextView, x, y);
-        if (offset != -1) {
+        if (offset != -1 && false) {
             final String text = listSelectedTextView.getText().toString();
             final String word = Utils.getWordAtOffset(text, offset);
             if (word != null) {

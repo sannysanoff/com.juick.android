@@ -1,18 +1,19 @@
-package com.juick.android.psto;
+package com.juick.android.point;
 
 import android.content.Context;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
-import com.juickadvanced.data.juick.JuickMessage;
-import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
-import com.juickadvanced.data.psto.PstoMessage;
-import com.juickadvanced.data.psto.PstoMessageID;
-import com.juickadvanced.parsers.PstoNetParser;
+import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.point.PointMessageID;
+import com.juickadvanced.parsers.PointNetParser;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,57 +22,31 @@ import java.util.*;
  * Time: 12:59 AM
  * To change this template use File | Settings | File Templates.
  */
-public class PstoCompatibleMessagesSource extends MessagesSource {
+public class PointWebCompatibleMessagesSource extends MessagesSource {
 
     URLParser urlParser;
     String title;
     int page;
 
-    public PstoCompatibleMessagesSource(Context ctx, String psto_kind, String title, String path) {
-        super(ctx, "psto_"+psto_kind);
+    public PointWebCompatibleMessagesSource(Context ctx, String kind, String title, String path) {
+        super(ctx, "point_"+kind);
         this.title = title;
         urlParser = new URLParser(path);
-        PstoAuthorizer.skipAskPassword = false;
+        PointAuthorizer.skipAskPassword = false;
     }
 
     @Override
     public void getChildren(MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        String midString = ((PstoMessageID)mid).getId();
-        String user = ((PstoMessageID)mid).user;
-        String url = user != null && user.length() > 0 ? "http://" + user.toLowerCase() + ".psto.net/" + midString : "http://psto.net/" + midString;
+        String midString = ((PointMessageID)mid).getId();
+        String user = ((PointMessageID)mid).user;
+        String url = user != null && user.length() > 0 ? "http://" + user.toLowerCase() + ".point.im/" + midString : "http://point.im/" + midString;
         Utils.RESTResponse jsonWithRetries = getJSONWithRetries(ctx, url, notifications);
         if (jsonWithRetries.errorText != null) {
-            cont.apply(PstoNetParser.badRetval);
+            cont.apply(new ArrayList<JuickMessage>());
         } else {
             String result = jsonWithRetries.result;
-            ArrayList<JuickMessage> messages = new PstoNetParser().parseWebMessageListPure(result, PstoNetParser.ParseMode.PARSE_THREAD_FIRST);
-            if (messages.size() == 1) {
-                PstoMessage msg = (PstoMessage)messages.get(0);
-                msg.setMID(mid);
-                int commentsStart = result.indexOf("<div class=\"comments\">");
-                if (commentsStart > 0) {
-                    result = result.substring(commentsStart + 10);
-                    ArrayList<JuickMessage> comments = new PstoNetParser().parseWebMessageListPure(result, PstoNetParser.ParseMode.PARSE_THREAD_COMMENTS);
-                    HashMap<Integer, JuickMessage> replies = new HashMap<Integer, JuickMessage>();
-                    for (JuickMessage comment : comments) {
-                        replies.put(comment.getRID(), comment);
-                    }
-                    for (JuickMessage comment : comments) {
-                        comment.setMID(mid);
-                        // filling in "@User" into replies
-                        if (comment.getReplyTo() != 0) {
-                            JuickMessage juickMessage = replies.get(comment.getReplyTo());
-                            if (juickMessage != null) {
-                                comment.Text = "@"+juickMessage.User.UName+" "+comment.Text;
-                            }
-                        }
-                    }
-                    messages.addAll(comments);
-                }
-                cont.apply(messages);
-            } else {
-                cont.apply(PstoNetParser.badRetval);
-            }
+            ArrayList<JuickMessage> messages = new PointNetParser().parseWebMessageListPure(result);
+            cont.apply(messages);
         }
 
     }
@@ -86,7 +61,7 @@ public class PstoCompatibleMessagesSource extends MessagesSource {
 
     @Override
     public void getFirst(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        page = 0;
+        page = 1;
         loadedMessages.clear();
         fetchURLAndProcess(notifications, cont);
     }
@@ -103,14 +78,22 @@ public class PstoCompatibleMessagesSource extends MessagesSource {
                 // not a number
             }
         } else {
+            try {
+                Integer.parseInt(pathPart);
+                urlParser.setPath("");  // pathPart is already number
+            } catch (Exception ex) {}
             // have no number
         }
         if (page != 0) {
-            urlParser.setPath(urlParser.getPathPart()+"/"+page);
+            if (urlParser.getPathPart().length() > 0) {
+                urlParser.setPath(urlParser.getPathPart()+"/"+page);
+            } else {
+                urlParser.setPath(""+page);
+            }
         }
         final String jsonStr = getJSONWithRetries(ctx, urlParser.getFullURL(), notification).getResult();
         if (jsonStr != null) {
-            ArrayList<JuickMessage> messages = new PstoNetParser().parseWebMessageListPure(jsonStr, PstoNetParser.ParseMode.PARSE_MESSAGE_LIST);
+            ArrayList<JuickMessage> messages = new PointNetParser().parseWebMessageListPure(jsonStr);
             if (messages.size() > 0) {
                 for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
                     JuickMessage message = iterator.next();
@@ -144,7 +127,7 @@ public class PstoCompatibleMessagesSource extends MessagesSource {
 
     @Override
     public MicroBlog getMicroBlog() {
-        return MainActivity.getMicroBlog(PstoMessageID.CODE);
+        return MainActivity.getMicroBlog(PointMessageID.CODE);
     }
 
     public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {

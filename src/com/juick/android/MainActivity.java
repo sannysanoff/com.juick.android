@@ -45,6 +45,7 @@ import com.actionbarsherlock.app.ActionBar;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.juick.*;
+import com.juick.android.point.PointMicroBlog;
 import com.juick.android.psto.PstoCompatibleMessagesSource;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
@@ -95,6 +96,8 @@ public class MainActivity extends JuickFragmentActivity implements
         microBlogs.put(bnwMicroBlog.getCode(), bnwMicroBlog);
         PstoMicroBlog pstoMicroBlog = new PstoMicroBlog();
         microBlogs.put(pstoMicroBlog.getCode(), pstoMicroBlog);
+        PointMicroBlog pointMicroBlog = new PointMicroBlog();
+        microBlogs.put(pointMicroBlog.getCode(), pointMicroBlog);
 
         for (MicroBlog microBlog : microBlogs.values()) {
             microBlog.initialize();
