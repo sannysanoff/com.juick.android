@@ -85,7 +85,7 @@ public class BNWMicroBlog implements MicroBlog {
     }
 
     @Override
-    public OperationInProgress postReply(final Activity context, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(final Activity context, final MessageID mid, JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         new Thread("postReply") {
             @Override
             public void run() {

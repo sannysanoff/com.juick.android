@@ -41,7 +41,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -252,7 +251,7 @@ public class JuickMicroBlog implements MicroBlog {
     }
 
     @Override
-    public OperationInProgress postReply(Activity context, MessageID mid, JuickMessage selectedReply, String msg, String attachmentUri, String attachmentMime, Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(Activity context, MessageID mid, JuickMessage threadStarter, JuickMessage selectedReply, String msg, String attachmentUri, String attachmentMime, Utils.Function<Void, String> then) {
         String msgnum = "#" + ((JuickMessageID)mid).getMid();
         if (selectedReply != null && selectedReply.getRID() > 0) {
             msgnum += "/" + selectedReply.getRID();

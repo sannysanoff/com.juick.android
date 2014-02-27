@@ -182,7 +182,7 @@ public class PstoMicroBlog implements MicroBlog {
     }
 
     @Override
-    public OperationInProgress postReply(final Activity context_, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(final Activity context_, final MessageID mid, JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         final ThreadActivity context = (ThreadActivity)context_;
         new Thread("Post reply") {
             @Override

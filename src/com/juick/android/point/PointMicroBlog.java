@@ -8,16 +8,11 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.util.Pair;
 import android.view.View;
-import android.webkit.URLUtil;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
-import com.juick.android.juick.JuickHttpAPI;
-import com.juick.android.juick.JuickMicroBlog;
 import com.juickadvanced.data.juick.JuickMessage;
-import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
@@ -208,7 +203,7 @@ public class PointMicroBlog implements MicroBlog {
     }
 
     @Override
-    public OperationInProgress postReply(final Activity context_, final MessageID mid, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(final Activity context_, final MessageID mid, final JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         final ThreadActivity context = (ThreadActivity) context_;
         new Thread("Post reply") {
             @Override
@@ -222,12 +217,16 @@ public class PointMicroBlog implements MicroBlog {
                     }
                     StringBuilder data = new StringBuilder();
                     data.append("text=" + URLEncoder.encode(msg, "utf-8"));
-                    data.append("&csrf_token=" + ((PointMessage) selectedReply).csrf_token);
+                    if (selectedReply != null) {
+                        data.append("&csrf_token=" + ((PointMessage) selectedReply).csrf_token);
+                    } else {
+                        data.append("&csrf_token=" + ((PointMessage) threadStarter).csrf_token);
+                    }
                     int replyTo = 0;
                     if (selectedReply != null && selectedReply.getRID() != 0) {
                         data.append("&comment_id=" + (replyTo = selectedReply.getRID()));
                     }
-                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://" + selectedReply.User.UName + ".point.im/" + pointMid.getId(), data.toString());
+                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://" + threadStarter.User.UName + ".point.im/" + pointMid.getId(), data.toString());
                     final int finalReplyTo = replyTo;
                     context.runOnUiThread(new Runnable() {
                         @Override

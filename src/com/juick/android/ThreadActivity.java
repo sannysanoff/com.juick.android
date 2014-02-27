@@ -35,13 +35,10 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.StyleSpan;
 import android.view.*;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
-import com.actionbarsherlock.view.*;
 import com.actionbarsherlock.view.Menu;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
@@ -577,7 +574,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         if (tf.listAdapter.getCount() > 0) {
             setFormEnabled(false);
             final JuickMessage threadStarter = tf.listAdapter.getItem(0);
-            replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
+            replyInProgress = MainActivity.getMicroBlog(mid.getMicroBlogCode()).postReply(this, mid, threadStarter, selectedReply, msg, attachmentUri, attachmentMime, new Utils.Function<Void, String>() {
                 @Override
                 public Void apply(String error) {
                     replyInProgress = null;

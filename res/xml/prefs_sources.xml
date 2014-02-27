@@ -139,5 +139,22 @@
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="POINT.IM sources">
+        <CheckBoxPreference
+            android:key="msrcPointSubs"
+            android:title="@string/navigationPointSubs"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcPointAll"
+            android:title="@string/navigationPointAll"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcPointMine"
+            android:title="@string/navigationPointMine"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
 
 </PreferenceScreen>
