@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import com.juickadvanced.R;
+import com.juickadvanced.parsers.URLParser;
 import org.apache.http.client.HttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;

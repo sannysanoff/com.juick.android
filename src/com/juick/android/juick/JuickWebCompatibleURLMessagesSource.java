@@ -1,7 +1,7 @@
 package com.juick.android.juick;
 
 import android.content.Context;
-import com.juick.android.URLParser;
+import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
@@ -43,22 +43,28 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
 
     protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         Utils.RESTResponse result = new JuickCompatibleURLMessagesSource(label, "dummy", ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
-        final String jsonStr = result.getResult();
+        final String htmlStr = result.getResult();
         Utils.DownloadErrorNotification errorNotification = null;
         if (notification instanceof Utils.DownloadErrorNotification)
             errorNotification = (Utils.DownloadErrorNotification)notification;
-        if (jsonStr == null) {
+        if (htmlStr == null) {
             if (errorNotification != null)
                 errorNotification.notifyDownloadError(result.getErrorText());
             cont.apply(new ArrayList<JuickMessage>());
         } else {
-            ArrayList<JuickMessage> messages = new DevJuickComMessages().parseWebPage(jsonStr);
+            ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
+            String errorCause = "";
+            try {
+                messages = new DevJuickComMessages().parseWebPage(htmlStr);
+            } catch (Exception e) {
+                errorCause = ": "+e.toString();
+            }
             if (messages.size() > 0) {
                 JuickMessage juickMessage = messages.get(messages.size() - 1);
                 lastRetrievedMID = ((JuickMessageID)juickMessage.getMID()).getMid();
             } else {
                 if (errorNotification != null)
-                    errorNotification.notifyDownloadError("Page parse error.");
+                    errorNotification.notifyDownloadError("Page parse error"+errorCause);
             }
             cont.apply(messages);
         }

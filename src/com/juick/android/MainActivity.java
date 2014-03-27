@@ -33,19 +33,19 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.util.TypedValue;
-import android.view.*;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.view.*;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.juick.*;
+import com.juick.android.point.PointMicroBlog;
 import com.juick.android.psto.PstoCompatibleMessagesSource;
 import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
@@ -54,6 +54,9 @@ import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.data.psto.PstoMessageID;
+/* http://code.google.com/p/android-file-dialog/ */
+import com.lamerman.FileDialog;
+import com.lamerman.SelectionMode;
 import com.mobeta.android.dslv.DragSortController;
 import com.mobeta.android.dslv.DragSortListView;
 import org.acra.ACRA;
@@ -70,6 +73,8 @@ public class MainActivity extends JuickFragmentActivity implements
 
     public static final int ACTIVITY_SIGNIN = 2;
     public static final int ACTIVITY_PREFERENCES = 3;
+    public static final int COLORS_THEME_STORAGE_ACTION_SAVE = 100;
+    public static final int COLORS_THEME_STORAGE_ACTION_LOAD = 101;
     public static final int PENDINGINTENT_CONSTANT = 713242183;
 
     public static int displayWidth;
@@ -91,6 +96,8 @@ public class MainActivity extends JuickFragmentActivity implements
         microBlogs.put(bnwMicroBlog.getCode(), bnwMicroBlog);
         PstoMicroBlog pstoMicroBlog = new PstoMicroBlog();
         microBlogs.put(pstoMicroBlog.getCode(), pstoMicroBlog);
+        PointMicroBlog pointMicroBlog = new PointMicroBlog();
+        microBlogs.put(pointMicroBlog.getCode(), pointMicroBlog);
 
         for (MicroBlog microBlog : microBlogs.values()) {
             microBlog.initialize();
@@ -322,6 +329,8 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         }
 
+        initCensor();
+
         setContentView(R.layout.main);
         final MyRelativeLayout mll = (MyRelativeLayout)findViewById(R.id.layout_container);
         mll.listener = new MyRelativeLayout.Listener() {
@@ -416,7 +425,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void updateNavigationBarTitle() {
-        if (getSelectedNavigationIndex() != -1) {
+        if (getSelectedNavigationIndex() >= 0 && getSelectedNavigationIndex() < navigationItems.size()) {
             ActionBar bar = getSupportActionBar();
             String title = getString(navigationItems.get(getSelectedNavigationIndex()).labelId);
             bar.setTitle(title);
@@ -866,12 +875,21 @@ public class MainActivity extends JuickFragmentActivity implements
         final SharedPreferences spn = getSharedPreferences("saved_last_navigation_type", MODE_PRIVATE);
         int restoredLastNavItem = spn.getInt("last_navigation", 0);
         if (restoredLastNavItem != 0) {
+            NavigationItem allSources = null;
             for (int i = 0; i < navigationItems.size(); i++) {
                 NavigationItem navigationItem = navigationItems.get(i);
                 if (navigationItem.labelId == restoredLastNavItem) {
                     lastNavigationItem = navigationItem;
-                    break;
                 }
+                if (navigationItem.labelId == R.string.navigationAll) {
+                    allSources = navigationItem;
+                }
+            }
+            if (lastNavigationItem == null) {
+                lastNavigationItem = allSources;    // could be null if not configured
+            }
+            if (lastNavigationItem == null && navigationItems.size() > 0) {
+                lastNavigationItem = navigationItems.get(0);    // last default
             }
             if (lastNavigationItem != null) {
                 restoreLastNavigationPosition();
@@ -1010,6 +1028,10 @@ public class MainActivity extends JuickFragmentActivity implements
         toggleJAMessaging(this, useJAM);
     }
 
+    private void initCensor() {
+        Censor.setCensorshipLevel( Integer.parseInt(sp.getString("censor", "0")));
+    }
+
     public static boolean commandJAMService(Context ctx, String command) {
         if (isJAMServiceRunning(ctx)) {
             Intent service = new Intent(ctx, JAMService.class);
@@ -1133,10 +1155,20 @@ public class MainActivity extends JuickFragmentActivity implements
 //                startActivity(intent);
 //
             }
+        } else if (requestCode == COLORS_THEME_STORAGE_ACTION_SAVE) {
+            if (resultCode == RESULT_OK) {
+                final String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
+                ColorsTheme.saveColorsTheme(getApplicationContext(), filePath);
+            }
+        } else if (requestCode == COLORS_THEME_STORAGE_ACTION_LOAD) {
+            if (resultCode == RESULT_OK) {
+                final String filePath = data.getStringExtra(FileDialog.RESULT_PATH);
+                ColorsTheme.loadColorsTheme(getApplicationContext(), filePath);
+            }
         }
     }
 
-    @Override
+        @Override
     public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
         com.actionbarsherlock.view.MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.main, menu);
@@ -1199,9 +1231,29 @@ public class MainActivity extends JuickFragmentActivity implements
             case R.id.menuitem_existing_saved_sharing_key:
                 obtainSavedMessagesURL(false);
                 return true;
+            case R.id.menuitem_load_colors_theme:
+                startColorsThemeStorageAction(COLORS_THEME_STORAGE_ACTION_LOAD);
+                return true;
+            case R.id.menuitem_save_colors_theme:
+                startColorsThemeStorageAction(COLORS_THEME_STORAGE_ACTION_SAVE);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void startColorsThemeStorageAction(int storageAction) {
+        Intent intent = new Intent(this, FileDialog.class);
+        File storageDir = ColorsTheme.getStorageDir(getApplicationContext());
+        String storageDirAbsolutePath = storageDir.getAbsolutePath();
+        intent.putExtra(FileDialog.START_PATH, storageDirAbsolutePath);
+        //can user select directories or not
+        intent.putExtra(FileDialog.CAN_SELECT_DIR, false);
+        //alternatively you can set file filter
+        intent.putExtra(FileDialog.FORMAT_FILTER, ColorsTheme.FILE_DIALOG_FILE_EXTENSIONS);
+        intent.putExtra(FileDialog.SELECTION_MODE,
+                (storageAction == COLORS_THEME_STORAGE_ACTION_SAVE) ? SelectionMode.MODE_CREATE : SelectionMode.MODE_OPEN);
+        startActivityForResult(intent, storageAction);
     }
 
     private void obtainSavedMessagesURL(final boolean reset) {
@@ -1537,6 +1589,11 @@ public class MainActivity extends JuickFragmentActivity implements
                     sp.getBoolean(s, false) ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                     skipDontKillApp ? 0 : PackageManager.DONT_KILL_APP);
         }
+        boolean censorLevelChanged = false;
+        if (s.equals("censor")) {
+            censorLevelChanged = true;
+            Censor.setCensorshipLevel( Integer.parseInt(sp.getString("censor", "0")));
+        }
         boolean dontWatchPreferences = sp.getBoolean("dontWatchPreferences", false);
         if (dontWatchPreferences) return;
         if (s.startsWith("msrc")) {
@@ -1545,6 +1602,9 @@ public class MainActivity extends JuickFragmentActivity implements
             updateNavigation();
         }
         boolean invalidateRendering = false;
+        if (censorLevelChanged) {
+            invalidateRendering = true;
+        }
         if (s.startsWith("Colors.")) {
             invalidateRendering = true;
         }
@@ -1620,7 +1680,6 @@ public class MainActivity extends JuickFragmentActivity implements
     public boolean isRunning() {
         return resumed;
     }
-
 
 
 }

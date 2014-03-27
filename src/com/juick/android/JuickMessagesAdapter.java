@@ -48,8 +48,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.juickadvanced.imaging.*;
+import com.juickadvanced.parsers.URLParser;
 import jp.tomorrowkey.android.gifplayer.GifView;
-import org.acra.ACRA;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -531,6 +531,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return colorTheme;
     }
 
+    public static void clearColorTheme() {
+        colorTheme = null;
+    }
+
     public void invalidateItemsRendering() {
         for(int i=0; i<getCount(); i++) {
             getItem(i).parsedText = null;
@@ -625,7 +629,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         //
         // MESSAGE BODY
         //
-        String txt = jmsg.Text;
+        String txt = Censor.getCensoredText(jmsg.Text);
         if (!condensed) {
             if (jmsg.Photo != null) {
                 txt = jmsg.Photo + "\n" + txt;
@@ -714,6 +718,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 try {
                     DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
                     String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
+                    if (date.endsWith("/76")) date = date.substring(0, date.length()-3); // special case for no year in datasource
                     ssb.append("\n" + date + " ");
                 } catch (Exception e) {
                     ssb.append("\n[fmt err] ");
@@ -728,6 +733,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                     } else {
                         DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
                         String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
+                        if (date.endsWith("/76")) date = date.substring(0, date.length()-3); // special case for no year in datasource
                         compactDt.append(date);
                     }
                 } catch (Exception e) {
@@ -866,40 +872,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     public static boolean isNickPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '-' || c == '@';
-    }
-
-    private static ParsedMessage formatFirstMessageText(JuickMessage jmsg) {
-        SpannableStringBuilder ssb = new SpannableStringBuilder();
-        String tags = jmsg.getTags();
-        if (feedlyFonts) {
-            tags = tags.toUpperCase();
-        }
-        if (tags.length() > 0) {
-            tags += "\n";
-        }
-        String txt = jmsg.Text;
-        if (jmsg.Photo != null) {
-            txt = jmsg.Photo + "\n" + txt;
-        }
-        if (jmsg.Video != null) {
-            txt = jmsg.Video + "\n" + txt;
-        }
-        ssb.append(tags + txt);
-        if (tags.length() > 0) {
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), 0, tags.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            if (feedlyFonts) {
-                ssb.setSpan(new CustomTypefaceSpan("", JuickAdvancedApplication.dinWebPro), 0, tags.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-        }
-
-        int paddingt = tags.length();
-        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
-        ArrayList<String> urls = new ArrayList<String>();
-        for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
-            ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), paddingt + foundURL.getStart(), paddingt + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            urls.add(foundURL.getUrl());
-        }
-        return new ParsedMessage(ssb, urls);
     }
 
     public void addAllMessages(ArrayList<JuickMessage> messages) {
@@ -1216,6 +1188,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 final int WIDTH = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth());
                 String host = "ja.ip.rt.ru:8080";
                 //String host = "192.168.1.77:8080";
+                if (url.startsWith("https://i.juick.com")) {
+                    url = "http"+url.substring(5);
+                }
                 loadURl  = "http://"+host+"/img?url=" + Uri.encode(url)+"&height="+HEIGHT+"&width="+WIDTH;
             }
             if (imageLoadMode.contains("weserv")) {
@@ -1466,38 +1441,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
 
-    }
-
-    public static String formatTimeDiff(long timediff, boolean russian) {
-        StringBuilder sb = new StringBuilder();
-        if (timediff < 0) {
-            return russian ? "раньше" : "earlier";
-        }
-        timediff /= 1000;
-        timediff /= 60;
-        long minutes = timediff % 60;
-        timediff /= 60;
-        long hours = timediff % 24;
-        timediff /= 24;
-        long days = timediff;
-        sb.append("+");
-        if (days != 0) {
-            sb.append(days);
-            sb.append(russian?"д":"d ");
-        }
-        if (hours != 0) {
-            sb.append(hours);
-            sb.append(russian?"ч":"h ");
-        }
-        if (minutes != 0) {
-            sb.append(minutes);
-            sb.append(russian?"м":"m ");
-        }
-        if (sb.length() == 1) {
-            sb.setLength(0);
-            sb.append(russian ? "сразу" : "immed.");
-        }
-        return sb.toString();
     }
 
 

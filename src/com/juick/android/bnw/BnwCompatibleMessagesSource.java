@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
-import com.juick.android.URLParser;
+import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juickadvanced.data.bnw.BNWMessage;
 import com.juickadvanced.data.bnw.BnwMessageID;

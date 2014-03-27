@@ -32,6 +32,7 @@ import com.juickadvanced.R;
 public class TagsActivity extends FragmentActivity implements TagsFragment.TagsFragmentListener {
 
     private int uid;
+    private String uidS;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,8 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         super.onCreate(savedInstanceState);
 
         uid = getIntent().getIntExtra("uid", 0);
+        uidS = getIntent().getStringExtra("user");
+        String microblog = getIntent().getStringExtra("microblog");
         boolean multi = getIntent().getBooleanExtra("multi", false);
 
         if (uid == 0) {
@@ -51,6 +54,8 @@ public class TagsActivity extends FragmentActivity implements TagsFragment.TagsF
         TagsFragment tf = new TagsFragment();
         Bundle args = new Bundle();
         args.putInt("uid", uid);
+        args.putString("user", uidS);
+        args.putString("microblog", microblog);
         args.putBoolean("multi", multi);
         args.putBoolean("add_system_tags", true);
         tf.setArguments(args);

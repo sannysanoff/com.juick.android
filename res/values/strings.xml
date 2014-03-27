@@ -8,6 +8,7 @@
     <string name="JuickMicroblog">Juick</string>
     <string name="BNWMicroblog">BnW</string>
     <string name="PstoMicroblog">psto.net</string>
+    <string name="PointMicroblog">point.im</string>
     <string name="Loading___">Loading...</string>
     <string name="Loading___report">Loading... Complex report may take minute or two...</string>
     <string name="LoadingBackup___">Loading (backup)...</string>
@@ -75,6 +76,15 @@
     <string name="Are_you_sure_subscribe">Are you sure you want to subscribe?</string>
     <string name="Are_you_sure_blacklist">Are you sure you want to blacklist?</string>
 
+    <!-- Censor -->
+    <string name="CensorSubmitTokenForReview1">Submit</string>
+    <string name="CensorSubmitTokenForReview2">to censor for review</string>
+    <string name="CensorSubmitWordSelectionError">Censor: word selection error</string>
+    <string name="CensorSubmitForReviewConfirmation">Are you sure you want to submit this word to censor for review?"</string>
+    <string name="CensorSubmitForReviewChooseSuggestedLevel">Choose suggested level</string>
+    <string name="CensorSubmittedForReview">The word has been submitted to censor for review</string>
+
+
     <!-- JuickMessagesAdapter -->
     <string name="Replies_">Replies:</string>
 
@@ -82,6 +92,8 @@
     <string name="Juick__New_message">Juick: New message</string>
     <string name="BnW__New_message">BnW: New message</string>
     <string name="Psto__New_message">psto: New message</string>
+    <string name="Point__New_message">point: New message</string>
+    <string name="Point__PostNote"> - use *tag1 *tag2 text</string>
     <string name="New_message">New message</string>
     <string name="To__All">To: All</string>
     <string name="Attach">Attach</string>
@@ -170,6 +182,7 @@
 
 
     <string name="navigationSubscriptions">Subscriptions</string>
+    <string name="navigationSubscriptionsWeb">Subscriptions(web)</string>
     <string name="navigationAll">Last messages</string>
     <string name="navigationTop">Top messages</string>
     <string name="navigationPhoto">With photos</string>
@@ -560,7 +573,7 @@
             Дискуссии (тоже раздел с сайта). Включить в список? <input type="checkbox" name="prefs.msrcDiscuss" #prefs.checked.msrcDiscuss#>
             </li>
             <li>
-            Также, и лента подписок может браться не c глючными старыми сообщениями с json api, а с сайта. Если на сайте нет глюка с датами, то значит нет глюка и в Juick Advanced.
+            (obsolete) Также, и лента подписок может браться не c глючными старыми сообщениями с json api, а с сайта. Если на сайте нет глюка с датами, то значит нет глюка и в Juick Advanced.
             Кушает немного больше трафика.
             Включить? <input type="checkbox" name="prefs.web_for_subscriptions" #prefs.checked.web_for_subscriptions#>
             </li>
@@ -1111,6 +1124,9 @@
     <string name="navigationPSTOSubs">psto.Subs</string>
     <string name="navigationPSTOMy">psto.Blog</string>
     <string name="navigationPSTOPopular">psto.Popular</string>
+    <string name="navigationPointAll">point.All</string>
+    <string name="navigationPointSubs">point.Subs</string>
+    <string name="navigationPointMine">point.Mine</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
     <string name="NonJabberNotifications">Non-Jabber notifications</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">is not enabled or service is not running</string>
@@ -1245,6 +1261,10 @@
     <string name="TurnOffButtonsLight">Turn off buttons light</string>
     <string name="ShowDigitsOnIcon">Show digits on icon</string>
     <string name="No">No</string>
-
-
+    <string name="Censor">Censor</string>
+    <string name="NewMsgTemplate">New message template..</string>
+    <string name="NewMsgTemplateDescription">Initial content of new Juick messages</string>
+    <string name="ColorsThemes">Colors Themes</string>
+    <string name="LoadColorsTheme">Load Colors Theme</string>
+    <string name="SaveColorsTheme">Save Colors Theme</string>
 </resources>

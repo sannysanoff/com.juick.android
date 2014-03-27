@@ -36,6 +36,7 @@ public class MyListView extends ListView {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
+        JuickAdvancedApplication.setLastTouchCoords(ev.getX(), ev.getY());
         switch(ev.getActionMasked()) {
             case MotionEvent.ACTION_POINTER_DOWN:
                 if (shouldReset) {

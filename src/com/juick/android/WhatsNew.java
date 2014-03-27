@@ -266,8 +266,8 @@ public class WhatsNew {
                         dialog.cancel();
                         Toast.makeText(activity, activity.getString(R.string.DownloadWillStartNow), Toast.LENGTH_LONG).show();
                         final DownloadManager mgr = (DownloadManager) runningActivity.getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
-                        final Uri parse = Uri.parse(updateURL);
                         try {
+                            final Uri parse = Uri.parse(updateURL);
                             final DownloadManager.Request req = new DownloadManager.Request(parse);
 
                             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)

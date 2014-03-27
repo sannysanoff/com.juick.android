@@ -48,13 +48,13 @@ import android.widget.*;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.point.PointMicroBlog;
 import com.juickadvanced.R;
 
 import java.io.*;
 import java.util.ArrayList;
 
 /**
- *
  * @author Ugnich Anton
  */
 public class NewMessageActivity extends Activity implements OnClickListener, DialogInterface.OnClickListener {
@@ -62,7 +62,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     private static final int ACTIVITY_LOCATION = 1;
     public static final int ACTIVITY_ATTACHMENT_IMAGE = 2;
     public static final int ACTIVITY_ATTACHMENT_VIDEO = 3;
-    private static final int ACTIVITY_TAGS = 4;
+    public static final int ACTIVITY_TAGS = 4;
     public EditText etTo;
     private EditText etMessage;
     public Button bLocationHint;
@@ -71,6 +71,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     public ImageButton bAttachment;
     private ImageButton bSend;
     private ProgressBar progressSend;
+    SharedPreferences sp;
 
     public static class DialogData implements Serializable {
 
@@ -109,12 +110,13 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         JuickAdvancedApplication.setupTheme(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
         setContentView(R.layout.newmessage);
 
-        data.messagesSource = (MessagesSource)getIntent().getSerializableExtra("messagesSource");
+        data.messagesSource = (MessagesSource) getIntent().getSerializableExtra("messagesSource");
         checkMessagesSource();
 
 
@@ -133,6 +135,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         bAttachment.setOnClickListener(this);
         bSend.setOnClickListener(this);
 
+
         resetForm();
         handleIntent(getIntent());
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
@@ -149,7 +152,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);    //To change body of overridden methods use File | Settings | File Templates.
         if (savedInstanceState != null && savedInstanceState.containsKey("dialogData")) {
-            data = (DialogData)savedInstanceState.getSerializable("dialogData");
+            data = (DialogData) savedInstanceState.getSerializable("dialogData");
         }
 
         bAttachment.setSelected(data.attachmentUri != null);
@@ -163,7 +166,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     private void resetForm() {
         setProgressBarIndeterminateVisibility(true);
-        etMessage.setText("");
+        String str = sp.getString("defaultJuickMessageTemplate", "*notag");
+        if (!str.endsWith(" ")) str += " ";
+        etMessage.setText(str);
         bLocationHint.setVisibility(View.GONE);
         bLocation.setSelected(false);
         bAttachment.setSelected(false);
@@ -180,8 +185,11 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         etMessage.requestFocus();
         checkMessagesSource();
         data.messagesSource.getMicroBlog().decorateNewMessageActivity(this);
-        TextView oldTitle = (TextView)findViewById(R.id.old_title);
-        oldTitle.setText(data.messagesSource.getMicroBlog().getMicroblogName(this));
+        TextView oldTitle = (TextView) findViewById(R.id.old_title);
+        String microblogName = data.messagesSource.getMicroBlog().getMicroblogName(this);
+        String microblogPostNote = data.messagesSource.getMicroBlog().getPostNote(this);
+        if (microblogPostNote == null) microblogPostNote = "";
+        oldTitle.setText(microblogName + microblogPostNote);
 
     }
 
@@ -206,13 +214,14 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         String action = i.getAction();
         if (action != null && action.equals(Intent.ACTION_SEND)) {
             String mime = i.getType();
+            if (mime == null) mime = "unknown";
             final Bundle extras = i.getExtras();
             if (mime.equals("image/*")) {
                 Object extraStream = extras.get(Intent.EXTRA_STREAM);
                 if (extraStream != null && (extraStream.toString().toLowerCase().endsWith(".jpg") || extraStream.toString().toLowerCase().endsWith(".jpeg"))) {
                     mime = "image/jpeg";
                 } else {
-                    Toast.makeText(this, "Cannot prove file is jpeg: "+extraStream, Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Cannot prove file is jpeg: " + extraStream, Toast.LENGTH_LONG).show();
                 }
             }
             if (mime.equals("text/plain")) {
@@ -235,7 +244,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             } else {
                 String errorMessage;
                 try {
-                    errorMessage = String.format(getString(R.string.JuickBadMimetype)+" - "+extras.get(Intent.EXTRA_STREAM), mime);
+                    errorMessage = String.format(getString(R.string.JuickBadMimetype) + " - " + extras.get(Intent.EXTRA_STREAM), mime);
                 } catch (Exception ex) {
                     /// java.util.MissingFormatArgumentException: Format specifier: 20i  (???)
                     errorMessage = "Use JPEG/3GP/MP4 only";
@@ -286,23 +295,13 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 MediaStore.Images.Media.insertImage(getContentResolver(), uri.getPath(), "Juick Capture", "");
             }
         } catch (FileNotFoundException e) {
-            Toast.makeText(this, "Error saving to gallery: "+e.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Error saving to gallery: " + e.toString(), Toast.LENGTH_LONG).show();
         }
     }
 
     public void onClick(View v) {
         if (v == bTags) {
-            JuickMicroBlog.withUserId(this, new Utils.Function<Void, Pair<Integer,String>>() {
-                @Override
-                public Void apply(Pair<Integer, String> cred) {
-                    Intent i = new Intent(NewMessageActivity.this, TagsActivity.class);
-                    i.setAction(Intent.ACTION_PICK);
-                    i.putExtra("uid", cred.first.intValue());
-                    i.putExtra("multi", true);
-                    startActivityForResult(i, ACTIVITY_TAGS);
-                    return null;
-                }
-            });
+            data.messagesSource.getMicroBlog().launchTagsForNewPost(this);
         } else if (v == bLocationHint) {
             bLocationHint.setVisibility(View.GONE);
             data.pid = data.pidHint;
@@ -324,7 +323,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 bLocation.setSelected(false);
             }
         } else if (v == bAttachment) {
-            switch(getResources().getConfiguration().orientation) {
+            switch (getResources().getConfiguration().orientation) {
                 case Configuration.ORIENTATION_LANDSCAPE:
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                     break;
@@ -417,7 +416,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                         }
                     });
                 }
-            },"Post message (large)");
+            }, "Post message (large)");
             thr.start();
         }
     }
@@ -432,7 +431,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 break;
             case 1:
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
                 boolean useTempFileForCapture = sp.getBoolean("useTempFileForCapture", true);
                 if (useTempFileForCapture) {
                     File file = getPhotoCaptureFile();
@@ -466,7 +464,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             if (requestCode == ACTIVITY_TAGS) {
                 String tag = data.getStringExtra("tag");
                 if (tag.trim().length() == 0) return;
-                if (!tag.startsWith("*")) tag = "*"+tag; // compatible
+                if (!tag.startsWith("*")) tag = "*" + tag; // compatible
                 etMessage.setText(tag + " " + etMessage.getText());
             } else if (requestCode == ACTIVITY_LOCATION) {
                 this.data.pid = data.getIntExtra("pid", 0);
@@ -525,8 +523,8 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                 if (outHeight > 400 || outWidth > 400) {
                     AlertDialog.Builder builder =
                             new AlertDialog.Builder(parent)
-                            .setView(ll)
-                            .setTitle(parent.getString(R.string.ResizeImage));
+                                    .setView(ll)
+                                    .setTitle(parent.getString(R.string.ResizeImage));
 
                     TextView tv = new TextView(parent);
                     tv.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
@@ -535,12 +533,12 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     RadioGroup rg = new RadioGroup(parent);
                     rg.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
                     final ArrayList<RadioButton> rbs = new ArrayList<RadioButton>();
-                    for(int i=2; i<6; i++) {
+                    for (int i = 2; i < 6; i++) {
                         RadioButton rb = new RadioButton(parent);
                         rb.setLayoutParams(new ViewGroup.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
                         int nh = outHeight / i;
                         int nw = outWidth / i;
-                        rb.setText(parent.getString(R.string.Resize__)+" " + nw + " x " + nh);
+                        rb.setText(parent.getString(R.string.Resize__) + " " + nw + " x " + nh);
                         rbs.add(rb);
                         rg.addView(rb);
                         rb.setTag(i);
@@ -571,7 +569,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                 if (rb.isChecked()) {
                                     File deleteFile = null;
                                     try {
-                                        Integer skipSize = (Integer)rb.getTag();
+                                        Integer skipSize = (Integer) rb.getTag();
                                         BitmapFactory.Options opts = new BitmapFactory.Options();
                                         opts.inJustDecodeBounds = false;
                                         opts.inSampleSize = Math.max(skipSize, skipSize);
@@ -592,7 +590,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                         int sourceWidth = bitmap.getWidth();
                                         int sourceHeight = bitmap.getHeight();
                                         float angle = 0;
-                                        switch(orientation) {
+                                        switch (orientation) {
                                             case ExifInterface.ORIENTATION_ROTATE_90: {
                                                 angle = 90;
                                                 break;
@@ -624,8 +622,8 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
                                         Bitmap displayBitmap = bitmap;
                                         if (displayBitmap.getWidth() > 256) {
-                                            double scale = 256.0/displayBitmap.getWidth();
-                                            displayBitmap = Bitmap.createScaledBitmap(bitmap, (int)(scale * displayBitmap.getWidth()), (int)(scale * displayBitmap.getHeight()), false);
+                                            double scale = 256.0 / displayBitmap.getWidth();
+                                            displayBitmap = Bitmap.createScaledBitmap(bitmap, (int) (scale * displayBitmap.getWidth()), (int) (scale * displayBitmap.getHeight()), false);
                                         }
 
                                         BitmapDrawable icon = new BitmapDrawable(displayBitmap);
@@ -654,7 +652,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                                 .create();
                                         alertDialog.show();
                                     } catch (IOException e) {
-                                        Toast.makeText(parent, "Error: "+e.toString(), Toast.LENGTH_LONG).show();
+                                        Toast.makeText(parent, "Error: " + e.toString(), Toast.LENGTH_LONG).show();
                                         return;
                                     } finally {
                                         if (deleteFile != null)
@@ -668,7 +666,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                     final AlertDialog alertDialog = builder.create();
                     alertDialog.show();
                 } else {
-                    Toast.makeText(parent, String.format(parent.getString(R.string.SkippingResize), tmpfile.length()/1024, outWidth, outHeight),Toast.LENGTH_LONG).show();
+                    Toast.makeText(parent, String.format(parent.getString(R.string.SkippingResize), tmpfile.length() / 1024, outWidth, outHeight), Toast.LENGTH_LONG).show();
                 }
             } catch (IOException ex) {
                 Toast.makeText(parent, ex.toString(), Toast.LENGTH_LONG).show();
@@ -686,7 +684,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     private static void copyStreamToFile(InputStream inputStream, File tmpfile) throws IOException {
         FileOutputStream fos = new FileOutputStream(tmpfile);
         byte[] arr = new byte[4096];
-        while(true) {
+        while (true) {
             int len = inputStream.read(arr);
             if (len < 1) break;
             fos.write(arr);

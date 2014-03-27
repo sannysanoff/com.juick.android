@@ -495,6 +495,8 @@
     <string name="TurnOffButtonsLight">Отключать подсветку кнопок</string>
     <string name="ShowDigitsOnIcon">Циферки на иконке</string>
     <string name="No">Нет</string>
+    <string name="NewMsgTemplate">Шаблон нового сообщения</string>
+    <string name="NewMsgTemplateDescription">Текст по умолчанию при создании нового сообщения</string>
 
 
 </resources>

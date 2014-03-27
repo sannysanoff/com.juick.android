@@ -37,8 +37,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickHttpAPI;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.point.PointMicroBlog;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessageID;
 import org.json.JSONArray;
 
 import java.io.File;
@@ -53,6 +57,7 @@ public class TagsFragment extends Fragment  {
 
     private TagsFragmentListener parentActivity;
     private int uid = 0;
+    private String uidS;
     private boolean multi = false;
     private boolean showMine = true;
     /**
@@ -116,7 +121,10 @@ public class TagsFragment extends Fragment  {
         super.onViewCreated(view, savedInstanceState);
         myView = view;
         Bundle args = getArguments();
-        myAll = (View)view.findViewById(R.id.myAll);
+        myAll = view.findViewById(R.id.myAll);
+        if (PointMessageID.CODE.equals(args.getString("microblog"))) {
+            myAll.setVisibility(View.GONE); // not visible for point
+        }
         myAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -129,6 +137,7 @@ public class TagsFragment extends Fragment  {
         });
         if (args != null) {
             uid = args.getInt("uid", 0);
+            uidS = args.getString("user");
             multi = args.getBoolean("multi", false);
             if (uid == 0) {
                 MessagesSource messagesSource = (MessagesSource) args.get("messagesSource");
@@ -179,25 +188,21 @@ public class TagsFragment extends Fragment  {
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
+                Bundle args = getArguments();
+                MicroBlog microBlog;
+                JSONArray json = null;
                 final int tagsUID = showMine ? uid : 0;
-                String url = JuickHttpAPI.getAPIURL() + "tags";
-                File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-" + tagsUID + ".json");
-                String cachedString = null;
-                if (tagsUID != 0) { // -1 == mine
-                    url += "?user_id=" + tagsUID;
-                }
-                if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {
-                    cachedString = XMPPService.readFile(globalTagsCache);
-                }
-                final String jsonStr = cachedString != null ? cachedString : Utils.getJSON(getActivity(), url, null).getResult();
-                if (jsonStr != null && cachedString == null) {
-                    XMPPService.writeStringToFile(globalTagsCache, jsonStr);
+                if (PointMessageID.CODE.equals(args.getString("microblog"))) {
+                    microBlog = MainActivity.microBlogs.get(PointMessageID.CODE);
+                    json = ((PointMicroBlog)microBlog).getUserTags(view, uidS);
+                } else {
+                    microBlog = MainActivity.microBlogs.get(JuickMessageID.CODE);
+                    json = ((JuickMicroBlog)microBlog).getUserTags(view, tagsUID);
                 }
                 if (isAdded()) {
                     final SpannableStringBuilder tagsSSB = new SpannableStringBuilder();
-                    if (jsonStr != null) {
+                    if (json != null) {
                         try {
-                            JSONArray json = new JSONArray(jsonStr);
                             int cnt = json.length();
                             ArrayList<TagSort> sortables = new ArrayList<TagSort>();
                             for (int i = 0; i < cnt; i++) {
@@ -216,7 +221,7 @@ public class TagsFragment extends Fragment  {
                                 }
                             }
                             int start = 0;
-                            if (getArguments().containsKey("add_system_tags")) {
+                            if (microBlog instanceof JuickMicroBlog && getArguments().containsKey("add_system_tags")) {
                                 start = -4;
                             }
                             for (int i = start; i < cnt; i++) {

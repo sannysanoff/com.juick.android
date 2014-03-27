@@ -40,6 +40,7 @@ import java.net.*;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.text.BreakIterator;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
 
@@ -67,6 +68,7 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.*;
 
 /**
@@ -185,7 +187,8 @@ public class Utils {
 
     //public static final String JA_ADDRESS = "192.168.1.77:8080";
     public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
-    public static final String JA_ADDRESS_HTTPS = "ja.ip.rt.ru:8443";
+    public static final String JA_ADDRESS_HTTPS = "https://ja.ip.rt.ru:8443";
+    //public static final String JA_ADDRESS_HTTPS = "http://192.168.1.77:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
@@ -361,7 +364,12 @@ public class Utils {
                     if (LocalBinder.class.isAssignableFrom(ibinder.getClass())) {
                         LocalBinder<T> binder = (LocalBinder<T>) ibinder;
                         try {
-                            receive.withService(binder.getService());
+                            T svc = binder.getService();
+                            if (svc != null) {
+                                receive.withService(svc);
+                            } else {
+                                receive.withoutService();
+                            }
                         } finally {
                             context.unbindService(this);
                             synchronized (getServiceQueue) {
@@ -1109,6 +1117,20 @@ public class Utils {
         }
         return sb.toString();
     }
+
+    public static String getWordAtOffset(final String text, final int offset) {
+        BreakIterator wordIterator = BreakIterator.getWordInstance();
+        wordIterator.setText(text);
+        int start = wordIterator.first();
+        for (int end = wordIterator.next(); end != BreakIterator.DONE; start = end, end = wordIterator.next()) {
+            if ((end >= offset) && (end - start > 1)) {
+                return text.substring(start, end);
+            }
+        }
+        return null;
+    }
+
+
 
 
 }

@@ -32,11 +32,13 @@
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/UseWebInsteadOfJSON">
+        <!--
         <CheckBoxPreference
                 android:key="web_for_subscriptions"
                 android:title="@string/Subscriptions__Web"
                 android:defaultValue="false"
                 android:persistent="true"/>
+                -->
 <!--
         <CheckBoxPreference
                 android:key="web_for_myblog"
@@ -134,6 +136,23 @@
         <CheckBoxPreference
             android:key="msrcPSTOMy"
             android:title="@string/navigationPSTOMy"
+            android:defaultValue="false"
+            android:persistent="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="POINT.IM sources">
+        <CheckBoxPreference
+            android:key="msrcPointSubs"
+            android:title="@string/navigationPointSubs"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcPointAll"
+            android:title="@string/navigationPointAll"
+            android:defaultValue="false"
+            android:persistent="true"/>
+        <CheckBoxPreference
+            android:key="msrcPointMine"
+            android:title="@string/navigationPointMine"
             android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>

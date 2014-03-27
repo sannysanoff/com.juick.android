@@ -751,7 +751,17 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
     public static String toRelaviteDate(long ts, boolean russian) {
         StringBuilder sb = new StringBuilder();
-        ts = ((System.currentTimeMillis() - ts) / 1000) / 60;
+        long ctm = System.currentTimeMillis();
+        long delta = ctm - ts;
+        if (delta > 10000) {        // probably 1976 year
+            Calendar cal = GregorianCalendar.getInstance();
+            int currentYear = cal.get(Calendar.YEAR);
+            cal.setTimeInMillis(ts);
+            cal.set(Calendar.YEAR, currentYear);
+            ts = cal.getTimeInMillis();
+            delta = ctm - ts;
+        }
+        ts = (delta / 1000) / 60;
         if (ts < 0) {
             return russian ? "в будущем" : "in future";
         }

@@ -409,6 +409,10 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                                     lastPrepareMessages(messages, new Runnable() {
                                                         @Override
                                                         public void run() {
+                                                            if (!hasListView()) {
+                                                                handler.postDelayed(this, 300);
+                                                                return;
+                                                            }
                                                             initListWithMessages(messages);
                                                             if (moveToTop) {
                                                                 lv.setSelection(0);
@@ -458,6 +462,15 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             };
             thr.setPriority(Thread.MIN_PRIORITY);
             thr.start();
+        }
+    }
+
+    private boolean hasListView() {
+        try {
+            return getListView() != null;
+        } catch (IllegalStateException e) {
+            // java.lang.IllegalStateException: Content view not yet created
+            return false;
         }
     }
 
@@ -1251,13 +1264,17 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             if (itemToSave - 1 < listAdapter.getCount()) {  // some async delete could happen
                                 final JuickMessage item = (JuickMessage) listAdapter.getItem(itemToSave - 1);
                                 item.read = true;
-                                databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
-                                    @Override
-                                    public void withService(DatabaseService service) {
-                                        service.markAsRead(new DatabaseService.ReadMarker(item.getMID(), item.replies, item.Timestamp.getTime()));
-                                    }
+                                if (item.Timestamp != null) {
+                                    databaseGetter.getService(new Utils.ServiceGetter.Receiver<DatabaseService>() {
+                                        @Override
+                                        public void withService(DatabaseService service) {
+                                            if (service != null) {
+                                                service.markAsRead(new DatabaseService.ReadMarker(item.getMID(), item.replies, item.Timestamp.getTime()));
+                                            }
+                                        }
 
-                                });
+                                    });
+                                }
                             }
                         }
                         lastItemReported--;
@@ -1274,6 +1291,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
             }
         } catch (Exception ex) {
+            JuickAdvancedApplication.addToGlobalLog("marking read", ex);
         }
 
         if (messagesSource.supportsBackwardRefresh()) {
@@ -1313,7 +1331,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 }
                 mBounceHack = true;
             } else if (mBounceHack && mCurrentScrollState == SCROLL_STATE_FLING) {
-                setSelection(1);
+                try {
+                    setSelection(1);
+                } catch (Exception e) {
+                    // Content view is not yet created
+                }
             }
         }
     }

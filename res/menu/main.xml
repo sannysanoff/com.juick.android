@@ -22,4 +22,15 @@
     <item android:id="@+id/menuitem_existing_saved_sharing_key"
         android:title="Get Existing URL for sharing"
         android:showAsAction="never"/>
-</menu>
+    <item android:id="@+id/colors_themes"
+          android:title="@string/ColorsThemes">
+        <menu>
+            <item android:id="@+id/menuitem_save_colors_theme"
+                android:title="@string/SaveColorsTheme"
+                android:showAsAction="always"/>
+            <item android:id="@+id/menuitem_load_colors_theme"
+                android:title="@string/LoadColorsTheme"
+                android:showAsAction="always"/>
+         </menu>
+    </item>
+    </menu>

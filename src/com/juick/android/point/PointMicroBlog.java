@@ -1,8 +1,9 @@
-package com.juick.android.psto;
+package com.juick.android.point;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,9 +17,17 @@ import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
-import com.juickadvanced.data.psto.PstoMessage;
-import com.juickadvanced.data.psto.PstoMessageID;
+import com.juickadvanced.data.point.PointMessage;
+import com.juickadvanced.data.point.PointMessageID;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,81 +39,76 @@ import java.util.Date;
  * Time: 1:30 PM
  * To change this template use File | Settings | File Templates.
  */
-public class PstoMicroBlog implements MicroBlog {
-    public static PstoMicroBlog instance;
+public class PointMicroBlog implements MicroBlog {
 
-    public PstoMicroBlog() {
+    public static PointMicroBlog instance;
+
+    public PointMicroBlog() {
         instance = this;
     }
 
     @Override
     public void addNavigationSources(ArrayList<MainActivity.NavigationItem> navigationItems, final MainActivity mainActivity) {
         final SharedPreferences sp = mainActivity.sp;
-        navigationItems.add(new MainActivity.NavigationItem(50001, R.string.navigationPSTOSubs, R.drawable.navicon_psto, "msrcPSTOSubs") {
+        navigationItems.add(new MainActivity.NavigationItem(70001, R.string.navigationPointSubs, R.drawable.navicon_point, "msrcPointSubs") {
             @Override
             public void action() {
                 final MainActivity.NavigationItem thiz = this;
-                runAuthorized(new Runnable() {
+                runAuthorized(new Utils.Function<Void, String>() {
                     @Override
-                    public void run() {
+                    public Void apply(String arg) {
                         final Bundle args = new Bundle();
-                        final String weblogin = sp.getString("psto.web_login", null);
-                        PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, "home", mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/subs");
+                        final String weblogin = sp.getString("point.web_login", null);
+                        PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "home", mainActivity.getString(labelId), "http://" + weblogin + ".point.im/");
                         args.putSerializable("messagesSource", ms);
                         mainActivity.runDefaultFragmentWithBundle(args, thiz);
+                        return null;
                     }
                 }, mainActivity);
             }
         });
-        navigationItems.add(new MainActivity.NavigationItem(50002, R.string.navigationPSTOPopular, R.drawable.navicon_psto, "msrcPSTOPopular") {
+        navigationItems.add(new MainActivity.NavigationItem(70002, R.string.navigationPointAll, R.drawable.navicon_point, "msrcPointAll") {
             @Override
             public void action() {
                 final Bundle args = new Bundle();
-                PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, "top", mainActivity.getString(labelId), "http://psto.net/top");
-                ms.setCanNext(false);
+                PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/all?agree=1");
                 args.putSerializable("messagesSource", ms);
                 mainActivity.runDefaultFragmentWithBundle(args, this);
             }
         });
-        navigationItems.add(new MainActivity.NavigationItem(50003, R.string.navigationPSTORecent, R.drawable.navicon_psto, "msrcPSTORecent") {
-            @Override
-            public void action() {
-                final Bundle args = new Bundle();
-                PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://psto.net/recent");
-                args.putSerializable("messagesSource", ms);
-                mainActivity.runDefaultFragmentWithBundle(args, this);
-            }
-        });
-        navigationItems.add(new MainActivity.NavigationItem(50004, R.string.navigationPSTOMy, R.drawable.navicon_psto, "msrcPSTOMy") {
+        navigationItems.add(new MainActivity.NavigationItem(70003, R.string.navigationPointMine, R.drawable.navicon_point, "msrcPointMine") {
             @Override
             public void action() {
                 final MainActivity.NavigationItem thiz = this;
-                runAuthorized(new Runnable() {
+                runAuthorized(new Utils.Function<Void, String>() {
                     @Override
-                    public void run() {
+                    public Void apply(String s) {
                         final Bundle args = new Bundle();
-                        final String weblogin = sp.getString("psto.web_login", null);
-                        PstoCompatibleMessagesSource ms = new PstoCompatibleMessagesSource(mainActivity, "my", mainActivity.getString(labelId), "http://" + weblogin + ".psto.net/");
+                        final String weblogin = sp.getString("point.web_login", null);
+                        PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "mine", mainActivity.getString(labelId), "http://" + weblogin + ".point.im/blog");
                         args.putSerializable("messagesSource", ms);
                         mainActivity.runDefaultFragmentWithBundle(args, thiz);
+                        return null;
                     }
                 }, mainActivity);
             }
         });
     }
 
-    private void runAuthorized(final Runnable runWithLogin, final MainActivity mainActivity) {
-        Utils.URLAuth authorizer = Utils.getAuthorizer("http://psto.net/");
-        authorizer.authorize(mainActivity, true, false, "http://psto.net/", new Utils.Function<Void, String>() {
+    private void runAuthorized(final Utils.Function<Void, String> runWithLogin, final Activity mainActivity) {
+        PointAuthorizer authorizer = (PointAuthorizer)Utils.getAuthorizer("http://point.im/");
+        authorizer.authorize(mainActivity, true, false, "http://point.im/required", new Utils.Function<Void, String>() {
             @Override
             public Void apply(final String s) {
                 mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (s != null) {
-                            runWithLogin.run();
+                            runWithLogin.apply(s);
                         } else {
-                            mainActivity.restoreLastNavigationPosition();
+                            if (mainActivity instanceof MainActivity) {
+                                ((MainActivity)mainActivity).restoreLastNavigationPosition();
+                            }
                         }
                     }
                 });
@@ -114,41 +118,58 @@ public class PstoMicroBlog implements MicroBlog {
     }
 
     @Override
+    public void launchTagsForNewPost(final NewMessageActivity newMessageActivity) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(newMessageActivity);
+        String username = sp.getString("point.web_password", null);
+        if (username != null) {
+            Intent i = new Intent(newMessageActivity, TagsActivity.class);
+            i.setAction(Intent.ACTION_PICK);
+            i.putExtra("user", username);
+            i.putExtra("microblog", PointMessageID.CODE);
+            i.putExtra("multi", true);
+            newMessageActivity.startActivityForResult(i, NewMessageActivity.ACTIVITY_TAGS);
+        }
+
+    }
+
+
+
+    @Override
     public void decorateNewMessageActivity(NewMessageActivity newMessageActivity) {
-        newMessageActivity.bTags.setVisibility(View.GONE);
+//        newMessageActivity.bTags.setVisibility(View.GONE);
         newMessageActivity.bLocation.setVisibility(View.GONE);
         newMessageActivity.bAttachment.setVisibility(View.GONE);
         newMessageActivity.bLocationHint.setVisibility(View.GONE);
-        newMessageActivity.setTitle(R.string.Psto__New_message);
+        newMessageActivity.setTitle(R.string.Point__New_message);
         newMessageActivity.setProgressBarIndeterminateVisibility(false);
     }
 
     @Override
     public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new PstoCompatibleMessagesSource(context, "dummy", "","http://psto.net/").getChildren(mid, notifications, cont);
+        new PointWebCompatibleMessagesSource(context, "dummy", "", "http://point.im/").getChildren(mid, notifications, cont);
     }
 
     @Override
     public JuickMessage createMessage() {
-        JuickMessage juickMessage = new PstoMessage();
-        juickMessage.microBlogCode = PstoMessageID.CODE;
+        JuickMessage juickMessage = new PointMessage();
+        juickMessage.microBlogCode = PointMessageID.CODE;
         return juickMessage;
     }
 
 
     @Override
     public void initialize() {
-        Utils.authorizers.add(0, new PstoAuthorizer());
+        Utils.authorizers.add(0, new PointAuthorizer());
     }
 
     @Override
     public String getCode() {
-        return PstoMessageID.CODE;
+        return PointMessageID.CODE;
     }
 
     @Override
     public String getMicroblogName(Context context) {
-        return context.getString(R.string.PstoMicroblog);
+        return context.getString(R.string.PointMicroblog);
     }
 
     @Override
@@ -156,74 +177,75 @@ public class PstoMicroBlog implements MicroBlog {
         return new UserpicStorage.AvatarID() {
             @Override
             public String toString(int size) {
-                return "PSTO:"+jmsg.User.UName;
+                return "POINT:" + jmsg.User.UName;
             }
 
             @Override
             public String getURL(int size) {
-                return "http://psto.net/img/a/40/"+jmsg.User.UName+".png";
+                return "http://i.point.im/a/40/" + jmsg.User.UName + ".jpg";
             }
         };
     }
 
     @Override
     public MessageID createKey(String keyString) {
-        return PstoMessageID.fromString(keyString);
+        return PointMessageID.fromString(keyString);
     }
 
     @Override
     public MessageMenu getMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
-        return new PstoMessageMenu(activity, messagesSource, listView, listAdapter);
+        return new PointMessageMenu(activity, messagesSource, listView, listAdapter);
     }
 
     @Override
     public String getPostNote(NewMessageActivity newMessageActivity) {
-        return null;
+        return newMessageActivity.getString(R.string.Point__PostNote);
     }
 
     @Override
-    public OperationInProgress postReply(final Activity context_, final MessageID mid, JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
-        final ThreadActivity context = (ThreadActivity)context_;
+    public OperationInProgress postReply(final Activity context_, final MessageID mid, final JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+        final ThreadActivity context = (ThreadActivity) context_;
         new Thread("Post reply") {
             @Override
             public void run() {
                 try {
-                    PstoMessageID pstoMid = (PstoMessageID) mid;
+                    PointMessageID pointMid = (PointMessageID) mid;
                     final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                    final String webLogin = sp.getString("psto.web_login", null);
+                    final String webLogin = sp.getString("point.web_login", null);
                     if (webLogin == null) {
-                        throw new IllegalArgumentException("No PSTO authorization available");
+                        throw new IllegalArgumentException("No Point authorization available");
                     }
                     StringBuilder data = new StringBuilder();
-                    data.append("text="+ URLEncoder.encode(msg, "utf-8"));
+                    data.append("text=" + URLEncoder.encode(msg, "utf-8"));
+                    if (selectedReply != null) {
+                        data.append("&csrf_token=" + ((PointMessage) selectedReply).csrf_token);
+                    } else {
+                        data.append("&csrf_token=" + ((PointMessage) threadStarter).csrf_token);
+                    }
                     int replyTo = 0;
                     if (selectedReply != null && selectedReply.getRID() != 0) {
-                        data.append("&to_user="+URLEncoder.encode(""+selectedReply.User.UID,"utf-8"));
-                        data.append("&to_comment="+(replyTo = selectedReply.getRID()));
-                    } else {
-                        data.append("&to_user=");
-                        data.append("&to_comment=");
+                        data.append("&comment_id=" + (replyTo = selectedReply.getRID()));
                     }
-                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://"+webLogin+".psto.net/"+pstoMid.getId()+"/comment", data.toString());
+                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://" + threadStarter.User.UName + ".point.im/" + pointMid.getId(), data.toString());
                     final int finalReplyTo = replyTo;
                     context.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             if (restResponse.getErrorText() == null) {
-                                PstoMessage newmsg = new PstoMessage();
+                                PointMessage newmsg = new PointMessage();
                                 JuickMessagesAdapter listAdapter = context.tf.listAdapter;
                                 Object lastItem = listAdapter.getItem(listAdapter.getCount() - 1);
                                 int lastRid = 0;
-                                if (lastItem != null && lastItem instanceof PstoMessage) {
-                                    lastRid = ((PstoMessage)lastItem).getRID();
+                                if (lastItem != null && lastItem instanceof PointMessage) {
+                                    lastRid = ((PointMessage) lastItem).getRID();
                                 }
                                 newmsg.User = new JuickUser();
                                 newmsg.User.UName = webLogin;
                                 newmsg.Text = msg;
                                 newmsg.Timestamp = new Date();
-                                newmsg.setRID(lastRid+1);
+                                newmsg.setRID(lastRid + 1);
                                 newmsg.setReplyTo(finalReplyTo);
-                                newmsg.microBlogCode = PstoMessageID.CODE;
+                                newmsg.microBlogCode = PointMessageID.CODE;
                                 newmsg.setMID(mid);
                                 ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
                                 messages.add(newmsg);
@@ -256,12 +278,21 @@ public class PstoMicroBlog implements MicroBlog {
     @Override
     public void postNewMessage(NewMessageActivity newMessageActivity, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, final Utils.Function<Void, String> then) {
         try {
+
+
+
             final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(newMessageActivity);
-            String webLogin = sp.getString("psto.web_login", null);
+            String webLogin = sp.getString("point.web_login", null);
             if (webLogin == null) {
-                throw new IllegalArgumentException("No PSTO authorization available");
+                throw new IllegalArgumentException("No Point authorization available");
             }
 
+            Utils.RESTResponse donate = Utils.getJSONWithRetries(newMessageActivity, "http://" + webLogin.toLowerCase() + ".point.im/donate", null);
+            if (donate.getResult() == null) {
+                throw new RuntimeException(donate.getErrorText());
+            }
+            Document doc = Jsoup.parse(donate.getResult());
+            String csrf = doc.select("form[id=new-post-form] > input[name=csrf_token]").attr("value");
             StringBuilder tagsStr = new StringBuilder();
             String s = txt = txt.trim();
             if (s.startsWith("*")) {
@@ -278,15 +309,16 @@ public class PstoMicroBlog implements MicroBlog {
                 }
                 int eol = txt.indexOf("\n");
                 if (eol != -1) {
-                    txt = txt.substring(eol+1);
+                    txt = txt.substring(eol + 1);
                 }
             }
 
             StringBuilder data = new StringBuilder();
-            data.append("text="+ URLEncoder.encode(txt, "utf-8"));
+            data.append("text=" + URLEncoder.encode(txt, "utf-8"));
             if (tagsStr.length() > 0)
-                data.append("&tags="+URLEncoder.encode(tagsStr.toString(),"utf-8"));
-            final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://"+webLogin+".psto.net/post?", data.toString());
+                data.append("&tags=" + URLEncoder.encode(tagsStr.toString(), "utf-8"));
+            data.append("&csrf_token=" + csrf);
+            final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://" + webLogin + ".point.im/post?", data.toString());
             newMessageActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -313,8 +345,39 @@ public class PstoMicroBlog implements MicroBlog {
         return 20;
     }
 
-    @Override
-    public void launchTagsForNewPost(NewMessageActivity newMessageActivity) {
-
+    public JSONArray getUserTags(View view, String uidS) {
+        Context context = view.getContext();
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        final String weblogin = sp.getString("point.web_login", null);
+        String url = "http://" +weblogin.toLowerCase()+".point.im/tags";
+        File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-point-" + uidS + ".json");
+        String cachedString = null;
+        if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {
+            cachedString = XMPPService.readFile(globalTagsCache);
+        }
+        final String html = cachedString != null ? cachedString : Utils.getJSON(context, url, null).getResult();
+        if (html != null && cachedString == null) {
+            XMPPService.writeStringToFile(globalTagsCache, html);
+        }
+        if (html != null) {
+            JSONArray json = new JSONArray();
+            Document doc = Jsoup.parse(html);
+            Elements as = doc.select("div[id=content] > a[class=tag]");
+            for (Element a : as) {
+                String[] nameAndCount = a.attr("title").split("[: ]");
+                if (nameAndCount.length == 3) {
+                    try {
+                        JSONObject value = new JSONObject();
+                        value.put("tag", nameAndCount[0]);
+                        value.put("messages", Integer.parseInt(nameAndCount[2]));
+                        json.put(value);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return json;
+        }
+        return null;
     }
 }

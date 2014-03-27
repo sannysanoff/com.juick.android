@@ -65,6 +65,7 @@ public class ImagePreviewHelper {
             public void onClick(View v) {
                 try {
                     final DownloadManager mgr = (DownloadManager) view.getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                    if (url == null) return;
                     final Uri parse = Uri.parse(url);
                     final DownloadManager.Request req = new DownloadManager.Request(parse);
 
@@ -88,6 +89,16 @@ public class ImagePreviewHelper {
                             lastJob = mgr.enqueue(req);
                         }
                     });
+                } catch (NoClassDefFoundError e) {
+                    new AlertDialog.Builder(view.getContext())
+                            .setTitle("Unable to proceed.")
+                            .setMessage("Android version is too old.")
+                            .setCancelable(true)
+                            .setNegativeButton(R.string.Cancel, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            }).show();
                 } catch (IllegalArgumentException e) {
                     new AlertDialog.Builder(view.getContext())
                             .setTitle("Probably HTTPS image.")
@@ -299,8 +310,13 @@ public class ImagePreviewHelper {
 
     private void reopenWithURL(String newURL) {
         final File destFile = JuickMessagesAdapter.getDestFile(activity, newURL);
-        startWithImage(Drawable.createFromPath(destFile.getPath()), "", newURL, true);
-        updateInfo(this);
+        try {
+            Drawable fromPath = Drawable.createFromPath(destFile.getPath());
+            startWithImage(fromPath, "", newURL, true);
+            updateInfo(this);
+        } catch (OutOfMemoryError e) {
+            Toast.makeText(activity, "Out of memory.", Toast.LENGTH_LONG).show();
+        }
     }
 
     public boolean handleBack() {
