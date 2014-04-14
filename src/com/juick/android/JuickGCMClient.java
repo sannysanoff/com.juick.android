@@ -2,9 +2,9 @@ package com.juick.android;
 
 import android.content.Context;
 import com.juick.android.juick.JuickHttpAPI;
-import com.juick.android.juick.JuickMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.parsers.JuickParser;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -42,7 +42,7 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
                 @Override
                 public void withService(XMPPService service) {
                     try {
-                        JuickMessage juickMessage = JuickMessagesSource.initFromJSON(jsonObject);
+                        JuickMessage juickMessage = JuickParser.initFromJSON(jsonObject);
                         XMPPService.IncomingMessage msg = null;
                         if (juickMessage.getRID() == 0) {
                             if (juickMessage.tags.contains("private")) {

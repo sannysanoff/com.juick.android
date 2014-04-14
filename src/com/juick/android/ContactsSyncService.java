@@ -36,13 +36,13 @@ import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.RawContacts;
 import com.juick.android.juick.JuickHttpAPI;
-import com.juick.android.juick.JuickMessagesSource;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickUser;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.juickadvanced.parsers.JuickParser;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -107,7 +107,7 @@ public class ContactsSyncService extends Service {
                 JSONArray json = new JSONArray(jsonStr);
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
-                    JuickUser user = JuickMessagesSource.parseUserJSON(json.getJSONObject(i));
+                    JuickUser user = JuickParser.parseUserJSON(json.getJSONObject(i));
                     if (!localContacts.containsKey(user.UName)) {
                         addContact(context, account, user);
                     }

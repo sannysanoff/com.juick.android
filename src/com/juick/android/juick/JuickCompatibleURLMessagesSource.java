@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import com.juick.android.DatabaseService;
+import com.juickadvanced.parsers.JuickParser;
 import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -123,7 +124,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 int cnt = json.length();
                 for (int i = 0; i < cnt; i++) {
                     JSONObject jsonObject = json.getJSONObject(i);
-                    JuickMessage msg = initFromJSON(jsonObject);
+                    JuickMessage msg = JuickParser.initFromJSON(jsonObject);
                     if (msg.User != null && msg.User.UName != null) {
                         msg.User.UName = msg.User.UName.trim();
                     }
