@@ -85,14 +85,13 @@ public class BNWMicroBlog implements MicroBlog {
     }
 
     @Override
-    public OperationInProgress postReply(final Activity context, final MessageID mid, JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+    public OperationInProgress postReply(final Activity context, final MessageID mid, final JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         new Thread("postReply") {
             @Override
             public void run() {
-                BnwMessageID bmid = (BnwMessageID)mid;
-                String thrid = bmid.getId();
+                String thrid = ((BnwMessageID)threadStarter.getMID()).getId();
                 if (selectedReply != null) {
-                    thrid += "/"+((BNWMessage)selectedReply).getRIDString();
+                    thrid = ((BNWMessage)selectedReply).getRIDString();
                 }
                 try {
                     String encode = URLEncoder.encode(msg, "utf-8");

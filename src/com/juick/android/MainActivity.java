@@ -267,6 +267,12 @@ public class MainActivity extends JuickFragmentActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+/*
+        System.getProperties().put("http.proxyPort", "58080");
+        System.getProperties().put("http.proxyHost", "localhost");
+        System.getProperties().put("https.proxyPort", "58080");
+        System.getProperties().put("https.proxyHost", "localhost");
+*/
         nActiveMainActivities++;
         sp = PreferenceManager.getDefaultSharedPreferences(this);
         JuickAdvancedApplication.maybeEnableAcceleration(this);

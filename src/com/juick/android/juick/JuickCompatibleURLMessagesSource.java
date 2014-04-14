@@ -16,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -133,6 +134,20 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 }
             } catch (Exception e) {
                 Log.e("initOpinionsAdapter", e.toString());
+            }
+        }
+        HashMap<Integer, JuickMessage> replies = new HashMap<Integer, JuickMessage>();
+        for (JuickMessage message : messages) {
+            if (message.getRID() > 0) {
+                replies.put(message.getRID(), message);
+            }
+        }
+        for (JuickMessage message : messages) {
+            if (message.getRID() > 0 && message.getReplyTo() > 0) {
+                JuickMessage repliedTo = replies.get(message.getReplyTo());
+                if (repliedTo != null && !message.Text.startsWith("@")) {
+                    message.Text = "@"+repliedTo.User.UName+" "+message.Text;
+                }
             }
         }
         return messages;

@@ -248,7 +248,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
 
     @Override
     public String authorizeURL(String url, String cookie) {
-        if (JuickHttpAPI.isURLforAPIHost(url)) {
+        if (JuickHttpAPI.isURLforAPIHost(url) && !url.startsWith("https")) {
             if (cachedIPAddress == null) {
                 try {
                     InetAddress byName = Inet4Address.getByName(JuickHttpAPI.API_URL_HOST);
