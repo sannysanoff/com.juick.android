@@ -490,7 +490,7 @@
     <string name="TurnOffToGetTwitterStyleLook">Выключите чтобы показывало как в Твиттере</string>
     <string name="CompactComments">Компактно комменты</string>
     <string name="SendAnonUsageReports">Анонимно слать статистику</string>
-    <string name="Subscriptions__Web">Subscriptions (Web)</string>
+    <string name="Subscriptions__Web">Подписки (Сайт)</string>
     <string name="EnablePullToRefresh">Потянуть для обновления</string>
     <string name="TurnOffButtonsLight">Отключать подсветку кнопок</string>
     <string name="ShowDigitsOnIcon">Циферки на иконке</string>
