@@ -3,6 +3,7 @@ package com.juick.android.point;
 import android.content.Context;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juick.android.juick.MessagesSource;
@@ -10,6 +11,7 @@ import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.parsers.PointNetParser;
+import com.juickadvanced.sources.PurePointWebMessagesSource;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,14 +26,15 @@ import java.util.Iterator;
  */
 public class PointWebCompatibleMessagesSource extends MessagesSource {
 
-    URLParser urlParser;
+    PurePointWebMessagesSource pure = new PurePointWebMessagesSource(this);
+
     String title;
-    int page;
 
     public PointWebCompatibleMessagesSource(Context ctx, String kind, String title, String path) {
         super(ctx, "point_"+kind);
         this.title = title;
-        urlParser = new URLParser(path);
+        this.pureMessageSource = pure;
+        pure.urlParser = new URLParser(path);
         PointAuthorizer.skipAskPassword = false;
     }
 
@@ -40,7 +43,7 @@ public class PointWebCompatibleMessagesSource extends MessagesSource {
         String midString = ((PointMessageID)mid).getId();
         String user = ((PointMessageID)mid).user;
         String url = user != null && user.length() > 0 ? "http://" + user.toLowerCase() + ".point.im/" + midString : "http://point.im/" + midString;
-        Utils.RESTResponse jsonWithRetries = getJSONWithRetries(ctx, url, notifications);
+        RESTResponse jsonWithRetries = getJSONWithRetries(ctx, url, notifications);
         if (jsonWithRetries.errorText != null) {
             cont.apply(new ArrayList<JuickMessage>());
         } else {
@@ -57,67 +60,14 @@ public class PointWebCompatibleMessagesSource extends MessagesSource {
     }
 
 
-    HashSet<String> loadedMessages = new HashSet<String>();
-
     @Override
     public void getFirst(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        page = 1;
-        loadedMessages.clear();
-        fetchURLAndProcess(notifications, cont);
-    }
-
-    protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        // put in page
-        String pathPart = urlParser.getPathPart();
-        int ix = pathPart.lastIndexOf("/");
-        if (ix != -1) {
-            try {
-                Integer.parseInt(pathPart.substring(ix+1));
-                urlParser.setPath(pathPart.substring(0, ix));  // replace page
-            } catch (NumberFormatException e) {
-                // not a number
-            }
-        } else {
-            try {
-                Integer.parseInt(pathPart);
-                urlParser.setPath("");  // pathPart is already number
-            } catch (Exception ex) {}
-            // have no number
-        }
-        if (page != 0) {
-            if (urlParser.getPathPart().length() > 0) {
-                urlParser.setPath(urlParser.getPathPart()+"/"+page);
-            } else {
-                urlParser.setPath(""+page);
-            }
-        }
-        final String jsonStr = getJSONWithRetries(ctx, urlParser.getFullURL(), notification).getResult();
-        if (jsonStr != null) {
-            ArrayList<JuickMessage> messages = new PointNetParser().parseWebMessageListPure(jsonStr);
-            if (messages.size() > 0) {
-                for (Iterator<JuickMessage> iterator = messages.iterator(); iterator.hasNext(); ) {
-                    JuickMessage message = iterator.next();
-                    if (!loadedMessages.add(""+message.getMID())) {
-                        iterator.remove();
-                    }
-                }
-                if (loadedMessages.size() == 0) {
-                    page++;
-                    fetchURLAndProcess(notification, cont);
-                    return;
-                }
-            }
-            cont.apply(messages);
-        } else {
-            // error (notified via Notification)
-            cont.apply(new ArrayList<JuickMessage>());
-        }
+        pure.getFirst(notifications, cont);
     }
 
     @Override
     public void getNext(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        page++;
-        fetchURLAndProcess(notifications, cont);
+        pure.getNext(notifications, cont);
     }
 
     @Override
@@ -130,7 +80,7 @@ public class PointWebCompatibleMessagesSource extends MessagesSource {
         return MainActivity.getMicroBlog(PointMessageID.CODE);
     }
 
-    public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
+    public RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
         return Utils.getJSONWithRetries(ctx,url, notifications);
     }
 

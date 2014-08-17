@@ -38,18 +38,20 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.util.Pair;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.*;
-import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juick.android.juick.JuickMicroBlog;
-import com.juick.android.juick.MessagesSource;
-import com.juick.android.point.PointMicroBlog;
+import com.juick.android.bnw.BNWMicroBlog;
+import com.juick.android.bnw.BnwAuthorizer;
+import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juick.android.point.PointAuthorizer;
 import com.juickadvanced.R;
+import com.juickadvanced.data.bnw.BnwMessageID;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessageID;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -86,7 +88,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         private int acc = 0;
         private String attachmentUri = null;
         private String attachmentMime = null;
-        public MessagesSource messagesSource;
+        public String microblog;
     }
 
     public DialogData data = new DialogData();
@@ -105,10 +107,21 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         }
     };
 
+    static class MicroblogSelector {
+        String microblogCode;
+        String accountName;
+        int iconId;
+
+        MicroblogSelector(String microblogCode, String accountName, int iconId) {
+            this.microblogCode = microblogCode;
+            this.accountName = accountName;
+            this.iconId = iconId;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         JuickAdvancedApplication.setupTheme(this);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -116,10 +129,83 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
         setContentView(R.layout.newmessage);
 
-        data.messagesSource = (MessagesSource) getIntent().getSerializableExtra("messagesSource");
-        checkMessagesSource();
+        data.microblog = getIntent().getStringExtra("microblog");
+        if (data.microblog == null) {
 
+            String action = getIntent().getAction();
+            String mime = "text";
+            if (action != null && action.equals(Intent.ACTION_SEND)) {
+                mime = getIntent().getType();
+            }
+            final ArrayList<MicroblogSelector> microblogs = new ArrayList<MicroblogSelector>();
+            JuickAdvancedApplication.initAuthorizers(this);
+            if (JuickAPIAuthorizer.getJuickAccountName(this) != null) {
+                microblogs.add(new MicroblogSelector(JuickMessageID.CODE, JuickAPIAuthorizer.getJuickAccountName(this), -1));
+            }
+            if (PointAuthorizer.csrfToken != null) {
+                if (mime.startsWith("text")) {
+                    microblogs.add(new MicroblogSelector(PointMessageID.CODE, PointAuthorizer.getPointAccountName(this), -1));
+                }
+            }
+            if (BnwAuthorizer.myCookie != null) {
+                if (mime.startsWith("text")) {
+                    microblogs.add(new MicroblogSelector(BnwMessageID.CODE, BNWMicroBlog.instance.authorizer.getLogin(), -1));
+                }
+            }
+            if (microblogs.size() == 1) {
+                data.microblog = microblogs.get(0).microblogCode;
+                initWithMicroblogCode();
+            } else {
+                BaseAdapter adapter = new BaseAdapter() {
+                    @Override
+                    public int getCount() {
+                        return microblogs.size();
+                    }
 
+                    @Override
+                    public Object getItem(int position) {
+                        return position;
+                    }
+
+                    @Override
+                    public long getItemId(int position) {
+                        return position;
+                    }
+
+                    @Override
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        if (convertView == null)
+                            convertView = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, null);
+                        MicroblogSelector microblogSelector = microblogs.get(position);
+                        TextView text1 = (TextView)convertView.findViewById(android.R.id.text1);
+                        text1.setText("   " + microblogSelector.accountName + " @ " + microblogSelector.microblogCode);
+                        text1.setCompoundDrawablesWithIntrinsicBounds(
+                                XMPPIncomingMessagesActivity.getIconForMicroblog(NewMessageActivity.this, microblogSelector.microblogCode, 25), null, null, null);
+                        return convertView;
+                    }
+                };
+                ListView selector = (ListView)findViewById(R.id.microblogSelector);
+                selector.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        MicroblogSelector microblogSelector = microblogs.get(position);
+                        data.microblog = microblogSelector.microblogCode;
+                        initWithMicroblogCode();
+                    }
+                });
+                selector.setAdapter(adapter);
+                setTitle(getString(R.string.SelectAccountToPost));
+            }
+        } else {
+            initWithMicroblogCode();
+        }
+
+    }
+
+    private void initWithMicroblogCode() {
+        setTitle(getString(R.string.NewPost));
+        findViewById(R.id.microblogSelector).setVisibility(View.GONE);
+        findViewById(R.id.content).setVisibility(View.VISIBLE);
         etTo = (EditText) findViewById(R.id.editTo);
         etMessage = (EditText) findViewById(R.id.editMessage);
         bLocationHint = (Button) findViewById(R.id.buttonLocationHint);
@@ -139,13 +225,6 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         resetForm();
         handleIntent(getIntent());
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-
-    }
-
-    private void checkMessagesSource() {
-        if (data.messagesSource == null) {
-            data.messagesSource = new JuickCompatibleURLMessagesSource("X", "dummy", this, "http://nonsense.x/");
-        }
     }
 
     @Override
@@ -183,11 +262,11 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         progressDialog = null;
         progressDialogCancel.bool = false;
         etMessage.requestFocus();
-        checkMessagesSource();
-        data.messagesSource.getMicroBlog().decorateNewMessageActivity(this);
+        MicroBlog microBlog = MainActivity.getMicroBlog(data.microblog);
+        microBlog.decorateNewMessageActivity(this);
         TextView oldTitle = (TextView) findViewById(R.id.old_title);
-        String microblogName = data.messagesSource.getMicroBlog().getMicroblogName(this);
-        String microblogPostNote = data.messagesSource.getMicroBlog().getPostNote(this);
+        String microblogName = microBlog.getMicroblogName(this);
+        String microblogPostNote = microBlog.getPostNote(this);
         if (microblogPostNote == null) microblogPostNote = "";
         oldTitle.setText(microblogName + microblogPostNote);
 
@@ -206,8 +285,10 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        resetForm();
-        handleIntent(intent);
+        if (data.microblog != null) {
+            resetForm();
+            handleIntent(intent);
+        }
     }
 
     private void handleIntent(Intent i) {
@@ -300,8 +381,9 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
     }
 
     public void onClick(View v) {
+        final MicroBlog microBlog = MainActivity.getMicroBlog(data.microblog);
         if (v == bTags) {
-            data.messagesSource.getMicroBlog().launchTagsForNewPost(this);
+            microBlog.launchTagsForNewPost(this);
         } else if (v == bLocationHint) {
             bLocationHint.setVisibility(View.GONE);
             data.pid = data.pidHint;
@@ -379,7 +461,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    data.messagesSource.getMicroBlog().postNewMessage(NewMessageActivity.this, msg, data.pid, data.lat, data.lon, data.acc, data.attachmentUri, data.attachmentMime, progressDialog, progressHandler, progressDialogCancel, new Utils.Function<Void, String>() {
+                    microBlog.postNewMessage(NewMessageActivity.this, msg, data.pid, data.lat, data.lon, data.acc, data.attachmentUri, data.attachmentMime, progressDialog, progressHandler, progressDialogCancel, new Utils.Function<Void, String>() {
                         @Override
                         public Void apply(String errorText) {
                             if (progressDialog != null) {
@@ -503,7 +585,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
             Toast.makeText(parent, "Missing attachment URI ;(", Toast.LENGTH_LONG).show();
             return;
         }
-        boolean askForResize = PreferenceManager.getDefaultSharedPreferences(parent).getBoolean("askForResize", false);
+        boolean askForResize = PreferenceManager.getDefaultSharedPreferences(parent).getBoolean("askForResize", true);
         if (askForResize) {
             File deleteFile = null;
             try {

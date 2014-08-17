@@ -1,6 +1,7 @@
 package com.juick.android.juick;
 
 import android.content.Context;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -42,7 +43,7 @@ public class JuickWebCompatibleURLMessagesSource extends JuickMessagesSource  {
     }
 
     protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        Utils.RESTResponse result = new JuickCompatibleURLMessagesSource(label, "dummy", ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
+        RESTResponse result = new JuickCompatibleURLMessagesSource(label, "dummy", ctx, urlParser.getFullURL()).getJSONWithRetries(ctx, urlParser.getFullURL(), notification);
         final String htmlStr = result.getResult();
         Utils.DownloadErrorNotification errorNotification = null;
         if (notification instanceof Utils.DownloadErrorNotification)

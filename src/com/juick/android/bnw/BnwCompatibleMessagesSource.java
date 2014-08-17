@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juickadvanced.data.bnw.BNWMessage;
@@ -202,7 +203,7 @@ public class BnwCompatibleMessagesSource extends MessagesSource {
         return MainActivity.getMicroBlog(BnwMessageID.CODE);
     }
 
-    public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
+    public RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
         return Utils.getJSONWithRetries(ctx,url, notifications);
     }
 

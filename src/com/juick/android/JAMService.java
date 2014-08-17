@@ -7,7 +7,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juickadvanced.sources.DecodeMessageId;
 import com.juickadvanced.xmpp.ServerToClient;
+import com.juickadvanced.xmpp.commands.AccountProof;
+
+import java.util.HashSet;
 
 /**
  */
@@ -58,10 +62,10 @@ public class JAMService extends Service {
                 clientLocal.unlistenAll();
                 handled = true;
             } else if (intent != null && intent.getStringExtra("unsubscribeMessage") != null){
-                clientLocal.unsubscribeMessage(intent.getStringExtra("unsubscribeMessage"));
+                clientLocal.unsubscribeMessage(DecodeMessageId.fromString(intent.getStringExtra("unsubscribeMessage")));
                 handled = true;
             } else if (intent != null && intent.getStringExtra("subscribeMessage") != null){
-                clientLocal.subscribeMessage(intent.getStringExtra("subscribeMessage"));
+                clientLocal.subscribeMessage(DecodeMessageId.fromString(intent.getStringExtra("subscribeMessage")));
                 handled = true;
             }
         }
@@ -77,7 +81,7 @@ public class JAMService extends Service {
         if (!useJAM) return;
         if (client == null) {
             final Utils.ServiceGetter<XMPPService> getter = new Utils.ServiceGetter<XMPPService>(JAMService.this, XMPPService.class);
-            new Thread("JAM.startup") {
+            Thread startupThread = new Thread("JAM.startup") {
                 @Override
                 public void run() {
                     JAXMPPClient localClient = client;
@@ -88,9 +92,8 @@ public class JAMService extends Service {
                             return;
                         }
                     }
-                    String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(JAMService.this);
-                    String authString = JuickAPIAuthorizer.getBasicAuthString(JAMService.this);
-                    if (localClient == client && juickAccountName != null) {
+                    HashSet<AccountProof> accountProofs = JAXMPPClient.getAccountProofs(JAMService.this);
+                    if (localClient == client && accountProofs.size() > 0) {
                         // [race condition here]
                         localClient.setXmppClientListener(new JAXMPPClient.XMPPClientListener() {
                             @Override
@@ -119,7 +122,7 @@ public class JAMService extends Service {
                                 return false;
                             }
                         });
-                        String error = localClient.loginLocal(JAMService.this, handler, juickAccountName, authString);
+                        String error = localClient.loginLocal(JAMService.this, handler);
                         if (error == null) {
                             // ok
                         } else {
@@ -134,7 +137,9 @@ public class JAMService extends Service {
                         }
                     }
                 }
-            }.start();
+            };
+            startupThread.setPriority(Thread.MIN_PRIORITY);
+            startupThread.start();
         }
     }
 

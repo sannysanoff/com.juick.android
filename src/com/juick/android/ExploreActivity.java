@@ -89,6 +89,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
                 i.putExtra("mid", JuickMessageID.fromString(""+mid));
                 i.putExtra("messagesSource", getIntent().getSerializableExtra("messagesSource"));
                 startActivity(i);
+                overridePendingTransition(R.anim.enter_slide_to_left, R.anim.leave_lower_and_dark);
             } catch (Exception ex) {
                 Toast.makeText(getApplicationContext(), ex.toString(), Toast.LENGTH_SHORT).show();
             }

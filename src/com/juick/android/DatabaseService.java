@@ -23,6 +23,7 @@ import com.google.gson.*;
 import com.juick.android.api.MessageIDAdapter;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juick.android.juick.JuickMicroBlog;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
@@ -48,8 +49,11 @@ import java.util.zip.GZIPOutputStream;
  */
 public class DatabaseService extends Service {
 
-    Handler handler;
+    public Handler handler;
     SharedPreferences sp;
+
+    public static DatabaseService INSTANCE;
+    public static boolean running;
 
     /**
      * save to user's "Saved messages list"
@@ -304,11 +308,13 @@ public class DatabaseService extends Service {
                 JsonObject jsonObject = (JsonObject) gson.fromJson(str, JsonElement.class);
                 MessageID mid = tmp.deserialize(jsonObject.get("MID"), null, null);
                 JuickMessage msg = MainActivity.getMicroBlog(mid.getMicroBlogCode()).createMessage();
-                JuickMessage mesg = gson.fromJson(jsonObject, msg.getClass());
-                if (mesg != null) {
-                    mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
-                    mesg.messageSaveDate = cursor.getLong(saveDateIndex);
-                    retval.add(mesg);
+                if (msg != null) {
+                    JuickMessage mesg = gson.fromJson(jsonObject, msg.getClass());
+                    if (mesg != null) {
+                        mesg.User.UName = mesg.User.UName.trim();   // bug i am lazy to hunt on (CR unneeded in json)
+                        mesg.messageSaveDate = cursor.getLong(saveDateIndex);
+                        retval.add(mesg);
+                    }
                 }
             }
             cursor.moveToNext();
@@ -626,6 +632,8 @@ public class DatabaseService extends Service {
 
     @Override
     public void onCreate() {
+        INSTANCE = this;
+        running = true;
         synchronized (DatabaseService.class) {
             super.onCreate();
             sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -663,6 +671,7 @@ public class DatabaseService extends Service {
 
     @Override
     public void onDestroy() {
+        running = false;
         synchronized (writeJobs) {
             writerThread.interrupt();
             syncerThread.interrupt();
@@ -799,28 +808,28 @@ public class DatabaseService extends Service {
     long lastSyncIn = -1;
 
 
-    public Utils.RESTResponse executeServerSyncQuery(String db, int sinceCheckpoint) {
+    public RESTResponse executeServerSyncQuery(String db, int sinceCheckpoint) {
         String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
         String juickPassword = JuickAPIAuthorizer.getPassword(this);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
-        Utils.RESTResponse restResponse = Utils.postForm(this,
+        RESTResponse restResponse = Utils.postForm(this,
                 "http://" + Utils.JA_ADDRESS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
                 //"https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         return restResponse;
     }
 
-    public static Utils.RESTResponse obtainSharingURL(Context context, boolean reset) {
+    public static RESTResponse obtainSharingURL(Context context, boolean reset) {
         String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(context);
         String juickPassword = JuickAPIAuthorizer.getPassword(context);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
-        Utils.RESTResponse restResponse = Utils.postForm(context,
+        RESTResponse restResponse = Utils.postForm(context,
                 Utils.JA_ADDRESS_HTTPS + "/api/share_saved?reset="+reset+"&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         return restResponse;
     }
 
-    Utils.RESTResponse executeServerSyncCommit(String db, String json) {
+    RESTResponse executeServerSyncCommit(String db, String json) {
         String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(DatabaseService.this);
         String juickPassword = JuickAPIAuthorizer.getPassword(this);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
@@ -830,11 +839,11 @@ public class DatabaseService extends Service {
             gzos.write(json.getBytes());
             gzos.close();
         } catch (IOException e) {
-            return new Utils.RESTResponse(e.toString(), false, null);
+            return new RESTResponse(e.toString(), false, null);
         }
         nvs.add(new Utils.NameStreamValuePair("data", new ByteArrayInputStream(baos.toByteArray())));
         JuickAdvancedApplication.addToGlobalLog("syncdb: commit: db="+db+" len="+baos.size(), null);
-        Utils.RESTResponse restResponse = Utils.postForm(this,
+        RESTResponse restResponse = Utils.postForm(this,
                 Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=commit&db=" + db + "&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         if (restResponse.getErrorText() != null) {
@@ -847,9 +856,9 @@ public class DatabaseService extends Service {
             JSONObject jsonObject = new JSONObject(result);
             String revision = jsonObject.get("revision").toString();
             JuickAdvancedApplication.addToGlobalLog("syncdb: commit OK: "+revision, null);
-            return new Utils.RESTResponse(null, false, revision);
+            return new RESTResponse(null, false, revision);
         } catch (Exception ex) {
-            return new Utils.RESTResponse(ex.toString(), false, null);
+            return new RESTResponse(ex.toString(), false, null);
         }
     }
 
@@ -1014,7 +1023,7 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "useXMPP", false);
         copyBoolean(jo, sp, "useXMPPOnlyForBL", false);
         copyBoolean(jo, sp, "persistLastMessagesPosition", false);
-        copyBoolean(jo, sp, "lastReadMessages", false);
+        copyBoolean(jo, sp, "lastReadMessages", true);
         copyBoolean(jo, sp, "showNumbers", false);
         copyBoolean(jo, sp, "showUserpics", true);
         copyBoolean(jo, sp, "enableMessageDB", false);
@@ -1022,7 +1031,7 @@ public class DatabaseService extends Service {
         copyBoolean(jo, sp, "enableScaleByGesture", true);
         copyBoolean(jo, sp, "compressedMenu", false);
         copyBoolean(jo, sp, "singleLineMenu", false);
-        copyBoolean(jo, sp, "prefetchMessages", false);
+        copyBoolean(jo, sp, "prefetchMessages", true);
         copyBoolean(jo, sp, "dialogMessageMenu", false);
         copyBoolean(jo, sp, "web_for_subscriptions", false);
         copyBoolean(jo, sp, "web_for_myblog", false);
@@ -1200,5 +1209,10 @@ public class DatabaseService extends Service {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             return null;
         }
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
     }
 }

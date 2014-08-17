@@ -3,6 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
+<!--
     <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -34,6 +35,7 @@
                 android:layout_toLeftOf="@id/gotoMain"
                 />
     </RelativeLayout>
+-->
 
     <RelativeLayout
             android:id="@+id/buttons"
@@ -121,10 +123,9 @@
                     android:id="@+id/editMessage"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:layout_toLeftOf="@id/drafts"
                     android:layout_alignParentLeft="true"
                     android:textCursorDrawable="@null"
-                    android:maxHeight="260dip"
+                    android:maxLines="4"
                     android:hint="@string/ClickToReply"
                     />
         </RelativeLayout>
@@ -144,7 +145,7 @@
             android:id="@+id/threadfragment"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_below="@id/titleContainer"
+            android:layout_alignParentTop="true"
             android:layout_above="@id/separator"
             />
 

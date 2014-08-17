@@ -6,12 +6,10 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.ListView;
 import android.widget.Toast;
-import com.juick.android.MessageMenu;
-import com.juick.android.JuickMessagesAdapter;
-import com.juick.android.MessagesActivity;
-import com.juick.android.Utils;
+import com.juick.android.*;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.bnw.BnwMessageID;
 import org.json.JSONObject;
 
@@ -71,7 +69,7 @@ public class BNWMessageMenu extends MessageMenu {
         });
     }
 
-    public static Utils.RESTResponse apiCall(Context context, String call, Map<String, String> args)  {
+    public static RESTResponse apiCall(Context context, String call, Map<String, String> args)  {
         try {
             StringBuilder builder = new StringBuilder();
             Iterator it = args.entrySet().iterator();
@@ -84,7 +82,7 @@ public class BNWMessageMenu extends MessageMenu {
             }
             return postJSON(context, "http://ipv4.bnw.im/api/" + call + "?", builder.toString());
         } catch (UnsupportedEncodingException e) {
-            return new Utils.RESTResponse(e.toString(), false, null);
+            return new RESTResponse(e.toString(), false, null);
         }
     }
 
@@ -92,7 +90,7 @@ public class BNWMessageMenu extends MessageMenu {
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                final Utils.RESTResponse restResponse = apiCall(activity, call, args);
+                final RESTResponse restResponse = apiCall(activity, call, args);
                 activity.runOnUiThread(new Runnable() {
 
                     public void run() {

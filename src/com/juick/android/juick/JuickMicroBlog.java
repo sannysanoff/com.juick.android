@@ -26,11 +26,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.juick.android.*;
+import com.juick.android.Utils;
 import com.juick.android.ja.JAUnansweredMessagesSource;
+import com.juickadvanced.*;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
-import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.protocol.JuickHttpAPI;
+import com.juickadvanced.protocol.JuickLoginProcedure;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,7 +64,7 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public void postNewMessage(NewMessageActivity newMessageActivity, String msg, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, final Utils.Function<Void, String> then) {
-        final Utils.RESTResponse restResponse = sendMessage(newMessageActivity, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
+        final RESTResponse restResponse = sendMessage(newMessageActivity, msg, pid, lat, lon, acc, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
         newMessageActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -70,7 +73,7 @@ public class JuickMicroBlog implements MicroBlog {
         });
     }
 
-    public static Utils.RESTResponse sendMessage(final Context context, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, final ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel) {
+    public static RESTResponse sendMessage(final Context context, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, final ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel) {
         try {
             final String end = "\r\n";
             final String twoHyphens = "--";
@@ -160,18 +163,18 @@ public class JuickMicroBlog implements MicroBlog {
             out.close();
 
             if (progressDialogCancel.bool) {
-                return new Utils.RESTResponse("Cancelled", false, null);
+                return new RESTResponse("Cancelled", false, null);
             } else {
                 boolean b = conn.getResponseCode() == 200;
                 if (!b) {
-                    return new Utils.RESTResponse("HTTP "+conn.getResponseCode()+": "+conn.getResponseMessage(), false, null);
+                    return new RESTResponse("HTTP "+conn.getResponseCode()+": "+conn.getResponseMessage(), false, null);
                 } else {
-                    return new Utils.RESTResponse(null, false, "OK");
+                    return new RESTResponse(null, false, "OK");
                 }
             }
         } catch (final Exception e) {
             Log.e("sendOpinion", e.toString());
-            return new Utils.RESTResponse(e.toString(), false, null);
+            return new RESTResponse(e.toString(), false, null);
         }
     }
 
@@ -370,17 +373,23 @@ public class JuickMicroBlog implements MicroBlog {
             @Override
             public void action() {
                 final MainActivity.NavigationItem thiz = this;
-                withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
+                runAuthorized(new com.juickadvanced.Utils.Function<Void, String>() {
                     @Override
-                    public Void apply(Pair<Integer, String> cred) {
-                        final Bundle args = new Bundle();
-                        JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("user_id", "" + cred.first);
-                        ms.setKind("my_home");
-                        args.putSerializable("messagesSource", ms);
-                        activity.runDefaultFragmentWithBundle(args, thiz);
+                    public Void apply(String s) {
+                        withUserId(activity, new Utils.Function<Void, Pair<Integer, String>>() {
+                            @Override
+                            public Void apply(Pair<Integer, String> cred) {
+                                final Bundle args = new Bundle();
+                                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("user_id", "" + cred.first);
+                                ms.setKind("my_home");
+                                args.putSerializable("messagesSource", ms);
+                                activity.runDefaultFragmentWithBundle(args, thiz);
+                                return null;
+                            }
+                        });
                         return null;
                     }
-                });
+                }, activity);
             }
         });
         navigationItems.add(new MainActivity.NavigationItem(10005, R.string.navigationSrachiki, R.drawable.navicon_jugregator, "msrcSrachiki") {
@@ -489,7 +498,7 @@ public class JuickMicroBlog implements MicroBlog {
     @Override
     public void decorateNewMessageActivity(final NewMessageActivity newMessageActivity) {
         newMessageActivity.setTitle(R.string.Juick__New_message);
-        if (newMessageActivity.data.messagesSource instanceof JuickMessagesSource) {
+        if (newMessageActivity.data.microblog.equals(JuickMessageID.CODE)) {
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
@@ -564,7 +573,7 @@ public class JuickMicroBlog implements MicroBlog {
             Thread thr = new Thread(new Runnable() {
 
                 public void run() {
-                    final Utils.RESTResponse restResponse = Utils.postJSON(context, JuickHttpAPI.getAPIURL() + "post", "body=" + encode);
+                    final RESTResponse restResponse = Utils.postJSON(context, JuickHttpAPI.getAPIURL() + "post", "body=" + encode);
                     final String ret = restResponse.getResult();
                     if (!handled[0])
                         handled[0] = true;
@@ -626,7 +635,7 @@ public class JuickMicroBlog implements MicroBlog {
         Thread thr = new Thread(new Runnable() {
 
             public void run() {
-                final Utils.RESTResponse res = sendMessage(context, body, 0, 0, 0, 0, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
+                final RESTResponse res = sendMessage(context, body, 0, 0, 0, 0, attachmentUri, attachmentMime, progressDialog, progressHandler, progressDialogCancel);
                 if (!handled[0]) {
                     handled[0] = true;
                     context.runOnUiThread(new Runnable() {
@@ -675,74 +684,79 @@ public class JuickMicroBlog implements MicroBlog {
             public void run() {
                 final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(activity);
                 final String myUserId = atoi(sp.getString("myUserId", ""));
-                final String myUserName;
-                String pass = JuickAPIAuthorizer.getPassword(activity);
-                if (pass == null || pass.length() == 0) myUserName = ""; else myUserName = JuickAPIAuthorizer.getJuickAccountName(activity);
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (myUserId.equals("") || myUserName.equals("")) {
-                            final String userName = JuickAPIAuthorizer.getJuickAccountName(activity.getApplicationContext());
-                            if (userName == null) {
-                                // get some stuff
-                                class MyDownloadErrorNotification implements Utils.DownloadErrorNotification {
-                                    String error;
-                                    public void notifyDownloadError(String error) {
-                                        this.error = error;
-                                    }
-                                }
-                                final MyDownloadErrorNotification den = new MyDownloadErrorNotification();
-                                new Thread("Sample data fetcher") {
-                                    @Override
-                                    public void run() {
-                                        new JuickCompatibleURLMessagesSource("dummy", "dummy", activity, JuickHttpAPI.getAPIURL() + "home").getNext(den, new Utils.Function<Void, ArrayList<JuickMessage>>() {
-                                            @Override
-                                            public Void apply(ArrayList<JuickMessage> juickMessages) {
-                                                activity.runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        if (den.error != null) {
-                                                            Toast.makeText(activity, "No Juick Account configured", Toast.LENGTH_SHORT).show();
-                                                        } else {
-                                                            withUserId(activity, action);
-                                                        }
-                                                    }
-                                                });
-                                                return null;
-                                            }
-                                        });
-                                    }
-                                }.start();
-                                return;
-                            } else {
-                                String titleOfDialog = activity.getString(R.string.GettingYourId);
-
-                                final Utils.Function<Void, Pair<String, String>> withUserId = new Utils.Function<Void, Pair<String, String>>() {
-                                    @Override
-                                    public Void apply(Pair<String, String> cred) {
-                                        sp.edit().putString("myUserId", cred.first).commit();
-                                        sp.edit().putString("myUserName", cred.second).commit();
-                                        action.apply(new Pair<Integer, String>(Integer.parseInt(cred.first), cred.second));
-                                        return null;
-                                    }
-                                };
-
-                                obtainProperUserIdByName(activity, userName, titleOfDialog, withUserId);
+                final String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(activity);
+                if (myUserId.length() == 0) {
+                    String password = JuickAPIAuthorizer.getPassword(activity);
+                    final RESTResponse restResponse = JuickLoginProcedure.validateLoginPassword(juickAccountName, password, new DefaultHTTPClientService(activity));
+                    if (restResponse.getResult() != null) {
+                        final String[] usernameId = restResponse.getResult().split(":");
+                        sp.edit().putString("myUserId", usernameId[1]).commit();
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                action.apply(new Pair<Integer, String>(Integer.parseInt(usernameId[1]), usernameId[0]));
                             }
-                        } else {
-                            final Pair<Integer, String> data = new Pair<Integer, String>(Integer.parseInt(myUserId), myUserName);
-                            activity.runOnUiThread(new Runnable() {
+                        });
+                    } else {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(activity, "Error getting user ID: "+restResponse.getErrorText(), Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                } else {
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            action.apply(new Pair<Integer, String>(Integer.parseInt(myUserId), juickAccountName));
+                        }
+                    });
+
+                }
+            }
+        }.start();
+    }
+
+    public void runAuthorized(final Utils.Function<Void, String> runWithLogin, final Activity mainActivity) {
+        new Thread("runAuthorized") {
+            @Override
+            public void run() {
+                JuickAPIAuthorizer authorizer = (JuickAPIAuthorizer) Utils.getAuthorizer("http://api.juick.com/");
+                authorizer.authorize(mainActivity, false, false, "http://api.juick.com/required", new Utils.Function<Void, String>() {
+                    @Override
+                    public Void apply(final String s) {
+                        if (!Utils.URLAuth.REFUSED_AUTH.equals(s)) {
+                            mainActivity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    action.apply(data);
+                                    if (s != null) {
+                                        runWithLogin.apply(s);
+                                    } else {
+                                        if (mainActivity instanceof MainActivity) {
+                                            ((MainActivity) mainActivity).restoreLastNavigationPosition();
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            mainActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (mainActivity instanceof MainActivity) {
+                                        ((MainActivity) mainActivity).restoreLastNavigationPosition();
+                                    }
                                 }
                             });
                         }
+                        return null;
                     }
                 });
             }
         }.start();
     }
+
+
 
     private static String atoi(String myUserId) {
         try {
@@ -764,47 +778,24 @@ public class JuickMicroBlog implements MicroBlog {
             @Override
             public void run() {
                 try {
-                    String fullName = userName;
-                    if (fullName == null) {
-                        Toast.makeText(activity, activity.getString(R.string.UnableToDetectNick) + activity.getString(R.string.NoUserAccount), Toast.LENGTH_LONG).show();
-                    }
-                    if (fullName.startsWith("@")) fullName = fullName.substring(1);
-                    URL u = new URL("http://juick.com/" + fullName.trim() + "/");
-                    HttpURLConnection urlConnection = (HttpURLConnection)u.openConnection();
-                    urlConnection.setInstanceFollowRedirects(true);
-                    Utils.RESTResponse response = Utils.streamToString((InputStream) urlConnection.getContent(), null);
-                    if (response.getErrorText() != null) {
-                        throw new IOException(response.getErrorText());
-                    } else {
-                        String retval = response.getResult();
-                        String SEARCH_MARKER = "//i.juick.com/a/";
-                        int ix = retval.indexOf(SEARCH_MARKER);
-                        if (ix < 0) {
-                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
-                        }
-                        int ix2 = retval.indexOf(".png", ix + SEARCH_MARKER.length());
-                        if (ix2 < 0 || ix2 - (ix + SEARCH_MARKER.length()) > 15) {  // optimistic!
-                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
-                        }
-                        final String uidS = retval.substring(ix + SEARCH_MARKER.length(), ix2);
-
-                        int ix3 = retval.indexOf("alt=\"", ix);
-                        if (ix3 == -1) {
-                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
-                        }
-                        int ix4 = retval.indexOf("\"", ix3+5);
-                        if (ix4 == -1 || ix4 - ix3 > 25) {
-                            throw new RuntimeException(activity.getString(R.string.WebSiteReturnedBad));
-                        }
-                        final String uname = retval.substring(ix3+5, ix4);
+                    RESTResponse json = Utils.getJSON(activity, JuickHttpAPI.getAPIURL() + "users?uname=" + userName, null);
+                    if (json.getErrorText() != null || !json.getResult().contains("uid")){
                         activity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                withUserId.apply(new Pair<String, String>(uidS, uname));
+                                Toast.makeText(activity, activity.getString(R.string.UnableToDetectNick) + activity.getString(R.string.NoUserAccount), Toast.LENGTH_LONG).show();
+                            }});
+                    } else {
+                        JSONObject jo = new JSONArray(json.getResult()).getJSONObject(0);
+                        final int uid = jo.getInt("uid");
+                        final String uname = jo.getString("uname");
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                withUserId.apply(new Pair<String, String>(""+uid, uname));
                             }
                         });
                     }
-
                 } catch (final Exception e) {
                     activity.runOnUiThread(new Runnable() {
                         @Override

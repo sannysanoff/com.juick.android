@@ -1,14 +1,9 @@
 package com.juick.android;
 
-import android.app.Activity;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Handler;
 import android.widget.Toast;
 import com.juick.android.juick.JuickAPIAuthorizer;
-
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
+import com.juickadvanced.RESTResponse;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,7 +22,7 @@ public class CensorDummyServerAdapter implements Censor.CensorServerAdapter {
     }
 
     @Override
-    public void submitForReview(final int censorCategoryId, final String token, final Utils.Function<Void, Utils.RESTResponse> continuation) {
+    public void submitForReview(final int censorCategoryId, final String token, final Utils.Function<Void, RESTResponse> continuation) {
         new Thread() {
             @Override
             public void run() {
@@ -43,7 +38,7 @@ public class CensorDummyServerAdapter implements Censor.CensorServerAdapter {
                     public void withService(DatabaseService service) {
                         super.withService(service);    //To change body of overridden methods use File | Settings | File Templates.
                         service.addLocalCensorWord(censorCategoryId, token);
-                        continuation.apply(new Utils.RESTResponse(null, false, "OK"));
+                        continuation.apply(new RESTResponse(null, false, "OK"));
                     }
                 });
             }

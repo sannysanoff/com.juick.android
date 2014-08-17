@@ -39,6 +39,7 @@
     <string name="Juick__Explore">Джуик: Обзор</string>
     <string name="Popular_tags">Популярные теги</string>
     <string name="All_messages">Все сообщения</string>
+    <string name="All_subscriptions">Все подписки</string>
     <string name="Nearby_places">Места поблизости</string>
     <string name="My_blog">Мой блог</string>
 
@@ -140,7 +141,7 @@
     <string name="navigationAll">Все сообщения</string>
     <string name="navigationTop">Популярные</string>
     <string name="navigationPhoto">С фото</string>
-    <string name="navigationMy">Мой блог</string>
+    <string name="navigationMy">Мой Juick блог</string>
     <string name="navigationSrachiki">Срачики (jugregator)</string>
     <string name="navigationPrivate">Приват(веб)</string>
     <string name="navigationDiscuss">Дискусс.(веб)</string>
@@ -149,6 +150,8 @@
     <string name="navigationSaved">Сохраненные</string>
     <string name="navigationRecentlyOpened">Недавно читал</string>
     <string name="navigationRecentlyCommented">Недавно писал</string>
+    <string name="navigationAllCombined">Все/Комбинировано</string>
+    <string name="navigationSubsCombined">Подписки/Комбин.</string>
     <string name="XMPP_client">XMPP/Jabber клиент</string>
     <string name="XMPPControl">XMPP статус</string>
     <string name="XMPP_config">XMPP/Jabber конфиг</string>
@@ -497,6 +500,18 @@
     <string name="No">Нет</string>
     <string name="NewMsgTemplate">Шаблон нового сообщения</string>
     <string name="NewMsgTemplateDescription">Текст по умолчанию при создании нового сообщения</string>
+    <string name="GoToParticularToPost">Пардон, пойдите в конкретный микроблог для написания нового псто.</string>
+    <string name="GoToParticularToSearch">Пардон, пойдите в конкретный микроблог для поиска по микроблогу.</string>
+    <string name="ConfigureYourSources">Настраивайте источники прямо в навигационном меню.</string>
+    <string name="MakeTotalAdvance">Сделать всё зашибись?
+
+        (включатся недовключенные безопасные опции и фичи клиента, которые вы прозевали)
+    </string>
+    <string name="MagicButton">ВОЛШЕБНАЯ КНОПКА</string>
+    <string name="NowTotalAdvance">Теперь всё зашибись!</string>
+    <string name="SwipeToClose">Закрывать жестом тред</string>
+    <string name="SelectAccountToPost">Выберите куда постить</string>
+    <string name="NewPost">Новая запись</string>
 
 
 </resources>

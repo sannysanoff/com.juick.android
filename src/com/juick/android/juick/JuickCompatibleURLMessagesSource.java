@@ -3,21 +3,18 @@ package com.juick.android.juick;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import com.juick.android.DatabaseService;
-import com.juickadvanced.parsers.JuickParser;
+import com.juickadvanced.IHTTPClientService;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.parsers.URLParser;
 import com.juick.android.Utils;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.R;
-import com.juickadvanced.data.juick.JuickMessageID;
-import com.juickadvanced.parsers.DevJuickComMessages;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.juickadvanced.protocol.JuickHttpAPI;
+import com.juickadvanced.sources.PureJuickCompatibleURLMessagesSource;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -29,13 +26,10 @@ import java.util.Map;
  */
 public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
 
-    URLParser urlParser;
-    int lastRetrievedMID;
-    int page = 0;
+    PureJuickCompatibleURLMessagesSource pure = new PureJuickCompatibleURLMessagesSource(this);
+
     int useBackupServer = -1;
     String title;
-
-
 
     public JuickCompatibleURLMessagesSource(Context ctx, String kind) {
         this(ctx.getString(R.string.All_messages), kind, ctx);
@@ -43,7 +37,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
 
     @Override
     public boolean supportsBackwardRefresh() {
-        Map<String,String> argsMap = urlParser.getArgsMap();
+        Map<String,String> argsMap = pure.urlParser.getArgsMap();
         if (argsMap.containsKey("tag") || argsMap.containsKey("user_id") || argsMap.containsKey("search")) {
             return false;
         }
@@ -57,43 +51,29 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     public JuickCompatibleURLMessagesSource(String title, String kind, Context ctx, String baseURL) {
         super(ctx, kind);
         this.title = title;
-        urlParser = new URLParser(baseURL);
+        pureMessageSource = pure;
+        pure.init(baseURL);
         String useBackupServerS = sp.getString("useBackupServer", "-1");
         useBackupServer = (int)(Double.parseDouble(useBackupServerS) * 1000);
         if (useBackupServer < 0) useBackupServer = -1;      // instead of -1000;
     }
 
     public JuickCompatibleURLMessagesSource putArg(String name, String value) {
-        urlParser.getArgsMap().put(name, value);
+        pure.putArg(name, value);
         return this;
     }
 
     public String getArg(String name) {
-        return urlParser.getArgsMap().get(name);
+        return pure.urlParser.getArgsMap().get(name);
     }
 
     @Override
     public void getFirst(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        urlParser.getArgsMap().remove("before_mid");
-        urlParser.getArgsMap().remove("page");
-        page = 0;
-        lastRetrievedMID = -1;
-        fetchURLAndProcess(notification, cont);
+        pure.getFirst(notification, cont);
     }
 
     protected void fetchURLAndProcess(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        final String jsonStr = getJSONWithRetries(ctx, urlParser.getFullURL(), notification).getResult();
-        ArrayList<JuickMessage> messages = parseAndProcess(jsonStr);
-        if (messages.size() > 0) {
-            JuickMessage juickMessage = messages.get(messages.size() - 1);
-            lastRetrievedMID = ((JuickMessageID)juickMessage.getMID()).getMid();
-        }
-        cont.apply(messages);
-    }
-
-    private ArrayList<JuickMessage> parseAndProcess(String jsonStr) {
-        ArrayList<JuickMessage> messages = parseJSONpure(jsonStr);
-        return messages;
+        pure.fetchURLAndProcess(notification, cont);
     }
 
     protected boolean areMessagesInRow() {
@@ -102,79 +82,20 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
 
     @Override
     public void getNext(Utils.Notification notification, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        page++;
-        if (page > 0) {
-            putArg("page",""+page);
-        }
-        if (lastRetrievedMID > 0) {
-            putArg("before_mid",""+lastRetrievedMID);
-        }
-        fetchURLAndProcess(notification, cont);
+        pure.getNext(notification, cont);
     }
 
     public ArrayList<JuickMessage> parseJSONpure(String jsonStr) {
-        return parseJSONpure(jsonStr, false);
+        return PureJuickCompatibleURLMessagesSource.parseJSONpure(jsonStr, false);
     }
 
-    public static ArrayList<JuickMessage> parseJSONpure(String jsonStr, boolean storeSource) {
-        ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
-        if (jsonStr != null) {
-            try {
-                JSONArray json = new JSONArray(jsonStr);
-                int cnt = json.length();
-                for (int i = 0; i < cnt; i++) {
-                    JSONObject jsonObject = json.getJSONObject(i);
-                    JuickMessage msg = JuickParser.initFromJSON(jsonObject);
-                    if (msg.User != null && msg.User.UName != null) {
-                        msg.User.UName = msg.User.UName.trim();
-                    }
-                    msg.Text = DevJuickComMessages.unjuick(msg.Text);
-                    messages.add(msg);
-                    if (!storeSource)
-                        msg.source = null;
-                }
-            } catch (Exception e) {
-                Log.e("initOpinionsAdapter", e.toString());
-            }
-        }
-        HashMap<Integer, JuickMessage> replies = new HashMap<Integer, JuickMessage>();
-        for (JuickMessage message : messages) {
-            if (message.getRID() > 0) {
-                replies.put(message.getRID(), message);
-            }
-        }
-        for (JuickMessage message : messages) {
-            if (message.getRID() > 0 && message.getReplyTo() > 0) {
-                JuickMessage repliedTo = replies.get(message.getReplyTo());
-                if (repliedTo != null && !message.Text.startsWith("@")) {
-                    message.Text = "@"+repliedTo.User.UName+" "+message.Text;
-                }
-            }
-        }
-        return messages;
-    }
-
-
-    public class PureDownloader {
-        public ArrayList<JuickMessage> download(final MessageID mid, final Utils.Notification notifications, boolean messageDB) {
-            Utils.RESTResponse result = getJSONWithRetries(ctx, JuickHttpAPI.getAPIURL() + "thread?mid=" + ((JuickMessageID) mid).getMid(), notifications);
-            final String jsonStr = result.getResult();
-            final ArrayList<JuickMessage> stuff = JuickCompatibleURLMessagesSource.parseJSONpure(jsonStr, messageDB);
-            return stuff;
-        }
-
-        public ArrayList<JuickMessage> parseJSONpure(String str) {
-            return JuickCompatibleURLMessagesSource.parseJSONpure(str, false);
-        }
-
-    }
 
     @Override
     public void getChildren(final MessageID mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        getChildrenWithDBCache(ctx, new PureDownloader(), mid, notifications, cont);
+        getChildrenWithDBCache(ctx, this, new PureJuickCompatibleURLMessagesSource.PureJuickChildrenDownloader(), mid, notifications, cont);
     }
     
-    public static void getChildrenWithDBCache(Context context, final PureDownloader pureDownloader, final MessageID mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
+    public static void getChildrenWithDBCache(Context context, IHTTPClientService service, final PureJuickCompatibleURLMessagesSource.PureJuickChildrenDownloader pureJuickChildrenDownloader, final MessageID mid, final Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         final boolean retrieved[] = new boolean[1]; // concurrency indicator
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
@@ -207,7 +128,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                                 sb.setLength(sb.length()-1);        // last comma
                                 sb.append("]");
                                 // parse
-                                ArrayList<JuickMessage> alt = pureDownloader.parseJSONpure(sb.toString());
+                                ArrayList<JuickMessage> alt = pureJuickChildrenDownloader.parseJSONpure(sb.toString());
                                 if (retrieved[0]) return;
                                 if (alt.size() > 0 && alt.get(0).getRID() == 0) {
                                     // notify
@@ -223,7 +144,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
             });
         }
         // get from original location
-        final ArrayList<JuickMessage> stuff = pureDownloader.download(mid, notifications, messageDB);
+        final ArrayList<JuickMessage> stuff = pureJuickChildrenDownloader.download(mid, service, notifications, messageDB);
         retrieved[0] = true;
 
 
@@ -244,7 +165,12 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
         cont.apply(stuff);
     }
 
-    public Utils.RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
+    @Override
+    public RESTResponse getJSON(String url, com.juickadvanced.Utils.Notification progressNotification) {
+        return getJSONWithRetries(getContext(), url, progressNotification);
+    }
+
+    public RESTResponse getJSONWithRetries(Context ctx, String url, Utils.Notification notifications) {
         boolean backupServerApplies = false;
         if (url.contains("api.juick.com/messages") || url.contains("api.juick.com/thread")) {
             URLParser urlParser = new URLParser(url);
@@ -258,7 +184,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
             }
         }
         if (useBackupServer < 0) backupServerApplies = false;
-        Utils.RESTResponse lastResponse = null;
+        RESTResponse lastResponse = null;
         if (backupServerApplies) {
             int retry = 0;
             for(int i=0; i<5; i++) {
@@ -267,7 +193,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                     ((Utils.BackupServerNotification)notifications).notifyBackupInUse(false);
                 }
                 if (timeout != 0) {
-                    Utils.RESTResponse s = Utils.getJSON(ctx,url, notifications, timeout);
+                    RESTResponse s = Utils.getJSON(ctx,url, notifications, timeout);
                     if (s.getResult() != null && s.getResult().length() > 0) return s;
                     lastResponse = s;
                     if (notifications instanceof Utils.RetryNotification) {
@@ -283,7 +209,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
                 String[] hostPort = Utils.JA_ADDRESS.split(":");
                 urlParser.setHost(hostPort[0]);
                 urlParser.setPort(hostPort[1]);
-                Utils.RESTResponse s = Utils.getJSON(ctx,urlParser.getFullURL(), notifications);
+                RESTResponse s = Utils.getJSON(ctx,urlParser.getFullURL(), notifications);
                 if (s.getResult() != null && s.getResult().length() > 0) return s;
                 lastResponse = s;
                 if (notifications instanceof Utils.RetryNotification) {

@@ -10,30 +10,24 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.method.LinkMovementMethod;
-import android.text.util.Linkify;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import com.juick.android.ja.Network;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
 import org.acra.ACRA;
-import org.apache.http.client.HttpClient;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +42,8 @@ import java.util.regex.Pattern;
 public class WhatsNew {
 
     ReleaseFeatures[] features = new ReleaseFeatures[]{
+            new ReleaseFeatures("2014081601", R.string.rf_2014081601),
+            new ReleaseFeatures("2014081101", R.string.rf_2014081101),
             new ReleaseFeatures("2013100101", R.string.rf_2013100101),
             new ReleaseFeatures("2013062001", R.string.rf_2013062001),
             new ReleaseFeatures("2012121903", R.string.rf_2012121903),
@@ -87,7 +83,7 @@ public class WhatsNew {
             public void run() {
                 boolean found = false;
                 String reasonNotFound = "other reason";
-                final Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_news", null);
+                final RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_news", null);
                 try {
                     last_news_check.createNewFile();
                 } catch (IOException e) {
@@ -149,7 +145,7 @@ public class WhatsNew {
             new Thread() {
                 @Override
                 public void run() {
-                    Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/notify_updated?version=" + currentVersionCode, null);
+                    RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/notify_updated?version=" + currentVersionCode, null);
                     if (json.getErrorText() == null) {
                         JuickAdvancedApplication.foreverHandler.post(new Runnable() {
                             @Override
@@ -170,7 +166,7 @@ public class WhatsNew {
                     boolean found = false;
                     String reasonNotFound = "other reason";
                     try {
-                        Utils.RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version?force=" + force, null);
+                        RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version?force=" + force, null);
                         try {
                             last_check.createNewFile();
                         } catch (IOException e) {
@@ -185,19 +181,24 @@ public class WhatsNew {
                                     int updateVersionCode = Integer.parseInt(version);
                                     if (updateVersionCode > currentVersionCode) {
                                         if (!new File(updatesDir, "ignore-" + version).exists() || force) {
-                                            JsonObject jsonElement = (JsonObject) new Gson().fromJson(json.getResult(), JsonElement.class);
-                                            JsonPrimitive url = (JsonPrimitive) jsonElement.get("url");
-                                            updateURL = url.getAsString();
-                                            JsonPrimitive desc = (JsonPrimitive) jsonElement.get("description");
-                                            updateDescription = desc.getAsString();
-                                            MainActivity.updateAvailable = version;
-                                            found = true;
-                                            runningActivity.getHandler().post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    setUpdateVisible(runningActivity);
-                                                }
-                                            });
+                                            try {
+                                                JsonObject jsonElement = (JsonObject) new Gson().fromJson(json.getResult(), JsonElement.class);
+                                                JsonPrimitive url = (JsonPrimitive) jsonElement.get("url");
+                                                updateURL = url.getAsString();
+                                                JsonPrimitive desc = (JsonPrimitive) jsonElement.get("description");
+                                                updateDescription = desc.getAsString();
+                                                MainActivity.updateAvailable = version;
+                                                found = true;
+                                                runningActivity.getHandler().post(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        setUpdateVisible(runningActivity);
+                                                    }
+                                                });
+                                            } catch (Exception e) {
+                                                reasonNotFound = "Program bug with json? reported to author.";
+                                                ACRA.getErrorReporter().handleException(new RuntimeException("bad json? "+json.getResult(), e));
+                                            }
                                         }
                                     } else {
                                         reasonNotFound = "server version: " + updateVersionCode + " current version: " + currentVersionCode;
@@ -265,8 +266,8 @@ public class WhatsNew {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
                         Toast.makeText(activity, activity.getString(R.string.DownloadWillStartNow), Toast.LENGTH_LONG).show();
-                        final DownloadManager mgr = (DownloadManager) runningActivity.getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
                         try {
+                            final DownloadManager mgr = (DownloadManager) runningActivity.getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
                             final Uri parse = Uri.parse(updateURL);
                             final DownloadManager.Request req = new DownloadManager.Request(parse);
 
@@ -373,7 +374,28 @@ public class WhatsNew {
                         }
                     });
                 }
-                // continue here
+                if (!sp.getBoolean("propmpted_all_options", false)) {
+                    sp.edit().putBoolean("propmpted_all_options", true).commit();
+                    // continue here
+                    new AlertDialog.Builder(context)
+                            .setTitle("Total Advance")
+                            .setMessage(context.getString(R.string.MakeTotalAdvance))
+                            .setPositiveButton(context.getString(R.string.MagicButton), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    toggleAllOptions(context);
+                                    dialog.cancel();
+                                    Toast.makeText(context, context.getString(R.string.NowTotalAdvance), Toast.LENGTH_LONG).show();
+                                }
+                            })
+                            .setCancelable(false)
+                            .setNegativeButton(R.string.No, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            }).show();
+                }
             }
         };
         String currentSetting = sp.getString("usage_statistics", "");
@@ -417,6 +439,49 @@ public class WhatsNew {
         } else {
             after.run();
         }
+    }
+
+    private void toggleAllOptions(Activity context) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit()
+                .putString("image.loadMode", "japroxy")
+                .putBoolean("dialogMessageMenu", true)
+                .putBoolean("persistLastMessagesPosition", true)
+                .putBoolean("confirmActions", true)
+                .putBoolean("previewReplies", true)
+                .putBoolean("warnRepliesToBody", true)
+                .putBoolean("capitalizeReplies", true)
+                .putBoolean("showNumbers", true)
+                .putBoolean("showUserpics", true)
+                .putBoolean("compactComments", true)
+                .putBoolean("http_compression", true)
+                .putBoolean("image.indirect", true)
+                .putBoolean("enableMessageDB", true)
+
+                .putBoolean("msrcTopMessages", true)
+                .putBoolean("msrcWithPhotos", true)
+                .putBoolean("msrcUnread", true)
+                .putBoolean("msrcSaved", true)
+                .putBoolean("msrcRecentOpen", true)
+                .putBoolean("msrcRecentComment", true)
+                .putBoolean("msrcAllCombined", true)
+                .putBoolean("msrcSubsCombined", true)
+                .putBoolean("msrcBNWFeed", true)
+                .putBoolean("msrcBNWAll", true)
+                .putBoolean("msrcBNWHot", true)
+                .putBoolean("msrcFacebookFeed", true)
+                .putBoolean("msrcGlavSU", true)
+                .putBoolean("msrcUnanswered", true)
+                .putBoolean("msrcTopMessages", true)
+                .putBoolean("msrcMyBlog", true)
+                .putBoolean("msrcSrachiki", true)
+                .putBoolean("msrcPrivate", true)
+                .putBoolean("msrcDiscuss", true)
+                .putBoolean("msrcJubo", true)
+                .putBoolean("msrcPointSubs", true)
+                .putBoolean("msrcPointAll", true)
+                .putBoolean("msrcPointMine", true)
+                .commit();
     }
 
     public static String getSendStatValueFromUI(View stat) {
@@ -732,28 +797,32 @@ public class WhatsNew {
         if ("1".equals(string)) {
             doLocalInstall(context, maybeLocalURI);
         } else {
-            new AlertDialog.Builder(context)
-                    .setMessage("You must allow 'unknown sources' to install update")
-                    .setPositiveButton("Enable unknown sources", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            launchApplicationSettingsForUnknownSources(context, maybeLocalURI);
-                            //To change body of implemented methods use File | Settings | File Templates.
+            try {
+                new AlertDialog.Builder(context)
+                        .setMessage("You must allow 'unknown sources' to install update")
+                        .setPositiveButton("Enable unknown sources", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                launchApplicationSettingsForUnknownSources(context, maybeLocalURI);
+                                //To change body of implemented methods use File | Settings | File Templates.
+                            }
+                        }).setNegativeButton("Skip update", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (context instanceof MainActivity) {
+                            MainActivity ma = (MainActivity) context;
+                            try {
+                                new File(new File(context.getFilesDir(), "updates"), "ignore-" + ma.updateAvailable).createNewFile();
+                            } catch (IOException e) {
+                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            }
                         }
-                    }).setNegativeButton("Skip update", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    if (context instanceof MainActivity) {
-                        MainActivity ma = (MainActivity) context;
-                        try {
-                            new File(new File(context.getFilesDir(), "updates"), "ignore-" + ma.updateAvailable).createNewFile();
-                        } catch (IOException e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                        }
+                        dialog.cancel();
                     }
-                    dialog.cancel();
-                }
-            }).show();
+                }).show();
+            } catch (Exception ex) {
+                //
+            }
 
         }
     }

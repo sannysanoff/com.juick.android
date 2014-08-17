@@ -1,6 +1,7 @@
 package com.juick.android;
 
 import android.content.Context;
+import com.juickadvanced.RESTResponse;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class Censor {
 
 
     public interface CensorServerAdapter {
-        public void submitForReview(int censorCategoryId, String token, final Utils.Function<Void, Utils.RESTResponse> continuation);
+        public void submitForReview(int censorCategoryId, String token, final Utils.Function<Void, RESTResponse> continuation);
     }
 
     public interface CensorStorageAdapter {

@@ -30,6 +30,7 @@ public class JuickFragmentActivity extends SherlockFragmentActivity {
     BroadcastReceiver downloadCompleteReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent == null || intent.getPackage() == null) return;
             if (intent.getPackage().equals("com.juickadvanced")) {
                 Bundle extras = intent.getExtras();
                 Long l = extras != null ? (Long) extras.get("extra_download_id") : null;

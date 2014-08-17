@@ -19,7 +19,7 @@ package com.juick.android;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -57,11 +57,11 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     /**
      * @see MessagesFragment#alternativeLongClick
      */
-    private boolean alternativeLongClick;
     private JuickMessage prefetched;    // this is partially obtained thread originating in 'pending' replies screen
     private Toast shownThreadToast;
     private boolean navigationMenuShown;
     private JuickFragmentActivity parent;
+    private JuickMessage originalMessage;
 
     public interface ThreadExternalUpdater {
 
@@ -109,6 +109,32 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     MessagesSource parentMessagesSource;
+    BroadcastReceiver recv = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            if (intent.hasExtra("threadMessage")) {
+                if (listAdapter != null && listAdapter.getCount() > 0) {
+                    JuickMessage item = listAdapter.getItem(0);
+                    JuickMessage jm = (JuickMessage)intent.getSerializableExtra("threadMessage");
+                    if (jm.getMID().equals(item.getMID())) {
+                        boolean found = false;
+                        for(int i=0; i<listAdapter.getCount(); i++) {
+                            JuickMessage test = listAdapter.getItem(i);
+                            if (test.getRID() == jm.getRID()) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            ArrayList<JuickMessage> s = new ArrayList<JuickMessage>();
+                            s.add(jm);
+                            listAdapter.addAllMessages(s);
+                            listAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+            }
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,15 +142,20 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(getActivity(), XMPPService.class);
         handler = new Handler();
         parentMessagesSource = (MessagesSource) getArguments().getSerializable("messagesSource");
+        originalMessage = (JuickMessage) getArguments().getSerializable("originalMessage");
         prefetched = (JuickMessage) getArguments().getSerializable("prefetched");
         if (parentMessagesSource != null)
             parentMessagesSource.setContext(getActivity());
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        trackLastRead = sp.getBoolean("lastReadMessages", false);
+        trackLastRead = sp.getBoolean("lastReadMessages", true);
         if (Build.VERSION.SDK_INT >= 8) {
             mScaleDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
         }
+        IntentFilter f = new IntentFilter(XMPPService.ACTION_THREAD_MESSAGE_RECEIVED);
+        getActivity().registerReceiver(recv, f);
+
     }
+
 
     public ThreadFragment(Object restoreData, JuickFragmentActivity parent) {
         this.restoreData = restoreData;
@@ -236,44 +267,52 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
     private void initAdapter() {
-        listAdapter = new JuickMessagesAdapter(getActivity(), this, JuickMessagesAdapter.TYPE_THREAD, JuickMessagesAdapter.SUBTYPE_OTHER);
+        final FragmentActivity activity = getActivity();
+        listAdapter = new JuickMessagesAdapter(activity, this, JuickMessagesAdapter.TYPE_THREAD, JuickMessagesAdapter.SUBTYPE_OTHER);
         if (implicitlyCreated || restoreData != null) {
             getView().findViewById(android.R.id.empty).setVisibility(View.GONE);
         }
         if (implicitlyCreated) {
             return;
         }
-        getListView().setOnItemClickListener(this);
-        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        final ListView listView = getListView();
+        listView.setOnItemClickListener(this);
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, final long id) {
-                Object itemAtPosition = parent.getItemAtPosition(position);
-                if (itemAtPosition instanceof JuickMessage && parentMessagesSource != null) {
-                    final JuickMessage msg = (JuickMessage) itemAtPosition;
-                    if (msg.getMID() != null) {
-                        doOnClickActualTime = System.currentTimeMillis();
-                        doOnClick = new Runnable() {
-                            @Override
-                            public void run() {
-                                MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), parentMessagesSource, getListView(), listAdapter);
-                                messageMenu.onItemLongClick(parent, view, position, id);
-                            }
-                        };
-                        if (alternativeLongClick) {
-                            getListView().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                        } else {
-                            doOnClick.run();
-                            doOnClick = null;
-                            return true;
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (activity.isFinishing()) {
+                            System.out.println("OK");
+                            return;
                         }
+                        Object itemAtPosition = parent.getItemAtPosition(position);
+                        if (itemAtPosition instanceof JuickMessage && parentMessagesSource != null) {
+                            final JuickMessage msg = (JuickMessage) itemAtPosition;
+                            if (msg.getMID() != null) {
+                                doOnClickActualTime = System.currentTimeMillis();
+                                doOnClick = new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(activity, parentMessagesSource, listView, listAdapter);
+                                        if (messageMenu != null) {
+                                            messageMenu.onItemLongClick(parent, view, position, id);
+                                        }
+                                    }
+                                };
+                                doOnClick.run();
+                                doOnClick = null;
 
+                            }
+
+                        }
                     }
-
-                }
+                }, 100);
                 return false;
             }
         });
-        notification = new ThreadMessagesLoadNotification(getActivity(), handler);
+        notification = new ThreadMessagesLoadNotification(activity, handler);
         navMenu.setVisibility(View.GONE);
         Thread thr = new Thread(new Runnable() {
 
@@ -302,6 +341,11 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             parentMessagesSource.getChildren(mid, notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                                 @Override
                                 public Void apply(ArrayList<JuickMessage> messages) {
+                                    if (messages != null && messages.size() > 0 && originalMessage != null) {
+                                        if (messages.get(0).getRID() != 0) {
+                                            messages.add(0, originalMessage);
+                                        }
+                                    }
                                     preprocessMessages(messages);
                                     then.apply(new MessagesFragment.RetainedData(messages, null));
                                     return null;
@@ -503,6 +547,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     @Override
     public void onDestroy() {
+        getActivity().unregisterReceiver(recv);
         handler.removeCallbacksAndMessages(null);
         doneWebSocket();
         super.onDestroy();
@@ -535,6 +580,16 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                     }
                 }
                 if (listAdapter.getCount() > 0) {
+                    for (JuickMessage message : messages) {
+                        if (message.getReplyTo() != 0 && !message.Text.startsWith("@")) {
+                            for(int z=0; z<listAdapter.getCount(); z++) {
+                                JuickMessage item = listAdapter.getItem(z);
+                                if (item != null && item.getRID() == message.getReplyTo()) {
+                                    message.Text = "@" + item.User.UName+" " + message.Text;
+                                }
+                            }
+                        }
+                    }
                     listAdapter.addAllMessages(messages);
                     if (getActivity() instanceof ThreadActivity) {
                         ThreadActivity ta = (ThreadActivity)getActivity();
@@ -606,6 +661,8 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     public boolean onTouch(View view, MotionEvent event) {
+        if (parent.onListTouchEvent(view, event)) return true;
+        if (parent.isFinishing()) return true;
         if (mScaleDetector != null) {
             try {
                 mScaleDetector.onTouchEvent(event);
@@ -989,8 +1046,6 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
             }
         }
     }
-
-
 
 
 }

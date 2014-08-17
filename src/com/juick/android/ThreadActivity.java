@@ -19,7 +19,6 @@ package com.juick.android;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,7 +27,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.os.Handler;
-import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.app.FragmentTransaction;
 import android.text.Spannable;
@@ -59,10 +57,7 @@ import java.util.Vector;
  */
 public class ThreadActivity extends JuickFragmentActivity implements View.OnClickListener, DialogInterface.OnClickListener, ThreadFragment.ThreadFragmentListener {
 
-    public static int instanceCount;
-    {
-        instanceCount++;
-    }
+    public static int instanceCount = 0;
 
     public static final int ACTIVITY_ATTACHMENT_IMAGE = 2;
     public static final int ACTIVITY_ATTACHMENT_VIDEO = 3;
@@ -82,31 +77,24 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     private int rid = 0;
     private String attachmentUri = null;
     private String attachmentMime = null;
-    private ProgressDialog progressDialog = null;
     Handler handler;
-    private Handler progressHandler = new Handler() {
-        
-        @Override
-        public void handleMessage(Message msg) {
-            if (progressDialog.getMax() < msg.what) {
-                progressDialog.setMax(msg.what);
-            } else {
-                progressDialog.setProgress(msg.what);
-            }
-        }
-    };
     private MessagesSource messagesSource;
     private JuickMessage selectedReply;
     private long usageStart;
+    GestureDetector detector;
+
+    public ThreadActivity() {
+        instanceCount++;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         JuickAdvancedApplication.maybeEnableAcceleration(this);
         JuickAdvancedApplication.setupTheme(this);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getSherlock().requestFeature(Window.FEATURE_NO_TITLE);
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //getSherlock().requestFeature(Window.FEATURE_NO_TITLE);
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         super.onCreate(savedInstanceState);
         handler = new Handler();
 
@@ -122,12 +110,14 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         }
         setContentView(R.layout.thread);
+/*
         findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(ThreadActivity.this, MainActivity.class));
             }
         });
+*/
         final View buttons = findViewById(R.id.buttons);
         bSend = (ImageButton) findViewById(R.id.buttonSend);
         bSend.setOnClickListener(this);
@@ -135,11 +125,12 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         bAttach.setOnClickListener(this);
         etMessage = (EditText) findViewById(R.id.editMessage);
 
-        sp = PreferenceManager.getDefaultSharedPreferences(this);
         if (sp.getBoolean("helvNueFonts", false)) {
             etMessage.setTypeface(JuickAdvancedApplication.helvNue);
+/*
             TextView oldTitle = (TextView)findViewById(R.id.old_title);
             oldTitle.setTypeface(JuickAdvancedApplication.helvNue);
+*/
         }
 
 
@@ -276,12 +267,60 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         args.putSerializable("mid", mid);
         args.putSerializable("messagesSource", messagesSource);
         args.putSerializable("prefetched", i.getSerializableExtra("prefetched"));
+        args.putSerializable("originalMessage", i.getSerializableExtra("originalMessage"));
         args.putBoolean("scrollToBottom", i.getBooleanExtra("scrollToBottom", false));
         tf.setArguments(args);
         ft.add(R.id.threadfragment, tf);
         ft.commit();
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
+        detector = new GestureDetector(this, new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (velocityX > 0 && Math.abs(velocityX) > 4 * Math.abs(velocityY) && Math.abs(velocityX) > 400) {
+                    System.out.println("velocityX="+velocityX+" velocityY"+velocityY);
+                    if (sp.getBoolean("swipeToClose", true)) {
+                        onBackPressed();
+                    }
+                }
+                return false;
+            }
+        });
+
+        com.actionbarsherlock.app.ActionBar actionBar = getSherlock().getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setHomeButtonEnabled(true);
+        actionBar.setLogo(R.drawable.back_button);
+
     }
+
+
+
+    Runnable pendingTransition;
 
     void saveDraft(long saveRid, String saveMid, long saveTs, String messag) {
         final SharedPreferences drafts = getSharedPreferences("drafts", MODE_PRIVATE);
@@ -306,6 +345,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         imm.hideSoftInputFromWindow(etMessage.getWindowToken(), 0);
     }
 
+/*
     private void launchMainMessagesEnabler() {
         runOnUiThread(new Runnable() {
             @Override
@@ -316,6 +356,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             }
         });
     }
+*/
 
     void resetForm() {
         rid = 0;
@@ -335,7 +376,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     protected void onResume() {
         resumed = true;
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-        launchMainMessagesEnabler();
+        //launchMainMessagesEnabler();
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
         usageStart = System.currentTimeMillis();
     }
@@ -355,10 +396,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         bSend.setEnabled(state);
     }
 
-    public boolean isFormEnabled() {
-        return bSend.isEnabled();
-    }
-
     boolean focusedOnceOnPrefetched = false;
     public void onThreadLoaded(JuickMessage message) {
         String title = "@" + message.User.UName;
@@ -366,9 +403,10 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         boolean showNumbers = sp.getBoolean("showNumbers", false);
         if (showNumbers)
             title += " - "+message.getDisplayMessageNo()+" - "+
-                    XMPPIncomingMessagesActivity.toRelaviteDate(message.Timestamp.getTime(), XMPPIncomingMessagesActivity.isRussian());
-        TextView oldTitle = (TextView)findViewById(R.id.old_title);
-        oldTitle.setText(title);
+                    com.juickadvanced.Utils.toRelaviteDate(message.Timestamp.getTime(), XMPPIncomingMessagesActivity.isRussian());
+        //TextView oldTitle = (TextView)findViewById(R.id.old_title);
+        setTitle(title);
+        //oldTitle.setText(title);
         DatabaseService.rememberVisited(message);
         final Intent i = getIntent();
         final Serializable prefetched = i.getSerializableExtra("prefetched");
@@ -378,7 +416,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             prefetchedReply = (JuickMessage) tf.getListView().getAdapter().getItem(tf.getListView().getAdapter().getCount() - 1);
             onReplySelected(prefetchedReply);
             etMessage.requestFocus();
-        } else {
         }
         final String midS = mid.toString();
         final SharedPreferences drafts = getSharedPreferences("drafts", MODE_PRIVATE);
@@ -387,7 +424,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             if (savedMID != null && savedMID.equals(midS)) {
                 pullDraft(prefetchedReply, drafts, q);
                 break;
-            } else {
             }
         }
         updateDraftsButton();
@@ -400,9 +436,8 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
 
     /**
      * @param prefetchedReply nullable, for prefetch mode only
-     * @param drafts
+     * @param drafts oh
      * @param q     draft index
-     * @return      number of someDrafts increased if this draft is of no use
      */
     private void pullDraft(JuickMessage prefetchedReply, SharedPreferences drafts, int q) {
         final long savedRid = drafts.getLong("rid" + q, 0);
@@ -433,7 +468,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                     .remove("mid" + q)
                     .commit();
         }
-        return;
     }
 
     public void onReplySelected(final JuickMessage msg) {
@@ -442,7 +476,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         if (rid > 0) {
             SpannableStringBuilder ssb = new SpannableStringBuilder();
             String inreplyto = getResources().getString(R.string.In_reply_to_) + " ";
-            ssb.append(inreplyto + msg.Text);
+            ssb.append(inreplyto).append(msg.Text);
             ssb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, inreplyto.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             tvReplyTo.setText(ssb);
             setHeight(replyToContainer, ActionBar.LayoutParams.WRAP_CONTENT);
@@ -522,7 +556,7 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         if (sp.getBoolean("previewReplies", false)) {
             final TextView tv = new TextView(this);
             JuickMessage jm = new JuickMessage();
-            jm.User = new JuickUser();;
+            jm.User = new JuickUser();
             jm.User.UName = "You";
             jm.Text = msg;
             jm.tags = new Vector<String>();
@@ -704,6 +738,13 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                 prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
                 startActivity(prefsIntent);
                 return true;
+            case android.R.id.home:
+                finish();
+                overridePendingTransition(R.anim.enter_raise_and_light, R.anim.leave_slide_to_right);
+                if (MainActivity.nActiveMainActivities == 0) {
+                    startActivity(new Intent(ThreadActivity.this, MainActivity.class));
+                }
+                return true;
             case R.id.reload:
                 tf.reload();
                 return true;
@@ -731,6 +772,10 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
         super.requestWindowFeature(featureId);
     }
 
+    @Override
+    public boolean onListTouchEvent(View view, MotionEvent event) {
+        return detector.onTouchEvent(event) || super.onListTouchEvent(view, event);
+    }
 
 
     @Override
@@ -775,5 +820,6 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             }
         }
         super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
+        overridePendingTransition(R.anim.enter_raise_and_light, R.anim.leave_slide_to_right);
     }
 }

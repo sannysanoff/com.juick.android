@@ -58,7 +58,7 @@
         <item>вниз по страницам</item>
     </string-array>
     <string-array name="navigation_menu_start">
-        <item>редактировать источники</item>
+        <item>все источники / настроить</item>
         <item>стандартный порядок</item>
         <item>шире</item>
         <item>уже</item>

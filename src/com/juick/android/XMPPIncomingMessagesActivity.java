@@ -1,10 +1,15 @@
 package com.juick.android;
 
-import android.app.Activity;
+import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -17,13 +22,18 @@ import android.text.util.Linkify;
 import android.util.Log;
 import android.view.*;
 import android.widget.*;
+import com.actionbarsherlock.app.SherlockActivity;
+import com.juick.android.api.ChildrenMessageSource;
+import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juickadvanced.data.bnw.BNWMessage;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
-import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.R;
+import com.juickadvanced.data.point.PointMessageID;
 import org.acra.ACRA;
 
 import java.util.*;
@@ -35,7 +45,7 @@ import java.util.*;
  * Time: 2:18 PM
  * To change this template use File | Settings | File Templates.
  */
-public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessageReceiver.MessageReceiverListener{
+public class XMPPIncomingMessagesActivity extends SherlockActivity implements XMPPMessageReceiver.MessageReceiverListener{
 
     private boolean resumed;
 
@@ -73,25 +83,57 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        // requestWindowFeature(Window.FEATURE_NO_TITLE);
         JuickAdvancedApplication.maybeEnableAcceleration(this);
         super.onCreate(savedInstanceState);
 
         overridePendingTransition(R.anim.enter_slide_to_bottom, android.R.anim.fade_out);
         handler = new Handler();
         setContentView(R.layout.incoming_messages);
-        findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(XMPPIncomingMessagesActivity.this, MainActivity.class));
-            }
-        });
-        TextView oldTitle = (TextView)findViewById(R.id.old_title);
-        oldTitle.setText(R.string.Incoming_Events);
+//        findViewById(R.id.gotoMain).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startActivity(new Intent(XMPPIncomingMessagesActivity.this, MainActivity.class));
+//            }
+//        });
+//        TextView oldTitle = (TextView)findViewById(R.id.old_title);
+//        oldTitle.setText(R.string.Incoming_Events);
         SharedPreferences sp = getSharedPrefs();
         editMode = sp.getBoolean("editMode", false);
         xmppServiceServiceGetter = new Utils.ServiceGetter<XMPPService>(this, XMPPService.class);
         final MyListView lv = (MyListView)findViewById(R.id.list);
+
+        try {
+            SwipeDismissListViewTouchListener touchListener =
+                    new SwipeDismissListViewTouchListener(
+                            lv,
+                            new SwipeDismissListViewTouchListener.DismissCallbacks() {
+                                @Override
+                                public boolean canDismiss(int position) {
+                                    MyListAdapter mAdapter = (MyListAdapter)lv.getAdapter();
+                                    Object item = mAdapter.getItem(position);
+                                    return item instanceof Item;
+                                }
+
+                                @Override
+                                public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+                                    MyListAdapter mAdapter = (MyListAdapter)lv.getAdapter();
+                                    for (int position : reverseSortedPositions) {
+                                        Object messag = mAdapter.getItem(position);
+                                        if (messag instanceof Item) {
+                                            Item it = (Item)messag;
+                                            deleteOneOrManyMessages(it.messages.get(0));
+                                        }
+                                        displayItems.remove(position);
+                                    }
+                                    // mAdapter.notifyDataSetChanged();
+                                }
+                            });
+            lv.setOnTouchListener(touchListener);
+            lv.setOnScrollListener(touchListener.makeScrollListener());
+        } catch (Throwable ex) {
+            // not supported
+        }
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -141,7 +183,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
                                     });
                                 }
-                                collectURLs(msg.Text);
+                                collectURLs(msg.Text, listSelectedItem.getMID());
                                 runActions();
                             }
                         }
@@ -208,6 +250,10 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 }
             }
         });
+        com.actionbarsherlock.app.ActionBar actionBar = getSherlock().getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setHomeButtonEnabled(true);
+        actionBar.setLogo(R.drawable.back_button);
         MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
         listeningAll = sp.getBoolean("extxmpp.local.listeningAll", false);
     }
@@ -257,9 +303,11 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     // for enabled messagedb, it will be placed properly automatically
                 }
             }
-            intent.putExtra("mid", ((XMPPService.JuickIncomingMessage) incomingMessage).getMID());
-            intent.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(this,"xmpp_incoming"));
+            MessageID mid = ((XMPPService.JuickIncomingMessage) incomingMessage).getMID();
+            intent.putExtra("mid", mid);
+            intent.putExtra("messagesSource", ChildrenMessageSource.forMID(this, mid));
             startActivity(intent);
+            overridePendingTransition(R.anim.enter_slide_to_left, R.anim.leave_lower_and_dark);
             return;
         }
     }
@@ -274,7 +322,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         XMPPMessageReceiver.listeners.add(this);
         super.onResume();    //To change body of overridden methods use File | Settings | File Templates.
         refreshList();
-        launchMainMessagesEnabler();
+        //launchMainMessagesEnabler();
         resumed = true;
     }
 
@@ -341,7 +389,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         ArrayList<Item> privateMessages = new ArrayList<Item>();
         ArrayList<Item> jabberMessages = new ArrayList<Item>();
         ArrayList<Item> subscriptions = new ArrayList<Item>();
-        HashMap<JuickMessageID, Item> threadMessages = new HashMap<JuickMessageID, Item>();
+        HashMap<MessageID, Item> threadMessages = new HashMap<MessageID, Item>();
 
         int nCommentsTotal = 0;
 
@@ -435,10 +483,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         l = System.currentTimeMillis() - l;
         Log.i("XMPPIncomingMessages","update adapter time="+l);
         //MainActivity.restyleChildrenOrWidget(getWindow().getDecorView());
-    }
-
-    private int compareJuickMessages(XMPPService.JuickIncomingMessage im, XMPPService.JuickIncomingMessage im1) {
-        return im.getMID().getMid() -  im1.getMID().getMid();
     }
 
     private void deleteMessages(final Class incomingMessageClass) {
@@ -545,6 +589,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         view = getLayoutInflater().inflate(R.layout.incoming_messages_private, null);
                     makePressable(view);
                     TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
+                    fromTags.setCompoundDrawablesWithIntrinsicBounds(getIconForMessageId(privmsg.getMID(), fromTags), null, null, null);
                     TextView preview = (TextView)view.findViewById(R.id.preview);
                     fromTags.setText(privmsg.getFrom());
                     preview.setText(privmsg.getBody());
@@ -553,6 +598,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     return view;
                 }
                 if (message instanceof XMPPService.JuickThreadIncomingMessage) {
+                    XMPPService.JuickThreadIncomingMessage juickThreadIncomingMessage = (XMPPService.JuickThreadIncomingMessage)message;
                     HashMap<String,HashSet<String>> counts = new HashMap<String, HashSet<String>>();
                     int totalCount = 0;
                     MessageID topicMessageId = null;
@@ -594,6 +640,8 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     XMPPService.JuickThreadIncomingMessage commentMessage = (XMPPService.JuickThreadIncomingMessage)messagesItem.messages.get(0);
                     XMPPService.JuickIncomingMessage originalMessage = commentMessage.getOriginalMessage();
                     TextView fromTags = (TextView)view.findViewById(R.id.from_tags);
+                    fromTags.setCompoundDrawablesWithIntrinsicBounds(getIconForMessageId(juickThreadIncomingMessage.getMID(), fromTags), null, null, null);
+
                     SpannableStringBuilder ssb = new SpannableStringBuilder();
                     TextView preview = (TextView)view.findViewById(R.id.preview);
 
@@ -612,7 +660,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                         }
                         ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), off, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         int ix = ssb.length();
-                        ssb.append(" - " + toRelaviteDate(((Item) item).lastTime, russian));
+                        ssb.append(" - " + com.juickadvanced.Utils.toRelaviteDate(((Item) item).lastTime, russian));
                         ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                         fromTags.setText(ssb);
                     } else {
@@ -682,6 +730,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     SpannableStringBuilder ssb = new SpannableStringBuilder(subscriptionMessage.getFrom()+" ");
                     int off = ssb.length();
                     TextView fromTags  = (TextView)view.findViewById(R.id.from_tags);
+                    fromTags.setCompoundDrawablesWithIntrinsicBounds(getIconForMessageId(subscriptionMessage.getMID(), fromTags), null, null, null);
                     TextView preview = (TextView)view.findViewById(R.id.preview);
                     ArrayList<String> tags = subscriptionMessage.getTags();
                     for (int i1 = 0; i1 < tags.size(); i1++) {
@@ -695,7 +744,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                     }
                     ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.TAGS, 0xFF0000CC)), off, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                     int ix = ssb.length();
-                    ssb.append(" - " + toRelaviteDate(subscriptionMessage.datetime.getTime(), russian));
+                    ssb.append(" - " + com.juickadvanced.Utils.toRelaviteDate(subscriptionMessage.datetime.getTime(), russian));
                     ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
 
@@ -720,6 +769,45 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
                 Log.i("XMPPIncomingMessages","get item ("+i+") time="+l);
             }
         }
+    }
+
+    HashMap<String, Drawable> icons = new HashMap<String, Drawable>();
+
+    private Drawable getIconForMessageId(MessageID mid, TextView destView) {
+        String microBlogCode = mid.getMicroBlogCode();
+        Drawable retval = icons.get(microBlogCode);
+        if (retval == null) {
+            float requiredSize = destView.getTextSize() * 1.3f;
+            Drawable drawable = getIconForMicroblog(this, microBlogCode, (int) requiredSize);
+            if (drawable != null) {
+                icons.put(microBlogCode, drawable);
+            }
+            retval = drawable;
+        }
+        return retval;
+    }
+
+    public static Drawable getIconForMicroblog(Context ctx, String microBlogCode, int requiredSize) {
+        Drawable drawable = null;
+        if (microBlogCode.equals(JuickMessageID.CODE)) {
+            drawable = ctx.getResources().getDrawable(R.drawable.navicon_juickadvanced);
+        }
+        if (microBlogCode.equals(PointMessageID.CODE)) {
+            drawable = ctx.getResources().getDrawable(R.drawable.navicon_point);
+        }
+        if (microBlogCode.equals(BnwMessageID.CODE)) {
+            drawable = ctx.getResources().getDrawable(R.drawable.navicon_bnw);
+        }
+        if (drawable != null) {
+            drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+            int size = (int) requiredSize;
+            Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bmp);
+            canvas.scale(((float) size) / drawable.getIntrinsicWidth(), ((float) size) / drawable.getIntrinsicHeight());
+            drawable.draw(canvas);
+            drawable = new BitmapDrawable(ctx.getResources(), bmp);
+        }
+        return drawable;
     }
 
     public static boolean hasMyNickAnywhereInBody(String accountName, String body) {
@@ -749,45 +837,6 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         return Locale.getDefault().getLanguage().equals("ru");
     }
 
-    public static String toRelaviteDate(long ts, boolean russian) {
-        StringBuilder sb = new StringBuilder();
-        long ctm = System.currentTimeMillis();
-        long delta = ctm - ts;
-        if (delta > 10000) {        // probably 1976 year
-            Calendar cal = GregorianCalendar.getInstance();
-            int currentYear = cal.get(Calendar.YEAR);
-            cal.setTimeInMillis(ts);
-            cal.set(Calendar.YEAR, currentYear);
-            ts = cal.getTimeInMillis();
-            delta = ctm - ts;
-        }
-        ts = (delta / 1000) / 60;
-        if (ts < 0) {
-            return russian ? "в будущем" : "in future";
-        }
-        long minutes = ts % 60;
-        ts /= 60;
-        long hours = ts % 24;
-        ts /= 24;
-        long days = ts;
-        if (days != 0) {
-            sb.append(days);
-            sb.append(russian?"д":"d ");
-        }
-        if (hours != 0) {
-            sb.append(hours);
-            sb.append(russian?"ч":"h ");
-        }
-        if (minutes != 0) {
-            sb.append(minutes);
-            sb.append(russian?"м":"m ");
-        }
-        if (sb.length() == 0) {
-            sb.append(russian ? "только что":"now");
-        }
-        return sb.toString();
-    }
-
     private void makePressable(View view) {
         if (view instanceof PressableLinearLayout) {
             final PressableLinearLayout sll = (PressableLinearLayout)view;
@@ -812,14 +861,18 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
             deleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (message instanceof XMPPService.JuickThreadIncomingMessage) {
-                        deleteThreadMessages(((XMPPService.JuickThreadIncomingMessage) message).getMID().getMid());
-                    } else {
-                        deleteOneMessage(message);
-                    }
+                    deleteOneOrManyMessages(message);
 
                 }
             });
+        }
+    }
+
+    private void deleteOneOrManyMessages(XMPPService.IncomingMessage message) {
+        if (message instanceof XMPPService.JuickThreadIncomingMessage) {
+            deleteThreadMessages(((XMPPService.JuickThreadIncomingMessage) message).getMID());
+        } else {
+            deleteOneMessage(message);
         }
     }
 
@@ -839,7 +892,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
         });
     }
 
-    private void deleteThreadMessages(final int juickMid) {
+    private void deleteThreadMessages(final MessageID mid) {
         xmppServiceServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
             @Override
             public void withoutService() {
@@ -847,7 +900,7 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
 
             @Override
             public void withService(XMPPService service) {
-                service.removeMessages(new JuickMessageID(juickMid), false);
+                service.removeMessages(mid, false);
                 refreshListWithAllMessages(service, service.incomingMessages);
                 service.maybeCancelNotification();
             }
@@ -871,11 +924,12 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
+    public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+        com.actionbarsherlock.view.MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.xmpp_messages, menu);
         return true;
     }
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -890,17 +944,23 @@ public class XMPPIncomingMessagesActivity extends Activity implements XMPPMessag
     static boolean listeningAll;
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        MenuItem listenAll = menu.findItem(R.id.listen_all);
-        MenuItem unlistenAll = menu.findItem(R.id.unlisten_all);
+    public boolean onPrepareOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+        com.actionbarsherlock.view.MenuItem listenAll = menu.findItem(R.id.listen_all);
+        com.actionbarsherlock.view.MenuItem unlistenAll = menu.findItem(R.id.unlisten_all);
         listenAll.setVisible(!listeningAll);
         unlistenAll.setVisible(listeningAll);
         return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                if (MainActivity.nActiveMainActivities == 0) {
+                    startActivity(new Intent(this, MainActivity.class));
+                }
+                return true;
             case R.id.menuitem_preferences:
                 Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
                 prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());

@@ -42,7 +42,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-import com.juick.android.juick.JuickHttpAPI;
+import com.juickadvanced.protocol.JuickHttpAPI;
 import com.juickadvanced.data.juick.JuickPlace;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.R;

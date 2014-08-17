@@ -43,9 +43,13 @@ import android.widget.*;
 import android.widget.AdapterView.OnItemLongClickListener;
 import com.juick.android.juick.*;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.imaging.ExtractURLFromMessage;
+import com.juickadvanced.protocol.JuickHttpAPI;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -56,6 +60,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -111,20 +116,22 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             urls.add(listSelectedItem.Video);
         }
 
-        collectURLs(listSelectedItem.Text);
+        collectURLs(listSelectedItem.Text, listSelectedItem.getMID());
         if (secondaryItem != null) {
-            collectURLs(secondaryItem.Text);
+            collectURLs(secondaryItem.Text, listSelectedItem.getMID());
         }
 
         if (urls.size() > 0) {
+            HashSet<String> added = new HashSet<String>();
             for (final String url : urls) {
-                menuActions.add(new RunnableItem(url) {
-                    @Override
-                    public void run() {
-                        launchURL(url);
-                    }
-                });
-
+                if (added.add(url)) {
+                    menuActions.add(new RunnableItem(url) {
+                        @Override
+                        public void run() {
+                            launchURL(listSelectedItem.getMID(), url);
+                        }
+                    });
+                }
             }
         }
 
@@ -253,14 +260,22 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         });
     }
 
-    private void launchURL(String url) {
+    private void launchURL(MessageID origMid, String url) {
         if (url.startsWith("#")) {
-            int mid = Integer.parseInt(url.substring(1));
-            if (mid > 0) {
+            MessageID newId = null;
+            if (origMid instanceof JuickMessageID) {
+                int mid = Integer.parseInt(url.substring(1));
+                newId = new JuickMessageID(mid);
+            }
+            if (origMid instanceof PointMessageID) {
+                newId = new PointMessageID("", url.substring(1), -1);
+            }
+            if (newId != null) {
                 Intent intent = new Intent(activity, ThreadActivity.class);
-                intent.putExtra("mid", new JuickMessageID(mid));
+                intent.putExtra("mid", newId);
                 intent.putExtra("messagesSource", messagesSource);
                 activity.startActivity(intent);
+                activity.overridePendingTransition(R.anim.enter_slide_to_left, R.anim.leave_lower_and_dark);
             }
             //} else if (url.startsWith("@")) {
         } else {
@@ -272,15 +287,15 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         }
     }
 
-    protected void collectURLs(String source) {
+    protected void collectURLs(String source, MessageID mid) {
         if (urls == null)
             urls = new ArrayList<String>();
-        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(source);
+        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(source, mid);
         for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
-            urls.add(foundURL.getUrl());
+            urls.add(foundURL.url);
         }
         int pos = 0;
-        Matcher m = JuickMessagesAdapter.msgPattern.matcher(source);
+        Matcher m = JuickMessagesAdapter.getCrossReferenceMsgPattern(mid).matcher(source);
         while (m.find(pos)) {
             urls.add(source.substring(m.start(), m.end()));
             pos = m.end();
@@ -296,6 +311,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
     protected void actionUserCenter() {
         Intent i = new Intent(activity, UserCenterActivity.class);
         i.putExtra("uname", listSelectedItem.User.UName);
+        i.putExtra("microblogCode", listSelectedItem.getMID().getMicroBlogCode());
         i.putExtra("uid", listSelectedItem.User.UID);
         i.putExtra("messagesSource", messagesSource);
         i.putExtra("mid", listSelectedItem.getMID());
@@ -321,9 +337,9 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                                 confirmAction(R.string.CensorSubmitForReviewConfirmation, new Runnable() {
                                     @Override
                                     public void run() {
-                                        Censor.getServerAdapter(activity).submitForReview(categoryId, token, new Utils.Function<Void, Utils.RESTResponse>() {
+                                        Censor.getServerAdapter(activity).submitForReview(categoryId, token, new Utils.Function<Void, RESTResponse>() {
                                             @Override
-                                            public Void apply(Utils.RESTResponse restResponse) {
+                                            public Void apply(RESTResponse restResponse) {
                                                 if (restResponse.getErrorText() != null) {
                                                     Toast.makeText(activity, "Censor suggest: " + restResponse.getErrorText(), Toast.LENGTH_LONG).show();
                                                 } else {
@@ -455,7 +471,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             @Override
             public void run() {
                 postMessage("U #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Unsubscribed));
-                MainActivity.commandJAMService(activity, "unsubscribeMessage:"+getCurrentMIDInt());
+                MainActivity.commandJAMService(activity, "unsubscribeMessage:"+getCurrentMIDString());
             }
         });
     }
@@ -465,7 +481,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             @Override
             public void run() {
                 postMessage("S #" + getCurrentMIDInt(), activity.getResources().getString(R.string.Subscribed));
-                MainActivity.commandJAMService(activity, "subscribeMessage:"+getCurrentMIDInt());
+                MainActivity.commandJAMService(activity, "subscribeMessage:"+getCurrentMIDString());
             }
         });
     }
@@ -691,7 +707,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                     @Override
                     public void onClick(View v) {
                         alertDialog.dismiss();
-                        launchURL(urls.get(0));
+                        launchURL(listSelectedItem.getMID(), urls.get(0));
                     }
                 });
             } else if (urls != null && urls.size() > 0) {
@@ -703,7 +719,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                                 if (position != 0) {
                                     alertDialog.dismiss();
-                                    launchURL(urls.get(position));
+                                    launchURL(listSelectedItem.getMID(), urls.get(position));
                                 }
                             }
 
@@ -908,33 +924,43 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         return ((JuickMessageID)listSelectedItem.getMID()).getMid();
     }
 
+    private String getCurrentMIDString() {
+        return listSelectedItem.getMID().toString();
+    }
+
     protected void completeInitDialogMode(AlertDialog alertDialog, View dialogView) {
 
     }
 
     protected void actionOpenMessageInBrowser() {
-        JuickMessageID mid = (JuickMessageID)listSelectedItem.getMID();
         int rid = listSelectedItem.getRID();
-        String author = null;
-        if (listAdapter != null) {
-            if (rid == 0) {
-                author = listSelectedItem.User.UName;
-            } else {
-                if (activity instanceof ThreadActivity) {
-                    JuickMessage item = listAdapter.getItem(0);
-                    author = item.User.UName;
+        MessageID mid = listSelectedItem.getMID();
+        if (mid instanceof JuickMessageID) {
+            String author = null;
+            if (listAdapter != null) {
+                if (rid == 0) {
+                    author = listSelectedItem.User.UName;
+                } else {
+                    if (activity instanceof ThreadActivity) {
+                        JuickMessage item = listAdapter.getItem(0);
+                        author = item.User.UName;
+                    }
                 }
             }
+            String url = "http://www.juick.com/";
+            if (author != null) {
+                url += author+"/";
+            }
+            url += ((JuickMessageID) mid).getMid();
+            if (rid != 0) {
+                url += "#"+rid;
+            }
+            launchURL(mid, url);
         }
-        String url = "http://www.juick.com/";
-        if (author != null) {
-            url += author+"/";
+        if (mid instanceof PointMessageID) {
+            String url = "http://point.im/"+((PointMessageID) mid).getId();
+            launchURL(mid, url);
         }
-        url += mid.getMid();
-        if (rid != 0) {
-            url += "#"+rid;
-        }
-        launchURL(url);
     }
 
     private void actionUserStats() {
@@ -978,7 +1004,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
 
             public void run() {
                 try {
-                    final Utils.RESTResponse restResponse = Utils.postJSON(activity, JuickHttpAPI.getAPIURL() + "post", "body=" + URLEncoder.encode(body, "utf-8"));
+                    final RESTResponse restResponse = Utils.postJSON(activity, JuickHttpAPI.getAPIURL() + "post", "body=" + URLEncoder.encode(body, "utf-8"));
                     final String ret = restResponse.getResult();
                     activity.runOnUiThread(new Runnable() {
 

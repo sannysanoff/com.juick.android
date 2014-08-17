@@ -11,22 +11,20 @@ import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentActivity;
 import android.view.WindowManager;
 import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.google.android.gcm.GCMRegistrar;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
+import com.juickadvanced.parsers.DevJuickComMessages;
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
 import java.io.*;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
 import static org.acra.ReportField.*;
 
@@ -87,12 +85,29 @@ public class JuickAdvancedApplication extends Application {
         }
     }
 
+    public static void initAuthorizers(Context ctx) {
+        for (Utils.URLAuth authorizer : Utils.authorizers) {
+            authorizer.maybeLoadCredentials(ctx);
+        }
+    }
+
 
     @Override
     public void onCreate() {
         long l = System.currentTimeMillis();
         if (instance == null)
             ACRA.init(this);
+        final Thread.UncaughtExceptionHandler acraHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable ex) {
+                String className = ex.getClass().getName();
+                if (className.contains("BadTokenException")) return;                        // some irrelevant callbacks
+                if (className.contains("java.util.concurrent.TimeoutException")) return;    // from finalizer
+                if (className.contains("No permission to modify given thread")) return;    // some webkit stuff
+                acraHandler.uncaughtException(thread, ex);
+            }
+        });
         instance = this;
         foreverHandler = new Handler();
         sp = PreferenceManager.getDefaultSharedPreferences(this);
@@ -349,7 +364,7 @@ public class JuickAdvancedApplication extends Application {
                 public void run() {
                     ArrayList<Utils.NameValuePair> data = new ArrayList<Utils.NameValuePair>();
                     data.add(new Utils.NameStringValuePair("file", str));
-                    final Utils.RESTResponse restResponse = Utils.postForm(instance, "http://ja.ip.rt.ru:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
+                    final RESTResponse restResponse = Utils.postForm(instance, "http://ja.ip.rt.ru:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
                     //final Utils.RESTResponse restResponse = Utils.postForm(instance, "http://192.168.1.77:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
                     if (restResponse.getErrorText() == null) {
                         file.delete();
@@ -384,5 +399,19 @@ public class JuickAdvancedApplication extends Application {
     public static void setLastTouchCoords(float x, float y) {
         lastTouchX = x;
         lastTouchY = y;
+    }
+
+    static {
+        DevJuickComMessages.sdftz = new DevJuickComMessages.SDFTZ() {
+            @Override
+            public void initSDFTZ(SimpleDateFormat sdf, String tz) {
+                sdf.setTimeZone(TimeZone.getTimeZone(tz));
+            }
+
+            @Override
+            public SimpleDateFormat createSDF(String format, String l1, String l2) {
+                return new SimpleDateFormat(format, new Locale(l1, l2));
+            }
+        };
     }
 }

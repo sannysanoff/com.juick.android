@@ -18,16 +18,18 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
-import com.juick.android.Base64;
+import com.juickadvanced.protocol.Base64;
+import com.juick.android.DefaultHTTPClientService;
+import com.juickadvanced.IHTTPClientService;
+import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
+import com.juickadvanced.protocol.JuickHttpAPI;
+import com.juickadvanced.protocol.JuickLoginProcedure;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.message.BasicHeader;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import java.io.OutputStreamWriter;
 import java.net.*;
 
 /**
@@ -55,6 +57,11 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                 accountName = null;
         }
         return accountName;
+    }
+
+    @Override
+    public void maybeLoadCredentials(Context context) {
+
     }
 
     @Override
@@ -114,64 +121,35 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                                             sp.edit().putString("juick_account_name", loginS).commit();
                                         }
 
+                                        final IHTTPClientService httpClientService = new DefaultHTTPClientService(act);
+
                                         new Thread(new Runnable() {
 
                                             public void run() {
-                                                int status = 0;
-                                                Utils.RESTResponse json = Utils.getJSON(act, JuickHttpAPI.getAPIURL() + "users?uname=" + loginS, null);
-                                                if (json.getErrorText() != null) {
-                                                    Utils.verboseDebugString(activity, "Unknown username!");
+                                                RESTResponse result = JuickLoginProcedure.validateLoginPassword(loginS, passwordS, httpClientService);
+                                                if (result.getResult() != null) {
+                                                    String[] canonicalUID = result.getResult().split(":");
+                                                    sp.edit().putString("juick_account_name", canonicalUID[0]).commit();
+                                                    Account account = new Account(canonicalUID[0], activity.getString(R.string.com_juick));
+                                                    AccountManager am = AccountManager.get(activity);
+                                                    boolean accountCreated = am.addAccountExplicitly(account, passwordS, null);
+                                                    if (!accountCreated) {
+                                                        Utils.verboseDebugString(activity, "(warning) android account for juick not created");
+                                                    }
+                                                    if (insecureB) {
+                                                        sp.edit().putString("juick_account_name", canonicalUID[0]).putString("juick_account_password", passwordS).commit();
+                                                    }
+                                                    withCookie.apply(getBasicAuthString(act));
+
                                                 } else {
-                                                    String canonicalName = loginS;
-                                                    try {
-                                                        JSONArray idname = new JSONArray(json.getResult());
-                                                        if (idname.length() != 1)
-                                                            throw new RuntimeException("Unknown username (zero length API response)!");
-                                                        canonicalName = (String)((JSONObject) idname.get(0)).get("uname");
-                                                        sp.edit().putString("juick_account_name", canonicalName).commit();
-                                                        String authStr = canonicalName + ":" + passwordS;
-                                                        final String basicAuth = "Basic " + Base64.encodeToString(authStr.getBytes(), Base64.NO_WRAP);
-                                                        Utils.verboseDebugString(activity, "Authorization: " + basicAuth+" Canonical name: "+canonicalName);
-                                                        URL apiUrl = new URL(JuickHttpAPI.getAPIURL() + "post");
-                                                        HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
-                                                        conn.setConnectTimeout(10000);
-                                                        conn.setUseCaches(false);
-                                                        conn.setRequestMethod("POST");
-                                                        conn.setDoOutput(true);
-                                                        conn.setRequestProperty("Authorization", basicAuth);
-                                                        conn.connect();
-                                                        OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-                                                        wr.write("body=S%20*juick_advanced");
-                                                        wr.close();
-                                                        status = conn.getResponseCode();
-                                                        conn.disconnect();
-                                                    } catch (Exception e) {
-                                                        Utils.verboseDebugString(activity, e.toString());
-                                                        Log.e("checkingNickPassw", e.toString());
-                                                    }
-                                                    if (status == 200) {
-                                                        Account account = new Account(canonicalName, activity.getString(R.string.com_juick));
-                                                        AccountManager am = AccountManager.get(activity);
-                                                        boolean accountCreated = am.addAccountExplicitly(account, passwordS, null);
-                                                        if (!accountCreated) {
-                                                            Utils.verboseDebugString(activity, "(warning) android account for juick not created");
+                                                    final RESTResponse finalResult = result;
+                                                    activity.runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            Toast.makeText(activity, "auth: " + finalResult.getErrorText(), Toast.LENGTH_LONG);
+                                                            authorize(act, forceLoginDialog, false, url, withCookie);
                                                         }
-
-                                                        if (insecureB) {
-                                                            sp.edit().putString("juick_account_name", canonicalName).putString("juick_account_password", passwordS).commit();
-                                                        }
-                                                        withCookie.apply(getBasicAuthString(act));
-
-                                                    } else {
-                                                        final int finalStatus = status;
-                                                        activity.runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                Toast.makeText(activity, "auth: HTTP status: " + finalStatus, Toast.LENGTH_LONG);
-                                                                authorize(act, forceLoginDialog, false, url, withCookie);
-                                                            }
-                                                        });
-                                                    }
+                                                    });
                                                 }
                                             }
                                         }).start();
@@ -219,13 +197,14 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
         if (url.contains("media=all")) return false;
         if (url.contains("/messages")) return false;
         if (url.contains("users?uname")) return false;
+        if (url.contains("post?login_check")) return false;
         return true;
     }
 
     @Override
     public void authorizeRequest(HttpRequestBase request, String cookie) {
         if (cookie != null && cookie.length() > 0) {
-            request.addHeader(new BasicHeader("Authorization", cookie));
+            request.setHeader(new BasicHeader("Authorization", cookie));
         }
         if (cachedIPAddress != null && cachedIPAddress.length() > 0) {
             if (request.getURI().toString().contains(cachedIPAddress)) {

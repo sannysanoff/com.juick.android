@@ -1,12 +1,14 @@
-package com.juick.android.psto;
+package com.juick.android.facebook;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.widget.ListView;
+import android.widget.Toast;
 import com.juick.android.JuickMessagesAdapter;
 import com.juick.android.MessageMenu;
 import com.juick.android.MessagesActivity;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.point.PointWebCompatibleMessagesSource;
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,9 +17,9 @@ import com.juick.android.juick.MessagesSource;
  * Time: 2:33 PM
  * To change this template use File | Settings | File Templates.
  */
-public class PstoMessageMenu extends MessageMenu {
+public class FacebookMessageMenu extends MessageMenu {
 
-    public PstoMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
+    public FacebookMessageMenu(Activity activity, MessagesSource messagesSource, ListView listView, JuickMessagesAdapter listAdapter) {
         super(activity, messagesSource, listView, listAdapter);
     }
 
@@ -26,15 +28,18 @@ public class PstoMessageMenu extends MessageMenu {
         //
     }
 
+
+
     @Override
     public boolean isDialogMode() {
         return false;
     }
 
     protected void actionUserBlog() {
-        Intent i = new Intent(activity, MessagesActivity.class);
-        i.putExtra("messagesSource", new PstoCompatibleMessagesSource(activity, "userblog", "@" + listSelectedItem.User.UName, "http://"+listSelectedItem.User.UName+".psto.net/"));
-        activity.startActivity(i);
+        Toast.makeText(activity, "Not implemented yet", Toast.LENGTH_SHORT);
+//        Intent i = new Intent(activity, MessagesActivity.class);
+//        i.putExtra("messagesSource", new PointWebCompatibleMessagesSource(activity, "userblog", "@" + listSelectedItem.User.UName, "http://"+listSelectedItem.User.UName+".point.im/"));
+//        activity.startActivity(i);
     }
 
 

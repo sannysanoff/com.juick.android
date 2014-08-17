@@ -32,7 +32,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
-import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.IHTTPClient;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.R;
 
 import java.io.*;
@@ -42,8 +43,10 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.BreakIterator;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
+import com.juickadvanced.protocol.Base64;
 import com.juickadvanced.xmpp.ServerToClient;
 import org.apache.http.*;
 import org.apache.http.client.ClientProtocolException;
@@ -59,6 +62,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.HttpEntityWrapper;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -68,13 +72,12 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.*;
 
 /**
  * @author Ugnich Anton
  */
-public class Utils {
+public class Utils extends com.juickadvanced.Utils {
 
     public static final String NO_AUTH = "NO AUTH";
     public static ArrayList<URLAuth> authorizers = new ArrayList<URLAuth>();
@@ -96,6 +99,8 @@ public class Utils {
             NORMAL,
             FAIL
         }
+
+        public abstract void maybeLoadCredentials(Context context);
 
         public abstract boolean acceptsURL(String url);
 
@@ -120,6 +125,11 @@ public class Utils {
 
 
         String jaiprtruCache = null;
+
+        @Override
+        public void maybeLoadCredentials(Context context) {
+
+        }
 
         @Override
         public boolean acceptsURL(String url) {
@@ -244,11 +254,6 @@ public class Utils {
 
     }
 
-    public static abstract class Function<T, A> {
-        int retryCount = 0;
-        public abstract T apply(A a);
-    }
-
 
     public static class GetServiceRequest {
         ServiceGetter sg;
@@ -319,6 +324,22 @@ public class Utils {
 
         public void getService(final Receiver<T> receive) {
             final GetServiceStatus getServiceStatus;
+            if (serviceClass == DatabaseService.class) {
+                if (DatabaseService.INSTANCE != null && DatabaseService.running) {
+                    DatabaseService.INSTANCE.handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (DatabaseService.INSTANCE != null && DatabaseService.running) {
+                                receive.withService((T)DatabaseService.INSTANCE);
+                            } else {
+                                getService(receive);
+                            }
+                        }
+                    });
+                    return;
+                }
+            }
+
             synchronized (getServiceQueue) {
                 GetServiceStatus getServiceStatus__ = getServiceQueue.get(serviceClass);
                 if (getServiceStatus__ == null) {
@@ -421,32 +442,6 @@ public class Utils {
         return accs.length > 0;
     }
 
-
-    public static interface Notification {
-
-    }
-
-    public static interface RetryNotification extends Notification {
-        public void notifyRetryIsInProgress(int retry);
-    }
-
-    public static interface BackupServerNotification extends Notification {
-        public void notifyBackupInUse(boolean backup);
-    }
-
-    public static interface HasCachedCopyNotification extends Notification {
-        public void onCachedCopyObtained(ArrayList<JuickMessage> messages);
-    }
-
-    public static interface DownloadProgressNotification extends Notification {
-        public void notifyDownloadProgress(int progressBytes);
-
-        public void notifyHttpClientObtained(HttpClient client);
-    }
-
-    public static interface DownloadErrorNotification extends Notification {
-        public void notifyDownloadError(String error);
-    }
 
     public static RESTResponse getJSONWithRetries(Context context, String url, Notification notification) {
         RESTResponse retval = null;
@@ -678,30 +673,6 @@ public class Utils {
             }
 
         });
-    }
-
-    public static class RESTResponse {
-        public String result;
-        public String errorText;
-        public boolean mayRetry;
-
-        public RESTResponse(String errorText, boolean mayRetry, String result) {
-            this.errorText = errorText;
-            this.mayRetry = mayRetry;
-            this.result = result;
-        }
-
-        public String getResult() {
-            return result;
-        }
-
-        public boolean isMayRetry() {
-            return mayRetry;
-        }
-
-        public String getErrorText() {
-            return errorText;
-        }
     }
 
     public static class BINResponse {
@@ -942,7 +913,6 @@ public class Utils {
         }
     }
 
-
     public static RESTResponse postJSON(final Context context, final String url, final String data) {
         return postJSON(context, url, data, null);
     }
@@ -969,7 +939,7 @@ public class Utils {
                     conn.setUseCaches(false);
                     conn.setDoInput(true);
                     conn.setDoOutput(true);
-                    //conn.setRequestMethod("POST");
+                    conn.setRequestMethod("POST");
 
                     OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
                     wr.write(data);
@@ -1021,30 +991,6 @@ public class Utils {
         return ret[0];
     }
 
-
-    public static RESTResponse streamToString(InputStream is, Notification progressNotification) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            long l = System.currentTimeMillis();
-            byte[] buf = new byte[1024];
-            while (true) {
-                int len = is.read(buf);
-                if (len <= 0) break;
-                baos.write(buf, 0, len);
-                if (System.currentTimeMillis() - l > 100) {
-                    l = System.currentTimeMillis();
-                    if (progressNotification instanceof DownloadProgressNotification)
-                        ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(baos.size());
-                }
-            }
-            return new RESTResponse(null, false, new String(baos.toByteArray(), "UTF-8"));
-        } catch (Exception e) {
-            if (progressNotification instanceof DownloadErrorNotification)
-                ((DownloadErrorNotification) progressNotification).notifyDownloadError(e.toString());
-            Log.e("streamReader", e.toString());
-            return new RESTResponse(e.toString(), true, null);
-        }
-    }
 
     public static BINResponse streamToByteArray(InputStream is, Notification progressNotification) {
         try {
@@ -1130,7 +1076,111 @@ public class Utils {
         return null;
     }
 
+    public static class AndroidHTTPClient implements IHTTPClient {
+
+        HttpRequestBase base;
+        Context context;
+        HttpClient client = new DefaultHttpClient();
+
+        public AndroidHTTPClient(Context context) {
+            this.context = context;
+        }
 
 
+        @Override
+        public void setURL(String method, String url) {
+            if (method.equals("POST")) {
+                base = new HttpPost(url);
+            } else {
+                base = new HttpGet(url);
+            }
+
+        }
+
+        @Override
+        public void addHeader(String name, String value) {
+            base.addHeader(name, value);
+        }
+
+        @Override
+        public Response execute() throws IOException {
+            final String url = base.getURI().toURL().toString();
+            final URLAuth authorizer = getAuthorizer(url);
+            final AtomicReference<Response> retval = new AtomicReference<Response>();
+            new Thread() {
+                public void run() {
+                    authorizer.authorize(context, false, false, url, new Function<Void, String>() {
+                        @Override
+                        public Void apply(String myCookie) {
+                            try {
+                                authorizer.authorizeRequest(base, myCookie);
+                                final HttpResponse execute = client.execute(base);
+                                final HttpEntity entity = execute.getEntity();
+                                retval.set(new Response(execute.getStatusLine().getStatusCode()) {
+                                    @Override
+                                    public InputStream getStream() throws IOException {
+                                        return entity.getContent();
+                                    }
+
+                                    @Override
+                                    public Header[] getHeaders(String s) {
+                                        org.apache.http.Header[] headers = execute.getHeaders(s);
+                                        Header[] retval = new Header[headers.length];
+                                        for (int i = 0; i < headers.length; i++) {
+                                            org.apache.http.Header header = headers[i];
+                                            retval[i] = new Header(header.getName(), header.getValue());
+                                        }
+                                        return retval;
+                                    }
+                                });
+                            } catch (Exception e) {
+                                retval.set(new Response(599) {
+                                    @Override
+                                    public InputStream getStream() throws IOException {
+                                        return null;
+                                    }
+
+                                    @Override
+                                    public Header[] getHeaders(String s) {
+                                        return new Header[0];
+                                    }
+                                });
+                            } finally {
+                                synchronized (retval) {
+                                    retval.notify();
+                                }
+                            }
+                            return null;
+                        }
+                    });
+                }
+            }.start();
+            synchronized (retval) {
+                try {
+                    retval.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            return retval.get();
+        }
+
+        @Override
+        public void setURLEncodedPostData(String data) {
+            try {
+                if (base instanceof HttpPost) {
+                    ((HttpPost)base).setEntity(new StringEntity(data));
+                    ((HttpPost)base).addHeader("Content-Type","application/x-www-form-urlencoded");
+                }
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void terminate() {
+            client.getConnectionManager().shutdown();
+        }
+    }
 
 }

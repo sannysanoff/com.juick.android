@@ -3,6 +3,7 @@ package com.juick.android.ja;
 import android.content.Context;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
+import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
@@ -10,6 +11,7 @@ import com.juickadvanced.R;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.sources.PureJuickCompatibleURLMessagesSource;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,9 +39,9 @@ public class JAUnansweredMessagesSource extends MessagesSource {
     @Override
     public void getFirst(final Utils.Notification notifications, final Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         final String url = "https://ja.ip.rt.ru:8444/api/pending?command=list";
-        final Utils.Function<Void, Utils.RESTResponse> then = new Utils.Function<Void, Utils.RESTResponse>() {
+        final Utils.Function<Void, RESTResponse> then = new Utils.Function<Void, RESTResponse>() {
             @Override
-            public Void apply(Utils.RESTResponse response) {
+            public Void apply(RESTResponse response) {
                 ArrayList<JuickMessage> messages = parseAndProcess(response.getResult());
                 cont.apply(messages);
                 return null;
@@ -52,9 +54,9 @@ public class JAUnansweredMessagesSource extends MessagesSource {
         if (jsonStr == null) return new ArrayList<JuickMessage>();
         try {
             final JSONObject jsonObject = new JSONObject(jsonStr);
-            final ArrayList<JuickMessage> juickMessages = JuickCompatibleURLMessagesSource.parseJSONpure(jsonObject.get("replies").toString(), false);
-            final ArrayList<JuickMessage> posts = JuickCompatibleURLMessagesSource.parseJSONpure(jsonObject.get("posts").toString(), false);
-            final ArrayList<JuickMessage> myReplies = JuickCompatibleURLMessagesSource.parseJSONpure(jsonObject.get("my_replies").toString(), false);
+            final ArrayList<JuickMessage> juickMessages = PureJuickCompatibleURLMessagesSource.parseJSONpure(jsonObject.get("replies").toString(), false);
+            final ArrayList<JuickMessage> posts = PureJuickCompatibleURLMessagesSource.parseJSONpure(jsonObject.get("posts").toString(), false);
+            final ArrayList<JuickMessage> myReplies = PureJuickCompatibleURLMessagesSource.parseJSONpure(jsonObject.get("my_replies").toString(), false);
             // join context to messages
             for (JuickMessage juickMessage : juickMessages) {
                 final MessageID mid = juickMessage.getMID();

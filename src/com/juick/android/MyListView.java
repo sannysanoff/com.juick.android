@@ -60,8 +60,9 @@ public class MyListView extends ListView {
         }
         try {
             return super.onTouchEvent(ev);
-        } finally {
-
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            // 2.3.3 bug
+            return false;
         }
     }
 

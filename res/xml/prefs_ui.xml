@@ -8,6 +8,7 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
+<!--
     <PreferenceCategory android:title="@string/NavigationMode">
         <CheckBoxPreference
                 android:key="googlePlusNavigation"
@@ -16,6 +17,7 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
+-->
     <PreferenceCategory android:title="@string/LegacyMenu">
         <ListPreference
                 android:key="menuFontScale"
@@ -44,28 +46,39 @@
                 android:summary="@string/Position_can_be_reset"
                 android:defaultValue="false"
                 android:persistent="true"/>
+<!--
         <CheckBoxPreference
                 android:key="lastReadMessages"
                 android:title="@string/MarkAlreadyReadMessages"
                 android:defaultValue="false"
                 android:persistent="true"/>
+-->
+<!--
         <CheckBoxPreference
                 android:key="prefetchMessages"
                 android:title="@string/PrefetchMoreMessages"
                 android:summary="@string/AndNeverSeeLoading"
                 android:defaultValue="false"
                 android:persistent="true"/>
+-->
+<!--
         <CheckBoxPreference
                 android:key="enable_pull_to_refresh"
                 android:title="@string/EnablePullToRefresh"
                 android:defaultValue="true"
                 android:persistent="true"/>
+-->
         <ListPreference
                 android:key="keyScrollMode"
                 android:title="@string/VolumeKeysScrolling"
                 android:entries="@array/keys_scrolling"
                 android:entryValues="@array/keys_scrolling_values"
                 android:defaultValue="page"
+                android:persistent="true"/>
+        <CheckBoxPreference
+                android:key="swipeToClose"
+                android:title="@string/SwipeToClose"
+                android:defaultValue="true"
                 android:persistent="true"/>
         <CheckBoxPreference
                 android:key="confirmActions"
@@ -108,19 +121,23 @@
                 android:defaultValue="false"
                 android:persistent="true"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/CameraCapture">
+    <!--<PreferenceCategory android:title="@string/CameraCapture">-->
+<!--
         <CheckBoxPreference
                 android:key="useTempFileForCapture"
                 android:title="@string/CaptureIntoTempFile"
                 android:defaultValue="true"
                 android:persistent="true"/>
+-->
+<!--
         <CheckBoxPreference
                 android:key="askForResize"
                 android:title="@string/AskForPhotoResize"
                 android:summary="@string/OnlyWorksWithAboveCheckboxOn"
                 android:defaultValue="false"
                 android:persistent="true"/>
-    </PreferenceCategory>
+-->
+    <!--</PreferenceCategory>-->
 
     <PreferenceCategory android:title="@string/FullScreen">
         <CheckBoxPreference
@@ -146,11 +163,6 @@
                 android:key="text_accelerated"
                 android:title="Early text render"
                 android:summary="Render text in BG thread (pre-alpha, do not use.)"
-                android:defaultValue="false"
-                android:persistent="true"/>
-        <CheckBoxPreference
-                android:key="alternativeLongClick"
-                android:title="Alternative long click"
                 android:defaultValue="false"
                 android:persistent="true"/>
         <CheckBoxPreference

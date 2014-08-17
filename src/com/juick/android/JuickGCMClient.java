@@ -1,7 +1,8 @@
 package com.juick.android;
 
 import android.content.Context;
-import com.juick.android.juick.JuickHttpAPI;
+import com.juickadvanced.protocol.JuickHttpAPI;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.parsers.JuickParser;
@@ -50,12 +51,14 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
                                         "@"+juickMessage.User.UName,
                                         juickMessage.Text,
                                         "#"+((JuickMessageID)juickMessage.getMID()).getMid(),
+                                        JuickMessageID.CODE,
                                         juickMessage.Timestamp);
                             } else {
                                 XMPPService.JuickSubscriptionIncomingMessage imsg = new XMPPService.JuickSubscriptionIncomingMessage(
                                         "@"+juickMessage.User.UName,
                                         juickMessage.Text,
                                         "#"+((JuickMessageID)juickMessage.getMID()).getMid(),
+                                        JuickMessageID.CODE,
                                         juickMessage.Timestamp);
                                 imsg.tags = new ArrayList<String>();
                                 imsg.tags.addAll(juickMessage.tags);
@@ -66,6 +69,7 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
                                     "@"+juickMessage.User.UName,
                                     juickMessage.Text,
                                     "#"+((JuickMessageID)juickMessage.getMID()).getMid()+"/"+juickMessage.getRID(),
+                                    JuickMessageID.CODE,
                                     juickMessage.Timestamp);
                             tmsg.replyto = juickMessage.getReplyTo();
                             msg = tmsg;
@@ -103,7 +107,7 @@ public class JuickGCMClient implements GCMIntentService.GCMMessageListener {
     }
 
     private void registerOnServer(String registrationId) {
-        Utils.RESTResponse json = Utils.getJSON(context, JuickHttpAPI.getAPIURL() + "android/register?regid=" + registrationId, null);
+        RESTResponse json = Utils.getJSON(context, JuickHttpAPI.getAPIURL() + "android/register?regid=" + registrationId, null);
         if (json.getResult() != null) {
             XMPPService.juickGCMStatus = "Registered";
             JuickAdvancedApplication.showXMPPToast("JuickGCMClient register success");

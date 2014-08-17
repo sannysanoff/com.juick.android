@@ -36,11 +36,6 @@ public class DisplayChartActivity2 extends Activity implements Utils.Notificatio
         });
     }
 
-    @Override
-    public void notifyHttpClientObtained(HttpClient client) {
-
-    }
-
     Handler handler;
 
     @Override

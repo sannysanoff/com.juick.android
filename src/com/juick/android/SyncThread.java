@@ -3,6 +3,7 @@ package com.juick.android;
 import android.content.ContentValues;
 import android.database.Cursor;
 import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juickadvanced.RESTResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -97,7 +98,7 @@ public class SyncThread extends Thread {
                     if (count > 0) {
                         // have some lastread markers to sync
                         sb.append("]");
-                        final Utils.RESTResponse checkpoint = databaseService.executeServerSyncCommit("last_reads", sb.toString());
+                        final RESTResponse checkpoint = databaseService.executeServerSyncCommit("last_reads", sb.toString());
                         if (checkpoint.getErrorText() != null) {
                             waitDelay = -1; // maybe later
                             continue;
@@ -168,7 +169,7 @@ public class SyncThread extends Thread {
                     if (count > 0) {
                         // have some lastread markers to sync
                         sb.append("]");
-                        final Utils.RESTResponse checkpoint = databaseService.executeServerSyncCommit("saved_messages", sb.toString());
+                        final RESTResponse checkpoint = databaseService.executeServerSyncCommit("saved_messages", sb.toString());
                         if (checkpoint.getErrorText() != null) {
                             waitDelay = -1; // maybe later
                             continue;
@@ -240,7 +241,7 @@ public class SyncThread extends Thread {
                     if (count > 0) {
                         // have some lastread markers to sync
                         sb.append("]");
-                        final Utils.RESTResponse checkpoint = databaseService.executeServerSyncCommit("censor_local", sb.toString());
+                        final RESTResponse checkpoint = databaseService.executeServerSyncCommit("censor_local", sb.toString());
                         if (checkpoint.getErrorText() != null) {
                             waitDelay = -1; // maybe later
                             continue;
@@ -279,7 +280,7 @@ public class SyncThread extends Thread {
                         cursor.moveToNext();
                         int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
                         cursor.close();
-                        Utils.RESTResponse somethingToSync = databaseService.executeServerSyncQuery("saved_messages", lastCheckpoint);
+                        RESTResponse somethingToSync = databaseService.executeServerSyncQuery("saved_messages", lastCheckpoint);
                         if (somethingToSync.getErrorText() != null) {
                             JuickAdvancedApplication.addToGlobalLog("sync: "+somethingToSync.getErrorText(), null);
                             waitDelay = -1; // maybe later
@@ -343,7 +344,7 @@ public class SyncThread extends Thread {
                         cursor.moveToNext();
                         int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
                         cursor.close();
-                        Utils.RESTResponse somethingToSync = databaseService.executeServerSyncQuery("last_reads", lastCheckpoint);
+                        RESTResponse somethingToSync = databaseService.executeServerSyncQuery("last_reads", lastCheckpoint);
                         if (somethingToSync.getErrorText() != null) {
                             waitDelay = -1; // maybe later
                             continue;
@@ -404,7 +405,7 @@ public class SyncThread extends Thread {
                         cursor.moveToNext();
                         int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
                         cursor.close();
-                        Utils.RESTResponse somethingToSync = databaseService.executeServerSyncQuery("censor_category", lastCheckpoint);
+                        RESTResponse somethingToSync = databaseService.executeServerSyncQuery("censor_category", lastCheckpoint);
                         if (somethingToSync.getErrorText() != null) {
                             waitDelay = -1; // maybe later
                             continue;
@@ -463,7 +464,7 @@ public class SyncThread extends Thread {
                         cursor.moveToNext();
                         int lastCheckpoint = cursor.getInt(0);  // 0 is ok.
                         cursor.close();
-                        Utils.RESTResponse somethingToSync = databaseService.executeServerSyncQuery("censor_global", lastCheckpoint);
+                        RESTResponse somethingToSync = databaseService.executeServerSyncQuery("censor_global", lastCheckpoint);
                         if (somethingToSync.getErrorText() != null) {
                             waitDelay = -1; // maybe later
                             continue;

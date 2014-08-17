@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
+import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juick.android.juick.JuickMicroBlog;
@@ -23,8 +24,8 @@ import java.net.URLEncoder;
  */
 public class Network {
 
-    public static Utils.RESTResponse postJSONHome(Context context, String path, String data) {
-        Utils.RESTResponse ret = null;
+    public static RESTResponse postJSONHome(Context context, String path, String data) {
+        RESTResponse ret = null;
         try {
             URL jsonURL = new URL("http://" + Utils.JA_ADDRESS + path);
             HttpURLConnection conn = (HttpURLConnection) jsonURL.openConnection();
@@ -44,18 +45,18 @@ public class Network {
                 ret = Utils.streamToString(inputStream, null);
                 inputStream.close();
             } else {
-                return new Utils.RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
+                return new RESTResponse("HTTP "+conn.getResponseCode()+" " + conn.getResponseMessage(), false, null);
             }
 
             conn.disconnect();
             return ret;
         } catch (Exception e) {
             Log.e("getJSONHome", e.toString());
-            return new Utils.RESTResponse(e.toString(), false, null);
+            return new RESTResponse(e.toString(), false, null);
         }
     }
 
-    public static void executeJAHTTPS(final Context ctx, final Utils.Notification notifications, final String url, final Utils.Function<Void, Utils.RESTResponse> then) {
+    public static void executeJAHTTPS(final Context ctx, final Utils.Notification notifications, final String url, final Utils.Function<Void, RESTResponse> then) {
         final Activity activity = (Activity) ctx;
         activity.runOnUiThread(new Runnable() {
             @Override
@@ -69,11 +70,11 @@ public class Network {
                                 String pass = JuickAPIAuthorizer.getPassword(ctx);
                                 if (pass != null) {
                                     final String password = URLEncoder.encode(pass);
-                                    final Utils.RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
+                                    final RESTResponse response = Utils.getJSON(ctx, url + "&login=" + URLEncoder.encode(integerStringPair.second)
                                             + "&password=" + password, notifications);
                                     then.apply(response);
                                 } else {
-                                    then.apply(new Utils.RESTResponse("Not authorized (empty password)", false, null));
+                                    then.apply(new RESTResponse("Not authorized (empty password)", false, null));
                                 }
                             }
                         }.start();

@@ -8,7 +8,14 @@ import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
 import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juick.android.juick.JuickMicroBlog;
+import com.juick.android.point.PointAuthorizer;
+import com.juick.android.point.PointMicroBlog;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
+import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.xmpp.ClientToServer;
 import com.juickadvanced.xmpp.ServerToClient;
 import com.juickadvanced.xmpp.XMPPConnectionSetup;
@@ -41,7 +48,6 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     Context context;
     private Handler handler;
     XMPPConnectionSetup setup;
-    String username;
     volatile JASocketClient wsClient;
     Thread wsclientLoop;
     public boolean loggedIn;
@@ -56,6 +62,9 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     public String loginXMPP(Context context, Handler handler, XMPPConnectionSetup setup, HashSet<String> wachedJids) {
         this.wachedJids = wachedJids;
         this.context = context;
+        if (context == null) {
+            ACRA.getErrorReporter().handleException(new RuntimeException("NULL context in constructor! "));
+        }
         this.setup = setup;
         this.handler = handler;
         socketName = "xmppSocket";
@@ -137,14 +146,15 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }
     }
 
-    public String loginLocal(Context context, Handler handler, String username, String cookie) {
+    public String loginLocal(Context context, Handler handler) {
         this.context = context;
+        if (context == null) {
+            ACRA.getErrorReporter().handleException(new RuntimeException("NULL context in constructor! "));
+        }
         JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal");
-        log("loginLocal: "+username);
         this.handler = handler;
-        this.username = username;
         socketName = "jamSocket";
-        String retval = performLoginLocal(context, username, cookie);
+        String retval = performLoginLocal(context);
         if (retval == null) {
             JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal success");
             loggedIn = true;
@@ -156,14 +166,15 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     private String performLogin(Context context, XMPPConnectionSetup setup) {
-        if (JuickAPIAuthorizer.getPassword(context) == null)
-            return new String("No Juick Account");
+        HashSet<AccountProof> accountProofs = getAccountProofs(context);
+        if (accountProofs.size() < 1)
+            return new String("No accounts, need smth to use JAXMPP");
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
         Login login = new Login(setup, this.wachedJids, JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
         login.setProofAccountId(JuickAPIAuthorizer.getJuickAccountName(context));
         login.setProofAccountToken(JuickAPIAuthorizer.getBasicAuthString(context));
-        login.setProofAccountType("juick");
+        login.setProofAccountType(JuickMessageID.CODE);
         c2s.setLogin(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
         onKeepAlive();
@@ -185,30 +196,48 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             return "Incomplete JAXMPP configuration.";
         }
         if (setup.jid.endsWith("@local")) {
-            int lastLocal = setup.jid.lastIndexOf("@local");
-            String uname = setup.jid.substring(0, lastLocal);
-            return performLoginLocal(context, uname, setup.password);
+            return performLoginLocal(context);
         } else {
             return performLogin(context, setup);
         }
     }
 
-    private String performLoginLocal(Context context, String username, String cookie) {
-        if (JuickAPIAuthorizer.getPassword(context) == null)
-            return new String("No Juick Account");
+    private String performLoginLocal(Context context) {
+        HashSet<AccountProof> accountProofs = getAccountProofs(context);
+        if (accountProofs.size() < 1)
+            return new String("No Accounts");
         setup = new XMPPConnectionSetup();
-        setup.jid = username.trim()+"@local";
-        setup.password = cookie;
+        setup.jid = DatabaseService.getUniqueInstallationId(context, "")+"@local";
+        setup.password = "";
         sessionId = createJASessionId(context, setup);
         ClientToServer c2s = new ClientToServer(sessionId);
-        Login login = new Login(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
-        login.setProofAccountId(JuickAPIAuthorizer.getJuickAccountName(context));
-        login.setProofAccountToken(JuickAPIAuthorizer.getBasicAuthString(context));
-        login.setProofAccountType("juick");
-        c2s.setLogin(login);
+        LoginMultiple login = new LoginMultiple(setup, new HashSet<String>(), JuickAdvancedApplication.registrationId, JuickAdvancedApplication.version);
+        HashSet<AccountProof> proofs = getAccountProofs(context);
+        login.setProofs(proofs);
+        c2s.setLoginMultiple(login);
         ServerToClient serverToClient = callXmppControl(context, c2s);
         onKeepAlive();
         return serverToClient.getErrorMessage();
+    }
+
+    public static HashSet<AccountProof> getAccountProofs(Context context) {
+        HashSet<AccountProof> proofs = new HashSet<AccountProof>();
+        if (JuickAPIAuthorizer.getJuickAccountName(context) != null) {
+            proofs.add(new AccountProof(
+                    JuickAPIAuthorizer.getJuickAccountName(context),
+                    JuickAPIAuthorizer.getBasicAuthString(context),
+                    JuickMessageID.CODE
+                    ));
+        }
+        PointMicroBlog.instance.authorizer.maybeLoadCredentials(context);
+        if (PointAuthorizer.token != null) {
+            proofs.add(new AccountProof(
+                    PointAuthorizer.getPointAccountName(context),
+                    PointAuthorizer.getPointAccountPassword(context),
+                    PointMessageID.CODE
+            ));
+        }
+        return proofs;
     }
 
     public void callXmppControlSafe(final Context context, final ClientToServer c2s, final Utils.Function<Void, ServerToClient> then) {
@@ -237,7 +266,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     public ServerToClient callXmppControl(Context context, ClientToServer c2s) {
         String dataValue = new Gson().toJson(c2s);
-        Utils.RESTResponse restResponse = Utils.postJA(context, controlURL, dataValue);
+        RESTResponse restResponse = Utils.postJA(context, controlURL, dataValue);
         ServerToClient result;
         if (restResponse.getErrorText() != null) {
             result = new ServerToClient(sessionId, restResponse.getErrorText());
@@ -379,24 +408,30 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         });
     }
 
+    String[] allXMPPMicroblogs = new String[] { JuickMessageID.CODE, PointMessageID.CODE };
+
     public void listenAll() {
-        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
-            @Override
-            public Void apply(ClientToServer clientToServer) {
-                clientToServer.setSubscribeToAll(new SubscribeToAll("S"));
-                return null;
-            }
-        }, null);
+        for (final String microblog : allXMPPMicroblogs) {
+            callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+                @Override
+                public Void apply(ClientToServer clientToServer) {
+                    clientToServer.setSubscribeToAll(new SubscribeToAll("S", microblog));
+                    return null;
+                }
+            }, null);
+        }
     }
 
     public void unlistenAll() {
-        callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
-            @Override
-            public Void apply(ClientToServer clientToServer) {
-                clientToServer.setSubscribeToAll(new SubscribeToAll("U"));
-                return null;
-            }
-        }, null);
+        for (final String microblog : allXMPPMicroblogs) {
+            callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
+                @Override
+                public Void apply(ClientToServer clientToServer) {
+                    clientToServer.setSubscribeToAll(new SubscribeToAll("U", microblog));
+                    return null;
+                }
+            }, null);
+        }
     }
 
     public void setupSubscriptions(final ArrayList<String> subscriptions) {
@@ -409,41 +444,41 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         }, null);
     }
 
-    public void unsubscribeMessage(final String mid) {
+    public void unsubscribeMessage(final MessageID mid) {
         callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
             @Override
             public Void apply(ClientToServer clientToServer) {
-                clientToServer.setSubscribeToThread(new SubscribeToThread(Integer.parseInt(mid), "R"));
+                clientToServer.setSubscribeToThread(new SubscribeToThread(mid.toString(), "R"));
                 return null;
             }
         }, null);
     }
 
-    public void subscribeMessage(final String mid) {
+    public void subscribeMessage(final MessageID mid) {
         callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
             @Override
             public Void apply(ClientToServer clientToServer) {
-                clientToServer.setSubscribeToThread(new SubscribeToThread(Integer.parseInt(mid), "S"));
+                clientToServer.setSubscribeToThread(new SubscribeToThread(mid.toString(), "S"));
                 return null;
             }
         }, null);
     }
 
-    public void subscribeToComments(final String uname) {
+    public void subscribeToComments(final String uname, final String microblogId) {
         callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
             @Override
             public Void apply(ClientToServer clientToServer) {
-                clientToServer.setSubscribeToComments(new SubscribeToComments(uname, "S"));
+                clientToServer.setSubscribeToComments(new SubscribeToComments(uname, microblogId, "S"));
                 return null;
             }
         }, null);
     }
 
-    public void unsubscribeFromComments(final String uname) {
+    public void unsubscribeFromComments(final String uname, final String microblogId) {
         callXMPPControlSafeWithArgs(new Utils.Function<Void, ClientToServer>() {
             @Override
             public Void apply(ClientToServer clientToServer) {
-                clientToServer.setSubscribeToComments(new SubscribeToComments(uname, null));
+                clientToServer.setSubscribeToComments(new SubscribeToComments(uname, microblogId, null));
                 return null;
             }
         }, null);

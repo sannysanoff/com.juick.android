@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:summary="@string/ConfigureYourSources">
+    <Preference android:summary="@string/NotificationsSummary">
+        <intent android:targetPackage="com.juickadvanced" android:targetClass="com.juick.android.XMPPControlActivity"/>
+    </Preference>
     <PreferenceCategory android:title="@string/JuBoIntegration">
-        <CheckBoxPreference
-            android:key="msrcJubo"
-            android:title="@string/JuBoRSSReader"
-            android:summary="@string/AddThisSourceToTheList"
-            android:defaultValue="false"
-            android:persistent="true"/>
         <EditTextPreference
             android:key="juboRssURL"
             android:title="JuBo RSS url"
@@ -20,140 +17,10 @@
             android:persistent="true"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/navigationMy">
-        <CheckBoxPreference
-            android:key="msrcMyBlog"
-            android:title="@string/navigationMy"
-            android:defaultValue="true"
-            android:persistent="true"/>
         <EditTextPreference
             android:key="myUserId"
             android:title="@string/UserIdForMyBlog"
             android:summary="@string/LeaveItEmptyIfUnknown"
-            android:persistent="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/UseWebInsteadOfJSON">
-        <!--
-        <CheckBoxPreference
-                android:key="web_for_subscriptions"
-                android:title="@string/Subscriptions__Web"
-                android:defaultValue="false"
-                android:persistent="true"/>
-                -->
-<!--
-        <CheckBoxPreference
-                android:key="web_for_myblog"
-                android:title="My blog"
-                android:defaultValue="false"
-                android:persistent="true"/>
--->
-
-    </PreferenceCategory>
-    <PreferenceCategory android:title="@string/MessagesSources">
-        <CheckBoxPreference
-            android:key="msrcTopMessages"
-            android:title="@string/navigationTop"
-            android:defaultValue="true"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcWithPhotos"
-            android:title="@string/navigationPhoto"
-            android:defaultValue="true"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcSrachiki"
-            android:title="@string/navigationSrachiki"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcPrivate"
-            android:title="@string/navigationPrivate"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcDiscuss"
-            android:title="@string/navigationDiscuss"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcUnread"
-            android:title="@string/navigationUnread"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcUnanswered"
-            android:title="@string/navigationUnanswered"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-                android:key="msrcSaved"
-                android:title="@string/navigationSaved"
-                android:defaultValue="false"
-                android:persistent="true"/>
-        <CheckBoxPreference
-                android:key="msrcRecentOpen"
-                android:title="@string/navigationRecentlyOpened"
-                android:defaultValue="false"
-                android:persistent="true"/>
-        <CheckBoxPreference
-                android:key="msrcRecentComment"
-                android:title="@string/navigationRecentlyCommented"
-                android:defaultValue="false"
-                android:persistent="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="BnW sources">
-        <CheckBoxPreference
-            android:key="msrcBNWFeed"
-            android:title="@string/navigationBNWFeed"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcBNWAll"
-            android:title="@string/navigationBNWAll"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcBNWHot"
-            android:title="@string/navigationBNWHot"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="PSTO.NET sources">
-        <CheckBoxPreference
-            android:key="msrcPSTOSubs"
-            android:title="@string/navigationPSTOSubs"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcPSTORecent"
-            android:title="@string/navigationPSTORecent"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcPSTOPopular"
-            android:title="@string/navigationPSTOPopular"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcPSTOMy"
-            android:title="@string/navigationPSTOMy"
-            android:defaultValue="false"
-            android:persistent="true"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="POINT.IM sources">
-        <CheckBoxPreference
-            android:key="msrcPointSubs"
-            android:title="@string/navigationPointSubs"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcPointAll"
-            android:title="@string/navigationPointAll"
-            android:defaultValue="false"
-            android:persistent="true"/>
-        <CheckBoxPreference
-            android:key="msrcPointMine"
-            android:title="@string/navigationPointMine"
-            android:defaultValue="false"
             android:persistent="true"/>
     </PreferenceCategory>
 

@@ -9,6 +9,7 @@
     <string name="BNWMicroblog">BnW</string>
     <string name="PstoMicroblog">psto.net</string>
     <string name="PointMicroblog">point.im</string>
+    <string name="Facebook">Facebook</string>
     <string name="Loading___">Loading...</string>
     <string name="Loading___report">Loading... Complex report may take minute or two...</string>
     <string name="LoadingBackup___">Loading (backup)...</string>
@@ -49,6 +50,7 @@
     <string name="Juick__Explore">Juick: Explore</string>
     <string name="Popular_tags">Popular tags</string>
     <string name="All_messages">All messages</string>
+    <string name="All_subscriptions">All subscriptions</string>
     <string name="Nearby_places">Nearby places</string>
     <string name="My_blog">My blog</string>
 
@@ -93,6 +95,7 @@
     <string name="BnW__New_message">BnW: New message</string>
     <string name="Psto__New_message">psto: New message</string>
     <string name="Point__New_message">point: New message</string>
+    <string name="Facebook__New_message">Facebook: New message</string>
     <string name="Point__PostNote"> - use *tag1 *tag2 text</string>
     <string name="New_message">New message</string>
     <string name="To__All">To: All</string>
@@ -186,7 +189,7 @@
     <string name="navigationAll">Last messages</string>
     <string name="navigationTop">Top messages</string>
     <string name="navigationPhoto">With photos</string>
-    <string name="navigationMy">My blog</string>
+    <string name="navigationMy">My Juick blog</string>
     <string name="navigationSrachiki">Srachiki (jugr)</string>
     <string name="navigationPrivate">Private(web)</string>
     <string name="navigationDiscuss">Discuss.(web)</string>
@@ -195,6 +198,9 @@
     <string name="navigationSaved">Saved messages</string>
     <string name="navigationRecentlyOpened">Recent read</string>
     <string name="navigationRecentlyCommented">Recent write</string>
+    <string name="navigationAllCombined">ALL/Combined</string>
+    <string name="navigationSubsCombined">Subs/Combined</string>
+    <string name="navigationGlavSu">glav.su/ukr</string>
     <string name="SingleLine_Menu">Single line menu items</string>
     <string name="SingleLine_Menu_Summary">Menu will be even more compact</string>
     <string name="XMPP_client">XMPP (Jabber) client</string>
@@ -317,7 +323,7 @@
                 ]]>
     </string>
 
-    <string name="rf_2013100101"><![CDATA[
+    <string name="rf_2014081601"><![CDATA[
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
@@ -330,18 +336,86 @@
             <body>
 
             <form>
-            <b>Мартобрь 2014, будущий билд</b>
+            <b>Август 2014, билд дружбы народов и гуманитарного конвоя </b>
             <ul>
             <li>
-            Циферки в иконке уведомления в Juick Advanced.
+            УРА! Уведомления от point.im (включить галочку "J.A-messaging/J.A-уведомления" в уведомлениях).
+            Галочка общая, включает уведомления вообще. Уведомления приходят только из тех микроблогов,
+            на которые у вас есть авторизация. Если авторизировался уже после включения, то надо потом дернуть эту галочку дабы рестартануть единожды.
+            </li>
+            <li>
+            Надо сказать, что обновления текущего открытого треда point.im будут
+            происходить только если уведомления включены вообще. В жуйке они работают всегда.
+            </li>
+            <li>
+            Добавил более классической навигации (стрелка назад в левом углу вместо узких текстовых ссылок).
+            </li>
+            <li>
+            Удаление уведомлений из списка можно делать свайпом.
+            </li>
+            <li>
+            Добавил определение ссылок на пойнтовые мессаги ( ссылки типа #abcde ). Добавил выделение собственного пойнтового ника цветом.
+            </li>
+            <li>
+            Добавил простое меню на фейсбучную ленту
+            </li>
+
+            <hr>
+            Все фичи Juick Advanced можно посмотреть в настройках, пункт \"Что Нового\".
+
+            #script#
+
+            ]]>
+    </string>
+
+    <string name="rf_2014081101"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style>
+                input {
+                    -webkit-transform: scale(1.4,1.4);
+                }
+            </style>
+            </head>
+            <body>
+
+            <form>
+            <b>Август 2014, военный укро-апокалиптический билд</b>
+            <ul>
+            <li>
+            Источник point.im приобрел некую минимальную законченность, но уведомлений от него еще пока никаких нету.
+            </li>
+            <li>
+            Добавился источник на почитать - фейсбук. Также добавил укро-тред с glav.su, но его листать можно только от большой нужды,
+            как у меня, потому что он сделан на тормозящих WebView и вдобавок прыгает туда-сюда, пока грузится.
+            </li>
+            <li>
+            Комбинированные источники: Все/Комбинированные и Подписки/Комбинированные. Первый содержит в себе весь поток с Juick/Point/BNW отсортированный
+            по датам. Второй будет показывать все ваши подписки, если вы авторизовались на соответствующем источнике. Кстати сюда включается уже и пейсбук.
+            </li>
+            <li>
+            Анимации открытия закрытия треда, и закрытие треда свайпом справа налево.
+            </li>
+            <li>
+            Поддержка https к жуйку (credits: coderoo)
+            </li>
+            <li>
+            Цветовые темы (credits: coderoo)
+            </li>
+            <li>
+            Циферки в иконке уведомления в Juick Advanced (credits: coderoo).
             </li>
             <li>
             Фотографии которые аттачатся прямо из камеры, сейчас сохраняются в альбом.
             </li>
             <li>
+            Убрал некоторые опции. Теперь кое-что всегда будет как я сказал 8-)
+            </li>
+            <li>
             Багфиксы: показываются огороженные сообщения в общей ленте и в прочих, улучшения отправки фотографии, запись ее в фотоальбом,
             проблемы с поворотом во время аттача, уменьшен минимальный размер фонта для супер-высокого разрешения, аватары
-            в ленте обновляются, баг вылезший в Android 4.4.
+            в ленте обновляются, баг вылезший в Android 4.4, прочие багфиксы
             </li>
             </ul>
 
@@ -352,6 +426,7 @@
 
             ]]>
     </string>
+
 
     <string name="rf_2013100101"><![CDATA[
             <html>
@@ -974,9 +1049,37 @@
     </string>
 
     <string name="HTMLStart"><![CDATA[
+            <!DOCTYPE html>
             <html>
             <head>
             <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            </head>
+            <body>
+    ]]>
+    </string>
+
+    <string name="HTMLStart_glavsu"><![CDATA[
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style type="text/css">
+.quote {
+    background-color: #ddd;
+    background: #ddd no-repeat 5px 3px;
+    border-left: 2px solid #666;
+    display: block;
+    padding: 5px 10px 5px 30px;
+}
+
+.quote .quoteHeader {
+    color: #666;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+
+            </style>
             </head>
             <body>
     ]]>
@@ -1127,6 +1230,7 @@
     <string name="navigationPointAll">point.All</string>
     <string name="navigationPointSubs">point.Subs</string>
     <string name="navigationPointMine">point.Mine</string>
+    <string name="navigationFacebookFeed">FB Feed</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
     <string name="NonJabberNotifications">Non-Jabber notifications</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">is not enabled or service is not running</string>
@@ -1267,4 +1371,16 @@
     <string name="ColorsThemes">Colors Themes</string>
     <string name="LoadColorsTheme">Load Colors Theme</string>
     <string name="SaveColorsTheme">Save Colors Theme</string>
+    <string name="GoToParticularToPost">Sorry, go to the particular messages list to post.</string>
+    <string name="GoToParticularToSearch">Sorry, go to the particular messages list to search.</string>
+    <string name="ConfigureYourSources">Configure your sources directly in navigation menu.</string>
+    <string name="MakeTotalAdvance">Enable all advanced features?
+
+        (will turn on all (safe) client features you could miss these years)
+    </string>
+    <string name="MagicButton">MAGIC BUTTON</string>
+    <string name="NowTotalAdvance">Now your Juick is fully Advanced!</string>
+    <string name="SwipeToClose">Swipe to close thread</string>
+    <string name="SelectAccountToPost">Select account to post new message</string>
+    <string name="NewPost">New post</string>
 </resources>

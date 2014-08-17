@@ -12,6 +12,7 @@ import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
 import org.apache.http.HttpResponse;
@@ -29,6 +30,22 @@ import java.net.*;
  * To change this template use File | Settings | File Templates.
  */
 public class BnwAuthorizer extends Utils.URLAuth {
+
+    String login;
+
+    @Override
+    public void maybeLoadCredentials(Context context) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        if (myCookie == null) {
+            myCookie = sp.getString("bnw.web_cookie", null);
+        }
+        login = sp.getString("bnw.web_login", null);
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
     @Override
     public boolean acceptsURL(String url) {
         if (url.indexOf("http://ipv4.bnw.im/api/passlogin") != -1) return false;
@@ -40,6 +57,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
     public boolean allowsOptionalAuthorization(String url) {
         if (url.indexOf("http://ipv4.bnw.im/api/show") != -1) return true;
         if (url.indexOf("http://ipv4.bnw.im/api/today") != -1) return true;
+        if (url.indexOf("ipv4.bnw.im/api/passlogin") != -1) return true;
         return false;
     }
 
@@ -47,9 +65,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
     @Override
     public void authorize(final Context context, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, final Utils.Function<Void, String> cont) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        if (myCookie == null) {
-            myCookie = sp.getString("bnw.web_cookie", null);
-        }
+        maybeLoadCredentials(context);
         if (!(context instanceof Activity)) {
             cont.apply(null);
         } else if (myCookie == null && !allowsOptionalAuthorization(url)) {
@@ -126,9 +142,9 @@ public class BnwAuthorizer extends Utils.URLAuth {
 
                 private void tryLoginWithPassword(final String loginS, final String passwordS, final Runnable thiz) {
                     obtainCookieByLoginPassword(context, loginS, passwordS,
-                            new Utils.Function<Void, Utils.RESTResponse>() {
+                            new Utils.Function<Void, RESTResponse>() {
                                 @Override
-                                public Void apply(final Utils.RESTResponse s) {
+                                public Void apply(final RESTResponse s) {
                                     if (s.result != null) {
                                         myCookie = s.result;
                                         cont.apply(s.result);
@@ -163,10 +179,10 @@ public class BnwAuthorizer extends Utils.URLAuth {
         }
     }
 
-    static void obtainCookieByLoginPassword(final Context context, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
+    static void obtainCookieByLoginPassword(final Context context, String login, String password, final Utils.Function<Void, RESTResponse> result) {
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
-            final Utils.RESTResponse response = Utils.getJSON(context,
+            final RESTResponse response = Utils.getJSON(context,
                     "http://ipv4.bnw.im/api/passlogin?user=" + login + "&password="
                             + URLEncoder.encode(password.toString(), "ISO-8859-1"),
                     null);
@@ -178,13 +194,14 @@ public class BnwAuthorizer extends Utils.URLAuth {
                 if (json.getBoolean("ok")) {
                     String login_key = json.getString("desc");
                     if (login_key != null) {
-                        result.apply(new Utils.RESTResponse(null, false, login_key));
+                        result.apply(new RESTResponse(null, false, login_key));
                     }
-
+                } else {
+                    result.apply(new RESTResponse("login not ok", true, null));
                 }
             }
         } catch (Exception e) {
-            result.apply(new Utils.RESTResponse("Other error: " + e.toString(), false, null));
+            result.apply(new RESTResponse("Other error: " + e.toString(), false, null));
             //
         } finally {
             client.getConnectionManager().shutdown();

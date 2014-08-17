@@ -3,10 +3,15 @@ package com.juick.android.juick;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import com.juick.android.DefaultHTTPClientService;
 import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
+import com.juickadvanced.IHTTPClient;
+import com.juickadvanced.IHTTPClientService;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.sources.PureMessageSource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -18,12 +23,15 @@ import java.util.ArrayList;
  * Time: 10:44 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class MessagesSource implements Serializable {
+public abstract class MessagesSource implements Serializable, IHTTPClientService, Cloneable {
 
     protected transient Context ctx;
     protected transient SharedPreferences sp;
     public boolean canNext = true;
     public String kind;
+
+    // to re-init on context
+    protected PureMessageSource pureMessageSource;
 
     public MessagesSource(Context ctx, String kind) {
         setContext(ctx);
@@ -33,6 +41,9 @@ public abstract class MessagesSource implements Serializable {
     public void setContext(Context ctx) {
         this.ctx = ctx;
         sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+        if (pureMessageSource != null) {
+            pureMessageSource.setHttpClientService(this);
+        }
     }
 
     public Context getContext() {
@@ -72,5 +83,26 @@ public abstract class MessagesSource implements Serializable {
         this.canNext = canNext;
     }
 
+    @Override
+    public RESTResponse getJSON(String url, com.juickadvanced.Utils.Notification progressNotification) {
+        return Utils.getJSONWithRetries(getContext(), url, progressNotification);
+    }
+
+    @Override
+    public IHTTPClient createClient() {
+        return new Utils.AndroidHTTPClient(getContext());
+    }
+
+    public void cleanCloneFromCache() {
+
+    }
+
+    public MessagesSource clone()  {
+        try {
+            return (MessagesSource)super.clone();
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
+    }
 
 }

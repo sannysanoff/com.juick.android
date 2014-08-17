@@ -28,18 +28,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentActivity;
 import android.util.Pair;
 import android.view.*;
 import android.widget.*;
 import com.google.gson.Gson;
 import com.juick.android.ja.JAPastConversationMessagesSource;
-import com.juick.android.ja.JAUnansweredMessagesSource;
-import com.juick.android.ja.Network;
-import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.UserInfo;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -56,6 +53,7 @@ public class UserCenterActivity extends Activity {
 
     private View search;
     private String uname;
+    private String microblogCode;
 
     public static final int SEARCH_PAST_CONVERSATIONS = 0x100001;
     public static final int SEARCH_MORE               = 0x100002;
@@ -81,6 +79,7 @@ public class UserCenterActivity extends Activity {
             return;
         }
         uname = extras.getString("uname");
+        microblogCode = extras.getString("microblogCode");
         final int uid = extras.getInt("uid");
 
         final MessageID mid = (MessageID)extras.getSerializable("mid");
@@ -100,7 +99,7 @@ public class UserCenterActivity extends Activity {
         new Thread() {
             @Override
             public void run() {
-                final Utils.RESTResponse json = Utils.getJSON(UserCenterActivity.this,
+                final RESTResponse json = Utils.getJSON(UserCenterActivity.this,
                         "http://" + Utils.JA_ADDRESS + "/api/userinfo?uname=" + Uri.encode(uname), null);
                 runOnUiThread(new Runnable() {
                     @Override
@@ -323,7 +322,7 @@ public class UserCenterActivity extends Activity {
                 enableJAM(new Runnable() {
                     @Override
                     public void run() {
-                        JAMService.instance.client.subscribeToComments(uname);
+                        JAMService.instance.client.subscribeToComments(uname, microblogCode);
                     }
                 });
             }
@@ -334,7 +333,7 @@ public class UserCenterActivity extends Activity {
                 enableJAM(new Runnable() {
                     @Override
                     public void run() {
-                        JAMService.instance.client.unsubscribeFromComments(uname);
+                        JAMService.instance.client.unsubscribeFromComments(uname, microblogCode);
                     }
                 });
             }

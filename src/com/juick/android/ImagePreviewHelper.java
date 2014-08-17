@@ -99,7 +99,7 @@ public class ImagePreviewHelper {
                                 public void onClick(DialogInterface dialog, int which) {
                                 }
                             }).show();
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     new AlertDialog.Builder(view.getContext())
                             .setTitle("Probably HTTPS image.")
                             .setMessage("Cannot use Download Manager (see message below). Load manually? Error was:" + e.toString())
@@ -112,7 +112,6 @@ public class ImagePreviewHelper {
                                             final File destFile = JuickMessagesAdapter.getDestFile(view.getContext(), url);
                                             DefaultHttpClient httpClient = new DefaultHttpClient();
                                             HttpGet httpGet = new HttpGet(url);
-                                            String loadURl = url;
                                             try {
                                                 httpClient.execute(httpGet, new ResponseHandler<HttpResponse>() {
                                                     @Override
@@ -144,8 +143,13 @@ public class ImagePreviewHelper {
                                                         return null;
                                                     }
                                                 });
-                                            } catch (IOException e1) {
-                                                e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                                            } catch (final Exception e1) {
+                                                activity.runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Toast.makeText(activity, "Error: " + e1.toString(), Toast.LENGTH_LONG).show();
+                                                    }
+                                                });
                                             }
                                         }
                                     }.start();

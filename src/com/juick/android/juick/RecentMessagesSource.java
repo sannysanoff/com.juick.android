@@ -6,7 +6,6 @@ import com.juick.android.DatabaseService;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
 import com.juick.android.Utils;
-import com.juickadvanced.R;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;

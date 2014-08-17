@@ -39,7 +39,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.juick.JuickAPIAuthorizer;
-import com.juick.android.juick.JuickHttpAPI;
+import com.juickadvanced.protocol.Base64;
+import com.juickadvanced.protocol.JuickHttpAPI;
 import com.juickadvanced.R;
 
 import java.io.OutputStreamWriter;

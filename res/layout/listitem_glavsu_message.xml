@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<com.juick.android.PressableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:id="@+id/juick_message_row"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:drawingCacheQuality="low"
+    android:background="#FFFFFFFF"
+    android:padding="2dip">
+
+<TextView android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/username" android:textColor="#FF000000"/>
+<WebView android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/html"/>
+
+</com.juick.android.PressableLinearLayout>

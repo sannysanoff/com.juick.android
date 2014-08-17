@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.bnw.BNWMessage;
 import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 public class BNWMicroBlog implements MicroBlog {
 
     public static BNWMicroBlog instance;
+    public BnwAuthorizer authorizer;
 
     public BNWMicroBlog() {
         instance = this;
@@ -41,7 +43,8 @@ public class BNWMicroBlog implements MicroBlog {
 
     @Override
     public void initialize() {
-        Utils.authorizers.add(0, new BnwAuthorizer());
+        authorizer = new BnwAuthorizer();
+        Utils.authorizers.add(0, authorizer);
     }
 
     @Override
@@ -84,51 +87,80 @@ public class BNWMicroBlog implements MicroBlog {
         return null;
     }
 
-    @Override
-    public OperationInProgress postReply(final Activity context, final MessageID mid, final JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
-        new Thread("postReply") {
+    public void runAuthorized(final Utils.Function<Void, String> runWithLogin, final Activity mainActivity) {
+        authorizer.authorize(mainActivity, true, false, "http://bnw.im/required", new Utils.Function<Void, String>() {
             @Override
-            public void run() {
-                String thrid = ((BnwMessageID)threadStarter.getMID()).getId();
-                if (selectedReply != null) {
-                    thrid = ((BNWMessage)selectedReply).getRIDString();
-                }
-                try {
-                    String encode = URLEncoder.encode(msg, "utf-8");
-                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://ipv4.bnw.im/api/comment?", "message="+thrid + "&text=" + encode);
-                    context.runOnUiThread(new Runnable() {
-
-                        public void run() {
-                            try {
-                                if (restResponse.getErrorText() != null) {
-                                    then.apply(restResponse.getErrorText());
-                                } else {
-                                    JSONObject retjson = new JSONObject(restResponse.getResult());
-
-                                    if (retjson.getBoolean("ok")) {
-                                        Toast.makeText(context, retjson.getString("desc"), Toast.LENGTH_SHORT).show();
-                                        then.apply(null);
-
-                                    } else {
-                                        Toast.makeText(context, retjson.getString("desc"), Toast.LENGTH_SHORT).show();
-                                        then.apply(retjson.getString("desc"));
-                                    }
-                                }
-                            } catch (Exception e) {
-                                Log.e("postComment", e.toString());
+            public Void apply(final String s) {
+                mainActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (s != null) {
+                            runWithLogin.apply(s);
+                        } else {
+                            if (mainActivity instanceof MainActivity) {
+                                ((MainActivity) mainActivity).restoreLastNavigationPosition();
                             }
                         }
-                    });
-                } catch (final UnsupportedEncodingException e) {
-                    context.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            then.apply(e.toString());
-                        }
-                    });
-                }
+                    }
+                });
+                return null;
             }
-        }.start();
+        });
+    }
+
+
+
+    @Override
+    public OperationInProgress postReply(final Activity context, final MessageID mid, final JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
+        runAuthorized(new Utils.Function<Void, String>() {
+            @Override
+            public Void apply(String s) {
+                new Thread("postReply") {
+                    @Override
+                    public void run() {
+                        String thrid = ((BnwMessageID)threadStarter.getMID()).getId();
+                        if (selectedReply != null) {
+                            thrid = ((BNWMessage)selectedReply).getRIDString();
+                        }
+                        try {
+                            String encode = URLEncoder.encode(msg, "utf-8");
+                            final RESTResponse restResponse = Utils.postJSON(context, "http://ipv4.bnw.im/api/comment?", "message="+thrid + "&text=" + encode);
+                            context.runOnUiThread(new Runnable() {
+
+                                public void run() {
+                                    try {
+                                        if (restResponse.getErrorText() != null) {
+                                            then.apply(restResponse.getErrorText());
+                                        } else {
+                                            JSONObject retjson = new JSONObject(restResponse.getResult());
+
+                                            if (retjson.getBoolean("ok")) {
+                                                Toast.makeText(context, retjson.getString("desc"), Toast.LENGTH_SHORT).show();
+                                                then.apply(null);
+
+                                            } else {
+                                                Toast.makeText(context, retjson.getString("desc"), Toast.LENGTH_SHORT).show();
+                                                then.apply(retjson.getString("desc"));
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        Log.e("postComment", e.toString());
+                                    }
+                                }
+                            });
+                        } catch (final UnsupportedEncodingException e) {
+                            context.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    then.apply(e.toString());
+                                }
+                            });
+                        }
+                    }
+                }.start();
+                return null;
+            }
+        }, context);
         return new OperationInProgress() {
             @Override
             public void preliminarySuccess() {
@@ -179,7 +211,7 @@ public class BNWMicroBlog implements MicroBlog {
                 data.append("&tags="+URLEncoder.encode(tags.toString(),"utf-8"));
             if (hasclubs)
                 data.append("&clubs="+URLEncoder.encode(clubs.toString(),"utf-8"));
-            final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://ipv4.bnw.im/api/post?", data.toString());
+            final RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://ipv4.bnw.im/api/post?", data.toString());
             newMessageActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

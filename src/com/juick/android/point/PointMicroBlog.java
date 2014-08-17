@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
@@ -42,6 +44,7 @@ import java.util.Date;
 public class PointMicroBlog implements MicroBlog {
 
     public static PointMicroBlog instance;
+    public PointAuthorizer authorizer;
 
     public PointMicroBlog() {
         instance = this;
@@ -58,8 +61,7 @@ public class PointMicroBlog implements MicroBlog {
                     @Override
                     public Void apply(String arg) {
                         final Bundle args = new Bundle();
-                        final String weblogin = sp.getString("point.web_login", null);
-                        PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "home", mainActivity.getString(labelId), "http://" + weblogin + ".point.im/");
+                        PointAPIMessagesSource ms = new PointAPIMessagesSource(mainActivity, "home", mainActivity.getString(labelId), "http://point.im/api/recent");
                         args.putSerializable("messagesSource", ms);
                         mainActivity.runDefaultFragmentWithBundle(args, thiz);
                         return null;
@@ -72,6 +74,7 @@ public class PointMicroBlog implements MicroBlog {
             public void action() {
                 final Bundle args = new Bundle();
                 PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/all?agree=1");
+                //PointAPIMessagesSource ms = new PointAPIMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/api/all");
                 args.putSerializable("messagesSource", ms);
                 mainActivity.runDefaultFragmentWithBundle(args, this);
             }
@@ -85,7 +88,10 @@ public class PointMicroBlog implements MicroBlog {
                     public Void apply(String s) {
                         final Bundle args = new Bundle();
                         final String weblogin = sp.getString("point.web_login", null);
-                        PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "mine", mainActivity.getString(labelId), "http://" + weblogin + ".point.im/blog");
+                        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mainActivity);
+                        String login = sp.getString("point.api_login", "xx");
+                        PointAPIMessagesSource ms = new PointAPIMessagesSource(mainActivity, "home", mainActivity.getString(labelId), "http://point.im/api/blog/"+login);
+                        //PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "mine", mainActivity.getString(labelId), "http://" + weblogin + ".point.im/blog");
                         args.putSerializable("messagesSource", ms);
                         mainActivity.runDefaultFragmentWithBundle(args, thiz);
                         return null;
@@ -95,8 +101,8 @@ public class PointMicroBlog implements MicroBlog {
         });
     }
 
-    private void runAuthorized(final Utils.Function<Void, String> runWithLogin, final Activity mainActivity) {
-        PointAuthorizer authorizer = (PointAuthorizer)Utils.getAuthorizer("http://point.im/");
+    public void runAuthorized(final Utils.Function<Void, String> runWithLogin, final Activity mainActivity) {
+        PointAuthorizer authorizer = (PointAuthorizer) Utils.getAuthorizer("http://point.im/");
         authorizer.authorize(mainActivity, true, false, "http://point.im/required", new Utils.Function<Void, String>() {
             @Override
             public Void apply(final String s) {
@@ -107,7 +113,7 @@ public class PointMicroBlog implements MicroBlog {
                             runWithLogin.apply(s);
                         } else {
                             if (mainActivity instanceof MainActivity) {
-                                ((MainActivity)mainActivity).restoreLastNavigationPosition();
+                                ((MainActivity) mainActivity).restoreLastNavigationPosition();
                             }
                         }
                     }
@@ -131,7 +137,6 @@ public class PointMicroBlog implements MicroBlog {
         }
 
     }
-
 
 
     @Override
@@ -159,7 +164,8 @@ public class PointMicroBlog implements MicroBlog {
 
     @Override
     public void initialize() {
-        Utils.authorizers.add(0, new PointAuthorizer());
+        authorizer = new PointAuthorizer();
+        Utils.authorizers.add(0, authorizer);
     }
 
     @Override
@@ -205,68 +211,70 @@ public class PointMicroBlog implements MicroBlog {
     @Override
     public OperationInProgress postReply(final Activity context_, final MessageID mid, final JuickMessage threadStarter, final JuickMessage selectedReply, final String msg, String attachmentUri, String attachmentMime, final Utils.Function<Void, String> then) {
         final ThreadActivity context = (ThreadActivity) context_;
-        new Thread("Post reply") {
+        PointMicroBlog.instance.runAuthorized(new Utils.Function<Void, String>() {
             @Override
-            public void run() {
-                try {
-                    PointMessageID pointMid = (PointMessageID) mid;
-                    final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-                    final String webLogin = sp.getString("point.web_login", null);
-                    if (webLogin == null) {
-                        throw new IllegalArgumentException("No Point authorization available");
-                    }
-                    StringBuilder data = new StringBuilder();
-                    data.append("text=" + URLEncoder.encode(msg, "utf-8"));
-                    if (selectedReply != null) {
-                        data.append("&csrf_token=" + ((PointMessage) selectedReply).csrf_token);
-                    } else {
-                        data.append("&csrf_token=" + ((PointMessage) threadStarter).csrf_token);
-                    }
-                    int replyTo = 0;
-                    if (selectedReply != null && selectedReply.getRID() != 0) {
-                        data.append("&comment_id=" + (replyTo = selectedReply.getRID()));
-                    }
-                    final Utils.RESTResponse restResponse = Utils.postJSON(context, "http://" + threadStarter.User.UName + ".point.im/" + pointMid.getId(), data.toString());
-                    final int finalReplyTo = replyTo;
-                    context.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (restResponse.getErrorText() == null) {
-                                PointMessage newmsg = new PointMessage();
-                                JuickMessagesAdapter listAdapter = context.tf.listAdapter;
-                                Object lastItem = listAdapter.getItem(listAdapter.getCount() - 1);
-                                int lastRid = 0;
-                                if (lastItem != null && lastItem instanceof PointMessage) {
-                                    lastRid = ((PointMessage) lastItem).getRID();
-                                }
-                                newmsg.User = new JuickUser();
-                                newmsg.User.UName = webLogin;
-                                newmsg.Text = msg;
-                                newmsg.Timestamp = new Date();
-                                newmsg.setRID(lastRid + 1);
-                                newmsg.setReplyTo(finalReplyTo);
-                                newmsg.microBlogCode = PointMessageID.CODE;
-                                newmsg.setMID(mid);
-                                ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
-                                messages.add(newmsg);
-                                listAdapter.addAllMessages(messages);
-                                listAdapter.notifyDataSetChanged();
-
+            public Void apply(String s) {
+                new Thread("Post reply") {
+                    @Override
+                    public void run() {
+                        try {
+                            PointMessageID pointMid = (PointMessageID) mid;
+                            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                            final String apiLogin = sp.getString("point.api_login", null);
+                            if (apiLogin == null) {
+                                throw new IllegalArgumentException("No Point authorization available");
                             }
-                            then.apply(restResponse.getErrorText());
+                            StringBuilder data = new StringBuilder();
+                            data.append("text=" + URLEncoder.encode(msg, "utf-8"));
+                            data.append("&csrf_token=" + PointAuthorizer.csrfToken);
+                            int replyTo = 0;
+                            if (selectedReply != null && selectedReply.getRID() != 0) {
+                                data.append("&comment_id=" + (replyTo = selectedReply.getRID()));
+                            }
+                            final RESTResponse restResponse = Utils.postJSON(context, "http://point.im/api/post/" + pointMid.getId(), data.toString());
+                            final int finalReplyTo = replyTo;
+                            context.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (restResponse.getErrorText() == null) {
+                                        PointMessage newmsg = new PointMessage();
+                                        JuickMessagesAdapter listAdapter = context.tf.listAdapter;
+                                        Object lastItem = listAdapter.getItem(listAdapter.getCount() - 1);
+                                        int lastRid = 0;
+                                        if (lastItem != null && lastItem instanceof PointMessage) {
+                                            lastRid = ((PointMessage) lastItem).getRID();
+                                        }
+                                        newmsg.User = new JuickUser();
+                                        newmsg.User.UName = apiLogin;
+                                        newmsg.Text = msg;
+                                        newmsg.Timestamp = new Date();
+                                        newmsg.setRID(lastRid + 1);
+                                        newmsg.setReplyTo(finalReplyTo);
+                                        newmsg.microBlogCode = PointMessageID.CODE;
+                                        newmsg.setMID(mid);
+                                        ArrayList<JuickMessage> messages = new ArrayList<JuickMessage>();
+                                        messages.add(newmsg);
+                                        listAdapter.addAllMessages(messages);
+                                        listAdapter.notifyDataSetChanged();
+
+                                    }
+                                    then.apply(restResponse.getErrorText());
+                                }
+                            });
+                        } catch (final Exception e) {
+                            context.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
+                                    then.apply(e.toString());
+                                }
+                            });
                         }
-                    });
-                } catch (final Exception e) {
-                    context.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(context, e.toString(), Toast.LENGTH_LONG).show();
-                            then.apply(e.toString());
-                        }
-                    });
-                }
+                    }
+                }.start();
+                return null;
             }
-        }.start();
+        }, context);
         return new OperationInProgress() {
             @Override
             public void preliminarySuccess() {
@@ -279,21 +287,7 @@ public class PointMicroBlog implements MicroBlog {
     public void postNewMessage(NewMessageActivity newMessageActivity, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, final Utils.Function<Void, String> then) {
         try {
 
-
-
-            final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(newMessageActivity);
-            String webLogin = sp.getString("point.web_login", null);
-            if (webLogin == null) {
-                throw new IllegalArgumentException("No Point authorization available");
-            }
-
-            Utils.RESTResponse donate = Utils.getJSONWithRetries(newMessageActivity, "http://" + webLogin.toLowerCase() + ".point.im/donate", null);
-            if (donate.getResult() == null) {
-                throw new RuntimeException(donate.getErrorText());
-            }
-            Document doc = Jsoup.parse(donate.getResult());
-            String csrf = doc.select("form[id=new-post-form] > input[name=csrf_token]").attr("value");
-            StringBuilder tagsStr = new StringBuilder();
+            StringBuilder data = new StringBuilder();
             String s = txt = txt.trim();
             if (s.startsWith("*")) {
                 String tagline = s.split("\n")[0];
@@ -301,10 +295,8 @@ public class PointMicroBlog implements MicroBlog {
                 for (String tag : tags) {
                     String thatTag = tag.trim();
                     if (thatTag.length() > 0) {
-                        if (tagsStr.length() != 0) {
-                            tagsStr.append(",");
-                        }
-                        tagsStr.append(thatTag);
+                        if (data.length() > 0) data.append("&");
+                        data.append("tag=" + Uri.encode(thatTag));
                     }
                 }
                 int eol = txt.indexOf("\n");
@@ -313,18 +305,18 @@ public class PointMicroBlog implements MicroBlog {
                 }
             }
 
-            StringBuilder data = new StringBuilder();
-            data.append("text=" + URLEncoder.encode(txt, "utf-8"));
-            if (tagsStr.length() > 0)
-                data.append("&tags=" + URLEncoder.encode(tagsStr.toString(), "utf-8"));
-            data.append("&csrf_token=" + csrf);
-            final Utils.RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://" + webLogin + ".point.im/post?", data.toString());
+            if (data.length() > 0) data.append("&");
+            data.append("text=" + Uri.encode(txt));
+
+            final RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://point.im/api/post", data.toString());
             newMessageActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     then.apply(restResponse.getErrorText());
                 }
             });
+
+
         } catch (final Exception e) {
             newMessageActivity.runOnUiThread(new Runnable() {
                 @Override
@@ -349,7 +341,7 @@ public class PointMicroBlog implements MicroBlog {
         Context context = view.getContext();
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         final String weblogin = sp.getString("point.web_login", null);
-        String url = "http://" +weblogin.toLowerCase()+".point.im/tags";
+        String url = "http://" + weblogin.toLowerCase() + ".point.im/tags";
         File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-point-" + uidS + ".json");
         String cachedString = null;
         if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {

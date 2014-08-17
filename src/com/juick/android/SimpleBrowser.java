@@ -11,11 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
+import android.widget.*;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.parsers.URLParser;
 import org.apache.http.client.HttpClient;
 import org.json.JSONException;
@@ -112,7 +110,11 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
         browser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(currentURL)));
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(currentURL)));
+                } catch (Exception ex) {
+                    Toast.makeText(SimpleBrowser.this, ex.toString(), Toast.LENGTH_LONG ).show();
+                }
             }
         });
         Spinner modeWidget = (Spinner) findViewById(R.id.mode);
@@ -193,7 +195,7 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                 public void run() {
                     final String loadingURL = currentURL;
                     currentBody = null;
-                    final Utils.RESTResponse response = processURL(currentURL, SimpleBrowser.this);
+                    final RESTResponse response = processURL(currentURL, SimpleBrowser.this);
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -244,20 +246,20 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
         return result;
     }
 
-    private Utils.RESTResponse processURL(String url, Utils.Notification notification) {
+    private RESTResponse processURL(String url, Utils.Notification notification) {
         if (url.startsWith("!")) {
             // paging in gwt, for example
             return Utils.getJSON(SimpleBrowser.this, url.substring(1), notification, 60000);
         } else {
             switch (mode) {
                 case BOILERPIPE:
-                    final Utils.RESTResponse json = Utils.getJSON(SimpleBrowser.this, "http://boilerpipe-web.appspot.com/extract?url=" + Uri.encode(url) + "&extractor=ArticleExtractor&output=json&extractImages=", notification, 60000);
+                    final RESTResponse json = Utils.getJSON(SimpleBrowser.this, "http://boilerpipe-web.appspot.com/extract?url=" + Uri.encode(url) + "&extractor=ArticleExtractor&output=json&extractImages=", notification, 60000);
                     if (json.getErrorText() != null) return json;
                     try {
                         final JSONObject jo = new JSONObject(json.getResult());
                         final String status = jo.getString("status");
                         if (!status.equals("success"))
-                            return new Utils.RESTResponse("status="+status, false, null);
+                            return new RESTResponse("status="+status, false, null);
                         final JSONObject response = jo.getJSONObject("response");
                         String title = null;
                         if (response.has("title"))
@@ -276,9 +278,9 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                             sb.append(toHTML(string));
                             sb.append("</p>");
                         }
-                        return new Utils.RESTResponse(null, false, sb.toString());
+                        return new RESTResponse(null, false, sb.toString());
                     } catch (JSONException e) {
-                        return new Utils.RESTResponse(e.toString(), false, null);
+                        return new RESTResponse(e.toString(), false, null);
                     }
                 case GWT:
                     return Utils.getJSON(SimpleBrowser.this, "http://google.com/gwt/x?u="+Uri.encode(url)+"&ie=UTF-8&oe=UTF-8", notification, 60000);
@@ -292,7 +294,7 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                         case JA_BOILERPIPE: extractor = "boilerpipe"; break;
                         case JA_POCKET: extractor = "pocketcom"; break;
                     }
-                    final Utils.RESTResponse jaresult = Utils.getJSON(SimpleBrowser.this, "http://ja.ip.rt.ru:8080/htmlproxy?extractor="+extractor+"&url=" + Uri.encode(url), notification, 60000);
+                    final RESTResponse jaresult = Utils.getJSON(SimpleBrowser.this, "http://ja.ip.rt.ru:8080/htmlproxy?extractor="+extractor+"&url=" + Uri.encode(url), notification, 60000);
                     if (jaresult.getResult() == null) return jaresult;
                     StringBuilder sb = new StringBuilder();
                     sb.append("<html><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'></head><body>");
@@ -323,13 +325,13 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                                 sb.append("\n");
                             }
                         }
-                        return new Utils.RESTResponse(null, false, sb.toString());
+                        return new RESTResponse(null, false, sb.toString());
                     } catch (JSONException e) {
-                        return new Utils.RESTResponse(e.toString(), false, null);
+                        return new RESTResponse(e.toString(), false, null);
                     }
 
                 default:
-                    return new Utils.RESTResponse("Bad option", false, null);
+                    return new RESTResponse("Bad option", false, null);
             }
         }
     }
@@ -353,11 +355,6 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
             }
         });
 
-    }
-
-    @Override
-    public void notifyHttpClientObtained(HttpClient client) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public static String toHTML(String str) {

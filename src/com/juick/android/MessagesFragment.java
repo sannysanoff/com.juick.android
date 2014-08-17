@@ -42,13 +42,12 @@ import com.juick.android.ja.Network;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import org.acra.ACRA;
-import org.apache.http.client.HttpClient;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -141,7 +140,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         databaseGetter = new Utils.ServiceGetter<DatabaseService>(getActivity(), DatabaseService.class);
         handler = new Handler();
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        trackLastRead = sp.getBoolean("lastReadMessages", false);
+        trackLastRead = sp.getBoolean("lastReadMessages", true);
         alternativeLongClick = sp.getBoolean("alternativeLongClick", false);
 
         Bundle args = getArguments();
@@ -177,7 +176,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
     @Override
     public void onResume() {
-        prefetchMessages = sp.getBoolean("prefetchMessages", false);
+        prefetchMessages = sp.getBoolean("prefetchMessages", true);
         startTime = System.currentTimeMillis();
         super.onResume();
     }
@@ -244,9 +243,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listAdapter.setOnForgetListener(new Utils.Function<Void,JuickMessage>() {
             @Override
             public Void apply(final JuickMessage jm) {
-                Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, Utils.RESTResponse>() {
+                Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, RESTResponse>() {
                     @Override
-                    public Void apply(final Utils.RESTResponse response) {
+                    public Void apply(final RESTResponse response) {
                         final Activity activity = getActivity();
                         if (activity == null) return null; // gone.
                         if (response.getErrorText() != null) {
@@ -294,7 +293,11 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         public void run() {
                             JuickMessage msg = (JuickMessage) itemAtPosition;
                             MessageMenu messageMenu = MainActivity.getMicroBlog(msg).getMessageMenu(getActivity(), messagesSource, listView, listAdapter);
-                            messageMenu.onItemLongClick(parent, view, position, id);
+                            if (messageMenu != null) {
+                                messageMenu.onItemLongClick(parent, view, position, id);
+                            } else {
+                                Toast.makeText(getActivity(), "Not implemented ;-(", Toast.LENGTH_LONG).show();
+                            }
                         }
                     };
                     if (alternativeLongClick) {
@@ -377,9 +380,16 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             Log.w("com.juick.advanced", "getFirst: before filter");
                             final ArrayList<JuickMessage> messages = filterMessages(mespos.messages);
                             Log.w("com.juick.advanced", "getFirst: after filter");
+                            Boolean ownView = null;
                             if (!JuickMessagesAdapter.dontKeepParsed(parent)) {
                                 for (JuickMessage juickMessage : messages) {
-                                    juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
+                                    if (ownView == null) {
+                                        MicroBlog blog = MainActivity.microBlogs.get(juickMessage.getMID().getMicroBlogCode());
+                                        ownView = blog instanceof OwnRenderItems;
+                                    }
+                                    if (!ownView) {
+                                        juickMessage.parsedText = JuickMessagesAdapter.formatMessageText(parent, juickMessage, false);
+                                    }
                                 }
                             }
                             final Parcelable listPosition = mespos.viewState;
@@ -420,7 +430,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                                                                 if (finalListPosition != null) {
                                                                     lv.onRestoreInstanceState(finalListPosition);
                                                                 } else {
-                                                                    setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                                    //setSelection(messagesSource.supportsBackwardRefresh() ? 1 : 0);
+                                                                    setSelection(0);
                                                                 }
                                                             }
                                                             Log.w("com.juick.advanced", "getFirst: end.");
@@ -445,9 +456,9 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                             return null;
                         }
                     };
+                    if (getActivity() != null)
+                        messagesSource.setContext(getActivity());
                     if (restoreData == null) {
-                        if (getActivity() != null)
-                            messagesSource.setContext(getActivity());
                         messagesSource.getFirst(notification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                             @Override
                             public Void apply(ArrayList<JuickMessage> juickMessages) {
@@ -505,7 +516,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             topMessageId = null;
         }
 
-        if (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh() && sp.getBoolean("enable_pull_to_refresh", false)) {
+        if (false && (getListView().getHeaderViewsCount() == 0 && messagesSource.supportsBackwardRefresh() && sp.getBoolean("enable_pull_to_refresh", false))) {
             getListView().addHeaderView(mRefreshView, null, false);
             mRefreshViewHeight = mRefreshView.getMeasuredHeight();
         }
@@ -542,6 +553,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         try {
             lv = getListView();
             ListAdapter adapter = lv.getAdapter();
+            if (adapter == null) adapter = listAdapter;
             int firstVisiblePosition = lv.getFirstVisiblePosition();
             JuickMessage jm = (JuickMessage) adapter.getItem(firstVisiblePosition);
             mlbd.topMessageId = jm.getMID();
@@ -853,11 +865,6 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
 
         @Override
-        public void notifyHttpClientObtained(HttpClient client) {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
         public void notifyDownloadProgress(int progressBytes) {
             this.progressBytes = progressBytes;
             updateProgressText();
@@ -1061,6 +1068,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 final Activity activity = getActivity();
                 if (activity != null && isAdded()) {
                     try {
+                        messagesSource.setContext(activity);
                         messagesSource.getNext(progressNotification, new Utils.Function<Void, ArrayList<JuickMessage>>() {
                             @Override
                             public Void apply(final ArrayList<JuickMessage> messages) {
@@ -1213,11 +1221,18 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         }
         Intent i = new Intent(getActivity(), ThreadActivity.class);
         i.putExtra("mid", jmsg.getMID());
-        i.putExtra("messagesSource", messagesSource);
+        MessagesSource lightSource = messagesSource.clone();
+        lightSource.cleanCloneFromCache();
+        i.putExtra("messagesSource", lightSource);
+        i.putExtra("originalMessage", jmsg);
         if (jmsg.contextPost != null && messagesSource instanceof JAUnansweredMessagesSource) {
             i.putExtra("prefetched", jmsg);
         }
+        long l = System.currentTimeMillis();
         startActivity(i);
+        l = System.currentTimeMillis() - l;
+        Toast.makeText(getActivity(), "Activity start time: "+l+" msec", Toast.LENGTH_LONG);
+        getActivity().overridePendingTransition(R.anim.enter_slide_to_left, R.anim.leave_lower_and_dark);
     }
 
     // Refresh
@@ -1294,7 +1309,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             JuickAdvancedApplication.addToGlobalLog("marking read", ex);
         }
 
-        if (messagesSource.supportsBackwardRefresh()) {
+        if (false && messagesSource.supportsBackwardRefresh()) {
             // When the refresh view is completely visible, change the text to say
             // "Release to refresh..." and flip the arrow drawable.
             if (mCurrentScrollState == SCROLL_STATE_TOUCH_SCROLL
@@ -1372,7 +1387,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                 if (!getListView().isVerticalScrollBarEnabled()) {
                     getListView().setVerticalScrollBarEnabled(true);
                 }
-                if (messagesSource.supportsBackwardRefresh()) {
+                if (false && messagesSource.supportsBackwardRefresh()) {
                     if (getListView().getFirstVisiblePosition() == 0 && mRefreshState != REFRESHING) {
                         if ((mRefreshView.getBottom() >= mRefreshViewHeight
                                 || mRefreshView.getTop() >= 0)
@@ -1523,32 +1538,33 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
      * Sets the header padding back to original size.
      */
     private void resetHeaderPadding() {
-        mRefreshView.setPadding(
-                mRefreshView.getPaddingLeft(),
-                mRefreshOriginalTopPadding,
-                mRefreshView.getPaddingRight(),
-                mRefreshView.getPaddingBottom());
+//        mRefreshView.setPadding(
+//                mRefreshView.getPaddingLeft(),
+//                mRefreshOriginalTopPadding,
+//                mRefreshView.getPaddingRight(),
+//                mRefreshView.getPaddingBottom());
     }
 
     /**
      * Resets the header to the original state.
      */
     private void resetHeader() {
-        if (mRefreshState != TAP_TO_REFRESH) {
-            mRefreshState = TAP_TO_REFRESH;
-
-            resetHeaderPadding();
-
-            // Set refresh view text to the pull label
-            mRefreshViewText.setText(R.string.pull_to_refresh_tap_label);
-            // Replace refresh drawable with arrow drawable
-            mRefreshViewImage.setImageResource(R.drawable.ic_pulltorefresh_arrow);
-            // Clear the full rotation animation
-            mRefreshViewImage.clearAnimation();
-            // Hide progress bar and arrow.
-            mRefreshViewImage.setVisibility(View.GONE);
-            mRefreshViewProgress.setVisibility(View.GONE);
-        }
+//
+//        if (mRefreshState != TAP_TO_REFRESH) {
+//            mRefreshState = TAP_TO_REFRESH;
+//
+//            resetHeaderPadding();
+//
+//            // Set refresh view text to the pull label
+//            mRefreshViewText.setText(R.string.pull_to_refresh_tap_label);
+//            // Replace refresh drawable with arrow drawable
+//            mRefreshViewImage.setImageResource(R.drawable.ic_pulltorefresh_arrow);
+//            // Clear the full rotation animation
+//            mRefreshViewImage.clearAnimation();
+//            // Hide progress bar and arrow.
+//            mRefreshViewImage.setVisibility(View.GONE);
+//            mRefreshViewProgress.setVisibility(View.GONE);
+//        }
     }
 
     public void onScrollStateChanged(AbsListView view, int scrollState) {

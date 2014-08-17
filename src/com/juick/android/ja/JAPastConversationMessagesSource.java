@@ -3,6 +3,7 @@ package com.juick.android.ja;
 import android.content.Context;
 import com.juick.android.MainActivity;
 import com.juick.android.MicroBlog;
+import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juick.android.juick.MessagesSource;
@@ -10,8 +11,7 @@ import com.juickadvanced.R;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.juickadvanced.sources.PureJuickCompatibleURLMessagesSource;
 
 import java.util.ArrayList;
 
@@ -40,10 +40,10 @@ public class JAPastConversationMessagesSource extends MessagesSource {
     @Override
     public void getFirst(final Utils.Notification notifications, final Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         final String url = "https://ja.ip.rt.ru:8444/api/pending?command=past_conversations&uname="+uname;
-        final Utils.Function<Void, Utils.RESTResponse> then = new Utils.Function<Void, Utils.RESTResponse>() {
+        final Utils.Function<Void, RESTResponse> then = new Utils.Function<Void, RESTResponse>() {
             @Override
-            public Void apply(Utils.RESTResponse response) {
-                ArrayList<JuickMessage> messages = JuickCompatibleURLMessagesSource.parseJSONpure(response.getResult(), false);
+            public Void apply(RESTResponse response) {
+                ArrayList<JuickMessage> messages = PureJuickCompatibleURLMessagesSource.parseJSONpure(response.getResult(), false);
                 cont.apply(messages);
                 return null;
             }

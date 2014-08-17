@@ -19,6 +19,7 @@ package com.juick.android;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -34,6 +35,7 @@ import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.juick.android.juick.JuickAPIAuthorizer;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
@@ -47,6 +49,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.imaging.*;
 import com.juickadvanced.parsers.URLParser;
 import jp.tomorrowkey.android.gifplayer.GifView;
@@ -70,7 +74,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public static final int TYPE_THREAD = 1;
     public static final int SUBTYPE_ALL = 1;
     public static final int SUBTYPE_OTHER = 2;
-    public static Pattern msgPattern = Pattern.compile("#[0-9]+");
+    public static Pattern juickMsgReferencePattern = Pattern.compile("#[0-9]+");
+    public static Pattern pointMsgReferencePattern = Pattern.compile("#[a-z][a-z][a-z][a-z]+");
 //    public static Pattern usrPattern = Pattern.compile("@[a-zA-Z0-9\\-]{2,16}");
     private static String Replies;
     private final boolean noProxyOnWifi;
@@ -78,7 +83,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     private boolean allItemsEnabled = true;
 
     public static Set<String> filteredOutUsers;
-    private final double imageHeightPercent;
+    private static double imageHeightPercent;
     static String imageLoadMode;
     private final String proxyPassword;
     private final String proxyLogin;
@@ -172,7 +177,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         this.type = type;
         this.subtype = subtype;
         imageHeightPercent = Double.parseDouble(sp.getString("image.height_percent", "0.3"));
-        trackLastRead = sp.getBoolean("lastReadMessages", false);
+        trackLastRead = sp.getBoolean("lastReadMessages", true);
         imageLoadMode = sp.getString("image.loadMode", "off");
         proxyPassword = sp.getString("imageproxy.password", "");
         proxyLogin = sp.getString("imageproxy.login", "");
@@ -187,13 +192,30 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         enableScaleByGesture = sp.getBoolean("enableScaleByGesture", true);
         textScale = 1;
         try {
-            textScale = Float.parseFloat(sp.getString(PREFERENCES_SCALE, "1.0"));
+            String scale = sp.getString(PREFERENCES_SCALE, "");
+            if (scale.equals("")) {
+                scale = getDefaultScale(context);
+                sp.edit().putString(PREFERENCES_SCALE, scale).commit();
+            }
+            textScale = Float.parseFloat(scale);
         } catch (Exception ex) {
             //
         }
         databaseGetter = new Utils.ServiceGetter<DatabaseService>(context, DatabaseService.class);
         xmppServiceGetter = new Utils.ServiceGetter<XMPPService>(context, XMPPService.class);
         handler = new Handler();
+    }
+
+    private String getDefaultScale(Context context) {
+        int screenSize = context.getResources().getConfiguration().screenLayout &
+                Configuration.SCREENLAYOUT_SIZE_MASK;
+        if (screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE) {
+            return "2.0";
+        }
+        if (screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE) {
+            return "3.0";
+        }
+        return "1.0";
     }
 
     public void setOnForgetListener(Utils.Function<Void, JuickMessage> onForgetListener) {
@@ -229,31 +251,38 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public View getView(int position, View convertView, ViewGroup parent) {
         final JuickMessage jmsg = getItem(position);
         final Context context = getContext();
-        View v1 = convertView;
-        if (jmsg.User != null && jmsg.Text != null) {
-            MessageViewPreparer messageViewPreparer = new MessageViewPreparer(handler, jmsg, context, v1, getTextSize(context)).invoke();
-            v1 = messageViewPreparer.getV1();
-            startLoadUserPic(jmsg, messageViewPreparer.getT(), messageViewPreparer.getLrr(), messageViewPreparer.getParsedMessage(), messageViewPreparer.getUserPic());
-            if (messageViewPreparer.getParsedPreMessage() != null) {
-                startLoadUserPic(jmsg.contextPost, messageViewPreparer.getPret(), messageViewPreparer.getPrelrr(), messageViewPreparer.getParsedPreMessage(), messageViewPreparer.getPreuserPic());
-            }
+        MessageID mid = jmsg.getMID();
+        MicroBlog microBlog = mid != null ? MainActivity.microBlogs.get(mid.getMicroBlogCode()) : null;
+        if (microBlog instanceof OwnRenderItems) {
+            OwnRenderItems ori = (OwnRenderItems)microBlog;
+            return ori.getView(getContext(), jmsg, convertView);
         } else {
-            if (v1 == null || !(v1 instanceof TextView)) {
-                LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v1 = vi.inflate(R.layout.preference_category, null);
-            }
-
-            ((TextView) v1).setTextSize(getTextSize(context));
-
-            if (jmsg.Text != null) {
-                ((TextView) v1).setText(jmsg.Text);
+            View v1 = convertView;
+            if (jmsg.User != null && jmsg.Text != null) {
+                MessageViewPreparer messageViewPreparer = new MessageViewPreparer(handler, jmsg, context, v1, getTextSize(context)).invoke();
+                v1 = messageViewPreparer.getV1();
+                startLoadUserPic(jmsg, messageViewPreparer.getT(), messageViewPreparer.getLrr(), messageViewPreparer.getParsedMessage(), messageViewPreparer.getUserPic());
+                if (messageViewPreparer.getParsedPreMessage() != null) {
+                    startLoadUserPic(jmsg.contextPost, messageViewPreparer.getPret(), messageViewPreparer.getPrelrr(), messageViewPreparer.getParsedPreMessage(), messageViewPreparer.getPreuserPic());
+                }
             } else {
-                ((TextView) v1).setText("");
+                if (v1 == null || !(v1 instanceof TextView)) {
+                    LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    v1 = vi.inflate(R.layout.preference_category, null);
+                }
+
+                ((TextView) v1).setTextSize(getTextSize(context));
+
+                if (jmsg.Text != null) {
+                    ((TextView) v1).setText(jmsg.Text);
+                } else {
+                    ((TextView) v1).setText("");
+                }
             }
+            View v = v1;
+            MainActivity.restyleChildrenOrWidget(v, true);
+            return v;
         }
-        View v = v1;
-        MainActivity.restyleChildrenOrWidget(v, true);
-        return v;
     }
 
     public static float getTextSize(Context context) {
@@ -357,7 +386,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             String urlLower = url.toLowerCase();
             if (isValidImageURl(getContext(), urlLower)) {
                 if (hideGif && url.toLowerCase().contains(".gif")) continue;
-                retval.add(ImageURLConvertor.convertURLToDownloadable(url));
+                String nurl = ImageURLConvertor.convertURLToDownloadable(url);
+                if (!retval.contains(nurl))
+                    retval.add(nurl);
             }
         }
         return retval;
@@ -397,6 +428,10 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
     @Override
     public boolean isEnabled(int position) {
+        Activity context = (Activity) getContext();
+        if (context != null && context.isFinishing()) {
+            return true;
+        }
         JuickMessage jmsg = getItem(position);
         boolean retval = jmsg != null && jmsg.User != null && jmsg.getMID() != null;
         return retval;
@@ -641,11 +676,18 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         ssb.append(txt);
         boolean ssbChanged = false; // allocation optimization
         // Highlight links http://example.com/
-        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt);
+        ArrayList<ExtractURLFromMessage.FoundURL> foundURLs = ExtractURLFromMessage.extractUrls(txt, jmsg.getMID());
         ArrayList<String> urls = new ArrayList<String>();
         for (ExtractURLFromMessage.FoundURL foundURL : foundURLs) {
-            setSSBSpan(ssb, new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.getStart(), spanOffset + foundURL.getEnd(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            urls.add(foundURL.getUrl());
+            setSSBSpan(ssb, new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + foundURL.start, spanOffset + foundURL.end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            urls.add(foundURL.url);
+            if (foundURL.title != null) {
+                ssb.replace(spanOffset + foundURL.title.start-1, spanOffset + foundURL.title.start, " ");
+                ssb.replace(spanOffset + foundURL.title.end, spanOffset + foundURL.title.end+1, " ");
+                ssb.replace(spanOffset + foundURL.start-1, spanOffset + foundURL.start, "(");
+                ssb.replace(spanOffset + foundURL.end, spanOffset + foundURL.end+1, ")");
+                ssb.setSpan(new StyleSpan(Typeface.BOLD), spanOffset + foundURL.title.start, spanOffset + foundURL.title.end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
             ssbChanged = true;
         }
         // bold italic underline
@@ -666,12 +708,12 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
 
         // Highlight nick
-        String accountName = JuickAPIAuthorizer.getJuickAccountName(ctx);
+        String accountName = XMPPService.getMyAccountName(jmsg.getMID(), ctx);
         if (accountName != null) {
             int scan = spanOffset;
-            String nickScanArea = ssb+" ";
+            String nickScanArea = (ssb+" ").toUpperCase();
             while(true) {
-                int myNick = nickScanArea.indexOf("@" + accountName, scan);
+                int myNick = nickScanArea.indexOf("@" + accountName.toUpperCase(), scan);
                 if (myNick != -1) {
                     if (!isNickPart(nickScanArea.charAt(myNick + accountName.length() + 1))) {
                         setSSBSpan(ssb, new BackgroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.USERNAME_ME, 0xFF938e00)), myNick - 1, myNick + accountName.length() + 2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -685,7 +727,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         // Highlight messages #1234
         int pos = 0;
-        Matcher m = msgPattern.matcher(txt);
+        Matcher m = getCrossReferenceMsgPattern(jmsg.getMID()).matcher(txt);
         while (m.find(pos)) {
             ssb.setSpan(new ForegroundColorSpan(colorTheme.getColor(ColorsTheme.ColorKey.URLS, 0xFF0000CC)), spanOffset + m.start(), spanOffset + m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             pos = m.end();
@@ -729,7 +771,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 compactDt = new SpannableStringBuilder();
                 try {
                     if (true || jmsg.deltaTime!= Long.MIN_VALUE) {
-                        compactDt.append(XMPPIncomingMessagesActivity.toRelaviteDate(jmsg.Timestamp.getTime(), russian));
+                        compactDt.append(com.juickadvanced.Utils.toRelaviteDate(jmsg.Timestamp.getTime(), russian));
                     } else {
                         DateFormat df = new SimpleDateFormat("HH:mm dd/MMM/yy");
                         String date = jmsg.Timestamp != null ? df.format(jmsg.Timestamp) : "[bad date]";
@@ -803,6 +845,16 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         parsedMessage.messageNumberEnd = messageNumberEnd;
         parsedMessage.compactDate = compactDt;
         return parsedMessage;
+    }
+
+    public static Pattern getCrossReferenceMsgPattern(MessageID mid) {
+        if (mid instanceof JuickMessageID) {
+            return juickMsgReferencePattern;
+        }
+        if (mid instanceof PointMessageID) {
+            return pointMsgReferencePattern;
+        }
+        return juickMsgReferencePattern;
     }
 
     private static void setSSBSpan(SpannableStringBuilder ssb, Object span, int start, int end, int flags) {
@@ -999,7 +1051,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                 String loadURl = url;
 
                 if (!forceOriginalImage && !isHTMLSource(context, url)) {
-                    loadURl = setupProxyForURL(url);
+                    loadURl = setupProxyForURL(context, url, httpClient);
                 }
                 try {
                     final File tmpFile = new File(destFile.getPath()+".tmp");
@@ -1123,7 +1175,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
                                                         ImageLoader.this.url = imageURL;    // for image preview helper
                                                         suffix = "jpg";
                                                         if (!forceOriginalImage)
-                                                            imageURL = setupProxyForURL(imageURL);
+                                                            imageURL = setupProxyForURL(context, imageURL, httpClient);
                                                         updateStatus("Img load starts..");
                                                         try {
                                                             httpGet = new HttpGet(imageURL);
@@ -1177,40 +1229,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
         }
 
-
-        private String setupProxyForURL(String url) {
-            if (useDirectImageMode(getContext())) {
-                return url;
-            }
-            String loadURl = url;
-            if (imageLoadMode.contains("japroxy")) {
-                final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
-                final int WIDTH = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getWidth());
-                String host = "ja.ip.rt.ru:8080";
-                //String host = "192.168.1.77:8080";
-                if (url.startsWith("https://i.juick.com")) {
-                    url = "http"+url.substring(5);
-                }
-                loadURl  = "http://"+host+"/img?url=" + Uri.encode(url)+"&height="+HEIGHT+"&width="+WIDTH;
-            }
-            if (imageLoadMode.contains("weserv")) {
-                final int HEIGHT = (int)(((Activity)getContext()).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
-                // WESERV.NL
-                if (url.startsWith("https://")) {
-                    loadURl  = "http://images.weserv.nl/?url=ssl:" + Uri.encode(url.substring(8))+"&h="+HEIGHT+"&q=0.5";
-                } else if (url.startsWith("http://")) {
-                    loadURl  = "http://images.weserv.nl/?url=" + Uri.encode(url.substring(7))+"&h="+HEIGHT+"&q=0.5";
-                } else  {
-                    // keep url
-                }
-            }
-            if (imageLoadMode.contains("fastun") && proxyLogin.length() > 0 && proxyPassword.length() > 0) {
-                httpClient.getCredentialsProvider().setCredentials(new AuthScope("fastun.com",7000), new UsernamePasswordCredentials(proxyLogin, proxyPassword));
-                HttpHost proxy = new HttpHost("fastun.com", 7000);
-                httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-            }
-            return loadURl;
-        }
 
         private void updateStatus(final String text) {
             this.status = text;
@@ -1384,6 +1402,47 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             }
             return suffix;
         }
+    }
+
+    public static String setupProxyForURL(Context context, String url, DefaultHttpClient httpClient) {
+        if (useDirectImageMode(context)) {
+            return url;
+        }
+        String loadURl = url;
+        if (imageLoadMode.contains("japroxy")) {
+            final int HEIGHT = (int)(((Activity)context).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
+            final int WIDTH = (int)(((Activity)context).getWindow().getWindowManager().getDefaultDisplay().getWidth());
+            String host = "ja.ip.rt.ru:8080";
+            //String host = "192.168.1.77:8080";
+            if (url.startsWith("https://i.juick.com")) {
+                url = "http"+url.substring(5);
+            }
+            loadURl  = "http://"+host+"/img?url=" + Uri.encode(url)+"&height="+HEIGHT+"&width="+WIDTH;
+        }
+        if (imageLoadMode.contains("weserv")) {
+            final int HEIGHT = (int)(((Activity)context).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
+            // WESERV.NL
+            if (url.startsWith("https://")) {
+                loadURl  = "http://images.weserv.nl/?url=ssl:" + Uri.encode(url.substring(8))+"&h="+HEIGHT+"&q=0.5";
+            } else if (url.startsWith("http://")) {
+                loadURl  = "http://images.weserv.nl/?url=" + Uri.encode(url.substring(7))+"&h="+HEIGHT+"&q=0.5";
+            } else  {
+                // keep url
+            }
+        }
+        if (imageLoadMode.contains("fastun")) {
+            if (httpClient != null) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+                String proxyLogin = sp.getString("imageproxy.login", "");
+                String proxyPassword = sp.getString("imageproxy.password", "");
+                if (proxyLogin.length() > 0 && proxyPassword.length() > 0) {
+                    httpClient.getCredentialsProvider().setCredentials(new AuthScope("fastun.com",7000), new UsernamePasswordCredentials(proxyLogin, proxyPassword));
+                    HttpHost proxy = new HttpHost("fastun.com", 7000);
+                    httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+                }
+            }
+        }
+        return loadURl;
     }
 
     static private void handleOOM(final Activity activity, OutOfMemoryError e) {

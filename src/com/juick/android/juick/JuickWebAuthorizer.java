@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
 import org.apache.http.HttpEntity;
@@ -41,21 +42,27 @@ import java.util.List;
  */
 public class JuickWebAuthorizer extends Utils.URLAuth {
     @Override
+    public void maybeLoadCredentials(Context context) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        if (myCookie == null) {
+            myCookie = sp.getString("web_cookie", null);
+        }
+    }
+
+    @Override
     public boolean acceptsURL(String url) {
         return url.indexOf("//juick.com/") != -1;
     }
 
     @Override
     public void authorize(Context act, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, Utils.Function<Void, String> withCookie) {
+        maybeLoadCredentials(act);
         getMyCookie(act, withCookie);
     }
 
     public static String myCookie;
     private static void getMyCookie(final Context ctx, final Utils.Function<Void,String> cont) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-        if (myCookie == null) {
-            myCookie = sp.getString("web_cookie", null);
-        }
         if (myCookie == null) {
             if (ctx instanceof Activity) {
                 final Activity activity = (Activity)ctx;
@@ -134,9 +141,9 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
                             @Override
                             public void run() {
                                 obtainCookieByLoginPassword(activity, loginS, passwordS,
-                                        new Utils.Function<Void, Utils.RESTResponse>() {
+                                        new Utils.Function<Void, RESTResponse>() {
                                             @Override
-                                            public Void apply(final Utils.RESTResponse s) {
+                                            public Void apply(final RESTResponse s) {
                                                 if (s.result != null) {
                                                     myCookie = s.result;
                                                     activity.runOnUiThread(new Runnable() {
@@ -181,7 +188,7 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
         }
     }
 
-    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, Utils.RESTResponse> result) {
+    static void obtainCookieByLoginPassword(final Activity activity, String login, String password, final Utils.Function<Void, RESTResponse> result) {
         final DefaultHttpClient client = new DefaultHttpClient();
         try {
             HttpPost httpPost = new HttpPost("http://juick.com/login");
@@ -202,30 +209,30 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
                 public Object handleResponse(HttpResponse o) throws ClientProtocolException, IOException {
                     HttpEntity entity = o.getEntity();
                     InputStream content = entity.getContent();
-                    Utils.RESTResponse responseBody = Utils.streamToString(content, null);
+                    RESTResponse responseBody = Utils.streamToString(content, null);
                     if (o.getStatusLine().getStatusCode() == 200) {
                         CookieStore cookieStore = client.getCookieStore();
                         List<Cookie> cookies = cookieStore.getCookies();
                         for (Cookie cookie : cookies) {
                             if (cookie.getName().equals("hash")) {
-                                result.apply(new Utils.RESTResponse(null, false, cookie.getValue()));
+                                result.apply(new RESTResponse(null, false, cookie.getValue()));
                                 return "";
                             }
                         }
-                        result.apply(new Utils.RESTResponse("Result OK, but no cookies", false, null));
+                        result.apply(new RESTResponse("Result OK, but no cookies", false, null));
                         return "";
                     } else {
                         if (responseBody.result != null && responseBody.result.indexOf("forbidden") != -1) {
-                            result.apply(new Utils.RESTResponse(activity.getString(R.string.InvalidLoginPassword), false, null));
+                            result.apply(new RESTResponse(activity.getString(R.string.InvalidLoginPassword), false, null));
                         } else {
-                            result.apply(new Utils.RESTResponse("http://juick.com/login: Unknown response: code="+o.getStatusLine().getStatusCode()+" msg="+o.getStatusLine().getReasonPhrase()+" data="+responseBody.result, false, null));
+                            result.apply(new RESTResponse("http://juick.com/login: Unknown response: code="+o.getStatusLine().getStatusCode()+" msg="+o.getStatusLine().getReasonPhrase()+" data="+responseBody.result, false, null));
                         }
                         return "";
                     }
                 }
             });
         } catch (IOException e) {
-            result.apply(new Utils.RESTResponse("Other error: "+e.toString(), false, null));
+            result.apply(new RESTResponse("Other error: "+e.toString(), false, null));
             //
         } finally {
             client.getConnectionManager().shutdown();

@@ -36,11 +36,6 @@ public class MessagesLoadNotification implements
     }
 
     @Override
-    public void notifyHttpClientObtained(HttpClient client) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public void notifyDownloadProgress(final int progressBytes) {
         handler.post(new Runnable() {
             @Override

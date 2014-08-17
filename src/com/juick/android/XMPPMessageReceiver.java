@@ -218,9 +218,9 @@ public class XMPPMessageReceiver extends BroadcastReceiver {
             }
         }
         notificationBuilder.setDefaults(silent ? 0 : notification);
-        Intent intent = new Intent();
+        Intent intent = new Intent(context, XMPPService.class);
         intent.setAction(XMPPService.ACTION_LAUNCH_MESSAGELIST);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1000, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getService(context, 1000, intent, 0);
         //PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, nintent, 0);
         notificationBuilder.setContentTitle("Juick: " + nMessages + " new message" + (nMessages > 1 ? "s" : "")).
                 setContentText(tickerText).

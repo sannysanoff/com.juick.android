@@ -41,7 +41,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
-import com.juick.android.juick.JuickHttpAPI;
+import com.juickadvanced.protocol.JuickHttpAPI;
 import com.juickadvanced.R;
 import com.juickadvanced.data.juick.JuickPlace;
 import org.json.JSONArray;

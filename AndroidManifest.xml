@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.facebook.katana" android:hardwareAccelerated="true"
+-->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced" android:hardwareAccelerated="true"
-          android:versionCode="2014041401" android:versionName="20.4.4">
+          android:versionCode="2014081701" android:versionName="21.0.3">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -20,7 +23,6 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-
 
     <permission android:name="com.juickadvanced.permission.C2D_MESSAGE" android:protectionLevel="signature"/>
     <uses-permission android:name="com.juickadvanced.permission.C2D_MESSAGE"/>
@@ -52,8 +54,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="http" android:host="juick.com"/>
-                <data android:scheme="http" android:host="*.psto.net"/>
-                <data android:scheme="http" android:host="psto.net"/>
+                <data android:scheme="http" android:host="*.point.im"/>
                 <data android:scheme="http" android:host="bnw.im"/>
             </intent-filter>
         </activity>
@@ -95,7 +96,7 @@
         </activity>
         <activity android:name="com.juick.android.ExploreActivity" android:label="@string/Juick__Explore" android:theme="@style/Theme.Sherlock.NoNavigation"
                   android:configChanges="keyboard|keyboardHidden|orientation" android:noHistory="true"/>
-        <activity android:name="com.juick.android.ThreadActivity" android:label="" android:theme="@style/Theme.Sherlock.NoNavigation"
+        <activity android:name="com.juick.android.ThreadActivity" android:label="" android:theme="@style/Theme.Sherlock.Light"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.PlacesActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
@@ -129,7 +130,7 @@
         </activity>
         <activity android:name="com.juick.android.PickLocationActivity" android:label="@string/Pick_a_location"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>
-        <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events" android:theme="@style/Theme.Sherlock.NoNavigation"
+        <activity android:name="com.juick.android.XMPPIncomingMessagesActivity" android:label="@string/Incoming_Events" android:theme="@style/Theme.Sherlock.Light"
                   android:launchMode="singleTask" android:configChanges="keyboard|keyboardHidden|orientation"/>
         <activity android:name="com.juick.android.DisplayChartActivity"
                   android:configChanges="keyboard|keyboardHidden|orientation"/>

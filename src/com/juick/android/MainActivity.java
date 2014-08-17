@@ -29,6 +29,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
@@ -42,19 +43,22 @@ import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.actionbarsherlock.app.ActionBar;
+import com.juick.android.api.ChildrenMessageSource;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
+import com.juick.android.facebook.Facebook;
+import com.juick.android.ja.GlavSuMicroblog;
 import com.juick.android.juick.*;
 import com.juick.android.point.PointMicroBlog;
-import com.juick.android.psto.PstoCompatibleMessagesSource;
-import com.juick.android.psto.PstoMicroBlog;
 import com.juickadvanced.R;
+import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
-import com.juickadvanced.data.psto.PstoMessageID;
 /* http://code.google.com/p/android-file-dialog/ */
+import com.juickadvanced.data.point.PointMessageID;
+import com.juickadvanced.protocol.JuickHttpAPI;
 import com.lamerman.FileDialog;
 import com.lamerman.SelectionMode;
 import com.mobeta.android.dslv.DragSortController;
@@ -94,10 +98,12 @@ public class MainActivity extends JuickFragmentActivity implements
         microBlogs.put(juickMicroBlog.getCode(), juickMicroBlog);
         BNWMicroBlog bnwMicroBlog = new BNWMicroBlog();
         microBlogs.put(bnwMicroBlog.getCode(), bnwMicroBlog);
-        PstoMicroBlog pstoMicroBlog = new PstoMicroBlog();
-        microBlogs.put(pstoMicroBlog.getCode(), pstoMicroBlog);
         PointMicroBlog pointMicroBlog = new PointMicroBlog();
         microBlogs.put(pointMicroBlog.getCode(), pointMicroBlog);
+        GlavSuMicroblog glavsu = new GlavSuMicroblog();
+        microBlogs.put(glavsu.getCode(), glavsu);
+        Facebook fb = new Facebook();
+        microBlogs.put(fb.getCode(), fb);
 
         for (MicroBlog microBlog : microBlogs.values()) {
             microBlog.initialize();
@@ -246,7 +252,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void setFragmentNeededMetrics() {
-        if (sp.getBoolean("googlePlusNavigation", false)) {
+        if (true /* sp.getBoolean("googlePlusNavigation", false) */) {
             final ViewGroup navigationPanel = (ViewGroup)findViewById(R.id.navigation_panel);
             if (mf != null && navigationPanel.getWidth() != 0) {
                 mf.setRightScrollBound(navigationPanel.getWidth());
@@ -294,7 +300,7 @@ public class MainActivity extends JuickFragmentActivity implements
         startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
 
-        JuickHttpAPI.setHttpsEnabled( sp.getBoolean("useHttpsForJuickHttpAPI", false) );
+        JuickHttpAPI.setHttpsEnabled(sp.getBoolean("useHttpsForJuickHttpAPI", false));
 
         if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
             ACRA.getErrorReporter().putCustomData("juick_user", JuickAPIAuthorizer.getJuickAccountName(this));
@@ -359,18 +365,20 @@ public class MainActivity extends JuickFragmentActivity implements
                 xmppServiceGetter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
                     @Override
                     public void withService(XMPPService service) {
-                        final SharedPreferences rdnews = getSharedPreferences("read_news", MODE_PRIVATE);
-                        for(int i=0; i< newses.size(); i++) {
-                            final WhatsNew.News news = newses.get(i);
-                            if (news.code.equals("critical")) {
-                                if ("SannySanoff".equals(JuickAPIAuthorizer.getJuickAccountName(MainActivity.this))) {
-                                    service.handleTextMessage("critical@ja_server",news.body);
+                        if (service != null) {
+                            final SharedPreferences rdnews = getSharedPreferences("read_news", MODE_PRIVATE);
+                            for(int i=0; i< newses.size(); i++) {
+                                final WhatsNew.News news = newses.get(i);
+                                if (news.code.equals("critical")) {
+                                    if ("SannySanoff".equals(JuickAPIAuthorizer.getJuickAccountName(MainActivity.this))) {
+                                        service.handleTextMessage("critical@ja_server",news.body);
+                                    }
+                                    continue;
                                 }
-                                continue;
-                            }
-                            if (!rdnews.getBoolean("reported_"+news.code, false)) {
-                                rdnews.edit().putBoolean("reported_"+news.code, true).commit();
-                                service.handleTextMessage("news@ja_server",news.body);
+                                if (!rdnews.getBoolean("reported_"+news.code, false)) {
+                                    rdnews.edit().putBoolean("reported_"+news.code, true).commit();
+                                    service.handleTextMessage("news@ja_server",news.body);
+                                }
                             }
                         }
                     }
@@ -391,7 +399,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void setSelectedNavigationItem(int index) {
-        boolean googlePlus = sp.getBoolean("googlePlusNavigation", false);
+        boolean googlePlus = true; /* sp.getBoolean("googlePlusNavigation", false); */
         selectedNavigationItem = index;
         if (!googlePlus) {
             getSupportActionBar().setSelectedNavigationItem(index);
@@ -402,7 +410,7 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void updateActionBarMode() {
-        boolean googlePlus = sp.getBoolean("googlePlusNavigation", false);
+        boolean googlePlus = true; /* sp.getBoolean("googlePlusNavigation", false); */
         ActionBar bar = getSupportActionBar();
         bar.setDisplayShowTitleEnabled(false);
         bar.setDisplayShowHomeEnabled(false);
@@ -529,6 +537,9 @@ public class MainActivity extends JuickFragmentActivity implements
     public static final int NAVITEM_SAVED = 1002;
     public static final int NAVITEM_RECENT_READ = 1003;
     public static final int NAVITEM_RECENT_WRITE = 1004;
+    public static final int NAVITEM_ALL_COMBINED = 1005;
+    public static final int NAVITEM_SUBS_COMBINED = 1006;
+    public static final int NAVITEM_GLAVSU = 1007;
 
 
 
@@ -637,6 +648,36 @@ public class MainActivity extends JuickFragmentActivity implements
             public void action() {
                 final Bundle args = new Bundle();
                 args.putSerializable("messagesSource", new RecentlyCommentedMessagesSource(MainActivity.this));
+                runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new NavigationItem(NAVITEM_ALL_COMBINED, R.string.navigationAllCombined, R.drawable.navicon_juickadvanced, "msrcAllCombined") {
+            @Override
+            public void action() {
+                final Bundle args = new Bundle();
+                args.putSerializable("messagesSource", new CombinedAllMessagesSource(MainActivity.this,"combined_all"));
+                runDefaultFragmentWithBundle(args, this);
+            }
+        });
+        navigationItems.add(new NavigationItem(NAVITEM_SUBS_COMBINED, R.string.navigationSubsCombined, R.drawable.navicon_juickadvanced, "msrcSubsCombined") {
+            @Override
+            public void action() {
+                final NavigationItem thiz = this;
+                new Thread("MessageSource Initializer") {
+                    @Override
+                    public void run() {
+                        final Bundle args = new Bundle();
+                        args.putSerializable("messagesSource", new CombinedSubscriptionMessagesSource(MainActivity.this));
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                runDefaultFragmentWithBundle(args, thiz);
+                            }
+
+                        });
+                    }
+                }.start();
+                final Bundle args = new Bundle();
                 runDefaultFragmentWithBundle(args, this);
             }
         });
@@ -1201,15 +1242,23 @@ public class MainActivity extends JuickFragmentActivity implements
             case R.id.menuitem_newmessage:
                 if (mf != null) {
                     Intent intent1 = new Intent(this, NewMessageActivity.class);
-                    intent1.putExtra("messagesSource", mf.messagesSource);
+                    if (mf.messagesSource.getKind().startsWith("combined")) {
+                        //Toast.makeText(this, getString(R.string.GoToParticularToPost), Toast.LENGTH_LONG).show();
+                    } else {
+                        intent1.putExtra("microblog", mf.messagesSource.getMicroBlog().getCode());
+                    }
                     startActivity(intent1);
                     return true;
                 }
             case R.id.menuitem_search:
                 if (mf != null) {
-                    Intent intent = new Intent(this, ExploreActivity.class);
-                    intent.putExtra("messagesSource", mf.messagesSource);
-                    startActivity(intent);
+                    if (mf.messagesSource.getKind().equals("combined")) {
+                        Toast.makeText(this, getString(R.string.GoToParticularToSearch), Toast.LENGTH_LONG).show();
+                    } else {
+                        Intent intent = new Intent(this, ExploreActivity.class);
+                        intent.putExtra("messagesSource", mf.messagesSource);
+                        startActivity(intent);
+                    }
                 }
                 return true;
             case R.id.reload:
@@ -1273,7 +1322,7 @@ public class MainActivity extends JuickFragmentActivity implements
             @Override
             public void run() {
 
-                final Utils.RESTResponse restResponse = DatabaseService.obtainSharingURL(MainActivity.this, reset);
+                final RESTResponse restResponse = DatabaseService.obtainSharingURL(MainActivity.this, reset);
 
                 if (restResponse.getErrorText() == null)
                     try {
@@ -1348,6 +1397,7 @@ public class MainActivity extends JuickFragmentActivity implements
 
     private boolean parseUri(Uri uri, boolean shouldFinish) {
         List<String> segs = uri.getPathSegments();
+        if (uri == null || uri.getHost() == null) return true;
         if (uri.getHost().contains("juick.com")) {
             if ((segs.size() == 1 && segs.get(0).matches("\\A[0-9]+\\z"))
                     || (segs.size() == 2 && segs.get(1).matches("\\A[0-9]+\\z") && !segs.get(0).equals("places"))) {
@@ -1356,8 +1406,9 @@ public class MainActivity extends JuickFragmentActivity implements
                     if (shouldFinish) finish();
                     Intent intent = new Intent(this, ThreadActivity.class);
                     intent.setData(null);
-                    intent.putExtra("mid", new JuickMessageID(mid));
-                    intent.putExtra("messagesSource", new JuickCompatibleURLMessagesSource(this, "mid_from_url"));
+                    JuickMessageID jmid = new JuickMessageID(mid);
+                    intent.putExtra("mid", jmid);
+                    intent.putExtra("messagesSource", ChildrenMessageSource.forMID(this, jmid));
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
@@ -1365,31 +1416,6 @@ public class MainActivity extends JuickFragmentActivity implements
                 }
             } else if (segs.size() == 1 && segs.get(0).matches("\\A[a-zA-Z0-9\\-]+\\z")) {
                 //TODO show user
-            }
-        }
-        if (uri.getHost().contains("psto.net")) {
-            String[] hostPart = uri.getHost().split("\\.");
-            if (hostPart.length == 2) {
-                // open main page
-                if (shouldFinish) finish();
-                Intent intent = new Intent(this, MessagesActivity.class);
-                intent.setData(null);
-                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, "main", "PSTO Main","http://psto.net/recent"));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-            }
-            if (hostPart.length == 3 && segs.size() == 1) { // http://abc.psto.net/klmnop
-                // open thread
-                if (shouldFinish) finish();
-                Intent intent = new Intent(this, ThreadActivity.class);
-                intent.setData(null);
-                PstoMessageID mid = new PstoMessageID(hostPart[0], segs.get(0));
-                intent.putExtra("mid", mid);
-                intent.putExtra("messagesSource", new PstoCompatibleMessagesSource(this, "direct_mid", getString(R.string.navigationPSTORecent),"http://psto.net/recent"));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
             }
         }
         if (uri.getHost().contains("bnw.im")) {
@@ -1401,11 +1427,32 @@ public class MainActivity extends JuickFragmentActivity implements
                 intent.setData(null);
                 BnwMessageID mid = new BnwMessageID(segs.get(1));
                 intent.putExtra("mid", mid);
-                intent.putExtra("messagesSource", new BnwCompatibleMessagesSource(this, "direct_mid", getString(R.string.navigationBNWAll),"/show"));
+                intent.putExtra("messagesSource", ChildrenMessageSource.forMID(this, mid));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }
+
+        }
+        if (uri.getHost().contains("point.im")) {
+            String s = uri.toString();
+            if (s.endsWith("/")) return false;
+            s = s.substring(s.indexOf("point.im")+9);
+            if (s.contains("#")) {
+                s = s.substring(0, s.indexOf("#"));
+            }
+            if (s.contains("/") || s.length() > 6) return false;
+            for(int i=0; i<s.length(); i++) {
+                if (s.charAt(i) != Character.toLowerCase(s.charAt(i))) return false;
+            }
+            PointMessageID mid = new PointMessageID("", s, -1);
+            Intent intent = new Intent(this, ThreadActivity.class);
+            intent.setData(null);
+            intent.putExtra("mid", mid);
+            intent.putExtra("messagesSource", ChildrenMessageSource.forMID(this, mid));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
 
         }
         return false;
@@ -1470,6 +1517,8 @@ public class MainActivity extends JuickFragmentActivity implements
         ColorsTheme.ColorTheme colorTheme = JuickMessagesAdapter.getColorTheme(view.getContext());
         boolean pressed = view.isPressed();
         boolean selected = view.isSelected();
+        String name = view.getClass().getName();
+        if (name.contains("$HomeView")) return;
         if (view instanceof AbsListView) {
             ((AbsListView) view).setCacheColorHint(colorTheme.getBackground(pressed));
         }
@@ -1508,7 +1557,7 @@ public class MainActivity extends JuickFragmentActivity implements
         } else if (view instanceof TextView) {
             TextView text = (TextView) view;
             final int id = text.getId();
-            if (id != R.id.old_title && id != R.id.gotoMain) // keep it authentic
+            if (id != R.id.old_title /* && id != R.id.gotoMain */) // keep it authentic
                 text.setTextColor(colorTheme.getForeground(pressed));
         } else if (view instanceof ViewGroup) {
             restyleViewGroup((ViewGroup) view, colorTheme, pressed, selected, dontBackground);
@@ -1605,7 +1654,17 @@ public class MainActivity extends JuickFragmentActivity implements
         if (s.startsWith("msrc")) {
             final DragSortListView navigationList = (DragSortListView)findViewById(R.id.navigation_list);
             if (navigationList.isDragEnabled()) return; // editing is being done
-            updateNavigation();
+            final int REFRESHNAV = 0xFE0D;
+            if (!handler.hasMessages(REFRESHNAV)) {
+                Message msg = Message.obtain(handler, new Runnable() {
+                    @Override
+                    public void run() {
+                        updateNavigation();
+                    }
+                });
+                msg.what = REFRESHNAV;
+                handler.sendMessageDelayed(msg, 100);
+            }
         }
         boolean invalidateRendering = false;
         if (censorLevelChanged) {
