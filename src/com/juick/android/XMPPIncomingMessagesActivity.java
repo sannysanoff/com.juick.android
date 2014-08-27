@@ -730,7 +730,9 @@ public class XMPPIncomingMessagesActivity extends SherlockActivity implements XM
                     SpannableStringBuilder ssb = new SpannableStringBuilder(subscriptionMessage.getFrom()+" ");
                     int off = ssb.length();
                     TextView fromTags  = (TextView)view.findViewById(R.id.from_tags);
-                    fromTags.setCompoundDrawablesWithIntrinsicBounds(getIconForMessageId(subscriptionMessage.getMID(), fromTags), null, null, null);
+                    if (fromTags != null) {
+                        fromTags.setCompoundDrawablesWithIntrinsicBounds(getIconForMessageId(subscriptionMessage.getMID(), fromTags), null, null, null);
+                    }
                     TextView preview = (TextView)view.findViewById(R.id.preview);
                     ArrayList<String> tags = subscriptionMessage.getTags();
                     for (int i1 = 0; i1 < tags.size(); i1++) {

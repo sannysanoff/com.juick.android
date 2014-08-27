@@ -221,6 +221,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public static HashSet<AccountProof> getAccountProofs(Context context) {
+        JuickAdvancedApplication.initAuthorizers(context);
         HashSet<AccountProof> proofs = new HashSet<AccountProof>();
         if (JuickAPIAuthorizer.getJuickAccountName(context) != null) {
             proofs.add(new AccountProof(
@@ -229,13 +230,15 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                     JuickMessageID.CODE
                     ));
         }
-        PointMicroBlog.instance.authorizer.maybeLoadCredentials(context);
-        if (PointAuthorizer.token != null) {
-            proofs.add(new AccountProof(
-                    PointAuthorizer.getPointAccountName(context),
-                    PointAuthorizer.getPointAccountPassword(context),
-                    PointMessageID.CODE
-            ));
+        if (PointMicroBlog.instance != null && PointMicroBlog.instance.authorizer != null) {
+            PointMicroBlog.instance.authorizer.maybeLoadCredentials(context);
+            if (PointAuthorizer.token != null) {
+                proofs.add(new AccountProof(
+                        PointAuthorizer.getPointAccountName(context),
+                        PointAuthorizer.getPointAccountPassword(context),
+                        PointMessageID.CODE
+                ));
+            }
         }
         return proofs;
     }
