@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/sort_by_rating"
+          android:icon="@drawable/rating_sort_desc"
+          android:title="Sort by rating"
+          android:showAsAction="ifRoom"/>
+    <item android:id="@+id/sort_by_date_inc"
+          android:icon="@drawable/date_sort_asc"
+          android:title="Sort by date asc"
+          android:showAsAction="ifRoom"/>
+    <item android:id="@+id/sort_by_date_dec"
+          android:icon="@drawable/date_sort_desc"
+          android:title="Sort by date desc"
+          android:showAsAction="ifRoom"/>
     <item android:id="@+id/reload"
         android:icon="@drawable/ic_action_refresh"
         android:title="@string/Refresh"

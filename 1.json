@@ -1,10 +1,507 @@
-<div class="quote">
-<div class="quoteHeader">
-Цитата:
-<a href="/forum/4-politics/38-ukraine-russia-relationships/message/2374191/#msg2374191" rel="nofollow">Zet.69 от 01.06.2014 21:08:55</a>
-</div>
-<div class="quoteContent">
-Скорее подарок божий это выросшие цены на энергоресурсы.
-</div>
-</div>
-<br />Угу... при отсутствии НДПИ и экспортных пошлин, а также экспорте &quot;скважинной жидкости&quot; ( (с) Ходорковский ) - куда бы профит от повышения цен ушел? Неужто в бюджет? ЭльфизьмЪ...
+{"node": {
+    "has_comprehensive_title": false,
+    "to": null,
+    "can_viewer_append_photos": false,
+    "negative_feedback_actions": {
+        "edges": [
+            {
+                "node": {
+                    "type": "HIDE",
+                    "subtitle": {
+                        "text": "Hide this post from News Feed"
+                    },
+                    "title": {
+                        "text": "I don't want to see this"
+                    }
+                }
+            },
+            {
+                "node": {
+                    "type": "DONT_LIKE",
+                    "subtitle": {
+                        "text": "See what you can do about this."
+                    },
+                    "title": {
+                        "text": "I don't like this post"
+                    }
+                }
+            },
+            {
+                "node": {
+                    "type": "UNSUBSCRIBE",
+                    "subtitle": {
+                        "text": "You won't see posts from Dmitry."
+                    },
+                    "title": {
+                        "text": "Unfollow Dmitry"
+                    }
+                }
+            },
+            {
+                "node": {
+                    "type": "UNSUBSCRIBE_ATTACHED_STORY_ACTOR",
+                    "subtitle": {
+                        "text": "You won't see posts from Alexey."
+                    },
+                    "title": {
+                        "text": "Hide all from Alexey"
+                    }
+                }
+            }
+        ]
+    },
+    "cache_id": "MjU3OzEzNjQ4OTE3NTI7MTAyMDI2NjcyMDE3MDU1OTg7ODIwMDI5NDg4MDI5OTQ4OzE0MDkxMzgxMDg6MjU3OzEzNjQ4OTE3NTI7MTAyMDI2NjcyMDE3MDU1OTg7ODIwMDI5NDg4MDI5OTQ4OzE0MDkxMzgwMjk6LTg3MDU1MTUyNjE1MTc1NDg0MjQ6MTow",
+    "feedback_context": {
+        "read_likelihood": "LOW"
+    },
+    "via": null,
+    "icon_image": null,
+    "explicit_place": null,
+    "followup_feed_units": null,
+    "privacy_scope": null,
+    "id": "UzpfSTYzNTE2MTA1NjUwNDIwOF8xMzY0ODkxNzUyOjEwMjAyNjY3MjAxNzA1NTk4OjFfMTM2NDg5MTc1MjoxMDIwMjY2NzIwMTcwNTU5ODowXzYzNTE2MTA1NjUwNDIwOA==",
+    "feedback": null,
+    "report_info": {
+        "action": "Report\/Mark as Spam"
+    },
+    "title": {
+        "ranges": [
+            {
+                "length": 16,
+                "offset": 0,
+                "entity": {
+                    "id": "1364891752",
+                    "profile_picture": {
+                        "uri": "https:\/\/fbcdn-profile-a.akamaihd.net\/hprofile-ak-xaf1\/t1.0-1\/c54.54.669.669\/s60x60\/307995_3744251969254_140255164_n.jpg",
+                        "height": 60,
+                        "width": 60
+                    },
+                    "app_section": null,
+                    "android_urls": null,
+                    "redirection_info": null,
+                    "page": null,
+                    "name": "Dmitry Kornilich",
+                    "__type__": {
+                        "name": "User"
+                    },
+                    "url": "https:\/\/m.facebook.com\/dmitry.kornilich"
+                }
+            }
+        ],
+        "aggregated_ranges": [],
+        "image_ranges": [],
+        "text": "Dmitry Kornilich commented on this."
+    },
+    "sponsored_data": null,
+    "save_info": null,
+    "inline_activities": {
+        "nodes": []
+    },
+    "creation_time": 1409138108,
+    "actors": [
+        {
+            "id": "1364891752",
+            "profile_picture": {
+                "uri": "https:\/\/fbcdn-profile-a.akamaihd.net\/hprofile-ak-xaf1\/t1.0-1\/c54.54.669.669\/s60x60\/307995_3744251969254_140255164_n.jpg",
+                "height": 60,
+                "width": 60
+            },
+            "url": "https:\/\/m.facebook.com\/dmitry.kornilich",
+            "name": "Dmitry Kornilich",
+            "__type__": {
+                "name": "User"
+            }
+        }
+    ],
+    "attachments": [],
+    "hideable_token": "szAyMDCyNLGwAJJAqs41r8Q5Pzc3Na_ELz8l1SmxODXFNSU9Nbgkv6iyrs7Q2MzEwtLQ3NSoLiM-OaMIAA",
+    "application": null,
+    "with": [],
+    "shareable": null,
+    "implicit_place": null,
+    "display_explanation": null,
+    "substories": [],
+    "secondary_actions": [
+        {
+            "url": "https:\/\/m.facebook.com\/a\/feed_menu.php?story_permalink_token=S%3A_I635161056504208_1364891752%3A10202667201705598%3A1_1364891752%3A10202667201705598%3A0_635161056504208&hideable_token=szAyMDCyNLGwAJJAqs41r8Q5Pzc3Na_ELz8l1SmxODXFNSU9Nbgkv6iyrs7Q2MzEwtLQ3NSoLiM-OaMIAA&action=ms&gfid=AQCuUZyRZvcEc0Ex&_ft_=qid.6052272017708034532%3Amf_story_key.-8705515261517548424%3Aapp_id.0",
+            "title": "Report\/Mark as Spam",
+            "__type__": {
+                "name": "ReportActionLink"
+            }
+        }
+    ],
+    "__type__": {
+        "name": "Story"
+    },
+    "can_viewer_delete": false,
+    "suffix": null,
+    "action_links": [],
+    "url": null,
+    "message": null,
+    "stories": null,
+    "debug_info": null,
+    "legacy_api_story_id": null,
+    "tracking": "{\"qid\":\"6052272017708034532\",\"mf_story_key\":\"-8705515261517548424\",\"app_id\":0}",
+    "substory_count": 0,
+    "suggested_place": null,
+    "attached_story": {
+        "has_comprehensive_title": false,
+        "to": {
+            "id": "362586637107571",
+            "profile_picture": {
+                "uri": "https:\/\/fbcdn-profile-a.akamaihd.net\/hprofile-ak-xpa1\/v\/t1.0-1\/c18.0.60.60\/p60x60\/156565_10150000902508794_1918448624_n.png?oh=827492336ab5cb823c831e8c06078884&oe=546B9A44&__gda__=1416932166_76ed0a976e9f0ead67c979c9bd8181ff",
+                "height": 60,
+                "width": 60
+            },
+            "name": "Свободная Россия",
+            "__type__": {
+                "name": "Group"
+            }
+        },
+        "can_viewer_append_photos": false,
+        "negative_feedback_actions": {
+            "edges": [
+                {
+                    "node": {
+                        "type": "HIDE",
+                        "subtitle": {
+                            "text": "Hide this post from News Feed"
+                        },
+                        "title": {
+                            "text": "I don't want to see this"
+                        }
+                    }
+                },
+                {
+                    "node": {
+                        "type": "DONT_LIKE",
+                        "subtitle": {
+                            "text": "See what you can do about this."
+                        },
+                        "title": {
+                            "text": "I don't like this post"
+                        }
+                    }
+                },
+                {
+                    "node": {
+                        "type": "UNSUBSCRIBE",
+                        "subtitle": {
+                            "text": "You won't see posts from Alexey."
+                        },
+                        "title": {
+                            "text": "Hide all from Alexey"
+                        }
+                    }
+                },
+                {
+                    "node": {
+                        "type": "UNSUBSCRIBE_DIRECTED_TARGET",
+                        "subtitle": {
+                            "text": "You won't see posts from Свободная Россия."
+                        },
+                        "title": {
+                            "text": "Hide all from Свободная Россия"
+                        }
+                    }
+                }
+            ]
+        },
+        "cache_id": "ODIwMDI5NDg4MDI5OTQ4OjE=",
+        "via": null,
+        "explicit_place": null,
+        "privacy_scope": {
+            "icon": {
+                "uri": "https:\/\/fbstatic-a.akamaihd.net\/rsrc.php\/v2\/yp\/r\/--soLpMIbaJ.png",
+                "height": 11,
+                "width": 10
+            },
+            "label": "Public",
+            "type": "everyone",
+            "education_info": null,
+            "can_viewer_edit": false
+        },
+        "id": "UzpfSTEwMDAwMjQ4MDY2ODcwOTo4MjAwMjk0ODgwMjk5NDg=",
+        "feedback": {
+            "legacy_api_post_id": "362586637107571_820029488029948",
+            "is_viewer_subscribed": false,
+            "id": "ZmVlZGJhY2s6ODIwMDI5NDg4MDI5OTQ4",
+            "can_viewer_comment": false,
+            "likers": {
+                "count": 0
+            },
+            "can_viewer_comment_with_photo": true,
+            "can_viewer_like": true,
+            "can_viewer_subscribe": true,
+            "comments": {
+                "count": 2
+            },
+            "does_viewer_like": false,
+            "top_level_comments": null
+        },
+        "report_info": {
+            "action": "Report\/Mark as Spam"
+        },
+        "title": null,
+        "sponsored_data": null,
+        "save_info": null,
+        "inline_activities": {
+            "nodes": []
+        },
+        "creation_time": 1409137390,
+        "actors": [
+            {
+                "id": "100002480668709",
+                "profile_picture": {
+                    "uri": "https:\/\/fbcdn-profile-a.akamaihd.net\/hprofile-ak-xfa1\/v\/t1.0-1\/c113.33.414.414\/s60x60\/995676_465082586917759_1262148273_n.jpg?oh=c87f49d5fbab7f9341fc5fbf36ae9d07&oe=54739A4B&__gda__=1417582730_1ab406c7d996529ecd1646469954c8bf",
+                    "height": 60,
+                    "width": 60
+                },
+                "url": "https:\/\/m.facebook.com\/prozzzit777",
+                "name": "Alexey Shamshin",
+                "__type__": {
+                    "name": "User"
+                }
+            }
+        ],
+        "attachments": [
+            {
+                "title": "УкрСМИ. Донецк обстреливают с Байконура ракетами Протон-М",
+                "deduplication_key": "0153e7e915cd65d9057cbd67cc113db8",
+                "source": {
+                    "text": "youtube.com"
+                },
+                "description": {
+                    "ranges": [],
+                    "text": "сьели )))"
+                },
+                "target": {
+                    "viewer_timeline_collections_supported": null,
+                    "android_app_config": null,
+                    "is_music_item": null,
+                    "cover_photo": null,
+                    "current_price": null,
+                    "employer": null,
+                    "school_class": null,
+                    "music_type": null,
+                    "id": "226547524203272:678817968877552",
+                    "feedback": null,
+                    "preview_urls": null,
+                    "primary_object_node": null,
+                    "name": null,
+                    "event_cover_photo": null,
+                    "app_center_cover_image": null,
+                    "bylines": null,
+                    "android_store_url": null,
+                    "social_context": null,
+                    "can_viewer_join": null,
+                    "profile_picture": null,
+                    "application": {
+                        "id": "2309869772",
+                        "android_store_url": null,
+                        "android_app_config": {
+                            "package_name": null,
+                            "class_name": null
+                        },
+                        "social_usage_summary_sentence": null,
+                        "global_usage_summary_sentence": {
+                            "text": "Other"
+                        },
+                        "square_logo": {
+                            "uri": "https:\/\/fbcdn-photos-d-a.akamaihd.net\/hphotos-ak-xpa1\/t39.2080-0\/851586_10151488296814773_1735044556_n.gif"
+                        },
+                        "name": "Links",
+                        "average_star_rating": null,
+                        "url": "https:\/\/m.facebook.com\/appcenter\/2309869772",
+                        "canvas_url": null,
+                        "app_center_cover_image": null
+                    },
+                    "global_usage_summary_sentence": null,
+                    "music_object": null,
+                    "item_price": null,
+                    "work_project": null,
+                    "__type__": {
+                        "name": "ExternalUrl"
+                    },
+                    "time_range": null,
+                    "event_place": null,
+                    "url": "http:\/\/m.facebook.com\/l.php?u=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D67HHSJaxalk&h=FAQETZcJG&s=1&enc=AZPTS-nIl1UBUSz6aNNdwKi9aYU0foAugY_7qwqpfZKHY0IqJSajS8vvdvLvu_KPSEa8mmO8BBKX0oCObtVVE7NW",
+                    "canvas_url": null,
+                    "is_on_sale": null,
+                    "viewer_timeline_collections_containing": null,
+                    "musicians": null,
+                    "social_usage_summary_sentence": null,
+                    "school": null,
+                    "redirection_info": null,
+                    "android_urls": [],
+                    "roles": null,
+                    "square_logo": null,
+                    "average_star_rating": null,
+                    "rating": null,
+                    "media": null,
+                    "open_graph_node": {
+                        "id": "946985918651600",
+                        "open_graph_metadata": {
+                            "prices": [],
+                            "title": "УкрСМИ. Донецк обстреливают с Байконура ракетами Протон-М"
+                        },
+                        "__type__": {
+                            "name": "OpenGraphObject"
+                        }
+                    }
+                },
+                "subtitle": null,
+                "properties": [
+                    {
+                        "type": "double",
+                        "value": {
+                            "text": "1280"
+                        },
+                        "title": null,
+                        "key": "width"
+                    },
+                    {
+                        "type": "double",
+                        "value": {
+                            "text": "720"
+                        },
+                        "title": null,
+                        "key": "height"
+                    }
+                ],
+                "style_list": ["video_share", "share", "fallback"],
+                "media": {
+                    "image_medium": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQAx-Bom5BpXUmcL&w=240&h=2048&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&ext=jpg",
+                        "height": 135,
+                        "width": 240
+                    },
+                    "square_image_medium": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQD4ftWQBigHEMuz&w=240&h=240&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&cfs=1&ext=jpg",
+                        "height": 240,
+                        "width": 240
+                    },
+                    "image_high": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQAKeX2qQCoSAwSa&w=480&h=2048&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&ext=jpg",
+                        "height": 270,
+                        "width": 480
+                    },
+                    "width": null,
+                    "__type__": {
+                        "name": "GenericAttachmentMedia"
+                    },
+                    "image": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQDxSKAkJnksPabU&w=960&h=960&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&cfs=1&ext=jpg",
+                        "height": 720,
+                        "width": 720
+                    },
+                    "playable_duration": 0,
+                    "id": null,
+                    "feedback": null,
+                    "playable_url": "https:\/\/www.youtube.com\/v\/67HHSJaxalk?autohide=1&version=3&autoplay=1",
+                    "is_disturbing": null,
+                    "square_image_low": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQC0KkJCo85cI1Yr&w=120&h=120&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&cfs=1&ext=jpg",
+                        "height": 120,
+                        "width": 120
+                    },
+                    "height": null,
+                    "square_image_high": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQB3vHzIoJhIoFhf&w=480&h=480&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&cfs=1&ext=jpg",
+                        "height": 480,
+                        "width": 480
+                    },
+                    "is_playable": true,
+                    "focus": null,
+                    "image_low": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQAfjcDta-qCq37i&w=120&h=2048&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&ext=jpg",
+                        "height": 67,
+                        "width": 120
+                    },
+                    "image_large_aspect": {
+                        "uri": "https:\/\/fbexternal-a.akamaihd.net\/safe_image.php?d=AQBMcRBHav_uJVyY&w=480&h=248&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2F67HHSJaxalk%2Fmaxresdefault.jpg&cfs=1&ext=jpg",
+                        "height": 248,
+                        "width": 480
+                    }
+                },
+                "action_links": [],
+                "media_reference_token": null,
+                "url": "http:\/\/m.facebook.com\/l.php?u=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D67HHSJaxalk&h=FAQETZcJG&s=1&enc=AZPTS-nIl1UBUSz6aNNdwKi9aYU0foAugY_7qwqpfZKHY0IqJSajS8vvdvLvu_KPSEa8mmO8BBKX0oCObtVVE7NW",
+                "subattachments": []
+            }
+        ],
+        "hideable_token": "szAyMDCyNLGwAJJAqs41r8S9KL-0wDcxJycgv7jEuSg1sSQzPy-4JL-osq7O0AAIjEwsDMzMLMwNLOsA",
+        "application": null,
+        "with": [],
+        "shareable": {
+            "id": "226547524203272:678817968877552",
+            "__type__": {
+                "name": "ExternalUrl"
+            }
+        },
+        "implicit_place": null,
+        "display_explanation": null,
+        "substories": [],
+        "secondary_actions": [
+            {
+                "url": "https:\/\/m.facebook.com\/a\/feed_menu.php?story_permalink_token=S%3A_I100002480668709%3A820029488029948&hideable_token=szAyMDCyNLGwAJJAqs41r8S9KL-0wDcxJycgv7jEuSg1sSQzPy-4JL-osq7O0AAIjEwsDMzMLMwNLOsA&action=ms&gfid=AQCCpRw-1D4a6cPd&_ft_",
+                "title": "Report\/Mark as Spam",
+                "__type__": {
+                    "name": "ReportActionLink"
+                }
+            }
+        ],
+        "__type__": {
+            "name": "Story"
+        },
+        "can_viewer_delete": false,
+        "suffix": null,
+        "action_links": [],
+        "url": "https:\/\/m.facebook.com\/groups\/362586637107571?view=permalink&id=820029488029948",
+        "message": {
+            "ranges": [
+                {
+                    "length": 42,
+                    "offset": 180,
+                    "entity": {
+                        "id": "NjQyMTgzOTU5MjA4MTA3Omh0dHBcYS8vd3d3LnlvdXR1YmUuY29tL3dhdGNoP3Y9NjdISFNKYXhhbGs6Og==",
+                        "url": "http:\/\/m.facebook.com\/l.php?u=http%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D67HHSJaxalk&h=cAQHNqW6U&s=1&enc=AZPhstdKzPTxJMfTUp5uWFJRt9IzmcAyqtG5NpiwnIaUJmQYpg-hPdatpzlTj2Y2wIH9VF9sDHDin0zo0tUJnQim",
+                        "tag": null,
+                        "name": null,
+                        "__type__": {
+                            "name": "ExternalUrl"
+                        }
+                    }
+                }
+            ],
+            "text": "Как же всё таки укроповские СМИ гонят лажу не стесняясь, по ходу, что такое совесть и честь они никогда не слышали..) Явно чисто пиндосовское воспитание, Псаки обзавидуется..) >>> http:\/\/www.youtube.com\/watch?v=67HHSJaxalk"
+        },
+        "legacy_api_story_id": "100002480668709_820029488029948",
+        "tracking": "{}",
+        "substory_count": 0,
+        "suggested_place": null,
+        "attached_story": null,
+        "attached_action_links": [],
+        "topics_context": {
+            "pivotal_topics": [],
+            "trending_topics": []
+        },
+        "can_viewer_edit": false,
+        "edit_history": {
+            "count": null
+        },
+        "actions": [],
+        "underlying_admin_creator": null
+    },
+    "attached_action_links": [],
+    "topics_context": {
+        "pivotal_topics": [],
+        "trending_topics": []
+    },
+    "can_viewer_edit": false,
+    "edit_history": {
+        "count": null
+    },
+    "actions": [],
+    "underlying_admin_creator": null
+}, "is_in_low_engagement_block": false, "cursor": "MTQwOTEzODgyNToxNDA5MTM4ODI1OjI6LTg3MDU1MTUyNjE1MTc1NDg0MjQ6MTQwOTEzODEwODow", "deduplication_key": "-8705515261517548424", "sort_key": "1:00000000001409138825:04611686018427387904:09223372036854775806:04611686018427387904"}

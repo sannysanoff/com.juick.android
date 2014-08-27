@@ -37,6 +37,7 @@ import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -418,6 +419,12 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                         } else {
                             getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
                             getListView().setStackFromBottom(false);
+                        }
+                        if (parentMessagesSource instanceof MessagesSource.PersistedSorter) {
+                            MessagesSource.Sorter currentSorter = ((MessagesSource.PersistedSorter) parentMessagesSource).getCurrentSorter();
+                            JuickMessage first = messages.remove(0);
+                            Collections.sort(messages, currentSorter);
+                            messages.add(0, first);
                         }
                         listAdapter.addAllMessages(messages);
                         setListAdapter(listAdapter);
@@ -1045,6 +1052,23 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                 lv.smoothScrollBy(-(int)(lv.getHeight() * 0.93), 200);
             }
         }
+    }
+
+    public void sortMessages(MessagesSource.Sorter sorter) {
+        ArrayList<JuickMessage> stuffToSort = new ArrayList<JuickMessage>();
+        ArrayList<JuickMessage> header = new ArrayList<JuickMessage>();
+        int count = listAdapter.getCount();
+        for(int i=2; i<count; i++) {
+            JuickMessage item = listAdapter.getItem(i);
+            stuffToSort.add(item);
+        }
+        header.add(listAdapter.getItem(0));
+        header.add(listAdapter.getItem(1));
+        listAdapter.clear();
+        listAdapter.addAllMessages(header);
+        Collections.sort(stuffToSort, sorter);
+        listAdapter.addAllMessages(stuffToSort);
+        listAdapter.notifyDataSetChanged();
     }
 
 

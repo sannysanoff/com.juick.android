@@ -15,6 +15,7 @@ import com.juickadvanced.sources.PureMessageSource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +25,26 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class MessagesSource implements Serializable, IHTTPClientService, Cloneable {
+
+    public interface Sorter extends Comparator<JuickMessage> {
+        public int compare(JuickMessage m1, JuickMessage m2);
+    }
+
+    public interface SorterByRating {
+        Sorter getSorterByRating();
+    }
+
+    public interface SorterByDateAsc {
+        Sorter getSorterByDateAsc();
+    }
+
+    public interface SorterByDateDesc {
+        Sorter getSorterByDateDesc();
+    }
+
+    public interface PersistedSorter {
+        Sorter getCurrentSorter();
+    }
 
     protected transient Context ctx;
     protected transient SharedPreferences sp;

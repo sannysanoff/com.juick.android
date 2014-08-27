@@ -8,6 +8,7 @@ import com.juick.android.juick.MessagesSource;
 import com.juick.android.point.PointAuthorizer;
 import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.facebook.FacebookMessage;
 import com.juickadvanced.data.facebook.FacebookMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.point.PointMessageID;
@@ -26,7 +27,8 @@ import java.util.ArrayList;
  * Time: 12:59 AM
  * To change this template use File | Settings | File Templates.
  */
-public class FacebookFeedMessagesSource extends MessagesSource {
+public class FacebookFeedMessagesSource extends MessagesSource
+        implements MessagesSource.SorterByDateAsc, MessagesSource.SorterByDateDesc, MessagesSource.SorterByRating, MessagesSource.PersistedSorter {
 
     PureFacebookFeedMessagesSource pure = new PureFacebookFeedMessagesSource(this);
 
@@ -72,7 +74,53 @@ public class FacebookFeedMessagesSource extends MessagesSource {
         return Utils.getJSONWithRetries(ctx,url, notifications);
     }
 
+    public enum SavedSortOrder {
+        DATE_ASC,
+        DATE_DESC,
+        RATING
+    }
 
+    @Override
+    public Sorter getSorterByDateAsc() {
+        sp.edit().putString("fb_sortorder", SavedSortOrder.DATE_ASC.name()).commit();
+        return new Sorter() {
+            @Override
+            public int compare(JuickMessage m1, JuickMessage m2) {
+                return (int)Math.signum(m1.Timestamp.getTime() - m2.Timestamp.getTime());
+            }
+        };
+    }
 
+    @Override
+    public Sorter getSorterByDateDesc() {
+        sp.edit().putString("fb_sortorder", SavedSortOrder.DATE_DESC.name()).commit();
+        return new Sorter() {
+            @Override
+            public int compare(JuickMessage m1, JuickMessage m2) {
+                return (int)Math.signum(m2.Timestamp.getTime() - m1.Timestamp.getTime());
+            }
+        };
+    }
 
+    @Override
+    public Sorter getSorterByRating() {
+        sp.edit().putString("fb_sortorder", SavedSortOrder.RATING.name()).commit();
+        return new Sorter() {
+            @Override
+            public int compare(JuickMessage m1, JuickMessage m2) {
+                FacebookMessage f1 = (FacebookMessage)m1;
+                FacebookMessage f2 = (FacebookMessage)m2;
+                return (int)Math.signum(f2.likers - f1.likers);
+            }
+        };
+    }
+
+    @Override
+    public Sorter getCurrentSorter() {
+        String order = sp.getString("fb_sortorder", SavedSortOrder.DATE_ASC.name());
+        if (order.equals(SavedSortOrder.DATE_ASC.name())) return getSorterByDateAsc();
+        if (order.equals(SavedSortOrder.DATE_DESC.name())) return getSorterByDateDesc();
+        if (order.equals(SavedSortOrder.RATING.name())) return getSorterByRating();
+        return getSorterByDateAsc();
+    }
 }

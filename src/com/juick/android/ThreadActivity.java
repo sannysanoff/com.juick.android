@@ -38,6 +38,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import com.actionbarsherlock.view.Menu;
+import com.juick.android.facebook.FacebookFeedMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
 import com.juickadvanced.data.MessageID;
@@ -731,8 +732,25 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.sort_by_rating).setVisible(messagesSource instanceof MessagesSource.SorterByRating);
+        menu.findItem(R.id.sort_by_date_dec).setVisible(messagesSource instanceof MessagesSource.SorterByDateDesc);
+        menu.findItem(R.id.sort_by_date_inc).setVisible(messagesSource instanceof MessagesSource.SorterByDateAsc);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.sort_by_rating:
+                sortComments(((MessagesSource.SorterByRating) messagesSource).getSorterByRating());
+                return true;
+            case R.id.sort_by_date_dec:
+                sortComments(((MessagesSource.SorterByDateDesc) messagesSource).getSorterByDateDesc());
+                return true;
+            case R.id.sort_by_date_inc:
+                sortComments(((MessagesSource.SorterByDateAsc) messagesSource).getSorterByDateAsc());
+                return true;
             case R.id.menuitem_preferences:
                 Intent prefsIntent = new Intent(this, NewJuickPreferenceActivity.class);
                 prefsIntent.putExtra("menu", NewJuickPreferenceActivity.Menu.TOP_LEVEL.name());
@@ -751,6 +769,10 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void sortComments(MessagesSource.Sorter sorter) {
+        tf.sortMessages(sorter);
     }
 
     @Override
