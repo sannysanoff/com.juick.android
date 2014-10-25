@@ -37,6 +37,14 @@ import java.util.Map;
 
 public class PointAuthorizer extends Utils.URLAuth {
     @Override
+    public boolean isNoAuthInResponse(RESTResponse restResponse) {
+        if (restResponse.getResult() != null) {
+            if (restResponse.getResult().contains("{\"error\": \"PostAuthorError\"}")) return true;
+        }
+        return false;
+    }
+
+    @Override
     public void maybeLoadCredentials(Context context) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         if (token == null) {

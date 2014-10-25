@@ -1033,7 +1033,8 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
 
                                 for (JuickMessage juickMessage : list) {
                                     JuickMessagesAdapter.ParsedMessage pm = (JuickMessagesAdapter.ParsedMessage)juickMessage.parsedText;
-                                    tv.setText(pm.textContent);
+                                    if (pm != null && pm.textContent != null)
+                                        tv.setText(pm.textContent);
                                     stuff.clear();
                                     tv.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
                                     tv.draw(canvas);

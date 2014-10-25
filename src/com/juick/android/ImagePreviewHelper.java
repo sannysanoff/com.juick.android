@@ -25,6 +25,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -196,7 +197,7 @@ public class ImagePreviewHelper {
         }
     }
 
-    public static void doWithDownloadedURL(ImagePreviewHelper maybeCurrent, String url) {
+    public static void doWithDownloadedURL(ImagePreviewHelper maybeCurrent, @NotNull String url) {
         MyScrollImageView iv = (MyScrollImageView) maybeCurrent.view.findViewById(R.id.imagepreview_image);
         TextView infotv = (TextView) maybeCurrent.view.findViewById(R.id.imagepreview_info);
         try {

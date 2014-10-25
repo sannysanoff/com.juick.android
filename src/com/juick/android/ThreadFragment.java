@@ -420,7 +420,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
                             getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
                             getListView().setStackFromBottom(false);
                         }
-                        if (parentMessagesSource instanceof MessagesSource.PersistedSorter) {
+                        if (parentMessagesSource instanceof MessagesSource.PersistedSorter && messages.size() > 0) {
                             MessagesSource.Sorter currentSorter = ((MessagesSource.PersistedSorter) parentMessagesSource).getCurrentSorter();
                             JuickMessage first = messages.remove(0);
                             Collections.sort(messages, currentSorter);

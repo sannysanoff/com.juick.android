@@ -270,7 +270,7 @@ public class PickPlaceActivity extends ListActivity implements OnClickListener, 
                 }
                 startActivityForResult(i, ACTIVITY_PICKLOCATION);
             } catch (Throwable e) {
-                ACRA.getErrorReporter().handleException(new RuntimeException("While opening PickLocationActivity.class (not fatal)", e));
+                // ACRA.getErrorReporter().handleException(new RuntimeException("While opening PickLocationActivity.class (not fatal)", e));
                 Toast.makeText(getApplicationContext(), "Trouble with Location UI on this device: "+Utils.getRootException(e, 10).toString(), Toast.LENGTH_LONG);
             }
             return true;

@@ -233,8 +233,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
         if (savedInstanceState != null && savedInstanceState.containsKey("dialogData")) {
             data = (DialogData) savedInstanceState.getSerializable("dialogData");
         }
-
-        bAttachment.setSelected(data.attachmentUri != null);
+        bAttachment.setSelected(data != null && data.attachmentUri != null);
     }
 
     @Override

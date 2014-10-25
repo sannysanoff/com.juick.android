@@ -748,14 +748,16 @@ public class XMPPIncomingMessagesActivity extends SherlockActivity implements XM
                     int ix = ssb.length();
                     ssb.append(" - " + com.juickadvanced.Utils.toRelaviteDate(subscriptionMessage.datetime.getTime(), russian));
                     ssb.setSpan(new ForegroundColorSpan(0xFF808080), ix, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-
-                    fromTags.setText(ssb);
+                    if (fromTags != null) {
+                        fromTags.setText(ssb);
+                    }
                     String body = subscriptionMessage.getBody();
                     while(body.endsWith("\n")) {
                         body = body.substring(0, body.length()-1);
                     }
-                    preview.setText(body);
+                    if (preview != null) {
+                        preview.setText(body);
+                    }
                     enableInternalButtons(view, message);
                     MainActivity.restyleChildrenOrWidget(view, true);
                     return view;

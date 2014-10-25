@@ -303,9 +303,11 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 if (velocityX > 0 && Math.abs(velocityX) > 4 * Math.abs(velocityY) && Math.abs(velocityX) > 400) {
-                    System.out.println("velocityX="+velocityX+" velocityY"+velocityY);
-                    if (sp.getBoolean("swipeToClose", true)) {
-                        onBackPressed();
+                    if (etMessage.getText().toString().trim().length() == 0) {
+                        System.out.println("velocityX="+velocityX+" velocityY"+velocityY);
+                        if (sp.getBoolean("swipeToClose", true)) {
+                            onBackPressed();
+                        }
                     }
                 }
                 return false;

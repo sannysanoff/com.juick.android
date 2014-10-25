@@ -62,6 +62,8 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -988,7 +990,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
 
         String suffix;
 
-        public ImageLoader(ImageGallery gallery, final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
+        public ImageLoader(ImageGallery gallery, @NotNull final String url, View imageHolder, int destHeight, LinearLayout listRow, final boolean forceOriginalImage, boolean notOnlyImage) {
             this.gallery = gallery;
             this.url = url;
             this.listRow = listRow;
@@ -997,9 +999,11 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
             activity = (Activity)getContext();
             this.imageHolder = imageHolder;
             updateUIBindings();
-            final File destFile = getDestFile(getContext(), url);
-            suffix = getSuffix(destFile);
-            loadFromFileOrNetwork(handler, getContext(), url, imageHolder, forceOriginalImage, destFile);
+            final @Nullable File destFile = getDestFile(getContext(), url);
+            if (destFile != null) {
+                suffix = getSuffix(destFile);
+                loadFromFileOrNetwork(handler, getContext(), url, imageHolder, forceOriginalImage, destFile);
+            }
         }
 
         private void loadFromFileOrNetwork(final Handler handler, final Context context, final String url, final View imageHolder, final boolean forceOriginalImage, final File destFile) {
@@ -1490,7 +1494,8 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         return retval;
     }
 
-    public static File getDestFile(Context ctx, String url) {
+    public static @Nullable File getDestFile(Context ctx, @NotNull String url) {
+        if (url == null) return null;
         if (url.startsWith("file://")) {
             return new File("/"+new URLParser(url).getPathPart());
         } else {

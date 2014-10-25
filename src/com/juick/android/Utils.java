@@ -94,6 +94,10 @@ public class Utils extends com.juickadvanced.Utils {
 
         public static String REFUSED_AUTH = "___refused__auth____!!!";
 
+        public boolean isNoAuthInResponse(RESTResponse restResponse) {
+            return false;
+        }
+
         public enum ReplyCode {
             FORBIDDEN,
             NORMAL,
@@ -510,8 +514,19 @@ public class Utils extends com.juickadvanced.Utils {
                                     ((DownloadProgressNotification) progressNotification).notifyDownloadProgress(0);
                                 }
                                 InputStream content = e.getContent();
-                                ret[0] = streamToString(content, progressNotification);
+                                RESTResponse retval = streamToString(content, progressNotification);
                                 content.close();
+                                if (authorizer.isNoAuthInResponse(retval) && !cookieCleared[0]) {
+                                    cookieCleared[0] = true;    // don't enter loop
+                                    authorizer.clearCookie(context, new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            authorizer.authorize(context, true, false, url, thiz);
+                                        }
+                                    });
+                                    return null;
+                                }
+                                ret[0] = retval;
                             } else {
                                 if (authReplyCode == URLAuth.ReplyCode.FORBIDDEN && noAuthRequested) {
                                     ret[0] = new RESTResponse(NO_AUTH, false, null);

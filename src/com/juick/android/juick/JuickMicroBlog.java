@@ -403,15 +403,15 @@ public class JuickMicroBlog implements MicroBlog {
                 activity.runDefaultFragmentWithBundle(args, this);
             }
         });
-        navigationItems.add(new MainActivity.NavigationItem(10006, R.string.navigationPrivate, R.drawable.navicon_juick, "msrcPrivate") {
-            @Override
-            public void action() {
-                final Bundle args = new Bundle();
-                JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "private", activity, "http://juick.com/?show=private");
-                args.putSerializable("messagesSource", ms);
-                activity.runDefaultFragmentWithBundle(args, this);
-            }
-        });
+//        navigationItems.add(new MainActivity.NavigationItem(10006, R.string.navigationPrivate, R.drawable.navicon_juick, "msrcPrivate") {
+//            @Override
+//            public void action() {
+//                final Bundle args = new Bundle();
+//                JuickMessagesSource ms = new JuickWebCompatibleURLMessagesSource(activity.getString(labelId), "private", activity, "http://juick.com/?show=private");
+//                args.putSerializable("messagesSource", ms);
+//                activity.runDefaultFragmentWithBundle(args, this);
+//            }
+//        });
         navigationItems.add(new MainActivity.NavigationItem(10007, R.string.navigationDiscuss, R.drawable.navicon_juick, "msrcDiscuss") {
             @Override
             public void action() {

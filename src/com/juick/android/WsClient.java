@@ -92,7 +92,7 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
     public boolean connect(String host, int port, String location, String headers) {
         try {
             sock = new Socket(host, port);
-            sock.setSoTimeout(1000);
+            sock.setSoTimeout(15000);
             is = sock.getInputStream();
             os = sock.getOutputStream();
 
@@ -139,10 +139,10 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                     if (b == -1) break;
                     if (terminated) break;
                 } catch (SocketTimeoutException e) {
-                    if (beforePausedCounter-- == 0) {
-                        sock.setSoTimeout(15*60*1000);
+                    if (beforePausedCounter-- < 0) {
+                        sock.setSoTimeout(3*60*1000);
                     }
-                    Log.w("UgnichWS", "inst="+toString()+": sotimeout, terminated="+terminated);
+                    Log.w("UgnichWS", "inst="+toString()+": read sotimeout, terminated="+terminated);
                     continue;
                 }
 

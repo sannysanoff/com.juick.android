@@ -3,7 +3,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.facebook.katana" android:hardwareAccelerated="true"
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced" android:hardwareAccelerated="true"
-          android:versionCode="2014082701" android:versionName="21.0.4">
+          android:versionCode="2014102301" android:versionName="21.0.6">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -28,7 +28,6 @@
     <uses-permission android:name="com.juickadvanced.permission.C2D_MESSAGE"/>
 
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
-
 
     <uses-feature android:name="android.hardware.location" android:required="false"/>
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
