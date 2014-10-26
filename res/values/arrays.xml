@@ -182,12 +182,14 @@
         <item>restore default order</item>
         <item>wider</item>
         <item>narrower</item>
+        <item>logout some services…</item>
     </string-array>
     <string-array name="navigation_menu_end">
         <item>finish editing</item>
         <item>restore default order</item>
         <item>wider</item>
         <item>narrower</item>
+        <item>logout some services…</item>
     </string-array>
     <string-array name="back_button">
         <item>default exit sequence</item>

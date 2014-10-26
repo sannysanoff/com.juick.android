@@ -98,6 +98,8 @@ public class Utils extends com.juickadvanced.Utils {
             return false;
         }
 
+        public abstract boolean isForBlog(String microblogCode);
+
         public enum ReplyCode {
             FORBIDDEN,
             NORMAL,
@@ -129,6 +131,11 @@ public class Utils extends com.juickadvanced.Utils {
 
 
         String jaiprtruCache = null;
+
+        @Override
+        public boolean isForBlog(String microblogCode) {
+            return false;
+        }
 
         @Override
         public void maybeLoadCredentials(Context context) {

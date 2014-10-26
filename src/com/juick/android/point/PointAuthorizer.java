@@ -18,6 +18,7 @@ import com.juick.android.DefaultHTTPClientService;
 import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
+import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.parsers.URLParser;
 import com.juickadvanced.protocol.PointLoginProcedure;
 import org.acra.ACRA;
@@ -42,6 +43,11 @@ public class PointAuthorizer extends Utils.URLAuth {
             if (restResponse.getResult().contains("{\"error\": \"PostAuthorError\"}")) return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean isForBlog(String microblogCode) {
+        return microblogCode.equals(PointMessageID.CODE);
     }
 
     @Override

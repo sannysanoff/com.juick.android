@@ -184,23 +184,31 @@
     <string name="PostReply">Post a reply</string>
 
 
-    <string name="navigationSubscriptions">Subscriptions</string>
-    <string name="navigationSubscriptionsWeb">Subscriptions(web)</string>
-    <string name="navigationAll">Last messages</string>
-    <string name="navigationTop">Top messages</string>
-    <string name="navigationPhoto">With photos</string>
-    <string name="navigationMy">My Juick blog</string>
-    <string name="navigationSrachiki">Srachiki (jugr)</string>
-    <string name="navigationPrivate">Private(web)</string>
-    <string name="navigationDiscuss">Discuss.(web)</string>
-    <string name="navigationUnread">All-unread</string>
-    <string name="navigationUnanswered">Unanswered</string>
+    <string name="navigationSubscriptions">Juick Subs</string>
+    <string name="navigationSubscriptionsWeb">Juick Subs (web)</string>
+    <string name="navigationAll">Juick All</string>
+    <string name="navigationTop">Juick Top</string>
+    <string name="navigationPhoto">Juick Photos</string>
+    <string name="navigationMy">Juick My Blog</string>
+    <string name="navigationSrachiki">Jugregator Srachiki</string>
+    <string name="navigationPrivate">Juick Private</string>
+    <string name="navigationDiscuss">Juick Discussions</string>
+    <string name="navigationUnread">Juick Other Unread</string>
+    <string name="navigationUnanswered">Juick Unanswered</string>
     <string name="navigationSaved">Saved messages</string>
     <string name="navigationRecentlyOpened">Recent read</string>
     <string name="navigationRecentlyCommented">Recent write</string>
     <string name="navigationAllCombined">ALL/Combined</string>
     <string name="navigationSubsCombined">Subs/Combined</string>
     <string name="navigationGlavSu">glav.su/ukr</string>
+    <string name="navigationBNWFeed">BNW Subs</string>
+    <string name="navigationBNWAll">BNW All</string>
+    <string name="navigationBNWHot">BNW Top</string>
+    <string name="navigationPointAll">Pont All</string>
+    <string name="navigationPointSubs">Point Subs</string>
+    <string name="navigationPointMine">Point My Blog</string>
+    <string name="navigationFacebookFeed">FB Subs</string>
+    <string name="navigationJuboRSS">JuBo RSS</string>
     <string name="SingleLine_Menu">Single line menu items</string>
     <string name="SingleLine_Menu_Summary">Menu will be even more compact</string>
     <string name="XMPP_client">XMPP (Jabber) client</string>
@@ -1108,7 +1116,6 @@
     <string name="JustSame">No, just same</string>
     <string name="GettingYourId">Getting your UID</string>
     <string name="ConnectingToWwwJuick">Connecting to www.juick.com...</string>
-    <string name="navigationJuboRSS">JuBo RSS</string>
     <string name="ChooseUnreadSegment">Choose unread segment</string>
     <string name="UnreadSegments">Unread segments</string>
     <string name="YouHaveNotEnabledForUnreadSegments">You have not enabled last read markers in prefs, or you have not
@@ -1220,17 +1227,6 @@
     <string name="ForcedAttachment">Attachment of unrecognized format</string>
     <string name="AsJPEG">As JPEG</string>
     <string name="AsMP4Video">As MP4 video</string>
-    <string name="navigationBNWFeed">BNW Home</string>
-    <string name="navigationBNWAll">BNW All Messages</string>
-    <string name="navigationBNWHot">BNW Hot Today</string>
-    <string name="navigationPSTORecent">psto.Recent</string>
-    <string name="navigationPSTOSubs">psto.Subs</string>
-    <string name="navigationPSTOMy">psto.Blog</string>
-    <string name="navigationPSTOPopular">psto.Popular</string>
-    <string name="navigationPointAll">point.All</string>
-    <string name="navigationPointSubs">point.Subs</string>
-    <string name="navigationPointMine">point.Mine</string>
-    <string name="navigationFacebookFeed">FB Feed</string>
     <string name="JuickAdvancedCrashed">Juick Advanced has crashed</string>
     <string name="NonJabberNotifications">Non-Jabber notifications</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">is not enabled or service is not running</string>
@@ -1332,6 +1328,8 @@
     <string name="TooManyTags">Too many tags, maximum 5.</string>
     <string name="StorePlainTextPassword">Store plain-text password in private area</string>
     <string name="AllAuthHasBeenCleared">All saved logins and passwords has been cleared</string>
+    <string name="NoAuth">There\'s no logins saved</string>
+    <string name="AuthHasBeenClearedFor">Save login/pass has been cleared for:</string>
     <string name="ThisWillRemoveAuth">This will remove all saved logins and passwords from application. Continue?
     </string>
     <string name="ClearAllAuth">Clear all saved auth</string>

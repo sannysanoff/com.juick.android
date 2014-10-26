@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.protocol.Base64;
 import com.juick.android.DefaultHTTPClientService;
 import com.juickadvanced.IHTTPClientService;
@@ -57,6 +58,11 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                 accountName = null;
         }
         return accountName;
+    }
+
+    @Override
+    public boolean isForBlog(String microblogCode) {
+        return microblogCode.equals(JuickMessageID.CODE);
     }
 
     @Override

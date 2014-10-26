@@ -59,6 +59,7 @@ import com.juickadvanced.data.juick.JuickMessageID;
 /* http://code.google.com/p/android-file-dialog/ */
 import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.protocol.JuickHttpAPI;
+import com.juickadvanced.xmpp.commands.AccountProof;
 import com.lamerman.FileDialog;
 import com.lamerman.SelectionMode;
 import com.mobeta.android.dslv.DragSortController;
@@ -910,11 +911,15 @@ public class MainActivity extends JuickFragmentActivity implements
                                             ((BaseAdapter)navigationList.getAdapter()).notifyDataSetInvalidated();
                                         }
                                         break;
+                                    case 4:     // logout from..
+                                        logoutFromSomeServices();
+                                        break;
 
                                 }
                                 navigationListAdapter.notifyDataSetChanged();
                             }
                         })
+                        .setCancelable(true)
                         .create().show();
             }
         });
@@ -944,6 +949,46 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         }
 
+
+    }
+
+    private void logoutFromSomeServices() {
+        new Thread("Get logged in accounts") {
+            @Override
+            public void run() {
+                final HashSet<AccountProof> accountProofs = JAXMPPClient.getAccountProofs(MainActivity.this, false);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (accountProofs.size() == 0) {
+                            Toast.makeText(MainActivity.this, getString(R.string.NoAuth), Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        final CharSequence[] arr = new CharSequence[accountProofs.size()];
+                        int ix = 0;
+                        for (AccountProof accountProof : accountProofs) {
+                            arr[ix++] = accountProof.getProofAccountType();
+                        }
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setItems(arr, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        String what = arr[which].toString();
+                                        ArrayList<Utils.URLAuth> authorizers = Utils.authorizers;
+                                        for (Utils.URLAuth authorizer : authorizers) {
+                                            if (authorizer.isForBlog(what)) {
+                                                authorizer.reset(MainActivity.this, handler);
+                                            }
+                                        }
+                                        Toast.makeText(MainActivity.this, getString(R.string.AuthHasBeenClearedFor)+" "+what, Toast.LENGTH_LONG).show();
+                                    }
+                                })
+                                .setCancelable(true)
+                                .create().show();
+                    }
+                });
+            }
+        }.start();
 
     }
 
@@ -1146,7 +1191,7 @@ public class MainActivity extends JuickFragmentActivity implements
 //        }.start();
     }
 
-    public boolean onNavigationItemSelected(final int itemPosition, long _) {
+    public boolean onNavigationItemSelected(final int itemPosition, long z) {
         restyle();
         NavigationItem thisItem = navigationItems.get(itemPosition);
         if (lastNavigationItem == thisItem) return false;       // happens during screen rotate

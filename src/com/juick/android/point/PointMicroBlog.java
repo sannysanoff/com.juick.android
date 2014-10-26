@@ -288,25 +288,19 @@ public class PointMicroBlog implements MicroBlog {
         try {
 
             StringBuilder data = new StringBuilder();
-            String s = txt = txt.trim();
-            if (s.startsWith("*")) {
-                String tagline = s.split("\n")[0];
-                String[] tags = tagline.split("\\*");
-                for (String tag : tags) {
-                    String thatTag = tag.trim();
-                    if (thatTag.length() > 0) {
-                        if (data.length() > 0) data.append("&");
-                        data.append("tag=" + Uri.encode(thatTag));
-                    }
+            String s = txt.trim();
+            while (s.startsWith("*")) {
+                int ix = s.indexOf(" ");
+                if (ix < 0) {
+                    then.apply("Empty message? Tags only.");
                 }
-                int eol = txt.indexOf("\n");
-                if (eol != -1) {
-                    txt = txt.substring(eol + 1);
-                }
+                String tag = s.substring(0, ix);
+                s = s.substring(ix+1);
+                if (data.length() > 0) data.append("&");
+                data.append("tag=" + Uri.encode(tag));
             }
-
             if (data.length() > 0) data.append("&");
-            data.append("text=" + Uri.encode(txt));
+            data.append("text=" + Uri.encode(s));
 
             final RESTResponse restResponse = Utils.postJSON(newMessageActivity, "http://point.im/api/post", data.toString());
             newMessageActivity.runOnUiThread(new Runnable() {

@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -32,6 +33,11 @@ import java.net.*;
 public class BnwAuthorizer extends Utils.URLAuth {
 
     String login;
+
+    @Override
+    public boolean isForBlog(String microblogCode) {
+        return microblogCode.equals(BnwMessageID.CODE);
+    }
 
     @Override
     public void maybeLoadCredentials(Context context) {

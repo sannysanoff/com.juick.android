@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -41,6 +42,11 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class JuickWebAuthorizer extends Utils.URLAuth {
+    @Override
+    public boolean isForBlog(String microblogCode) {
+        return microblogCode.equals(JuickMessageID.CODE);
+    }
+
     @Override
     public void maybeLoadCredentials(Context context) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);

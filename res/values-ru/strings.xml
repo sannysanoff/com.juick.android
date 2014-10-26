@@ -109,6 +109,34 @@
     <string name="Nick_is_already_exists">Ник уже занят</string>
     <string name="Only_one_account">Вы можете использовать только одну учетную запись одновременно</string>
 
+
+    <string name="navigationSubscriptions">Juick Подписки</string>
+    <string name="navigationSubscriptionsWeb">Juick Подп(web)</string>
+    <string name="navigationAll">Juick Все</string>
+    <string name="navigationTop">Juick Топ</string>
+    <string name="navigationPhoto">Juick Фото</string>
+    <string name="navigationMy">Juick Мой блог</string>
+    <string name="navigationSrachiki">Jugregator Srachiki</string>
+    <string name="navigationPrivate">Juick Приватные</string>
+    <string name="navigationDiscuss">Juick Дискуссии</string>
+    <string name="navigationUnread">Juick Прочие Нечитанные</string>
+    <string name="navigationUnanswered">Juick Неотвеченные</string>
+    <string name="navigationSaved">Сохраненные</string>
+    <string name="navigationRecentlyOpened">Недавно читал</string>
+    <string name="navigationRecentlyCommented">Недавно писал</string>
+    <string name="navigationAllCombined">Все вперемешку</string>
+    <string name="navigationSubsCombined">Подписки вперемешку</string>
+    <string name="navigationGlavSu">glav.su/ukr</string>
+    <string name="navigationBNWFeed">BNW Подписки</string>
+    <string name="navigationBNWAll">BNW Все</string>
+    <string name="navigationBNWHot">BNW Топ</string>
+    <string name="navigationPointAll">Pont Все</string>
+    <string name="navigationPointSubs">Point Подписки</string>
+    <string name="navigationPointMine">Point Мой Блог</string>
+    <string name="navigationFacebookFeed">FB Подписки</string>
+    <string name="navigationJuboRSS">JuBo RSS</string>
+
+
     <!-- Preferences -->
     <string name="Account">Учетная запись</string>
     <string name="Nickname">Ник</string>
@@ -137,21 +165,6 @@
     <string name="Your_User_Name_Explain">Juick API не предоставляет известного способа для получения вашего Nickname. Введите ваш Nickname для определения по нему вашего Id.
     </string>
 
-    <string name="navigationSubscriptions">Подписки</string>
-    <string name="navigationAll">Все сообщения</string>
-    <string name="navigationTop">Популярные</string>
-    <string name="navigationPhoto">С фото</string>
-    <string name="navigationMy">Мой Juick блог</string>
-    <string name="navigationSrachiki">Срачики (jugregator)</string>
-    <string name="navigationPrivate">Приват(веб)</string>
-    <string name="navigationDiscuss">Дискусс.(веб)</string>
-    <string name="navigationUnread">Все нечитанные</string>
-    <string name="navigationUnanswered">Неотвеченные</string>
-    <string name="navigationSaved">Сохраненные</string>
-    <string name="navigationRecentlyOpened">Недавно читал</string>
-    <string name="navigationRecentlyCommented">Недавно писал</string>
-    <string name="navigationAllCombined">Все/Комбинировано</string>
-    <string name="navigationSubsCombined">Подписки/Комбин.</string>
     <string name="XMPP_client">XMPP/Jabber клиент</string>
     <string name="XMPPControl">XMPP статус</string>
     <string name="XMPP_config">XMPP/Jabber конфиг</string>
@@ -274,7 +287,6 @@
     <string name="JustSame">Просто reload</string>
     <string name="GettingYourId">Получаем ваш идентификатор</string>
     <string name="ConnectingToWwwJuick">Качаем с www.juick.com...</string>
-    <string name="navigationJuboRSS">JuBo RSS</string>
     <string name="ChooseUnreadSegment">Выберите нечитанный сегмент</string>
     <string name="UnreadSegments">Нечитанные сегменты</string>
     <string name="YouHaveNotEnabledForUnreadSegments">Вы не включили сохранение маркеров прочитанных мессаг в настройках,
@@ -370,13 +382,8 @@
     <string name="ForcedAttachment">Приложение неизвестного файла</string>
     <string name="AsJPEG">Это JPEG</string>
     <string name="AsMP4Video">Это MP4 video</string>
-    <string name="navigationBNWFeed">BNW Моё</string>
     <string name="JuickAdvancedCrashed">Juick Advanced - внутренняя ошибка</string>
 
-    <string name="navigationPSTORecent">psto.Лента</string>
-    <string name="navigationPSTORecent">psto.Подписки</string>
-    <string name="navigationPSTOMy">psto.Блог</string>
-    <string name="navigationPSTOPopular">psto.Популярные</string>
     <string name="NonJabberNotifications">Нежабберные уведомления</string>
     <string name="IsNotEnabledOrServiceIsNotRunning">не включено или сервис не работает</string>
     <string name="SubCommentsNotification___">Уведомления обо всех подписках и ответах через Juick Advanced server
@@ -467,6 +474,8 @@
     <string name="TooManyTags">Слишком много тегов, максимум 5.</string>
     <string name="StorePlainTextPassword">Сохранить пароль рядом с программой</string>
     <string name="AllAuthHasBeenCleared">Все сохраненные логины и пароли удалены</string>
+    <string name="NoAuth">Нет логинов и паролей</string>
+    <string name="AuthHasBeenClearedFor">Логин/пароль забыт для:</string>
     <string name="ThisWillRemoveAuth">Вы действительно хотите удалить сохраненные логины и пароли из программы?</string>
     <string name="ClearAllAuth">Удалить сохраненные логины</string>
     <string name="MinimalisticViewer">Минималистический бровзер для просмотра статей, проходящих в жуйке (экспериментальный)</string>

@@ -7,6 +7,10 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.juick.android.bnw.BNWMicroBlog;
+import com.juick.android.bnw.BnwAuthorizer;
+import com.juick.android.facebook.Facebook;
+import com.juick.android.facebook.FacebookAuthorizer;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.point.PointAuthorizer;
@@ -14,6 +18,8 @@ import com.juick.android.point.PointMicroBlog;
 import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.bnw.BnwMessageID;
+import com.juickadvanced.data.facebook.FacebookMessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.xmpp.ClientToServer;
@@ -221,6 +227,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     }
 
     public static HashSet<AccountProof> getAccountProofs(Context context) {
+        return getAccountProofs(context, true);
+    }
+
+    public static HashSet<AccountProof> getAccountProofs(Context context, boolean onlyJASupported) {
         JuickAdvancedApplication.initAuthorizers(context);
         HashSet<AccountProof> proofs = new HashSet<AccountProof>();
         if (JuickAPIAuthorizer.getJuickAccountName(context) != null) {
@@ -237,6 +247,22 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                         PointAuthorizer.getPointAccountName(context),
                         PointAuthorizer.getPointAccountPassword(context),
                         PointMessageID.CODE
+                ));
+            }
+        }
+        if (!onlyJASupported) {
+            if (BNWMicroBlog.instance.authorizer.getLogin() != null) {
+                proofs.add(new AccountProof(
+                        BNWMicroBlog.instance.authorizer.getLogin(),
+                        BnwAuthorizer.myCookie,
+                        BnwMessageID.CODE
+                ));
+            }
+            if (FacebookAuthorizer.oauth != null) {
+                proofs.add(new AccountProof(
+                        "uzer@facebook",
+                        FacebookAuthorizer.oauth,
+                        FacebookMessageID.CODE
                 ));
             }
         }

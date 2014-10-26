@@ -121,9 +121,13 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             collectURLs(secondaryItem.Text, listSelectedItem.getMID());
         }
 
+
         if (urls.size() > 0) {
             HashSet<String> added = new HashSet<String>();
             for (final String url : urls) {
+                // filter out crap
+                if (url.endsWith("hqdefault.jpg") && url.contains("youtube")) continue;
+                // deduplicate
                 if (added.add(url)) {
                     menuActions.add(new RunnableItem(url) {
                         @Override

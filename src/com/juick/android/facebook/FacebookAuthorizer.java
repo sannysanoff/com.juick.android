@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
+import com.juickadvanced.data.facebook.FacebookMessageID;
 import com.juickadvanced.protocol.FacebookTransport;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -180,6 +181,11 @@ public class FacebookAuthorizer extends Utils.URLAuth implements FacebookTranspo
         } else {
             cont.apply(oauth);
         }
+    }
+
+    @Override
+    public boolean isForBlog(String microblogCode) {
+        return microblogCode.equals(FacebookMessageID.CODE);
     }
 
     public void maybeLoadCredentials(Context context) {

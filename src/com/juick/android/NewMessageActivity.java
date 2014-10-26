@@ -493,6 +493,7 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
                                     // window is not active
                                 }
                             }
+                            finish();
                             return null;
                         }
                     });

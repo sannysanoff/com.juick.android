@@ -62,12 +62,14 @@
         <item>стандартный порядок</item>
         <item>шире</item>
         <item>уже</item>
+        <item>выйти из некоторых…</item>
     </string-array>
     <string-array name="navigation_menu_end">
         <item>закончить редактировать</item>
         <item>стандартный порядок</item>
         <item>шире</item>
         <item>уже</item>
+        <item>выйти из некоторых…</item>
     </string-array>
 
 
