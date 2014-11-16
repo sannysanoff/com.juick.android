@@ -45,6 +45,7 @@ import com.juick.android.juick.*;
 import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.data.point.PointMessageID;
@@ -209,6 +210,12 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 actionShareMessage();
             }
         });
+        menuActions.add(new RunnableItem("Open in browser") {
+            @Override
+            public void run() {
+                actionOpenMessageInBrowser();
+            }
+        });
 
 
         menuActions.add(new RunnableItem(activity.getResources().getString(R.string.FilterOutUser) + " @" + UName) {
@@ -273,6 +280,9 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
             }
             if (origMid instanceof PointMessageID) {
                 newId = new PointMessageID("", url.substring(1), -1);
+            }
+            if (origMid instanceof BnwMessageID) {
+                newId = new BnwMessageID(url.substring(1));
             }
             if (newId != null) {
                 Intent intent = new Intent(activity, ThreadActivity.class);
@@ -963,6 +973,10 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
         }
         if (mid instanceof PointMessageID) {
             String url = "http://point.im/"+((PointMessageID) mid).getId();
+            launchURL(mid, url);
+        }
+        if (mid instanceof BnwMessageID) {
+            String url = "http://bnw.im/p/"+((BnwMessageID) mid).getId();
             launchURL(mid, url);
         }
     }

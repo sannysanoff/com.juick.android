@@ -244,7 +244,10 @@ public class NewMessageActivity extends Activity implements OnClickListener, Dia
 
     private void resetForm() {
         setProgressBarIndeterminateVisibility(true);
-        String str = sp.getString("defaultJuickMessageTemplate", "*notag");
+        String str = "";
+        if (data.microblog.equals(JuickMessageID.CODE)) {
+            str = sp.getString("defaultJuickMessageTemplate", "*notag");
+        }
         if (!str.endsWith(" ")) str += " ";
         etMessage.setText(str);
         bLocationHint.setVisibility(View.GONE);

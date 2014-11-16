@@ -18,12 +18,12 @@ import java.util.ArrayList;
  * Time: 10:45 AM
  * To change this template use File | Settings | File Templates.
  */
-public class AllMessagesSource extends JuickCompatibleURLMessagesSource {
+public class JuickAllMessagesSource extends JuickCompatibleURLMessagesSource {
 
     // save last read position in prefs. False for CombinedMessagesSource
     boolean canPersistInPrefs = true;
 
-    public AllMessagesSource(Context ctx) {
+    public JuickAllMessagesSource(Context ctx) {
         super(ctx.getString(R.string.All_messages), "all", ctx);
     }
 

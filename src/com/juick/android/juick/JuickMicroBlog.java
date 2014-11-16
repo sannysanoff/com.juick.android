@@ -291,7 +291,7 @@ public class JuickMicroBlog implements MicroBlog {
             @Override
             public void action() {
                 final Bundle args = new Bundle();
-                args.putSerializable("messagesSource", new AllMessagesSource(activity));
+                args.putSerializable("messagesSource", new JuickAllMessagesSource(activity));
                 activity.runDefaultFragmentWithBundle(args, this);
             }
 
@@ -309,6 +309,28 @@ public class JuickMicroBlog implements MicroBlog {
                 args.putSerializable("messagesSource", ms);
                 activity.runDefaultFragmentWithBundle(args, this);
             }
+
+            @Override
+            public ArrayList<String> getMenuItems() {
+                if (JuickAPIAuthorizer.getJuickAccountName(activity) != null) {
+                    String s = "Logout";
+                    ArrayList<String> strings = new ArrayList<String>();
+                    strings.add(s);
+                    return strings;
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void handleMenuAction(int which, String value) {
+                switch(which) {
+                    case 0:
+                        activity.logoutService(JuickMessageID.CODE);
+                        break;
+                }
+            }
+
 
         };
         navigationItems.add(subscriptionsItem);

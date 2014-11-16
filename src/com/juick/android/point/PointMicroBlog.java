@@ -68,6 +68,28 @@ public class PointMicroBlog implements MicroBlog {
                     }
                 }, mainActivity);
             }
+
+            @Override
+            public ArrayList<String> getMenuItems() {
+                if (PointMicroBlog.instance.authorizer.isAuthorized()) {
+                    String s = "Logout";
+                    ArrayList<String> strings = new ArrayList<String>();
+                    strings.add(s);
+                    return strings;
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void handleMenuAction(int which, String value) {
+                switch(which) {
+                    case 0:
+                        mainActivity.logoutService(PointMessageID.CODE);
+                        break;
+                }
+            }
+
         });
         navigationItems.add(new MainActivity.NavigationItem(70002, R.string.navigationPointAll, R.drawable.navicon_point, "msrcPointAll") {
             @Override
@@ -295,6 +317,7 @@ public class PointMicroBlog implements MicroBlog {
                     then.apply("Empty message? Tags only.");
                 }
                 String tag = s.substring(0, ix);
+                if (tag.startsWith("*")) tag = tag.substring(1);
                 s = s.substring(ix+1);
                 if (data.length() > 0) data.append("&");
                 data.append("tag=" + Uri.encode(tag));

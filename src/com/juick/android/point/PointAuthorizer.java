@@ -391,6 +391,10 @@ public class PointAuthorizer extends Utils.URLAuth {
         token = null;
     }
 
+    public boolean isAuthorized() {
+        return token != null;
+    }
+
 
     public static String getPointAccountName(Context context) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);

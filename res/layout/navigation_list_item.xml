@@ -20,6 +20,7 @@
                 android:id="@+id/checkbox"
                 android:layout_width="36sp"
                 android:layout_height="36sp"
+                android:focusable="false"
                 android:layout_toRightOf="@id/draggable"
                 />
         <ImageView
@@ -37,7 +38,6 @@
                   android:layout_height="wrap_content"
                   android:textColor="#FFFFFF"
                   android:gravity="center_vertical"
-                  android:text="Sample"
                   android:checked="true"
                   android:paddingLeft="6dip"
                   android:layout_toRightOf="@android:id/icon"
@@ -45,6 +45,18 @@
                   android:background="@drawable/navigation_list_background"
                   android:minHeight="36sp"
                   android:textSize="@dimen/initialNavigationFontSize"
+                />
+        <ImageButton
+                android:layout_width="22sp"
+                android:src="@drawable/menu_btn_small_white"
+                android:background="@drawable/gray_button_background"
+                android:layout_marginRight="10sp"
+                android:layout_height="28sp"
+                android:scaleType="fitXY"
+                android:focusableInTouchMode="false"
+                android:id="@+id/menu_button"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
                 />
 
     </RelativeLayout>

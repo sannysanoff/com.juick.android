@@ -521,6 +521,7 @@
     <string name="SwipeToClose">Закрывать жестом тред</string>
     <string name="SelectAccountToPost">Выберите куда постить</string>
     <string name="NewPost">Новая запись</string>
+    <string name="SelectSources">Выбрать источники...</string>
 
 
 </resources>

@@ -260,6 +260,28 @@ public class BNWMicroBlog implements MicroBlog {
                 args.putSerializable("messagesSource", ms);
                 mainActivity.runDefaultFragmentWithBundle(args, this);
             }
+
+            @Override
+            public ArrayList<String> getMenuItems() {
+                if (BNWMicroBlog.instance.authorizer.getLogin() != null) {
+                    String s = "Logout";
+                    ArrayList<String> strings = new ArrayList<String>();
+                    strings.add(s);
+                    return strings;
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void handleMenuAction(int which, String value) {
+                switch(which) {
+                    case 0:
+                        mainActivity.logoutService(BnwMessageID.CODE);
+                        break;
+                }
+            }
+
         });
         navigationItems.add(new MainActivity.NavigationItem(60002, R.string.navigationBNWAll, R.drawable.navicon_bnw, "msrcBNWAll") {
             @Override

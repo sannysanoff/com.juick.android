@@ -53,8 +53,11 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="http" android:host="juick.com"/>
+                <data android:scheme="https" android:host="juick.com"/>
                 <data android:scheme="http" android:host="*.point.im"/>
+                <data android:scheme="https" android:host="*.point.im"/>
                 <data android:scheme="http" android:host="bnw.im"/>
+                <data android:scheme="http" android:host="meow.bnw.im"/>
             </intent-filter>
         </activity>
 

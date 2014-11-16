@@ -614,7 +614,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
             Log.w("JAGP","rightScrollBound == 0");
             return null;
         }
-        if (getActivity() == null) return null;
+        if (getActivity() == null || true) return null;
         int action = event.getAction();
         int actionMasked = event.getActionMasked();
         if (fragInParent == null)

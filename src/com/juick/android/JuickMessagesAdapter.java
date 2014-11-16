@@ -36,6 +36,7 @@ import android.view.*;
 import android.widget.*;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import android.content.Context;
 import android.text.Spannable;
@@ -78,6 +79,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     public static final int SUBTYPE_OTHER = 2;
     public static Pattern juickMsgReferencePattern = Pattern.compile("#[0-9]+");
     public static Pattern pointMsgReferencePattern = Pattern.compile("#[a-z][a-z][a-z][a-z]+");
+    public static Pattern bnwMsgReferencePattern = Pattern.compile("#[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]+");
 //    public static Pattern usrPattern = Pattern.compile("@[a-zA-Z0-9\\-]{2,16}");
     private static String Replies;
     private final boolean noProxyOnWifi;
@@ -855,6 +857,9 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         }
         if (mid instanceof PointMessageID) {
             return pointMsgReferencePattern;
+        }
+        if (mid instanceof BnwMessageID) {
+            return bnwMsgReferencePattern;
         }
         return juickMsgReferencePattern;
     }

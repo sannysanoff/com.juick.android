@@ -54,6 +54,28 @@ public class Facebook implements MicroBlog {
                     }
                 }, mainActivity);
             }
+
+            @Override
+            public ArrayList<String> getMenuItems() {
+                if (FacebookAuthorizer.oauth != null) {
+                    String s = "Logout";
+                    ArrayList<String> strings = new ArrayList<String>();
+                    strings.add(s);
+                    return strings;
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public void handleMenuAction(int which, String value) {
+                switch(which) {
+                    case 0:
+                        mainActivity.logoutService(FacebookMessageID.CODE);
+                        break;
+                }
+            }
+
         });
     }
 

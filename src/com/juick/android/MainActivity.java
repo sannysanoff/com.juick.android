@@ -45,7 +45,6 @@ import android.widget.*;
 import com.actionbarsherlock.app.ActionBar;
 import com.juick.android.api.ChildrenMessageSource;
 import com.juick.android.bnw.BNWMicroBlog;
-import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.facebook.Facebook;
 import com.juick.android.ja.GlavSuMicroblog;
 import com.juick.android.juick.*;
@@ -54,6 +53,7 @@ import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.bnw.BnwMessageID;
+import com.juickadvanced.data.facebook.FacebookMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 /* http://code.google.com/p/android-file-dialog/ */
@@ -70,6 +70,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.*;
+
+import static android.os.Build.*;
 
 public class MainActivity extends JuickFragmentActivity implements
         ActionBar.OnNavigationListener,
@@ -111,6 +113,8 @@ public class MainActivity extends JuickFragmentActivity implements
         }
     }
 
+    public DragSortListView navigationList;
+
     public static MicroBlog getMicroBlog(String key) {
         return microBlogs.get(key);
     }
@@ -121,6 +125,16 @@ public class MainActivity extends JuickFragmentActivity implements
 
     public static MicroBlog getMicroBlog(JuickMessage msg) {
         return microBlogs.get(msg.getMID().getMicroBlogCode());
+    }
+
+    public void logoutService(String code) {
+        for (Utils.URLAuth authorizer : Utils.authorizers) {
+            if (authorizer.isForBlog(code)) {
+                authorizer.reset(this, handler);
+            }
+        }
+        ((BaseAdapter)navigationList.getAdapter()).notifyDataSetChanged();
+
     }
 
 
@@ -145,6 +159,13 @@ public class MainActivity extends JuickFragmentActivity implements
 
         }
 
+        public ArrayList<String> getMenuItems() {
+            return null;
+        }
+
+        public void handleMenuAction(int which, String value) {
+
+        }
     }
 
     boolean navigationMenuShown = false;
@@ -298,7 +319,6 @@ public class MainActivity extends JuickFragmentActivity implements
     }
 
     private void initStage2() {
-        startPreferencesStorage(this);
         sp.registerOnSharedPreferenceChangeListener(this);
 
         JuickHttpAPI.setHttpsEnabled(sp.getBoolean("useHttpsForJuickHttpAPI", false));
@@ -659,6 +679,23 @@ public class MainActivity extends JuickFragmentActivity implements
                 args.putSerializable("messagesSource", new CombinedAllMessagesSource(MainActivity.this,"combined_all"));
                 runDefaultFragmentWithBundle(args, this);
             }
+
+            @Override
+            public ArrayList<String> getMenuItems() {
+                String s = getString(R.string.SelectSources);
+                ArrayList<String> strings = new ArrayList<String>();
+                strings.add(s);
+                return strings;
+            }
+
+            @Override
+            public void handleMenuAction(int which, String value) {
+                switch(which) {
+                    case 0:
+                        selectSourcesForAllCombined();
+                        break;
+                }
+            }
         });
         navigationItems.add(new NavigationItem(NAVITEM_SUBS_COMBINED, R.string.navigationSubsCombined, R.drawable.navicon_juickadvanced, "msrcSubsCombined") {
             @Override
@@ -680,6 +717,23 @@ public class MainActivity extends JuickFragmentActivity implements
                 }.start();
                 final Bundle args = new Bundle();
                 runDefaultFragmentWithBundle(args, this);
+            }
+
+            @Override
+            public ArrayList<String> getMenuItems() {
+                String s = getString(R.string.SelectSources);
+                ArrayList<String> strings = new ArrayList<String>();
+                strings.add(s);
+                return strings;
+            }
+
+            @Override
+            public void handleMenuAction(int which, String value) {
+                switch(which) {
+                    case 0:
+                        selectSourcesForAllSubs();
+                        break;
+                }
             }
         });
         int index = 10000;
@@ -718,7 +772,7 @@ public class MainActivity extends JuickFragmentActivity implements
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         final float finalMenuFontScale = menuFontScale;
-        final DragSortListView navigationList = (DragSortListView)findViewById(R.id.navigation_list);
+        navigationList = (DragSortListView)findViewById(R.id.navigation_list);
 
         // adapter for old-style navigation
         final BaseAdapter navigationAdapter = new BaseAdapter() {
@@ -822,6 +876,16 @@ public class MainActivity extends JuickFragmentActivity implements
                 final ArrayList<NavigationItem> items = getItems();
                 final NavigationItem theItem = items.get(position);
                 tv.setText(getString(theItem.labelId));
+                ImageButton menuButton = (ImageButton)retval.findViewById(R.id.menu_button);
+                menuButton.setFocusable(false);
+                ArrayList<String> menuItems = theItem.getMenuItems();
+                menuButton.setVisibility(menuItems != null && menuItems.size() > 0 ? View.VISIBLE : View.GONE);
+                menuButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        doNavigationItemMenu(theItem);
+                    }
+                });
                 ImageView iv = (ImageView) retval.findViewById(android.R.id.icon);
                 iv.setImageResource(theItem.imageId);
                 retval.findViewById(R.id.draggable).setVisibility(items != allNavigationItems ? View.GONE : View.VISIBLE);
@@ -839,6 +903,7 @@ public class MainActivity extends JuickFragmentActivity implements
                 });
                 int spacing = sp.getInt("navigation_spacing", 0);
                 tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize + spacing);
+
                 retval.setPadding(0, spacing, 0, spacing);
                 return retval;
             }
@@ -949,6 +1014,65 @@ public class MainActivity extends JuickFragmentActivity implements
             }
         }
 
+
+    }
+
+    private void selectSourcesForAllSubs() {
+        selectSourcesForCombined(CombinedSubscriptionMessagesSource.COMBINED_SUBSCRIPTION_MESSAGES_SOURCE, new String[]{JuickMessageID.CODE, PointMessageID.CODE, BnwMessageID.CODE, FacebookMessageID.CODE});
+    }
+
+    private void selectSourcesForCombined(final String prefix, final String[] codes) {
+        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        ScrollView v = new ScrollView(this);
+        v.setLayoutParams(new ScrollView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        final LinearLayout ll = new LinearLayout(this);
+        ll.setLayoutParams(new ScrollView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        ll.setOrientation(LinearLayout.VERTICAL);
+        v.addView(ll);
+        for(int i=0; i<codes.length; i++) {
+            final CompoundButton sw = VERSION.SDK_INT >= 14 ? new Switch(this) : new CheckBox(this);
+            sw.setPadding(10, 10, 10, 10);
+            sw.setLayoutParams(new ScrollView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            sw.setText(codes[i]);
+            sw.setChecked(sp.getBoolean(prefix + codes[i], true));
+            ll.addView(sw);
+        }
+
+        new AlertDialog.Builder(MainActivity.this)
+                .setView(v)
+                .setCancelable(true)
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialogInterface) {
+                        SharedPreferences.Editor e = sp.edit();
+                        for (int i = 0; i < ll.getChildCount(); i++) {
+                            CompoundButton cb = (CompoundButton) ll.getChildAt(i);
+                            assert cb != null;
+                            e.putBoolean(prefix + codes[i], cb.isChecked());
+                        }
+                        e.commit();
+                    }
+                })
+                .create().show();
+
+    }
+
+    private void selectSourcesForAllCombined() {
+        selectSourcesForCombined(CombinedAllMessagesSource.COMBINED_ALL_MESSAGE_SOURCE, new String[]{JuickMessageID.CODE, PointMessageID.CODE, BnwMessageID.CODE});
+    }
+
+    private void doNavigationItemMenu(final NavigationItem theItem) {
+        ArrayList<String> menuItems = theItem.getMenuItems();
+        final String[] menuItemsA = menuItems.toArray(new String[menuItems.size()]);
+        new AlertDialog.Builder(MainActivity.this)
+                .setItems(menuItemsA, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        theItem.handleMenuAction(which, menuItemsA[which]);
+                    }
+                })
+                .setCancelable(true)
+                .create().show();
 
     }
 
@@ -1180,16 +1304,6 @@ public class MainActivity extends JuickFragmentActivity implements
         return false;
     }
 
-    private void startPreferencesStorage(final MainActivity mainActivity) {
-//        new Thread() {
-//            @Override
-//            public void run() {
-//                String body = "BL";
-//                String whitelist = Utils.postJSON(mainActivity, JuickHttpAPI.getAPIURL() + "post", "body=" + body);
-//                System.out.println(whitelist);
-//            }
-//        }.start();
-    }
 
     public boolean onNavigationItemSelected(final int itemPosition, long z) {
         restyle();

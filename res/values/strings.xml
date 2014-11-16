@@ -1381,4 +1381,5 @@
     <string name="SwipeToClose">Swipe to close thread</string>
     <string name="SelectAccountToPost">Select account to post new message</string>
     <string name="NewPost">New post</string>
+    <string name="SelectSources">Select sources...</string>
 </resources>

@@ -1,12 +1,18 @@
 package com.juick.android;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import com.juick.android.bnw.BnwCompatibleMessagesSource;
-import com.juick.android.juick.AllMessagesSource;
+import com.juick.android.juick.JuickAllMessagesSource;
+import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
 import com.juick.android.point.PointWebCompatibleMessagesSource;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessageID;
 
 import java.util.ArrayList;
 
@@ -15,6 +21,7 @@ import java.util.ArrayList;
  */
 public class CombinedAllMessagesSource extends MessagesSource {
 
+    public static final String COMBINED_ALL_MESSAGE_SOURCE = "CombinedAllMessageSource.";
     ArrayList<MessagesSource> nested = new ArrayList<MessagesSource>();
     ArrayList<Boolean> finished = new ArrayList<Boolean>();
     ArrayList<ArrayList<JuickMessage>> queues = new ArrayList<ArrayList<JuickMessage>>();
@@ -43,12 +50,19 @@ public class CombinedAllMessagesSource extends MessagesSource {
     }
 
     protected void initSources(Context ctx) {
-        AllMessagesSource allMS = new AllMessagesSource(ctx);
-        allMS.setCanPersistInPrefs(false);
-        nested.add(allMS);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+        if (prefs.getBoolean(COMBINED_ALL_MESSAGE_SOURCE + JuickMessageID.CODE, true)) {
+            JuickAllMessagesSource allMS = new JuickAllMessagesSource(ctx);
+            allMS.setCanPersistInPrefs(false);
+            nested.add(allMS);
+        }
         //nested.add(new PointAPIMessagesSource(ctx, "all", ctx.getString(R.string.navigationPointAll), "http://point.im/api/all"));
-        nested.add(new PointWebCompatibleMessagesSource(ctx, "all", "Point/All", "http://point.im/all?agree=1"));
-        nested.add(new BnwCompatibleMessagesSource(ctx, "Bnw/All", "/show", "all"));
+        if (prefs.getBoolean(COMBINED_ALL_MESSAGE_SOURCE + PointMessageID.CODE, true)) {
+            nested.add(new PointWebCompatibleMessagesSource(ctx, "all", "Point/All", "http://point.im/all?agree=1"));
+        }
+        if (prefs.getBoolean(COMBINED_ALL_MESSAGE_SOURCE + BnwMessageID.CODE, true)) {
+            nested.add(new BnwCompatibleMessagesSource(ctx, "Bnw/All", "/show", "all"));
+        }
     }
 
     @Override
