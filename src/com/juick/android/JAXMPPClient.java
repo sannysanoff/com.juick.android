@@ -250,14 +250,14 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                 ));
             }
         }
+        if (BNWMicroBlog.instance != null && BNWMicroBlog.instance.authorizer.getLogin() != null) {
+            proofs.add(new AccountProof(
+                    BNWMicroBlog.instance.authorizer.getLogin(),
+                    BNWMicroBlog.instance.authorizer.getPassword(),
+                    BnwMessageID.CODE
+            ));
+        }
         if (!onlyJASupported) {
-            if (BNWMicroBlog.instance.authorizer.getLogin() != null) {
-                proofs.add(new AccountProof(
-                        BNWMicroBlog.instance.authorizer.getLogin(),
-                        BnwAuthorizer.myCookie,
-                        BnwMessageID.CODE
-                ));
-            }
             if (FacebookAuthorizer.oauth != null) {
                 proofs.add(new AccountProof(
                         "uzer@facebook",
@@ -591,6 +591,10 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                                     if (confirmResult.haveMoreMessages) {
                                         continue;
                                     }
+                                } else {
+                                    if (xmppClientListener != null) {
+                                        xmppClientListener.onAfterPoll();
+                                    }
                                 }
                                 if (serverToClient.getLogreq()) {
                                     JuickAdvancedApplication.sendGlobalLog();
@@ -650,6 +654,8 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     interface XMPPClientListener {
         boolean onMessage(String jid, String message);
         boolean onPresence(String jid, boolean on);
+
+        void onAfterPoll();
     }
 
     XMPPClientListener xmppClientListener;

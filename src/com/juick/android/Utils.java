@@ -870,6 +870,29 @@ public class Utils extends com.juickadvanced.Utils {
         }
     }
 
+    static {
+        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+            }
+
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+            }
+        } };
+
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static RESTResponse postForm(final Context context, final String url, ArrayList<NameValuePair> data) {
         try {
@@ -878,6 +901,7 @@ public class Utils extends com.juickadvanced.Utils {
             final String boundary = "****+++++******+++++++********";
 
             URL apiUrl = new URL(url);
+
             final HttpURLConnection conn = (HttpURLConnection) apiUrl.openConnection();
             conn.setConnectTimeout(10000);
             conn.setDoOutput(true);

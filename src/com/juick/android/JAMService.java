@@ -76,6 +76,7 @@ public class JAMService extends Service {
     }
 
     private synchronized void startup() {
+        MainActivity.microBlogs.size();     // boot microblogs
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         boolean useJAM = sp.getBoolean("enableJAMessaging", false);
         if (!useJAM) return;
@@ -120,6 +121,21 @@ public class JAMService extends Service {
                             @Override
                             public boolean onPresence(String jid, boolean on) {
                                 return false;
+                            }
+
+                            @Override
+                            public void onAfterPoll() {
+                                getter.getService(new Utils.ServiceGetter.Receiver<XMPPService>() {
+                                    @Override
+                                    public void withService(XMPPService service) {
+                                        service.sendMyBroadcast(false);
+                                    }
+
+                                    @Override
+                                    public void withoutService() {
+                                        log("XMPPServiceGetter:withoutService");
+                                    }
+                                });
                             }
                         });
                         String error = localClient.loginLocal(JAMService.this, handler);

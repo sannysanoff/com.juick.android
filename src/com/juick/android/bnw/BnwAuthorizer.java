@@ -33,6 +33,7 @@ import java.net.*;
 public class BnwAuthorizer extends Utils.URLAuth {
 
     String login;
+    String password;
 
     @Override
     public boolean isForBlog(String microblogCode) {
@@ -46,10 +47,15 @@ public class BnwAuthorizer extends Utils.URLAuth {
             myCookie = sp.getString("bnw.web_cookie", null);
         }
         login = sp.getString("bnw.web_login", null);
+        password = sp.getString("bnw.web_password", null);
     }
 
     public String getLogin() {
         return login;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     @Override

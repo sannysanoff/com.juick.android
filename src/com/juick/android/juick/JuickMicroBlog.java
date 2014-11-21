@@ -269,7 +269,7 @@ public class JuickMicroBlog implements MicroBlog {
 
     @Override
     public ThreadFragment.ThreadExternalUpdater getThreadExternalUpdater(Activity activity, MessageID mid) {
-        return new WsClient(activity, (JuickMessageID)mid);
+        return new WsClient(activity, mid);
 
     }
 

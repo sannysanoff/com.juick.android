@@ -63,6 +63,7 @@ public class SyncThread extends Thread {
                     // changed something in db message_read ?
                     //
                     //
+                    DatabaseService.db.setPageSize(65536);
                     Cursor cursor = DatabaseService.db.rawQuery("select * from message_read where checkpoint is null", new String[0]);
                     StringBuilder sb = new StringBuilder();
                     sb.append("[");
@@ -72,26 +73,16 @@ public class SyncThread extends Thread {
                     final ArrayList<String> updateds = new ArrayList<String>();
                     int count = 0;
                     while (cursor.moveToNext()) {
-                        try {
-                            JSONObject jo = new JSONObject();
-                            //midIndex integer not null primary key, tm integer not null, nreplies integer not null
-                            String key = cursor.getString(midIndex);
-                            jo.put("k", key);
-                            updateds.add(key);
-                            JSONObject v = new JSONObject();
-                            v.put("nr", cursor.getInt(nRepliesIndex));
-                            v.put("tm", cursor.getLong(tmIndex));
-                            jo.put("v", v);
-                            if (sb.length() > 1) {
-                                sb.append(",");
-                            }
-                            sb.append(jo.toString());
-                            count++;
-                            if (count >= 1000) {
-                                break;
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        // {"v":{"tm":1415780893047,"nr":4},"k":"pnt-tshsj"}
+                        String key = cursor.getString(midIndex);
+                        updateds.add(key);
+                        if (sb.length() > 1) {
+                            sb.append(",");
+                        }
+                        sb.append(String.format("{\"v\":{\"tm\":%d,\"nr\":%d},\"k\":\"%s\"}", cursor.getLong(tmIndex),cursor.getInt(nRepliesIndex),key));
+                        count++;
+                        if (count >= 1000) {
+                            break;
                         }
                     }
                     cursor.close();

@@ -308,7 +308,6 @@ public class PointMicroBlog implements MicroBlog {
     @Override
     public void postNewMessage(NewMessageActivity newMessageActivity, String txt, int pid, double lat, double lon, int acc, String attachmentUri, String attachmentMime, ProgressDialog progressDialog, Handler progressHandler, NewMessageActivity.BooleanReference progressDialogCancel, final Utils.Function<Void, String> then) {
         try {
-
             StringBuilder data = new StringBuilder();
             String s = txt.trim();
             while (s.startsWith("*")) {

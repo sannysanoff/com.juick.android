@@ -54,9 +54,6 @@ public class BnwCompatibleMessagesSource extends MessagesSource {
         pure.getFirst(notifications, cont);
     }
 
-
-
-
     @Override
     public void getNext(Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
         pure.getNext(notifications, cont);

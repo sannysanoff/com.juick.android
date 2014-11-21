@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.juick.android.*;
+import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.bnw.BNWMessage;
 import com.juickadvanced.data.bnw.BnwMessageID;
@@ -18,6 +19,8 @@ import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.MessageID;
 import com.juick.android.juick.MessagesSource;
 import com.juickadvanced.R;
+import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.sources.PureBnwMessagesSource;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -241,7 +244,25 @@ public class BNWMicroBlog implements MicroBlog {
 
     @Override
     public ThreadFragment.ThreadExternalUpdater getThreadExternalUpdater(Activity activity, MessageID mid) {
-        return null;
+        return new WsClient(activity, mid) {
+            @Override
+            protected boolean performConnect(MessageID mid) {
+                return connect("bnw.im", 80, "/p/" + ((BnwMessageID) mid).getId() + "/ws", null);
+            }
+
+            protected ArrayList<JuickMessage> convertMessages(String incomingData) throws JSONException {
+                PureBnwMessagesSource ms = new PureBnwMessagesSource(null);
+                ArrayList<JuickMessage> messages = ms.parseJSONpure("{messages:[" + incomingData + "]}");
+                if (messages.size() > 0) {
+                    JSONObject jo = new JSONObject(incomingData);
+                    int replyNumber = jo.getInt("num");
+                    messages.get(0).setRID(replyNumber);
+                }
+                return messages;
+            }
+
+
+        };
     }
 
     @Override

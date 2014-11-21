@@ -26,10 +26,14 @@ import java.util.ArrayList;
 
 import android.content.Context;
 import android.util.Log;
+import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juick.android.juick.JuickCompatibleURLMessagesSource;
 import com.juickadvanced.data.juick.JuickMessageID;
+import com.juickadvanced.data.point.PointMessage;
 import org.apache.http.util.ByteArrayBuffer;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  *
@@ -74,19 +78,27 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
         beforePausedCounter = paused ? 3 : 0;
     }
 
-    public WsClient(Context context, final JuickMessageID mid) {
+    public WsClient(Context context, final MessageID mid) {
         this.ctx = context;
         wsthr = new Thread(new Runnable() {
 
             public void run() {
                 while (!terminated) {
-                    if (connect("ws.juick.com", 80, "/" + mid.getMid(), null)) {
+                    if (performConnect(mid)) {
                         readLoop();
                     }
                 }
             }
         }, "Websocket thread: mid=" + mid);
         wsthr.start();
+    }
+
+    protected boolean performConnect(MessageID mid) {
+        return connect("ws.juick.com", 80, "/" + ((JuickMessageID) mid).getMid(), null);
+    }
+
+    public String getOrigin() {
+        return "http://juick.com/";
     }
 
     public boolean connect(String host, int port, String location, String headers) {
@@ -100,8 +112,8 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                     + "Host: " + host + "\r\n"
                     + "Connection: Upgrade\r\n"
                     + "Upgrade: websocket\r\n"
-                    + "Origin: http://juick.com/\r\n"
-                    + "User-Agent: JuickAndroid\r\n"
+                    + "Origin: "+getOrigin()+"\r\n"
+                    + "User-Agent: JuickAdvanced\r\n"
                     + "Sec-WebSocket-Key: SomeKey\r\n"
                     + "Sec-WebSocket-Version: 13\r\n"
                     + "Pragma: no-cache\r\n"
@@ -173,9 +185,10 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
                         if (PacketLength > 2) {
                             if (listener != null) {
                                 String incomingData = new String(buf.toByteArray(), "utf-8");
-                                JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx, "dummy");
-                                final ArrayList<JuickMessage> messages = jcus.parseJSONpure("[" + incomingData + "]");
-                                listener.onNewMessages(messages);
+                                final ArrayList<JuickMessage> messages = convertMessages(incomingData);
+                                if (messages.size() > 0) {
+                                    listener.onNewMessages(messages);
+                                }
                             }
                         } else {
                             os.write(keepAlive);
@@ -195,6 +208,11 @@ public class WsClient implements ThreadFragment.ThreadExternalUpdater {
         } finally {
             Log.w("UgnichWS", "inst="+toString()+" DISCONNECTED readLoop");
         }
+    }
+
+    protected ArrayList<JuickMessage> convertMessages(String incomingData) throws JSONException {
+        JuickCompatibleURLMessagesSource jcus = new JuickCompatibleURLMessagesSource(ctx, "dummy");
+        return jcus.parseJSONpure("[" + incomingData + "]");
     }
 
     public void disconnect() {

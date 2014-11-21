@@ -13,6 +13,7 @@ import com.juick.android.api.ChildrenMessageSource;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juick.android.point.PointAuthorizer;
 import com.juickadvanced.data.MessageID;
+import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.data.juick.JuickUser;
@@ -552,6 +553,12 @@ public class XMPPService extends Service {
         if (currentThread instanceof ExternalXMPPThread) {
             final ExternalXMPPThread et = (ExternalXMPPThread) currentThread;
             et.nextListener = new JAXMPPClient.XMPPClientListener() {
+
+                @Override
+                public void onAfterPoll() {
+
+                }
+
                 @Override
                 public boolean onMessage(String jid, String message) {
 
@@ -666,6 +673,9 @@ public class XMPPService extends Service {
                         if (microblogCode.equals(PointMessageID.CODE)) {
                             parsedMid = new PointMessageID("", messageNoPlain.substring(1), -1);
                         }
+                        if (microblogCode.equals(BnwMessageID.CODE)) {
+                            parsedMid = new BnwMessageID(messageNoPlain.substring(1));
+                        }
                     } else {
                         int ix2 = messageNoPlain.indexOf("#");   // -1 not found
                         String code = messageNoPlain.substring(ix2 + 1, ix);
@@ -674,6 +684,9 @@ public class XMPPService extends Service {
                         }
                         if (microblogCode.equals(PointMessageID.CODE)) {
                             parsedMid = new PointMessageID("", code, -1);
+                        }
+                        if (microblogCode.equals(BnwMessageID.CODE)) {
+                            parsedMid = new BnwMessageID(code);
                         }
                     }
                 }
@@ -743,11 +756,16 @@ public class XMPPService extends Service {
                     public void run() {
                         synchronized (incomingMessages) {
                             try {
-                                final File newFile = new File(getCacheDir(), "recentlyReceivedMessages.ser.new");
-                                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(newFile));
-                                oos.writeObject(recentlyReceivedMessages);
+                                final File newFile = new File(getCacheDir(), "recentlyReceivedMessages2.ser.new");
+                                FileOutputStream oos = new FileOutputStream(newFile);
+                                StringBuilder sb = new StringBuilder();
+                                for (String recentlyReceivedMessage : recentlyReceivedMessages) {
+                                    sb.append(recentlyReceivedMessage);
+                                    sb.append(" ");
+                                }
+                                oos.write(sb.toString().getBytes());
                                 oos.close();
-                                final File oldFile = new File(getCacheDir(), "recentlyReceivedMessages.ser");
+                                final File oldFile = new File(getCacheDir(), "recentlyReceivedMessages2.ser");
                                 newFile.renameTo(oldFile);
                             } catch (IOException e) {
                                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -802,6 +820,7 @@ public class XMPPService extends Service {
                             }
                             if (lastLine.contains("juick.com")) microblogCode = JuickMessageID.CODE;
                             if (lastLine.contains("point.im")) microblogCode = PointMessageID.CODE;
+                            if (lastLine.contains("bnw.im")) microblogCode = BnwMessageID.CODE;
                             handled = new JuickThreadIncomingMessage(username, sb.toString(), msgno, microblogCode, new Date());
                         }
                     } catch (Exception ex) {
@@ -1215,7 +1234,7 @@ public class XMPPService extends Service {
         return getDir("xmpp_messages_v1", MODE_PRIVATE);
     }
 
-    private void sendMyBroadcast(boolean sound) {
+    public void sendMyBroadcast(boolean sound) {
         Intent intent = new Intent();
         intent.setAction(ACTION_MESSAGE_RECEIVED);
         intent.putExtra("messagesCount", incomingMessages.size());
@@ -1321,6 +1340,7 @@ public class XMPPService extends Service {
         Thread restoreMessages = new Thread("XMPP Messages read") {
             @Override
             public void run() {
+                long l = System.currentTimeMillis();
                 ArrayList<IncomingMessage> readMessages = new ArrayList<IncomingMessage>();
                 File savedMessagesDirectory = getSavedMessagesDirectory();
                 String[] list = savedMessagesDirectory.list();
@@ -1331,6 +1351,10 @@ public class XMPPService extends Service {
                             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
                             try {
                                 IncomingMessage o = (IncomingMessage) ois.readObject();
+                                if (o instanceof JuickIncomingMessage) {
+                                    if (((JuickIncomingMessage) o).getMID() == null)
+                                        continue;
+                                }
                                 readMessages.add(o);
                             } catch (OutOfMemoryError ex) {
                                 // maybe broken file, maybe not.
@@ -1348,10 +1372,16 @@ public class XMPPService extends Service {
                     Log.e("com.juickadvanced", "restoreMessages", e);
                 }
                 synchronized (incomingMessages) {
-                    final File oldFile = new File(getCacheDir(), "recentlyReceivedMessages.ser");
+                    final File oldFile = new File(getCacheDir(), "recentlyReceivedMessages2.ser");
                     try {
-                        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(oldFile));
-                        recentlyReceivedMessages = (ArrayList<String>) ois.readObject();
+                        FileInputStream ois = new FileInputStream(oldFile);
+                        byte[] arr = new byte[(int)oldFile.length()];
+                        int rd = ois.read(arr, 0, arr.length);
+                        String[] ids = new String(arr, 0, rd).split(" ");
+                        recentlyReceivedMessages = new ArrayList<String>(ids.length + 3);
+                        for (String id : ids) {
+                            recentlyReceivedMessages.add(id);
+                        }
                         ois.close();
                     } catch (Exception ex) {
                         ex.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -1381,6 +1411,8 @@ public class XMPPService extends Service {
                         });
                     }
                 }
+                l = System.currentTimeMillis() - l;
+                JuickAdvancedApplication.addToGlobalLog("xmpp: load saved messages: "+l+" msec", null);
             }
         };
         restoreMessages.setPriority(Thread.MIN_PRIORITY);
@@ -1400,7 +1432,10 @@ public class XMPPService extends Service {
         XMPPConnectionSetup connectionArgs;
         JAXMPPClient client;
 
+        @Override
+        public void onAfterPoll() {
 
+        }
 
         public ExternalXMPPThread(XMPPConnectionSetup connectionArgs) {
             this.connectionArgs = connectionArgs;
