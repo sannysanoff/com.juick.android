@@ -1,0 +1,7 @@
+# view land/res/layout-land/ambilwarna_dialog.xml #generated:44
+# view res/layout/ambilwarna_dialog.xml #generated:19
+-keep class yuku.ambilwarna.AmbilWarnaKotak { <init>(...); }
+
+# view res/layout/ambilwarna_pref_widget.xml #generated:2
+-keep class yuku.ambilwarna.widget.AmbilWarnaPrefWidgetView { <init>(...); }
+

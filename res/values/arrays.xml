@@ -117,11 +117,6 @@
         <item>ACCURACY_COARSE</item>
         <item>ACCURACY_LOW</item>
     </string-array>
-    <string-array name="prefsAccuracyValues">
-        <item>ACCURACY_FINE</item>
-        <item>ACCURACY_COARSE</item>
-        <item>ACCURACY_LOW</item>
-    </string-array>
     <string-array name="prefsAccuracyTitles">
         <item>Fine (GPS - slow)</item>
         <item>Coarse (GSM+Google - fast)</item>

@@ -1,0 +1,52 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.13.3'
+    }
+}
+
+
+
+apply plugin: 'android'
+
+android {
+    lintOptions.abortOnError = false;
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src','../common/src']
+            res.srcDirs = ['res']
+	}
+    }
+}
+
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.1"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 19
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            runProguard false
+        }
+        debug {
+            runProguard false
+        }
+    }
+    dependencies {
+        compile project(":deps:ActionBarSherlock:library")
+        compile project(":deps:FileExplorer")
+        compile project(":deps:yuku-android-util:AmbilWarna")
+        compile fileTree(dir: 'libs', include: ['*.jar'])
+    }
+}
+
