@@ -866,9 +866,12 @@ public class XMPPService extends Service {
                                 String code = null;
                                 if (url.equals("http://juick.com/" + msgNo.substring(1))) {
                                     code = JuickMessageID.CODE;
-                                }
+                                } else
                                 if (url.equals("http://point.im/" + msgNo.substring(1))) {
                                     code = PointMessageID.CODE;
+                                } else
+                                if (url.equals("http://bnw.im/" + msgNo.substring(1))) {
+                                    code = BnwMessageID.CODE;
                                 }
                                 if (code != null) {
                                     JuickSubscriptionIncomingMessage subscriptionIncomingMessage = new JuickSubscriptionIncomingMessage(username, sb.toString(), msgNo, code, new Date());

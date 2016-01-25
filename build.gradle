@@ -7,8 +7,6 @@ buildscript {
     }
 }
 
-
-
 apply plugin: 'android'
 
 android {
@@ -25,8 +23,8 @@ android {
 
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.1"
+    compileSdkVersion 19
+    buildToolsVersion "20"
 
     defaultConfig {
         minSdkVersion 8

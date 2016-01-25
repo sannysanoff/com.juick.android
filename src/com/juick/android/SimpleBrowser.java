@@ -294,7 +294,7 @@ public class SimpleBrowser extends Activity implements Utils.DownloadProgressNot
                         case JA_BOILERPIPE: extractor = "boilerpipe"; break;
                         case JA_POCKET: extractor = "pocketcom"; break;
                     }
-                    final RESTResponse jaresult = Utils.getJSON(SimpleBrowser.this, "http://ja.ip.rt.ru:8080/htmlproxy?extractor="+extractor+"&url=" + Uri.encode(url), notification, 60000);
+                    final RESTResponse jaresult = Utils.getJSON(SimpleBrowser.this, "http://"+JAXMPPClient.jahost+":8080/htmlproxy?extractor="+extractor+"&url=" + Uri.encode(url), notification, 60000);
                     if (jaresult.getResult() == null) return jaresult;
                     StringBuilder sb = new StringBuilder();
                     sb.append("<html><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'></head><body>");

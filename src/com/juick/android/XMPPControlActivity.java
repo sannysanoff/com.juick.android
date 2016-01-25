@@ -74,20 +74,22 @@ public class XMPPControlActivity extends Activity {
         retry.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sp.edit().putBoolean("useXMPP", false).commit();
+                final boolean oldXMPP = sp.getBoolean("useXMPP", false);
+                final boolean oldJA = sp.getBoolean("enableJAMessaging", false);
+                sp.edit().putBoolean("useXMPP", false).putBoolean("enableJAMessaging", false).commit();
                 GCMIntentService.keepAlive();
                 new Thread() {
                     @Override
                     public void run() {
                         try {
-                            Thread.sleep(2000);
+                            Thread.sleep(5000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                sp.edit().putBoolean("useXMPP", true).commit();
+                                sp.edit().putBoolean("useXMPP", oldXMPP).putBoolean("enableJAMessaging", oldJA).commit();
                             }
                         });
                     }

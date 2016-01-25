@@ -43,7 +43,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JASocketClientListener {
-    String jahost = "ja.ip.rt.ru";
+    public static String jahost = "ja.servebeer.com";
     //String jahost = "192.168.1.77";
     //String jahost = "10.236.35.24";
     int jaSocketPort = 8228;

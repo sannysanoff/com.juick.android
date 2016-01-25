@@ -639,8 +639,9 @@ public class DatabaseService extends Service {
             sp = PreferenceManager.getDefaultSharedPreferences(this);
             handler = new Handler();
             database = new DB(this);
-            if (db == null)
+            if (db == null) {
                 db = database.getWritableDatabase();
+            }
             writerThread = new WriterThread();
             writerThread.start();
             syncerThread = new SyncThread(this);

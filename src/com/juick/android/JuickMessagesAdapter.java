@@ -1421,7 +1421,7 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
         if (imageLoadMode.contains("japroxy")) {
             final int HEIGHT = (int)(((Activity)context).getWindow().getWindowManager().getDefaultDisplay().getHeight() * imageHeightPercent);
             final int WIDTH = (int)(((Activity)context).getWindow().getWindowManager().getDefaultDisplay().getWidth());
-            String host = "ja.ip.rt.ru:8080";
+            String host = "ja.servebeer.com:8080";
             //String host = "192.168.1.77:8080";
             if (url.startsWith("https://i.juick.com")) {
                 url = "http"+url.substring(5);

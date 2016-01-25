@@ -125,7 +125,7 @@ public class NewJuickPreferenceActivity extends Activity {
     public static void showChart(Activity context, String chart, String args) {
         Intent intent = new Intent(context, DisplayChartActivity2.class);
         //String host = "192.168.1.77:8080";
-        String host = "ja.ip.rt.ru:8080";
+        String host = JAXMPPClient.jahost+":8080";
         String url = "http://" + host + "/charts/JuickCharts2/" + chart + ".jsp";
         if (args != null && args.length() > 0) {
             url += "?"+args;

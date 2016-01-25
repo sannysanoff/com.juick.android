@@ -243,7 +243,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listAdapter.setOnForgetListener(new Utils.Function<Void,JuickMessage>() {
             @Override
             public Void apply(final JuickMessage jm) {
-                Network.executeJAHTTPS(getActivity(), null, "https://ja.ip.rt.ru:8444/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, RESTResponse>() {
+                Network.executeJAHTTPS(getActivity(), null, "https://"+JAXMPPClient.jahost+":8443/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, RESTResponse>() {
                     @Override
                     public Void apply(final RESTResponse response) {
                         final Activity activity = getActivity();

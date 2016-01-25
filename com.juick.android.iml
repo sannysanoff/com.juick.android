@@ -5,6 +5,9 @@
       <configuration>
         <option name="APK_PATH" value="/apk/JA-debug-unaligned.apk" />
         <option name="CUSTOM_DEBUG_KEYSTORE_PATH" value="file://$USER_HOME$/.android/debug.keystore.san2" />
+        <proGuardCfgFiles>
+          <file>file://$USER_HOME$/soft/jdk7/tools/proguard/proguard-android.txt</file>
+        </proGuardCfgFiles>
         <option name="UPDATE_PROPERTY_FILES" value="true" />
         <includeAssetsFromLibraries>true</includeAssetsFromLibraries>
       </configuration>

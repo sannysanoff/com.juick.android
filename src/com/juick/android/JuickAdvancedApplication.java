@@ -364,7 +364,7 @@ public class JuickAdvancedApplication extends Application {
                 public void run() {
                     ArrayList<Utils.NameValuePair> data = new ArrayList<Utils.NameValuePair>();
                     data.add(new Utils.NameStringValuePair("file", str));
-                    final RESTResponse restResponse = Utils.postForm(instance, "http://ja.ip.rt.ru:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
+                    final RESTResponse restResponse = Utils.postForm(instance, "http://"+JAXMPPClient.jahost+":8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
                     //final Utils.RESTResponse restResponse = Utils.postForm(instance, "http://192.168.1.77:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
                     if (restResponse.getErrorText() == null) {
                         file.delete();

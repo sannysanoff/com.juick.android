@@ -130,7 +130,7 @@ public class Utils extends com.juickadvanced.Utils {
     static class DummyAuthorizer extends URLAuth {
 
 
-        String jaiprtruCache = null;
+        String jahostCache = null;
 
         @Override
         public boolean isForBlog(String microblogCode) {
@@ -154,9 +154,9 @@ public class Utils extends com.juickadvanced.Utils {
 
         @Override
         public void authorizeRequest(HttpRequestBase request, String cookie) {
-            if (jaiprtruCache != null && jaiprtruCache.length() > 0) {
-                if (request.getURI().toString().contains(jaiprtruCache)) {
-                    request.addHeader("Host","ja.ip.rt.ru");
+            if (jahostCache != null && jahostCache.length() > 0) {
+                if (request.getURI().toString().contains(jahostCache)) {
+                    request.addHeader("Host",JAXMPPClient.jahost);
                 }
             }
 
@@ -169,17 +169,17 @@ public class Utils extends com.juickadvanced.Utils {
 
         @Override
         public String authorizeURL(String url, String cookie) {
-            if (url.startsWith("http://ja.ip.rt.ru")) {
-                if (jaiprtruCache == null) {
+            if (url.startsWith("http://"+JAXMPPClient.jahost)) {
+                if (jahostCache == null) {
                     try {
-                        InetAddress byName = Inet4Address.getByName("ja.ip.rt.ru");
-                        jaiprtruCache = byName.getHostAddress();
+                        InetAddress byName = Inet4Address.getByName(JAXMPPClient.jahost);
+                        jahostCache = byName.getHostAddress();
                     } catch (UnknownHostException e) {
                         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
                 }
-                if (jaiprtruCache != null && jaiprtruCache.length() > 0) {
-                    url = url.replace("ja.ip.rt.ru", jaiprtruCache);
+                if (jahostCache != null && jahostCache.length() > 0) {
+                    url = url.replace(JAXMPPClient.jahost, jahostCache);
                 }
             }
             return url;
@@ -207,8 +207,8 @@ public class Utils extends com.juickadvanced.Utils {
     }
 
     //public static final String JA_ADDRESS = "192.168.1.77:8080";
-    public static final String JA_ADDRESS = "ja.ip.rt.ru:8080";
-    public static final String JA_ADDRESS_HTTPS = "https://ja.ip.rt.ru:8443";
+    public static final String JA_ADDRESS = JAXMPPClient.jahost+":8080";
+    public static final String JA_ADDRESS_HTTPS = "https://"+JAXMPPClient.jahost+":8443";
     //public static final String JA_ADDRESS_HTTPS = "http://192.168.1.77:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
