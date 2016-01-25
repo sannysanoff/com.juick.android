@@ -457,6 +457,7 @@ public class WhatsNew {
                 .putBoolean("http_compression", true)
                 .putBoolean("image.indirect", true)
                 .putBoolean("enableMessageDB", true)
+                .putBoolean("enableScaleByGesture", false)
 
                 .putBoolean("msrcTopMessages", true)
                 .putBoolean("msrcWithPhotos", true)
