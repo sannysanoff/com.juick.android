@@ -3,3 +3,5 @@
 /bin/
 workspace.xml
 .idea/
+build
+.gradle
