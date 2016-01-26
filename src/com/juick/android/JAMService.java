@@ -32,7 +32,7 @@ public class JAMService extends Service {
         startup();
     }
 
-    void log(String str) {
+    public static void log(String str) {
         XMPPService.log(str);
         JuickAdvancedApplication.addToGlobalLog("JAMService: "+str, null);
     }

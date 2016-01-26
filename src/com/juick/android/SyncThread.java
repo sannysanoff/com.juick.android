@@ -317,7 +317,8 @@ public class SyncThread extends Thread {
                                     }
                                 }
 
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
+                                JAMService.log("While getting sync msg2 from server: "+e.toString());
                                 waitDelay = -1;
                                 continue;
                             }
@@ -377,7 +378,8 @@ public class SyncThread extends Thread {
                                     }
                                 }
 
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
+                                JAMService.log("While getting sync msgread from server: "+e.toString());
                                 waitDelay = -1;
                                 continue;
                             }
@@ -437,6 +439,7 @@ public class SyncThread extends Thread {
                                 }
 
                             } catch (Exception e) {
+                                //Log
                                 waitDelay = -1;
                                 continue;
                             }
@@ -509,7 +512,7 @@ public class SyncThread extends Thread {
                     databaseService.lastSyncIn = System.currentTimeMillis();
                 }
             } else {
-                waitDelay = 5000;   // coalesce sequential changes
+                waitDelay = 30000;   // coalesce sequential changes
             }
 
         }
