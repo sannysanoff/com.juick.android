@@ -38,7 +38,7 @@ public class JuickCompatibleURLMessagesSource extends JuickMessagesSource {
     @Override
     public boolean supportsBackwardRefresh() {
         Map<String,String> argsMap = pure.urlParser.getArgsMap();
-        if (argsMap.containsKey("tag") || argsMap.containsKey("user_id") || argsMap.containsKey("search")) {
+        if (argsMap.containsKey("tag") || argsMap.containsKey("user_id") || argsMap.containsKey("uname") || argsMap.containsKey("search")) {
             return false;
         }
         return true;

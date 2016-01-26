@@ -137,7 +137,7 @@ public class BnwAuthorizer extends Utils.URLAuth {
                     });
                     try {
                         dlg.show();
-                    } catch (WindowManager.BadTokenException _) {
+                    } catch (WindowManager.BadTokenException ex) {
                         // window not running
                         doCancelButton();
                     }

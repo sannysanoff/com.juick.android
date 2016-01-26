@@ -114,7 +114,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                         login.setText(loginName);
                         login.setHint("JuickUser");
                         AlertDialog dlg = new AlertDialog.Builder(activity)
-                                .setTitle("Juick.com API login")
+                                .setTitle("Juick.com API login!")
                                 .setView(content)
                                 .setPositiveButton("Login", new DialogInterface.OnClickListener() {
                                     @Override
@@ -291,7 +291,7 @@ public class JuickAPIAuthorizer extends Utils.URLAuth {
                     act.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(act, "Auth: " + auth, Toast.LENGTH_LONG).show();
+                            Toast.makeText(act, "Auth : " + auth, Toast.LENGTH_LONG).show();
                         }
                     });
 

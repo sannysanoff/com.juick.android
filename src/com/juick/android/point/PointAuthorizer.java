@@ -164,7 +164,7 @@ public class PointAuthorizer extends Utils.URLAuth {
                         });
                         try {
                             dlg.show();
-                        } catch (WindowManager.BadTokenException _) {
+                        } catch (WindowManager.BadTokenException x) {
                             // not running ;(
                             doCancelButton();
                         }

@@ -2,12 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../ActionBarSherlock/library/ActionBarSherlock.iml" filepath="$PROJECT_DIR$/../ActionBarSherlock/library/ActionBarSherlock.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" filepath="$PROJECT_DIR$/../yuku-android-util/AmbilWarna/AmbilWarna.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../FileExplorer/FileExplorer.iml" filepath="$PROJECT_DIR$/../FileExplorer/FileExplorer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deps/ActionBarSherlock/ActionBarSherlock.iml" filepath="$PROJECT_DIR$/deps/ActionBarSherlock/ActionBarSherlock.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deps/yuku-android-util/AmbilWarna/AmbilWarna.iml" filepath="$PROJECT_DIR$/deps/yuku-android-util/AmbilWarna/AmbilWarna.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deps/FileExplorer/FileExplorer.iml" filepath="$PROJECT_DIR$/deps/FileExplorer/FileExplorer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deps/ActionBarSherlock/library/Library.iml" filepath="$PROJECT_DIR$/deps/ActionBarSherlock/library/Library.iml" />
       <module fileurl="file://$PROJECT_DIR$/com.juick.android.iml" filepath="$PROJECT_DIR$/com.juick.android.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../common/common.iml" filepath="$PROJECT_DIR$/../../common/common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deps/deps.iml" filepath="$PROJECT_DIR$/deps/deps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/deps/yuku-android-util/yuku-android-util.iml" filepath="$PROJECT_DIR$/deps/yuku-android-util/yuku-android-util.iml" />
     </modules>
   </component>
 </project>
-

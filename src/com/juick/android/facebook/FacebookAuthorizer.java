@@ -122,7 +122,7 @@ public class FacebookAuthorizer extends Utils.URLAuth implements FacebookTranspo
                         });
                         try {
                             dlg.show();
-                        } catch (WindowManager.BadTokenException _) {
+                        } catch (WindowManager.BadTokenException x) {
                             // not running ;(
                             doCancelButton();
                         }
@@ -302,8 +302,6 @@ public class FacebookAuthorizer extends Utils.URLAuth implements FacebookTranspo
                 return true;
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
             e.printStackTrace();
         }
         return false;

@@ -7,7 +7,9 @@ import com.juick.android.bnw.BnwCompatibleMessagesSource;
 import com.juick.android.juick.JuickAllMessagesSource;
 import com.juick.android.juick.JuickMicroBlog;
 import com.juick.android.juick.MessagesSource;
+import com.juick.android.point.PointAPIMessagesSource;
 import com.juick.android.point.PointWebCompatibleMessagesSource;
+import com.juickadvanced.R;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.bnw.BnwMessageID;
 import com.juickadvanced.data.juick.JuickMessage;
@@ -56,12 +58,12 @@ public class CombinedAllMessagesSource extends MessagesSource {
             allMS.setCanPersistInPrefs(false);
             nested.add(allMS);
         }
-        //nested.add(new PointAPIMessagesSource(ctx, "all", ctx.getString(R.string.navigationPointAll), "http://point.im/api/all"));
         if (prefs.getBoolean(COMBINED_ALL_MESSAGE_SOURCE + PointMessageID.CODE, true)) {
-            nested.add(new PointWebCompatibleMessagesSource(ctx, "all", "Point/All", "http://point.im/all?agree=1"));
+            nested.add(new PointAPIMessagesSource(ctx, "all", ctx.getString(com.juickadvanced.R.string.navigationPointAll), "http://point.im/api/all"));
+            //nested.add(new PointWebCompatibleMessagesSource(ctx, "all", "Point/All", "http://point.im/all?agree=1"));
         }
         if (prefs.getBoolean(COMBINED_ALL_MESSAGE_SOURCE + BnwMessageID.CODE, true)) {
-            nested.add(new BnwCompatibleMessagesSource(ctx, "Bnw/All", "/show", "all"));
+            nested.add(new BnwCompatibleMessagesSource(ctx, ctx.getString(com.juickadvanced.R.string.navigationBNWAll), "/show", "all"));
         }
     }
 

@@ -144,7 +144,7 @@ public class TagsFragment extends Fragment  {
                     if (user_idS != null) {
                         try {
                             uid = Integer.parseInt(user_idS);
-                        } catch (Throwable _) {
+                        } catch (Throwable x) {
                         }
                     }
                 }

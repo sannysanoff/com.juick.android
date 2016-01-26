@@ -95,8 +95,8 @@ public class PointMicroBlog implements MicroBlog {
             @Override
             public void action() {
                 final Bundle args = new Bundle();
-                PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/all?agree=1");
-                //PointAPIMessagesSource ms = new PointAPIMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/api/all");
+//                PointWebCompatibleMessagesSource ms = new PointWebCompatibleMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/all?agree=1");
+                PointAPIMessagesSource ms = new PointAPIMessagesSource(mainActivity, "all", mainActivity.getString(labelId), "http://point.im/api/all");
                 args.putSerializable("messagesSource", ms);
                 mainActivity.runDefaultFragmentWithBundle(args, this);
             }
@@ -173,7 +173,8 @@ public class PointMicroBlog implements MicroBlog {
 
     @Override
     public void getChildren(Activity context, MessageID mid, Utils.Notification notifications, Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        new PointWebCompatibleMessagesSource(context, "dummy", "", "http://point.im/").getChildren(mid, notifications, cont);
+        //new PointWebCompatibleMessagesSource(context, "dummy", "", "http://point.im/").getChildren(mid, notifications, cont);
+        new PointAPIMessagesSource(context, "dummy", "", "").getChildren(mid, notifications, cont);
     }
 
     @Override

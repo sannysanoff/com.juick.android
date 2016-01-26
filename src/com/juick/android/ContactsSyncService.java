@@ -43,8 +43,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.juickadvanced.parsers.JuickParser;
-import org.json.JSONArray;
-import org.json.JSONException;
+import org.ja.json.JSONArray;
+import org.ja.json.JSONException;
 
 /**
  *

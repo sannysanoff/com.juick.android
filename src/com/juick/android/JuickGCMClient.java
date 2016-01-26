@@ -6,8 +6,9 @@ import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.parsers.JuickParser;
-import org.json.JSONException;
-import org.json.JSONObject;
+
+import org.ja.json.JSONException;
+import org.ja.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;

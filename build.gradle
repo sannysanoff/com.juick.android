@@ -3,11 +3,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.13.3'
+        classpath 'com.android.tools.build:gradle:2.0.0-alpha7'
     }
 }
 
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 android {
     lintOptions.abortOnError = false;
@@ -15,16 +15,17 @@ android {
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src','../common/src']
+            java.srcDirs = ['src','../../common/src']
             res.srcDirs = ['res']
-	}
+    	}
     }
-}
 
+    dexOptions {
+        incremental true
+    }
 
-android {
     compileSdkVersion 19
-    buildToolsVersion "20"
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         minSdkVersion 8
@@ -34,10 +35,10 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
+            // runProguard false
         }
         debug {
-            runProguard false
+            // runProguard false
         }
     }
     dependencies {

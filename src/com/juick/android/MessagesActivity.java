@@ -113,9 +113,16 @@ public class MessagesActivity extends JuickFragmentActivity {
         return 0;
     }
 
+    public String getUname() {
+        if (messagesSource instanceof JuickCompatibleURLMessagesSource) {
+            return ((JuickCompatibleURLMessagesSource) messagesSource).getArg("uname");
+        }
+        return null;
+    }
+
     @Override
     public boolean onPrepareOptionsMenu(com.actionbarsherlock.view.Menu menu) {
-        menu.findItem(R.id.menuitem_search).setVisible(getUserId() > 0);
+        menu.findItem(R.id.menuitem_search).setVisible(getUserId() > 0 || getUname() != null);
         return super.onPrepareOptionsMenu(menu);    //To change body of overridden methods use File | Settings | File Templates.
     }
 
@@ -140,6 +147,7 @@ public class MessagesActivity extends JuickFragmentActivity {
                 Intent intent = new Intent(this, ExploreActivity.class);
                 intent.putExtra("messagesSource", messagesSource);
                 intent.putExtra("uid", getUserId());
+                intent.putExtra("uname", getUname());
                 startActivity(intent);
                 break;
         }

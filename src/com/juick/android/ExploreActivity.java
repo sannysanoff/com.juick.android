@@ -39,6 +39,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
 
     private EditText etSearch;
     private int uid = -1;
+    private String uname = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,7 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
         Bundle args = new Bundle();
         args.putSerializable("messagesSource", getIntent().getSerializableExtra("messagesSource"));
         uid = getIntent().getIntExtra("uid", -1);
+        uname = getIntent().getStringExtra("uname");
         args.putSerializable("uid", uid);
         tf.setArguments(args);
         ft.add(R.id.tagsfragment, tf);
@@ -110,6 +112,9 @@ public class ExploreActivity extends FragmentActivity implements View.OnClickLis
             jms.setCanNext(false);
             if (uid > 0) {
                 jms.putArg("user_id", "" + uid);
+            }
+            if (uname != null) {
+                jms.putArg("uname", uname);
             }
             jms.putArg("search", Uri.encode(search));
             i.putExtra("messagesSource", jms);

@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.13.3'
+        classpath 'com.android.tools.build:gradle:2.0.0-alpha7'
     }
  }
 
@@ -22,8 +22,8 @@ android { sourceSets {
 
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.1"
+    compileSdkVersion 19
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         minSdkVersion 8

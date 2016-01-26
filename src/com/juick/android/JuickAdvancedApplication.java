@@ -18,11 +18,13 @@ import com.google.android.gcm.GCMRegistrar;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
+import com.juickadvanced.lang.ISimpleDateFormat;
 import com.juickadvanced.parsers.DevJuickComMessages;
 import org.acra.ACRA;
 import org.acra.annotation.ReportsCrashes;
 
 import java.io.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -403,14 +405,30 @@ public class JuickAdvancedApplication extends Application {
 
     static {
         DevJuickComMessages.sdftz = new DevJuickComMessages.SDFTZ() {
-            @Override
-            public void initSDFTZ(SimpleDateFormat sdf, String tz) {
-                sdf.setTimeZone(TimeZone.getTimeZone(tz));
-            }
 
             @Override
-            public SimpleDateFormat createSDF(String format, String l1, String l2) {
-                return new SimpleDateFormat(format, new Locale(l1, l2));
+            public ISimpleDateFormat createSDF(String format, String lang, String country, String tz) {
+                final SimpleDateFormat rv = new SimpleDateFormat(format, new Locale(lang, country));
+                if (tz != null) {
+                    rv.setTimeZone(TimeZone.getTimeZone(tz));
+                } else {
+                    System.out.println("TZ requested is null");
+                }
+                return new ISimpleDateFormat() {
+                    @Override
+                    public long parse(String str) throws IllegalArgumentException {
+                        try {
+                            return rv.parse(str).getTime();
+                        } catch (ParseException e) {
+                            throw new IllegalArgumentException(e);
+                        }
+                    }
+
+                    @Override
+                    public String format(long date) {
+                        return rv.format(new Date(date));
+                    }
+                };
             }
         };
     }
