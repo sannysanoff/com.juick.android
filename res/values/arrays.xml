@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string-array name="prefsRefreshIntervalTitles">
         <item>Never</item>
         <item>5 minutes</item>
@@ -149,6 +149,15 @@
         <item>send_wifi</item>
         <item>no</item>
     </string-array>
+
+    <string-array name="activateUsageStatistics">
+        <item>Send</item>
+        <item>Send only over Wi-Fi</item>
+        <item>Don\'t send, but twinkle ;)</item>
+        <item>Don\'t send.</item>
+    </string-array>
+
+
     <string-array name="usageStatisticsLabels">
         <item>Send</item>
         <item>Send over wireless only</item>

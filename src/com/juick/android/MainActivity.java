@@ -264,7 +264,8 @@ public class MainActivity extends JuickFragmentActivity implements
     public ArrayList<NavigationItem> allNavigationItems = new ArrayList<NavigationItem>();
 
     public void runDefaultFragmentWithBundle(Bundle args, NavigationItem ni) {
-        mf = new MessagesFragment(restoreData, this);
+        mf = new MessagesFragment();
+        mf.init(restoreData, this);
         setFragmentNeededMetrics();
         restoreData = null;
         lastNavigationItem = ni;

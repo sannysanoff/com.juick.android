@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.0.0-alpha7'
+        classpath 'com.android.tools.build:gradle:2.1.2'
     }
 }
 
@@ -30,17 +30,35 @@ android {
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 19
-        versionCode 1
-        versionName "1.0"
     }
+
+    signingConfigs {
+        release {
+            storeFile file("juick-advanced-key.keystore")
+            keyAlias "juick-advanced-key"
+            storePassword "${key_password}"
+            keyPassword "${key_password}"
+        }
+        debug {
+            storeFile file("juick-advanced-key.keystore")
+            keyAlias "juick-advanced-key"
+            storePassword "${key_password}"
+            keyPassword "${key_password}"
+        }
+    }
+
     buildTypes {
         release {
             // runProguard false
+            signingConfig signingConfigs.release
         }
         debug {
             // runProguard false
+            signingConfig signingConfigs.debug
         }
     }
+
+
     dependencies {
         compile project(":deps:ActionBarSherlock:library")
         compile project(":deps:FileExplorer")

@@ -263,7 +263,8 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
             etMessage.setInputType(etMessage.getInputType() | EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES);
         }
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        tf = new ThreadFragment(getLastCustomNonConfigurationInstance(), this);
+        tf = new ThreadFragment();
+        tf.init(getLastCustomNonConfigurationInstance(), this);
         Bundle args = new Bundle();
         args.putSerializable("mid", mid);
         args.putSerializable("messagesSource", messagesSource);

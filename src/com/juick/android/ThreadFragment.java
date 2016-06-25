@@ -158,7 +158,7 @@ public class ThreadFragment extends ListFragment implements AdapterView.OnItemCl
     }
 
 
-    public ThreadFragment(Object restoreData, JuickFragmentActivity parent) {
+    public void init(Object restoreData, JuickFragmentActivity parent) {
         this.restoreData = restoreData;
         this.parent = parent;
         implicitlyCreated = false;

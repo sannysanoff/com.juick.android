@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<resources>
+<resources  xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="maps_key">0DjDjZPPUT1SCsxeIxkduemcXUkYnxtPSw7s0lQ</string>
     <!--<string name="maps_key">0DjDjZPPUT1RBx4LNrOlllz_EVOwnO83nJFq_xA</string>-->
     <string name="com_juick">com.juickadvanced</string>

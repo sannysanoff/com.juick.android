@@ -119,11 +119,13 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
     private int mTouchSlop;
     private float rightScrollBound;
 
-    public MessagesFragment(Object restoreData, JuickFragmentActivity parent) {
+
+    public void init(Object restoreData, JuickFragmentActivity parent) {
         this.restoreData = restoreData;
         implicitlyCreated = false;
         this.parent = parent;
     }
+
 
     public MessagesFragment() {
         implicitlyCreated = true;

@@ -72,7 +72,8 @@ public class MessagesActivity extends JuickFragmentActivity {
         TextView oldTitle = (TextView)findViewById(R.id.old_title);
         oldTitle.setText(messagesSource.getTitle());
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        mf = new MessagesFragment(restoreData, this);
+        mf = new MessagesFragment();
+        mf.init(restoreData, this);
         Bundle args = new Bundle();
         args.putSerializable("messagesSource", messagesSource);
         mf.setArguments(args);
