@@ -148,7 +148,7 @@ public class PointMicroBlog implements MicroBlog {
     @Override
     public void launchTagsForNewPost(final NewMessageActivity newMessageActivity) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(newMessageActivity);
-        String username = sp.getString("point.web_password", null);
+        String username = PointAuthorizer.getPointAccountName(newMessageActivity);
         if (username != null) {
             Intent i = new Intent(newMessageActivity, TagsActivity.class);
             i.setAction(Intent.ACTION_PICK);
@@ -316,6 +316,10 @@ public class PointMicroBlog implements MicroBlog {
                 if (ix < 0) {
                     then.apply("Empty message? Tags only.");
                 }
+                int ix2 = s.indexOf("\n");
+                if (ix2 >= 0 && ix2 < ix) {
+                    ix = ix2;   // maybe  tags line ends with newline?
+                }
                 String tag = s.substring(0, ix);
                 if (tag.startsWith("*")) tag = tag.substring(1);
                 s = s.substring(ix+1);
@@ -357,11 +361,11 @@ public class PointMicroBlog implements MicroBlog {
     public JSONArray getUserTags(View view, String uidS) {
         Context context = view.getContext();
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        final String weblogin = sp.getString("point.web_login", null);
+        final String weblogin = PointAuthorizer.getPointAccountName(context);
         String url = "http://" + weblogin.toLowerCase() + ".point.im/tags";
         File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-point-" + uidS + ".json");
         String cachedString = null;
-        if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L) {
+        if (globalTagsCache.exists() && globalTagsCache.lastModified() > System.currentTimeMillis() - 24 * 60 * 60 * 1000L) {
             cachedString = XMPPService.readFile(globalTagsCache);
         }
         final String html = cachedString != null ? cachedString : Utils.getJSON(context, url, null).getResult();
@@ -371,7 +375,7 @@ public class PointMicroBlog implements MicroBlog {
         if (html != null) {
             JSONArray json = new JSONArray();
             Document doc = Jsoup.parse(html);
-            Elements as = doc.select("div[id=content] > a[class=tag]");
+            Elements as = doc.select("a.tag");
             for (Element a : as) {
                 String[] nameAndCount = a.attr("title").split("[: ]");
                 if (nameAndCount.length == 3) {

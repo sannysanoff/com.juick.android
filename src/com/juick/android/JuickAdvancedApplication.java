@@ -14,21 +14,22 @@ import android.preference.PreferenceManager;
 import android.view.WindowManager;
 import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gcm.GCMRegistrar;
 import com.juick.android.juick.JuickAPIAuthorizer;
 import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
 import com.juickadvanced.lang.ISimpleDateFormat;
 import com.juickadvanced.parsers.DevJuickComMessages;
-import org.acra.ACRA;
-import org.acra.annotation.ReportsCrashes;
 
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static org.acra.ReportField.*;
+import io.fabric.sdk.android.Fabric;
+
+import static com.juick.android.Utils.JA_API_URL;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,16 +39,11 @@ import static org.acra.ReportField.*;
  * To change this template use File | Settings | File Templates.
  */
 
-@ReportsCrashes(formKey = "dDh3SG5BSTkzSkRXV2pEUGI0cU5MVEE6MA", resDialogText = R.string.JuickAdvancedCrashed, customReportContent =
-                    { REPORT_ID, APP_VERSION_CODE, APP_VERSION_NAME,
-            PACKAGE_NAME, FILE_PATH, PHONE_MODEL, BRAND, PRODUCT, ANDROID_VERSION, BUILD, TOTAL_MEM_SIZE,
-            AVAILABLE_MEM_SIZE, CUSTOM_DATA, IS_SILENT, STACK_TRACE, INITIAL_CONFIGURATION, CRASH_CONFIGURATION,
-            DISPLAY, USER_COMMENT, USER_EMAIL, USER_APP_START_DATE, USER_CRASH_DATE, DUMPSYS_MEMINFO, LOGCAT,
-            INSTALLATION_ID, DEVICE_FEATURES, ENVIRONMENT, SETTINGS_SYSTEM, SETTINGS_SECURE })
 public class JuickAdvancedApplication extends Application {
 
     static boolean supportsGCM = false;
     public static JuickAdvancedApplication instance;
+    public static Crashlytics crashlytics = new Crashlytics();
 
     public static Handler foreverHandler;
     public static SharedPreferences sp;
@@ -97,9 +93,8 @@ public class JuickAdvancedApplication extends Application {
     @Override
     public void onCreate() {
         long l = System.currentTimeMillis();
-        if (instance == null)
-            ACRA.init(this);
-        final Thread.UncaughtExceptionHandler acraHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Fabric.with(this, crashlytics);
+        final Thread.UncaughtExceptionHandler previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread thread, Throwable ex) {
@@ -107,7 +102,7 @@ public class JuickAdvancedApplication extends Application {
                 if (className.contains("BadTokenException")) return;                        // some irrelevant callbacks
                 if (className.contains("java.util.concurrent.TimeoutException")) return;    // from finalizer
                 if (className.contains("No permission to modify given thread")) return;    // some webkit stuff
-                acraHandler.uncaughtException(thread, ex);
+                previousHandler.uncaughtException(thread, ex);
             }
         });
         instance = this;
@@ -366,8 +361,7 @@ public class JuickAdvancedApplication extends Application {
                 public void run() {
                     ArrayList<Utils.NameValuePair> data = new ArrayList<Utils.NameValuePair>();
                     data.add(new Utils.NameStringValuePair("file", str));
-                    final RESTResponse restResponse = Utils.postForm(instance, "http://"+JAXMPPClient.jahost+":8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
-                    //final Utils.RESTResponse restResponse = Utils.postForm(instance, "http://192.168.1.77:8080/api/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
+                    final RESTResponse restResponse = Utils.postForm(instance, JA_API_URL+"/collect_log?user=" + juickAccountName + "&fsize=" + file.length() + "&postsize=" + str.length(), data);
                     if (restResponse.getErrorText() == null) {
                         file.delete();
                     }

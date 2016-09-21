@@ -16,6 +16,8 @@ import com.juickadvanced.sources.PureJuickCompatibleURLMessagesSource;
 
 import java.util.ArrayList;
 
+import static com.juick.android.Utils.JA_API_URL;
+
 /**
  * Created with IntelliJ IDEA.
  * User: san
@@ -40,7 +42,7 @@ public class JAPastConversationMessagesSource extends MessagesSource {
 
     @Override
     public void getFirst(final Utils.Notification notifications, final Utils.Function<Void, ArrayList<JuickMessage>> cont) {
-        final String url = "https://"+ JAXMPPClient.jahost+":8443/api/pending?command=past_conversations&uname="+uname;
+        final String url = JA_API_URL+"/pending?command=past_conversations&uname="+uname;
         final Utils.Function<Void, RESTResponse> then = new Utils.Function<Void, RESTResponse>() {
             @Override
             public Void apply(RESTResponse response) {

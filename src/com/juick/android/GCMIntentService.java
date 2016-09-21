@@ -27,7 +27,8 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
     }
 
 
-    public static final String SENDER_ID = "61277897514";
+    public static final String SENDER_ID = "661985690018";
+    //public static final String SENDER_ID = "61277897514";
     Handler handler;
 
     public GCMIntentService() {

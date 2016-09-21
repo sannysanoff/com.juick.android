@@ -402,7 +402,7 @@ public class JuickMicroBlog implements MicroBlog {
                             @Override
                             public Void apply(Pair<Integer, String> cred) {
                                 final Bundle args = new Bundle();
-                                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("user_id", "" + cred.first);
+                                JuickCompatibleURLMessagesSource ms = new JuickCompatibleURLMessagesSource(activity.getString(labelId), "my", activity).putArg("uname", "" + cred.second);
                                 ms.setKind("my_home");
                                 args.putSerializable("messagesSource", ms);
                                 activity.runDefaultFragmentWithBundle(args, thiz);

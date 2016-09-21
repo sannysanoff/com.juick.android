@@ -15,13 +15,13 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.juick.android.DefaultHTTPClientService;
+import com.juick.android.MainActivity;
 import com.juickadvanced.RESTResponse;
 import com.juick.android.Utils;
 import com.juickadvanced.R;
 import com.juickadvanced.data.point.PointMessageID;
 import com.juickadvanced.parsers.URLParser;
 import com.juickadvanced.protocol.PointLoginProcedure;
-import org.acra.ACRA;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -85,7 +85,7 @@ public class PointAuthorizer extends Utils.URLAuth {
     @Override
     public void authorize(final Context context, boolean forceOptionalAuth, boolean forceAttachCredentials, String url, final Utils.Function<Void, String> cont) {
         if (context == null) {
-            ACRA.getErrorReporter().handleException(new RuntimeException("Authorizer, null context"));
+            MainActivity.handleException(new RuntimeException("Authorizer, null context"));
             cont.apply(null);
             return;
         }

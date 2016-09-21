@@ -18,8 +18,9 @@ import android.view.animation.*;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.crashlytics.android.Crashlytics;
 import com.juickadvanced.R;
-import org.acra.ACRA;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
@@ -213,7 +214,7 @@ public class ImagePreviewHelper {
             }
         } catch (OutOfMemoryError e) {
             iv.setImageURI(null);
-            ACRA.getErrorReporter().handleException(new RuntimeException("OOM: "+ XMPPControlActivity.getMemoryStatusString(), e));
+            Crashlytics.logException(new RuntimeException("OOM: "+ XMPPControlActivity.getMemoryStatusString(), e));
             Toast.makeText(maybeCurrent.activity, "Out of memory.", Toast.LENGTH_LONG).show();
         } catch (Throwable ex) {
             Toast.makeText(maybeCurrent.activity, ex.toString(), Toast.LENGTH_LONG).show();

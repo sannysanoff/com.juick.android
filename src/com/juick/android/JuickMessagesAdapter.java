@@ -1455,7 +1455,6 @@ public class JuickMessagesAdapter extends ArrayAdapter<JuickMessage> {
     }
 
     static private void handleOOM(final Activity activity, OutOfMemoryError e) {
-        // ACRA.getErrorReporter().handleException(new RuntimeException("OOM: " + XMPPControlActivity.getMemoryStatusString(), e));
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {

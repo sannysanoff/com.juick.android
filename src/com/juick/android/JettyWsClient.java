@@ -62,9 +62,7 @@ public class JettyWsClient {
     public boolean connect(String host, int port, String location, String headers) {
         try {
 
-            Utils.MySSLSocketFactory sf = new Utils.MySSLSocketFactory(null);
-            sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            sock = sf.createSocket();
+            SSLSocketFactory sf = SSLSocketFactory.getSocketFactory();
             HttpParams params = new BasicHttpParams();
             sock = sf.connectSocket(sock, host, port, null, 0, params);
 

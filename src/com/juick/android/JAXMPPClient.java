@@ -6,7 +6,10 @@ import android.net.NetworkInfo;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.crashlytics.android.Crashlytics;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.bnw.BnwAuthorizer;
 import com.juick.android.facebook.Facebook;
@@ -30,7 +33,6 @@ import com.juickadvanced.xmpp.messages.ContactOffline;
 import com.juickadvanced.xmpp.messages.ContactOnline;
 import com.juickadvanced.xmpp.messages.PongFromServer;
 import com.juickadvanced.xmpp.messages.TimestampedMessage;
-import org.acra.ACRA;
 
 import java.io.IOException;
 import java.util.*;
@@ -44,10 +46,8 @@ import java.util.*;
  */
 public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMIntentService.ServerPingTimerListener, JASocketClientListener {
     public static String jahost = "ja.servebeer.com";
-    //String jahost = "192.168.1.77";
-    //String jahost = "10.236.35.24";
     int jaSocketPort = 8228;
-    String controlURL = "https://"+ jahost +":8222/xmpp/control";
+    String controlURL = "https://"+ jahost +"/xmpp/control";
     String sessionId;
     HashSet<String> wachedJids;
     long since;
@@ -69,7 +69,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         this.wachedJids = wachedJids;
         this.context = context;
         if (context == null) {
-            ACRA.getErrorReporter().handleException(new RuntimeException("NULL context in constructor! "));
+            MainActivity.handleException(new RuntimeException("NULL context in constructor! "));
         }
         this.setup = setup;
         this.handler = handler;
@@ -155,7 +155,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
     public String loginLocal(Context context, Handler handler) {
         this.context = context;
         if (context == null) {
-            ACRA.getErrorReporter().handleException(new RuntimeException("NULL context in constructor! "));
+            MainActivity.handleException(new RuntimeException("NULL context in constructor! "));
         }
         JuickAdvancedApplication.showXMPPToast("JAXMPPClient loginLocal");
         this.handler = handler;
@@ -198,7 +198,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
 
     String relogin() {
         if (setup == null || setup.jid == null) {
-            ACRA.getErrorReporter().handleException(new RuntimeException("relogin: null setup or jid: "+setup), false);
+            MainActivity.handleException(new RuntimeException("relogin: null setup or jid: "+setup));
             return "Incomplete JAXMPP configuration.";
         }
         if (setup.jid.endsWith("@local")) {
@@ -280,7 +280,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
             public void run() {
                 final ServerToClient serverToClient = callXmppControl(context, c2s);
                 if (handler == null) {
-                    ACRA.getErrorReporter().handleException(ex, false);
+                    Crashlytics.logException(ex);
                 } else {
                     handler.post(new Runnable() {
                         @Override
@@ -373,28 +373,32 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
         someMessages = true;
         XMPPService.nWSMessages++;
         XMPPService.lastWSMessage = new Date();
-        ServerToClient serverToClient = new Gson().fromJson(data, ServerToClient.class);
-        if (serverToClient != null) {
-            if (serverToClient.getNewInfoNotification() != null) {
-                XMPPService.lastWSMessageID = serverToClient.getNewInfoNotification().getRequestId();
-                ClientToServer c2s = new ClientToServer(sessionId);
-                c2s.setWillSynchronize(new WillSynchronize());
-                wsClient.send(new Gson().toJson(c2s));
-                startSync(new Runnable() {
-                    @Override
-                    public void run() {}});
-            }
-            if (serverToClient.getPongFromServer() != null) {
-                PongFromServer pongFromServer = serverToClient.getPongFromServer();
-                if (pongFromServer.isShouldResetConnectionStatistics()) {
-                    ConnectivityChangeReceiver.resetStatistics(context);
+        try {
+            ServerToClient serverToClient = new Gson().fromJson(data, ServerToClient.class);
+            if (serverToClient != null) {
+                if (serverToClient.getNewInfoNotification() != null) {
+                    XMPPService.lastWSMessageID = serverToClient.getNewInfoNotification().getRequestId();
+                    ClientToServer c2s = new ClientToServer(sessionId);
+                    c2s.setWillSynchronize(new WillSynchronize());
+                    wsClient.send(new Gson().toJson(c2s));
+                    startSync(new Runnable() {
+                        @Override
+                        public void run() {}});
                 }
-                if (pongFromServer.getAdjustSleepInterval() != 0) {
-                    ConnectivityChangeReceiver.adjustMaximumSleepInterval(context, pongFromServer.getAdjustSleepInterval());
+                if (serverToClient.getPongFromServer() != null) {
+                    PongFromServer pongFromServer = serverToClient.getPongFromServer();
+                    if (pongFromServer.isShouldResetConnectionStatistics()) {
+                        ConnectivityChangeReceiver.resetStatistics(context);
+                    }
+                    if (pongFromServer.getAdjustSleepInterval() != 0) {
+                        ConnectivityChangeReceiver.adjustMaximumSleepInterval(context, pongFromServer.getAdjustSleepInterval());
+                    }
+                    log("pong from server ok");
+                    lastPongFromServer = System.currentTimeMillis();
                 }
-                log("pong from server ok");
-                lastPongFromServer = System.currentTimeMillis();
             }
+        } catch (JsonSyntaxException e) {
+            Log.e("JA", "Parsing json: "+data, e);
         }
     }
 
@@ -430,7 +434,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                     }
                 } catch (Throwable e) {
                     final RuntimeException ne = new RuntimeException("Probably toast error: context=" + context + " cr=" + (context != null ? context.getResources() : null)+" em="+serverToClient.getErrorMessage(), e);
-                    ACRA.getErrorReporter().handleException(ne, false);
+                    MainActivity.handleException(ne);
                 }
                 return null;
             }
@@ -622,7 +626,7 @@ public class JAXMPPClient implements GCMIntentService.GCMMessageListener, GCMInt
                             }
                         }
                     } catch (Exception ex) {
-                        ACRA.getErrorReporter().handleException(new RuntimeException("While Ext.XMPP.Poll (not fatal)", ex));
+                        MainActivity.handleException(new RuntimeException("While Ext.XMPP.Poll (not fatal)", ex));
                     } finally {
                         synchronized (JAXMPPClient.this) {
                             switch (syncState) {

@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static com.juick.android.Utils.JA_API_URL;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -814,7 +816,7 @@ public class DatabaseService extends Service {
         String juickPassword = JuickAPIAuthorizer.getPassword(this);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
         RESTResponse restResponse = Utils.postForm(this,
-                "http://" + Utils.JA_ADDRESS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
+                JA_API_URL+"/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
                 //"https://" + Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=get_since_checkpoint&db=" + db + "&checkpoint=" + sinceCheckpoint + "&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         return restResponse;
@@ -825,7 +827,7 @@ public class DatabaseService extends Service {
         String juickPassword = JuickAPIAuthorizer.getPassword(context);
         ArrayList<Utils.NameValuePair> nvs = new ArrayList<Utils.NameValuePair>();
         RESTResponse restResponse = Utils.postForm(context,
-                Utils.JA_ADDRESS_HTTPS + "/api/share_saved?reset="+reset+"&login=" + juickAccountName + "&password=" + juickPassword,
+                Utils.JA_API_URL+ "/share_saved?reset="+reset+"&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         return restResponse;
     }
@@ -845,7 +847,7 @@ public class DatabaseService extends Service {
         nvs.add(new Utils.NameStreamValuePair("data", new ByteArrayInputStream(baos.toByteArray())));
         JuickAdvancedApplication.addToGlobalLog("syncdb: commit: db="+db+" len="+baos.size(), null);
         RESTResponse restResponse = Utils.postForm(this,
-                Utils.JA_ADDRESS_HTTPS + "/api/syncdb?command=commit&db=" + db + "&login=" + juickAccountName + "&password=" + juickPassword,
+                Utils.JA_API_URL+ "/syncdb?command=commit&db=" + db + "&login=" + juickAccountName + "&password=" + juickPassword,
                 nvs);
         if (restResponse.getErrorText() != null) {
             JuickAdvancedApplication.addToGlobalLog("syncdb: commit: "+restResponse.getErrorText(), null);

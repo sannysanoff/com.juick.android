@@ -1,13 +1,30 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven { url 'https://maven.fabric.io/public' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.2'
+        classpath 'com.android.tools.build:gradle:2.2.0-rc2'
+    }
+}
+buildscript {
+    repositories {
+        maven { url 'https://maven.fabric.io/public' }
+    }
+
+    dependencies {
+        // The Fabric Gradle plugin uses an open ended version to react
+        // quickly to Android tooling updates
+        classpath 'io.fabric.tools:gradle:1.+'
     }
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+
+repositories {
+    maven { url 'https://maven.fabric.io/public' }
+}
 
 android {
     lintOptions.abortOnError = false;
@@ -15,9 +32,9 @@ android {
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src','../../common/src']
+            java.srcDirs = ['src', '../../common/src']
             res.srcDirs = ['res']
-    	}
+        }
     }
 
     dexOptions {
@@ -25,7 +42,7 @@ android {
     }
 
     compileSdkVersion 19
-    buildToolsVersion "23.0.2"
+    buildToolsVersion '24'
 
     defaultConfig {
         minSdkVersion 8
@@ -36,14 +53,14 @@ android {
         release {
             storeFile file("juick-advanced-key.keystore")
             keyAlias "juick-advanced-key"
-            storePassword "${key_password}"
-            keyPassword "${key_password}"
+            storePassword 'sanoff'
+            keyPassword 'sanoff'
         }
         debug {
             storeFile file("juick-advanced-key.keystore")
             keyAlias "juick-advanced-key"
-            storePassword "${key_password}"
-            keyPassword "${key_password}"
+            storePassword 'sanoff'
+            keyPassword 'sanoff'
         }
     }
 
@@ -67,3 +84,8 @@ android {
     }
 }
 
+dependencies {
+    compile('com.crashlytics.sdk.android:crashlytics:2.6.2@aar') {
+        transitive = true;
+    }
+}

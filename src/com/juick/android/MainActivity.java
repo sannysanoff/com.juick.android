@@ -17,6 +17,7 @@
  */
 package com.juick.android;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -43,6 +44,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.*;
 import com.actionbarsherlock.app.ActionBar;
+import com.crashlytics.android.Crashlytics;
 import com.juick.android.api.ChildrenMessageSource;
 import com.juick.android.bnw.BNWMicroBlog;
 import com.juick.android.facebook.Facebook;
@@ -64,7 +66,9 @@ import com.lamerman.FileDialog;
 import com.lamerman.SelectionMode;
 import com.mobeta.android.dslv.DragSortController;
 import com.mobeta.android.dslv.DragSortListView;
-import org.acra.ACRA;
+import io.fabric.sdk.android.Fabric;
+import io.fabric.sdk.android.services.common.Crash;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -135,6 +139,10 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         ((BaseAdapter)navigationList.getAdapter()).notifyDataSetChanged();
 
+    }
+
+    public static void handleException(Exception ne) {
+        Crashlytics.logException(ne);
     }
 
 
@@ -324,8 +332,9 @@ public class MainActivity extends JuickFragmentActivity implements
 
         JuickHttpAPI.setHttpsEnabled(sp.getBoolean("useHttpsForJuickHttpAPI", false));
 
-        if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
-            ACRA.getErrorReporter().putCustomData("juick_user", JuickAPIAuthorizer.getJuickAccountName(this));
+        String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(this);
+        if (juickAccountName != null) {
+            Crashlytics.setString("juick_user", juickAccountName);
         }
         if (sp.getBoolean("fullScreenMessages", false)) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -1022,6 +1031,7 @@ public class MainActivity extends JuickFragmentActivity implements
         selectSourcesForCombined(CombinedSubscriptionMessagesSource.COMBINED_SUBSCRIPTION_MESSAGES_SOURCE, new String[]{JuickMessageID.CODE, PointMessageID.CODE, BnwMessageID.CODE, FacebookMessageID.CODE});
     }
 
+    @TargetApi(VERSION_CODES.ICE_CREAM_SANDWICH)
     private void selectSourcesForCombined(final String prefix, final String[] codes) {
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         ScrollView v = new ScrollView(this);
@@ -1852,9 +1862,11 @@ public class MainActivity extends JuickFragmentActivity implements
         }
         if (s.equals("enableLoginNameWithCrashReport")) {
             if (sp.getBoolean("enableLoginNameWithCrashReport", false)) {
-                ACRA.getErrorReporter().putCustomData("juick_user", JuickAPIAuthorizer.getJuickAccountName(this));
+                String juickAccountName = JuickAPIAuthorizer.getJuickAccountName(this);
+                if (juickAccountName != null)
+                    Crashlytics.setString("juick_user", juickAccountName);
             } else {
-                ACRA.getErrorReporter().putCustomData("juick_user", "");
+                Crashlytics.setString("juick_user", "");
             }
 
         }
@@ -1895,7 +1907,7 @@ public class MainActivity extends JuickFragmentActivity implements
         } catch (Exception e) {
             if (System.currentTimeMillis() - lastNPE > 5*60*1000L) {
                 lastNPE = System.currentTimeMillis();
-                ACRA.getErrorReporter().handleException(new RuntimeException("Handled NPE in alcatel", e), false);
+                MainActivity.handleException(new RuntimeException("Handled NPE in alcatel", e));
             }
             return true;
         }

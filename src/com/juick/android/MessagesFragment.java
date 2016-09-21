@@ -46,12 +46,13 @@ import com.juickadvanced.RESTResponse;
 import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickMessageID;
-import org.acra.ACRA;
 
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.juick.android.Utils.JA_API_URL;
 
 /**
  * @author Ugnich Anton
@@ -245,7 +246,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
         listAdapter.setOnForgetListener(new Utils.Function<Void,JuickMessage>() {
             @Override
             public Void apply(final JuickMessage jm) {
-                Network.executeJAHTTPS(getActivity(), null, "https://"+JAXMPPClient.jahost+":8443/api/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, RESTResponse>() {
+                Network.executeJAHTTPS(getActivity(), null, JA_API_URL+"/pending?command=ignore&mid=" + ((JuickMessageID) jm.getMID()).getMid() + "&rid=" + jm.getRID(), new Utils.Function<Void, RESTResponse>() {
                     @Override
                     public Void apply(final RESTResponse response) {
                         final Activity activity = getActivity();
@@ -1121,7 +1122,7 @@ public class MessagesFragment extends ListFragment implements AdapterView.OnItem
                         });
                     } catch (OutOfMemoryError e) {
                         messagesSource.setCanNext(false);
-                        ACRA.getErrorReporter().handleException(new RuntimeException("OOM: " + XMPPControlActivity.getMemoryStatusString(), e));
+                        MainActivity.handleException(new RuntimeException("OOM: " + XMPPControlActivity.getMemoryStatusString(), e));
                         progressNotification.notifyDownloadError("OUT OF MEMORY");
                     }
                 }

@@ -3,7 +3,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.facebook.katana" android:hardwareAccelerated="true"
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced" android:hardwareAccelerated="true"
-          android:versionCode="2016062501" android:versionName="22.0.40">
+          android:versionCode="2016092004" android:versionName="22.0.47">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -80,9 +80,6 @@
             </intent-filter>
         </activity>
         <activity android:name="com.juick.android.UserCenterActivity" android:label="@string/UserCenter" android:theme="@style/Theme.Sherlock.NoNavigation"
-                  android:configChanges="keyboard|keyboardHidden|orientation">
-        </activity>
-        <activity android:name="org.acra.CrashReportDialog"
                   android:configChanges="keyboard|keyboardHidden|orientation">
         </activity>
         <activity android:name="com.juick.android.NewMessageActivity" android:label="@string/New_message" android:theme="@style/Theme.Sherlock.NoNavigation"
@@ -209,5 +206,8 @@
             <meta-data android:name="android.provider.CONTACTS_STRUCTURE" android:resource="@xml/contacts"/>
         </service>
 
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="73f5eded0eef3693248c7b50f702bd27bb457ade" />
     </application>
 </manifest>

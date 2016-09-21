@@ -18,11 +18,12 @@ import android.webkit.WebView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.crashlytics.android.Crashlytics;
 import com.google.gson.*;
 import com.juick.android.ja.Network;
 import com.juickadvanced.R;
 import com.juickadvanced.RESTResponse;
-import org.acra.ACRA;
 
 import java.io.*;
 import java.net.URI;
@@ -31,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.juick.android.Utils.JA_API_URL;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,6 +45,7 @@ import java.util.regex.Pattern;
 public class WhatsNew {
 
     ReleaseFeatures[] features = new ReleaseFeatures[]{
+            new ReleaseFeatures("2016082102", R.string.rf_2016082102),
             new ReleaseFeatures("2014081601", R.string.rf_2014081601),
             new ReleaseFeatures("2014081101", R.string.rf_2014081101),
             new ReleaseFeatures("2013100101", R.string.rf_2013100101),
@@ -83,7 +87,7 @@ public class WhatsNew {
             public void run() {
                 boolean found = false;
                 String reasonNotFound = "other reason";
-                final RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_news", null);
+                final RESTResponse json = Utils.getJSON(activity, JA_API_URL+ "/get_last_news", null);
                 try {
                     last_news_check.createNewFile();
                 } catch (IOException e) {
@@ -134,7 +138,7 @@ public class WhatsNew {
         try {
             currentVersionCode = activity.getApplicationContext().getPackageManager().getPackageInfo(activity.getApplicationContext().getPackageName(), 0).versionCode;
         } catch (Exception ex) {
-            ACRA.getErrorReporter().handleException(ex, false);
+            Crashlytics.logException(ex);
             if (notRunning != null) notRunning.apply(ex.toString());
             return;
         }
@@ -145,7 +149,7 @@ public class WhatsNew {
             new Thread() {
                 @Override
                 public void run() {
-                    RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/notify_updated?version=" + currentVersionCode, null);
+                    RESTResponse json = Utils.getJSON(activity, JA_API_URL+"/notify_updated?version=" + currentVersionCode, null);
                     if (json.getErrorText() == null) {
                         JuickAdvancedApplication.foreverHandler.post(new Runnable() {
                             @Override
@@ -166,7 +170,7 @@ public class WhatsNew {
                     boolean found = false;
                     String reasonNotFound = "other reason";
                     try {
-                        RESTResponse json = Utils.getJSON(activity, "http://" + Utils.JA_ADDRESS + "/api/get_last_version?force=" + force, null);
+                        RESTResponse json = Utils.getJSON(activity, JA_API_URL+ "/get_last_version?force=" + force, null);
                         try {
                             last_check.createNewFile();
                         } catch (IOException e) {
@@ -197,7 +201,7 @@ public class WhatsNew {
                                                 });
                                             } catch (Exception e) {
                                                 reasonNotFound = "Program bug with json? reported to author.";
-                                                ACRA.getErrorReporter().handleException(new RuntimeException("bad json? "+json.getResult(), e));
+                                                Crashlytics.logException(new RuntimeException("bad json? "+json.getResult(), e));
                                             }
                                         }
                                     } else {
@@ -209,7 +213,7 @@ public class WhatsNew {
                                     }
                                 } catch (Exception e) {
                                     reasonNotFound = e.toString();
-                                    ACRA.getErrorReporter().handleException(e, false);
+                                    MainActivity.handleException(e);
                                 }
                             } else {
                                 reasonNotFound = "bad response from server";

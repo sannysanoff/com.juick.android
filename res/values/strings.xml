@@ -204,7 +204,7 @@
     <string name="navigationBNWFeed">BNW Subs</string>
     <string name="navigationBNWAll">BNW All</string>
     <string name="navigationBNWHot">BNW Top</string>
-    <string name="navigationPointAll">Pont All</string>
+    <string name="navigationPointAll">Point All</string>
     <string name="navigationPointSubs">Point Subs</string>
     <string name="navigationPointMine">Point My Blog</string>
     <string name="navigationFacebookFeed">FB Subs</string>
@@ -366,6 +366,42 @@
             </li>
             <li>
             Добавил простое меню на фейсбучную ленту
+            </li>
+
+            <hr>
+            Все фичи Juick Advanced можно посмотреть в настройках, пункт \"Что Нового\".
+
+            #script#
+
+            ]]>
+    </string>
+
+    <string name="rf_2016082102"><![CDATA[
+            <html>
+            <head>
+            <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+            <style>
+                input {
+                    -webkit-transform: scale(1.4,1.4);
+                }
+            </style>
+            </head>
+            <body>
+
+            <form>
+            <b>Август 2016, билд имени Ольги Васильевой</b>
+            <ul>
+            <li>
+            Переехал с ACRA на Crashlytics, халявний, но коммерческий сервис в который сваливаются крэши приложения, потому что
+            большое количество повторяющихся одинаковых эксепшнов на ACRA, падавшее мне в Google Docs, было сложно разгребать,
+            чтобы найти там чтото тоже важное.
+            </li>
+            <li>
+            Завел на сайте Let\'s Encrypt, и переключил туда все урлы. Возобновилась нормальная работа \'Неотвеченные\',
+            должен работать экспорт \"Saved messages\", и может еще ряд фич, о которых все давно забыли.
+            </li>
+            <li>
+            Пофиксил ряд микроскопических багов, втч неправильно показывающийся \"Мой блог\" в Жуйке.
             </li>
 
             <hr>

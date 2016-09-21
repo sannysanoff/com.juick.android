@@ -47,6 +47,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import static com.juick.android.Utils.JA_API_URL;
+
 /**
  */
 public class UserCenterActivity extends Activity {
@@ -100,7 +102,7 @@ public class UserCenterActivity extends Activity {
             @Override
             public void run() {
                 final RESTResponse json = Utils.getJSON(UserCenterActivity.this,
-                        "http://" + Utils.JA_ADDRESS + "/api/userinfo?uname=" + Uri.encode(uname), null);
+                        JA_API_URL + "/userinfo?uname=" + Uri.encode(uname), null);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

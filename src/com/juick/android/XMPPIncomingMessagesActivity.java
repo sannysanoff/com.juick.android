@@ -34,7 +34,6 @@ import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.R;
 import com.juickadvanced.data.point.PointMessageID;
-import org.acra.ACRA;
 
 import java.util.*;
 
@@ -766,7 +765,7 @@ public class XMPPIncomingMessagesActivity extends SherlockActivity implements XM
             } catch (Exception ex) {
                 TextView tv = new TextView(XMPPIncomingMessagesActivity.this);
                 tv.setText("Error here: "+ex.toString());
-                ACRA.getErrorReporter().handleException(ex, false);
+                MainActivity.handleException(ex);
                 return tv;
             } finally {
                 l = System.currentTimeMillis() - l;
