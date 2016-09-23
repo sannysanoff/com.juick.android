@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
@@ -71,7 +72,8 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
     @Override
     protected void onMessage(final Context context, final Intent intent) {
-        final Object msg = intent.getExtras().get("message");
+        Bundle extras = intent.getExtras();
+        final Object msg = extras != null ? extras.get("message") : null;
         final Set<String> categories = intent.getCategories();
         if (msg != null && msg instanceof String) {
             final String messag = (String)msg;

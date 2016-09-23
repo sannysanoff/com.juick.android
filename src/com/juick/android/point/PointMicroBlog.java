@@ -359,9 +359,12 @@ public class PointMicroBlog implements MicroBlog {
     }
 
     public JSONArray getUserTags(View view, String uidS) {
+        JSONArray retval = new JSONArray();
         Context context = view.getContext();
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         final String weblogin = PointAuthorizer.getPointAccountName(context);
+        if (weblogin == null)
+            return retval;
         String url = "http://" + weblogin.toLowerCase() + ".point.im/tags";
         File globalTagsCache = new File(view.getContext().getCacheDir(), "tags-point-" + uidS + ".json");
         String cachedString = null;
@@ -373,7 +376,6 @@ public class PointMicroBlog implements MicroBlog {
             XMPPService.writeStringToFile(globalTagsCache, html);
         }
         if (html != null) {
-            JSONArray json = new JSONArray();
             Document doc = Jsoup.parse(html);
             Elements as = doc.select("a.tag");
             for (Element a : as) {
@@ -383,13 +385,13 @@ public class PointMicroBlog implements MicroBlog {
                         JSONObject value = new JSONObject();
                         value.put("tag", nameAndCount[0]);
                         value.put("messages", Integer.parseInt(nameAndCount[2]));
-                        json.put(value);
+                        retval.put(value);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
             }
-            return json;
+            return retval;
         }
         return null;
     }

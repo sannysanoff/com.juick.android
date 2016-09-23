@@ -38,6 +38,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import com.actionbarsherlock.view.Menu;
+import com.crashlytics.android.Crashlytics;
 import com.juick.android.facebook.FacebookFeedMessagesSource;
 import com.juickadvanced.data.juick.JuickMessage;
 import com.juickadvanced.data.juick.JuickUser;
@@ -844,7 +845,11 @@ public class ThreadActivity extends JuickFragmentActivity implements View.OnClic
                 }
             }
         }
-        super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
+        try {
+            super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
+        } catch (Throwable e) {
+            MainActivity.handleException(e);
+        }
         overridePendingTransition(R.anim.enter_raise_and_light, R.anim.leave_slide_to_right);
     }
 }

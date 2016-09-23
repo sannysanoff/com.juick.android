@@ -31,7 +31,7 @@ public class PointAPIMessagesSource extends MessagesSource {
         super(ctx, "point_"+kind);
         this.title = title;
         this.pureMessageSource = pure;
-        pure.urlParser = new URLParser(path);
+        pure.urlParser = path != null ? new URLParser(path): null;
         PointAuthorizer.skipAskPassword = false;
     }
 

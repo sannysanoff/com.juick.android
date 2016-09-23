@@ -141,7 +141,7 @@ public class MainActivity extends JuickFragmentActivity implements
 
     }
 
-    public static void handleException(Exception ne) {
+    public static void handleException(Throwable ne) {
         Crashlytics.logException(ne);
     }
 
@@ -400,7 +400,7 @@ public class MainActivity extends JuickFragmentActivity implements
                             final SharedPreferences rdnews = getSharedPreferences("read_news", MODE_PRIVATE);
                             for(int i=0; i< newses.size(); i++) {
                                 final WhatsNew.News news = newses.get(i);
-                                if (news.code.equals("critical")) {
+                                if (news != null && news.code != null && news.code.equals("critical")) {
                                     if ("SannySanoff".equals(JuickAPIAuthorizer.getJuickAccountName(MainActivity.this))) {
                                         service.handleTextMessage("critical@ja_server",news.body);
                                     }

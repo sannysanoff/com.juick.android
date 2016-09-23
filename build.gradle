@@ -4,7 +4,7 @@ buildscript {
         maven { url 'https://maven.fabric.io/public' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.0-rc2'
+        classpath 'com.android.tools.build:gradle:2.2.0'
     }
 }
 buildscript {
@@ -34,11 +34,8 @@ android {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src', '../../common/src']
             res.srcDirs = ['res']
+            assets.srcDirs = ['src/assets']
         }
-    }
-
-    dexOptions {
-        incremental true
     }
 
     compileSdkVersion 19
