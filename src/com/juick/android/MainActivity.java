@@ -34,6 +34,7 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -91,6 +92,7 @@ public class MainActivity extends JuickFragmentActivity implements
     public static int displayWidth;
     public static int displayHeight;
 
+    //
     NavigationItem lastNavigationItem = null;
     Object restoreData;
     public SharedPreferences sp;
@@ -115,6 +117,7 @@ public class MainActivity extends JuickFragmentActivity implements
         for (MicroBlog microBlog : microBlogs.values()) {
             microBlog.initialize();
         }
+        Log.i("JuickAdvanced","static init");
     }
 
     public DragSortListView navigationList;

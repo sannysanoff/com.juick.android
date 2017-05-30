@@ -93,7 +93,12 @@ public class JuickAdvancedApplication extends Application {
     @Override
     public void onCreate() {
         long l = System.currentTimeMillis();
-        Fabric.with(this, crashlytics);
+
+        final Fabric fabric = new Fabric.Builder(this)
+                .kits(crashlytics)
+                .debuggable(true)
+                .build();
+        Fabric.with(fabric);
         final Thread.UncaughtExceptionHandler previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override

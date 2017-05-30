@@ -206,10 +206,8 @@ public class Utils extends com.juickadvanced.Utils {
         }
     }
 
-    //public static final String JA_ADDRESS = "192.168.1.77:8080";
     public static final String JA_ADDRESS = JAXMPPClient.jahost+":8080";
     public static final String JA_API_URL = "https://"+JAXMPPClient.jahost+"/api";
-    //public static final String JA_ADDRESS_HTTPS = "http://192.168.1.77:8080";
 
     public static void verboseDebugString(final Activity context, final String s) {
         boolean verboseDebug = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("verboseDebug", false);
@@ -785,8 +783,9 @@ public class Utils extends com.juickadvanced.Utils {
         }
     }
 
+    /*
     static {
-        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
             public java.security.cert.X509Certificate[] getAcceptedIssuers() {
                 return null;
             }
@@ -796,7 +795,7 @@ public class Utils extends com.juickadvanced.Utils {
 
             public void checkServerTrusted(X509Certificate[] certs, String authType) {
             }
-        } };
+        }};
 
         try {
             SSLContext sc = SSLContext.getInstance("SSL");
@@ -815,6 +814,7 @@ public class Utils extends com.juickadvanced.Utils {
             e.printStackTrace();
         }
     }
+    */
 
     public static RESTResponse postForm(final Context context, final String url, ArrayList<NameValuePair> data) {
         try {

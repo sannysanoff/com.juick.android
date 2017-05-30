@@ -202,7 +202,7 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
             formData.add(new BasicNameValuePair("username", login));
             formData.add(new BasicNameValuePair("password", password));
             httpPost.setEntity(new UrlEncodedFormEntity(formData));
-            httpPost.setHeader("Referer", "http://juick.com/login");
+            httpPost.setHeader("Referer", "http://juick.com/");
             httpPost.setHeader("Accept-Charset", "UTF-8,*;q=0.5");
             httpPost.setHeader("Connection", "keep-alive");
             //httpPost.setHeader("Accept-Encoding", "gzip,deflate,sdch");
@@ -220,7 +220,7 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
                         CookieStore cookieStore = client.getCookieStore();
                         List<Cookie> cookies = cookieStore.getCookies();
                         for (Cookie cookie : cookies) {
-                            if (cookie.getName().equals("hash")) {
+                            if (cookie.getName().equals("JSESSIONID")) {
                                 result.apply(new RESTResponse(null, false, cookie.getValue()));
                                 return "";
                             }
@@ -231,7 +231,10 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
                         if (responseBody.result != null && responseBody.result.indexOf("forbidden") != -1) {
                             result.apply(new RESTResponse(activity.getString(R.string.InvalidLoginPassword), false, null));
                         } else {
-                            result.apply(new RESTResponse("http://juick.com/login: Unknown response: code="+o.getStatusLine().getStatusCode()+" msg="+o.getStatusLine().getReasonPhrase()+" data="+responseBody.result, false, null));
+                            String display = responseBody.result;
+                            if (display.length() > 100)
+                                display = display.substring(0, 100)+" ...";
+                            result.apply(new RESTResponse("http://juick.com/login: Unknown response: code="+o.getStatusLine().getStatusCode()+" msg="+o.getStatusLine().getReasonPhrase()+" data="+ display, false, null));
                         }
                         return "";
                     }
@@ -248,7 +251,7 @@ public class JuickWebAuthorizer extends Utils.URLAuth {
 
     @Override
     public void authorizeRequest(HttpRequestBase request, String cookie) {
-        request.addHeader("Cookie", "hash=" + cookie);
+        request.addHeader("Cookie", "JSESSIONID=" + cookie);
     }
 
     @Override
