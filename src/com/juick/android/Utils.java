@@ -76,6 +76,7 @@ import javax.net.ssl.*;
 
 /**
  * @author Ugnich Anton
+ * @author Sanny Sanoff
  */
 public class Utils extends com.juickadvanced.Utils {
 

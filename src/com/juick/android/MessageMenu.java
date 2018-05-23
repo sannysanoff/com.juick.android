@@ -28,7 +28,6 @@ import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
-import android.net.http.AndroidHttpClient;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.text.Spannable;
@@ -54,6 +53,7 @@ import com.juickadvanced.protocol.JuickHttpAPI;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1074,7 +1074,8 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                 builder = builder.appendQueryParameter("inputm", "2");
                 builder = builder.appendQueryParameter("source", "edit");
                 builder = builder.appendQueryParameter("text", s);
-                final HttpClient client = AndroidHttpClient.newInstance("AndroidTranslate/2.4.2 2.3.6 (gzip)", activity);
+                final HttpClient client = new DefaultHttpClient();
+                // AndroidHttpClient.newInstance("AndroidTranslate/2.4.2 2.3.6 (gzip)", activity);
                 final HttpGet verb = new HttpGet(builder.build().toString());
                 actions.add(verb);
                 verb.setHeader("Accept-Charset", "UTF-8");
@@ -1092,6 +1093,7 @@ public class MessageMenu implements OnItemLongClickListener, OnClickListener {
                                 out.append("[error: "+e.toString()+"]");
                             Log.e("com.juickadvanced", "Error calling google translate", e);
                         } finally {
+                            client.getConnectionManager().shutdown();
                             synchronized (pieces) {
                                 pieces[0]++;
                                 results[finalI] = out.toString();

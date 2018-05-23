@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
-import android.net.http.AndroidHttpClient;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -34,6 +33,9 @@ import com.juickadvanced.data.MessageID;
 import com.juickadvanced.data.juick.JuickMessageID;
 import com.juickadvanced.protocol.JuickHttpAPI;
 import com.juickadvanced.protocol.JuickLoginProcedure;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -789,13 +791,14 @@ public class JuickMicroBlog implements MicroBlog {
         }
     }
 
+
     public static void obtainProperUserIdByName(final Activity activity, final String userName, String titleOfDialog, final Utils.Function<Void, Pair<String,String>> withUserId) {
         final ProgressDialog pd = new ProgressDialog(activity);
         pd.setTitle(titleOfDialog);
         pd.setMessage(activity.getString(R.string.ConnectingToWwwJuick));
         pd.setIndeterminate(true);
         pd.show();
-        final AndroidHttpClient httpClient = AndroidHttpClient.newInstance(activity.getString(R.string.com_juick));
+        final HttpClient httpClient = new DefaultHttpClient();
         new Thread("UserID obtainer") {
             @Override
             public void run() {
@@ -826,7 +829,7 @@ public class JuickMicroBlog implements MicroBlog {
                         }
                     });
                 } finally {
-                    httpClient.close();
+                    httpClient.getConnectionManager().shutdown();
                     activity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

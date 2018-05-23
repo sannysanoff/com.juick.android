@@ -1,18 +1,22 @@
 buildscript {
     repositories {
+        jcenter()
         mavenCentral()
         maven { url 'https://maven.fabric.io/public' }
+	maven { url 'https://maven.google.com' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.2'
+        classpath 'com.android.tools.build:gradle:3.0.0'
         classpath 'io.fabric.tools:gradle:1.+'
     }
 }
+
 apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
+    mavenCentral()
 }
 
 android {
@@ -27,12 +31,16 @@ android {
         }
     }
 
-    compileSdkVersion 19
-    buildToolsVersion '25.0.0'
+    compileSdkVersion 25
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 19
+    }
+
+    lintOptions {
+        abortOnError false
     }
 
     signingConfigs {
@@ -63,14 +71,17 @@ android {
 
 
     dependencies {
-        compile project(":deps:ActionBarSherlock:library")
+        // compile project(":deps:ActionBarSherlock:library")
+        compile project(":deps:actionbarsherlock")
         compile project(":deps:FileExplorer")
         compile project(":deps:yuku-android-util:AmbilWarna")
         compile fileTree(dir: 'libs', include: ['*.jar'])
+        compile fileTree(dir: '../../server/lib', include: ['jsoup*.jar'])
     }
 }
 
 dependencies {
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.1.3'
     compile('com.crashlytics.sdk.android:crashlytics:2.6.2@aar') {
         transitive = true;
     }
