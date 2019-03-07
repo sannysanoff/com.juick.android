@@ -31,6 +31,11 @@ public class PressableLinearLayout extends LinearLayout {
     }
 
     @Override
+    public boolean hasExplicitFocusable() {
+        return false;
+    }
+
+    @Override
     protected void finalize() throws Throwable {
         super.finalize();
         instanceCount--;

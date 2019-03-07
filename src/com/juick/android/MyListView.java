@@ -35,6 +35,11 @@ public class MyListView extends ListView {
     }
 
     @Override
+    public boolean hasExplicitFocusable() {
+        return false;
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent ev) {
         JuickAdvancedApplication.setLastTouchCoords(ev.getX(), ev.getY());
         switch(ev.getActionMasked()) {

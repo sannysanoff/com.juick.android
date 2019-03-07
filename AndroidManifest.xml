@@ -3,7 +3,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.facebook.katana" android:hardwareAccelerated="true"
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.juickadvanced" android:hardwareAccelerated="true"
-          android:versionCode="2018052301" android:versionName="22.0.51">
+          android:versionCode="2019030701" android:versionName="22.0.52">
+
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="13"/>
     <uses-permission android:name="android.permission.INTERNET"/>

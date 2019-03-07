@@ -28,12 +28,12 @@ android {
 
 
 android {
-   compileSdkVersion 25
+   compileSdkVersion 26
     buildToolsVersion '26.0.2'
 
     defaultConfig {
         minSdkVersion 8
-        targetSdkVersion 19
+        targetSdkVersion 26
     }
 }
 
